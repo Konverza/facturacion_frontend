@@ -1,4 +1,11 @@
 {
+  "_autocomplete-i5sh6eXG.js": {
+    "file": "assets/autocomplete-i5sh6eXG.js",
+    "name": "autocomplete",
+    "imports": [
+      "resources/js/autocomplete.js"
+    ]
+  },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf": {
     "file": "assets/fa-brands-400-DHHcbFjz.ttf",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf"
@@ -31,14 +38,43 @@
     "file": "assets/bootstrap-icons-BtvjY1KL.woff2",
     "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2"
   },
+  "resources/js/admin.js": {
+    "file": "assets/admin-WjBRgyWM.js",
+    "name": "admin",
+    "src": "resources/js/admin.js",
+    "isEntry": true,
+    "imports": [
+      "_autocomplete-i5sh6eXG.js",
+      "resources/js/autocomplete.js"
+    ]
+  },
   "resources/js/app.js": {
-    "file": "assets/app-CJVfUsx-.js",
+    "file": "assets/app-CSz3TPX1.js",
     "name": "app",
     "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "resources/js/autocomplete.js"
+    ]
+  },
+  "resources/js/autocomplete.js": {
+    "file": "assets/autocomplete-BhlH6aML.js",
+    "name": "autocomplete",
+    "src": "resources/js/autocomplete.js",
     "isEntry": true
   },
+  "resources/js/clients.js": {
+    "file": "assets/clients-CGSKd3X1.js",
+    "name": "clients",
+    "src": "resources/js/clients.js",
+    "isEntry": true,
+    "imports": [
+      "_autocomplete-i5sh6eXG.js",
+      "resources/js/autocomplete.js"
+    ]
+  },
   "resources/js/factura.js": {
-    "file": "assets/factura-ZQeZcqhZ.js",
+    "file": "assets/factura-D_5hNOYv.js",
     "name": "factura",
     "src": "resources/js/factura.js",
     "isEntry": true
@@ -50,7 +86,7 @@
     "isEntry": true
   },
   "resources/sass/app.scss": {
-    "file": "assets/app-BLEvb7d1.css",
+    "file": "assets/app-Br0lsFUV.css",
     "src": "resources/sass/app.scss",
     "isEntry": true
   }
