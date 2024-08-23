@@ -9,5 +9,16 @@ class BusinessProduct extends Model
 {
     use HasFactory;
 
-    protected $table = 'business_products';
+    protected $table = 'business_product';
+
+    protected $fillable = [
+        'business_id',
+        'tipoItem',
+        'codigo',
+        'uniMedida',
+        'descripcion',
+        'precioUni',
+        'precioSinTributos',
+        'tributos',
+    ];
 }

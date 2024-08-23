@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/js/factura.js',
                 'resources/js/invoices.js',
                 'resources/js/clients.js',
+                'resources/js/producto.js',
             ],
             refresh: true,
         }),

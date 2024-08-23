@@ -8,7 +8,7 @@ use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\DepartamentosController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\MailController;
-
+use App\Http\Controllers\ProductsController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -42,7 +42,8 @@ Route::group(['prefix' => 'business', 'middleware' => ['auth', 'role:negocio|ven
     Route::get('factura', [BusinessController::class, 'factura'])->name('business.factura');
     Route::get('clientes', [BusinessController::class, 'clientes'])->name('business.clientes');
     Route::get('sucursales' , [BusinessController::class, 'sucursales'])->name('business.sucursales');
-    Route::get('productos', [BusinessController::class, 'productos'])->name('business.productos');
+    Route::get('productos', [ProductsController::class, 'index'])->name('business.productos');
+    Route::post('productos', [ProductsController::class, 'store'])->name('business.productos.store');
     Route::get('dtes', [BusinessController::class, 'dtes'])->name('business.dtes');
     Route::post("/enviar_dte", [MailController::class, "mandar_correo"])->name("invoices.send");
     Route::post('factura', [BusinessController::class, 'send_dte'])->name('business.factura.send');

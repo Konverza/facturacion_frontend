@@ -21,7 +21,7 @@ class TributesSeeder extends Seeder
         ]);
         Tributes::create([
             "codigo" => "59",
-            "descripcion" => "Turismo: por alojamiento",
+            "descripcion" => "Turismo: Por Alojamiento (5%)",
             "valor" => 0.05,
             "es_porcentaje" => true,
             "aplicar_a_cantidad" => false,

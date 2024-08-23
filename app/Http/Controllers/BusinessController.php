@@ -39,11 +39,6 @@ class BusinessController extends Controller
         return view('business.sucursales');
     }
 
-    public function productos()
-    {
-        return view('business.productos');
-    }
-
     public function dtes()
     {
         $business_user = BusinessUser::where('user_id', auth()->id())->first();

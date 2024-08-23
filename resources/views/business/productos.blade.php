@@ -9,100 +9,84 @@
             </div>
         </div>
         <div class="row my-4">
-            <div class="col-md-4">
+            <div class="col-md-5">
                 <div class="card shadow bg-light card-body">
                     <h3>Añadir Producto</h3>
-                    <form>
+                    <form method="POST" action="{{route("business.productos.store")}}" id="formProducto">
+                        @csrf
                         <div class="form-group mb-3">
-                            <label for="tipo">Tipo:</label>
-                            <select id="tipo" class="form-select">
-                                <option selected>1 - Bien</option>
-                                <option>2 - Servicio</option>
-                                <option value="">3 - Bien y Servicio</option>
-                                <option value="">4 - Otros Tributos</option>
+                            <label for="tipo">Tipo de Producto:</label>
+                            <select id="tipo" class="form-select" name="tipoItem" required>
+                                <option selected value="1">1 - Bien</option>
+                                <option value="2">2 - Servicio</option>
+                                <option value="3">3 - Bien y Servicio</option>
                             </select>
                         </div>
 
                         <div class="form-group mb-3">
-                            <label for="unidadMedida">Unidad de Medida:</label>
-                            <select id="unidad" class="form-select">
-                                <option value="">-- Seleccionar --</option>
-                                <option value="01">01 - Metro</option>
-                                <option value="02">02 - Yarda</option>
-                                <option value="03">03 - Vara</option>
-                                <option value="04">04 - Pie</option>
-                                <option value="05">05 - Pulgada</option>
-                                <option value="06">06 - Milímetro</option>
-                                <option value="08">08 - Milla cuadrada</option>
-                                <option value="09">09 - Kilómetro cuadrado</option>
-                                <option value="10">10 - Hectárea</option>
-                                <option value="11">11 - Manzana</option>
-                                <option value="12">12 - Acre</option>
-                                <option value="13">13 - Metro cuadrado</option>
-                                <option value="14">14 - Yarda cuadrada</option>
-                                <option value="15">15 - Vara cuadrada</option>
-                                <option value="16">16 - Pie cuadrado</option>
-                                <option value="17">17 - Pulgada cuadrada</option>
-                                <option value="18">18 - Metro cúbico</option>
-                                <option value="19">19 - Yarda cúbica</option>
-                                <option value="20">20 - Barril</option>
-                                <option value="21">21 - Pie cúbico</option>
-                                <option value="22">22 - Galón</option>
-                                <option value="23">23 - Litro</option>
-                                <option value="24">24 - Botella</option>
-                                <option value="25">25 - Pulgada cúbica</option>
-                                <option value="26">26 - Mililitro</option>
-                                <option value="27">27 - Onza fluida</option>
-                                <option value="29">29 - Tonelada métrica</option>
-                                <option value="30">30 - Tonelada</option>
-                                <option value="31">31 - Quintal métrico</option>
-                                <option value="32">32 - Quintal</option>
-                                <option value="33">33 - Arroba</option>
-                                <option value="34">34 - Kilogramo</option>
-                                <option value="35">35 - Libra troy</option>
-                                <option value="36">36 - Libra</option>
-                                <option value="37">37 - Onza troy</option>
-                                <option value="38">38 - Onza</option>
-                                <option value="39">39 - Gramo</option>
-                                <option value="40">40 - Miligramo</option>
-                                <option value="42">42 - Megawatt</option>
-                                <option value="43">43 - Kilowatt</option>
-                                <option value="44">44 - Watt</option>
-                                <option value="45">45 - Megavoltio-amperio</option>
-                                <option value="46">46 - Kilovoltio-amperio</option>
-                                <option value="47">47 - Voltio-amperio</option>
-                                <option value="49">49 - Gigawatt-hora</option>
-                                <option value="50">50 - Megawatt-hora</option>
-                                <option value="51">51 - Kilowatt-hora</option>
-                                <option value="52">52 - Watt-hora</option>
-                                <option value="53">53 - Kilovoltio</option>
-                                <option value="54">54 - Voltio</option>
-                                <option value="55">55 - Millar</option>
-                                <option value="56">56 - Medio millar</option>
-                                <option value="57">57 - Ciento</option>
-                                <option value="58">58 - Docena</option>
-                                <option value="59">59 - Unidad</option>
-                                <option value="99">99 - Otra</option>
-                            </select>
+                            <label for="codigo">Código:</label>
+                            <input type="text" class="form-control" id="codigo" name="codigo" required>
                         </div>
 
                         <div class="form-group mb-3">
-                            <label for="nombreProducto">Nombre del Producto:</label>
-                            <input type="text" class="form-control" id="nombreProducto">
+                            <label for="uniMedida">Unidad de Medida:</label>
+                            <input type="text" class="form-control" id="uniMedida" name="uniMedida" autocomplete="off"
+                                required>
                         </div>
 
                         <div class="form-group mb-3">
-                            <label for="precio">Precio:</label>
-                            <input type="number" class="form-control" id="precio">
+                            <label for="descripcion">Descripción:</label>
+                            <input type="text" class="form-control" id="descripcion" name="descripcion">
                         </div>
 
+                        <div class="form-group row mb-3">
+                            <div class="col-md-6">
+                                <label for="precioSinTributos">Precio sin IVA:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.00000001" class="form-control" id="precioSinTributos"
+                                        name="precioSinTributos" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="precioUni">Precio con IVA:</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.00000001" class="form-control" id="precioUni"
+                                        name="precioUni" required>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <span class="form-text">
+                                    Puede ingresar el precio con IVA y el sistema calculará el precio sin IVA, o viceversa.
+                                </span>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <p class="form-label">Tributos que aplican a este producto:</p>
+                            @foreach ($tributos as $tributo)
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" value="{{ $tributo->codigo }}"
+                                        id="{{ $tributo->codigo }}" name="tributos[]"
+                                        @if ($tributo->codigo == '20') checked disabled @endif>
+                                    <label class="form-check-label" for="{{ $tributo->codigo }}">
+                                        {{ $tributo->descripcion }}
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="form-group mb-3 text-center">
+                            <button type="submit" class="btn btn-primary">Guardar Producto</button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <div class="col-md-8">
+            <div class="col-md-7">
                 <div class="card shadow bg-light card-body">
                     <p class="h4">Productos Registrados</p>
                 </div>
             </div>
         </div>
     </div>
+    @vite('resources/js/producto.js')
 @endsection
