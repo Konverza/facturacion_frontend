@@ -32,11 +32,6 @@ class BusinessController extends Controller
         return view('business.factura', compact('datos_empresa'));
     }
 
-    public function clientes()
-    {
-        return view('business.clientes');
-    }
-
     public function sucursales()
     {
         return view('business.sucursales');

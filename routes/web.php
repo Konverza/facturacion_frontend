@@ -9,6 +9,7 @@ use App\Http\Controllers\DepartamentosController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\MailController;
 use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\BusinessCustomerController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -40,7 +41,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:super-admin']]
 Route::group(['prefix' => 'business', 'middleware' => ['auth', 'role:negocio|vendedor']], function () {
     Route::get('dashboard', [BusinessController::class, 'dashboard'])->name('business.dashboard');
     Route::get('factura', [BusinessController::class, 'factura'])->name('business.factura');
-    Route::get('clientes', [BusinessController::class, 'clientes'])->name('business.clientes');
+    Route::get('clientes', [BusinessCustomerController::class, 'index'])->name('business.clientes');
+    Route::post('clientes', [BusinessCustomerController::class, 'store'])->name('business.clientes.store');
     Route::get('sucursales' , [BusinessController::class, 'sucursales'])->name('business.sucursales');
     Route::get('productos', [ProductsController::class, 'index'])->name('business.productos');
     Route::post('productos', [ProductsController::class, 'store'])->name('business.productos.store');

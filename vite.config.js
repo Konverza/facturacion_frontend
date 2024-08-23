@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/js/invoices.js',
                 'resources/js/clients.js',
                 'resources/js/producto.js',
+                'resources/js/customers.js',
             ],
             refresh: true,
         }),
