@@ -9,8 +9,8 @@
             <li class="nav-item"><a class="nav-link" href="{{ route("business.dtes") }}">Documentos Emitidos</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route("business.productos") }}">Productos</a></li>
             <li class="nav-item"><a class="nav-link" href="{{ route("business.clientes") }}">Clientes</a></li>
-            <li class="nav-item"><a class="nav-link" href="{{ route("business.sucursales") }}">Sucursales</a></li>
-            <li class="nav-item"><a class="nav-link" href="#">Usuarios</a></li>
+            <li class="nav-item d-none"><a class="nav-link" href="{{ route("business.sucursales") }}">Sucursales</a></li>
+            <li class="nav-item d-none"><a class="nav-link" href="#">Usuarios</a></li>
 
         </ul>
         <!-- Right Side Of Navbar -->

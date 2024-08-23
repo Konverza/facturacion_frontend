@@ -49,5 +49,6 @@ class DatabaseSeeder extends Seeder
         $this->call(Cat030TableSeeder::class);
         $this->call(Cat031TableSeeder::class);
         $this->call(Cat032TableSeeder::class);
+        $this->call(TributesSeeder::class);
     }
 }
