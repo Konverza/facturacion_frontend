@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Http;
 
 use App\Models\Business;
 use App\Models\BusinessUser;
+use App\Models\BusinessProduct;
+
 
 class BusinessController extends Controller
 {
@@ -18,7 +20,8 @@ class BusinessController extends Controller
         $datos_empresa = Http::get(env("OCTOPUS_API_URL").'/datos_empresa/nit/'.$business->nit)->json();
         $dtes = Http::get(env("OCTOPUS_API_URL").'/dtes/?nit='.$business->nit)->json();
         $pruebas = Http::get(env("OCTOPUS_API_URL").'/datos_empresa/pruebas/'.$business->nit)->json();
-        return view('business.dashboard', compact('statistics', 'datos_empresa', 'dtes', 'pruebas'));
+        $productos = BusinessProduct::where('business_id', $business->id)->count('id');
+        return view('business.dashboard', compact('statistics', 'datos_empresa', 'dtes', 'pruebas', 'productos'));
     }
 
     public function factura()

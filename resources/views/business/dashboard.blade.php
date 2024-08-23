@@ -29,7 +29,7 @@
         <div class="container-fluid">
             <div class="row my-4">
                 <div class="col-md-3 text-center">
-                    <div class="card">
+                    <a href="{{route("business.dtes")}}" class="card text-decoration-none">
                         <div class="card-body shadow bg-light btn">
                             <div class="row py-2 justify-content-center">
                                 <div class="col-3">
@@ -37,12 +37,12 @@
                                     <i class="fas fa-file-lines text-info fa-4x"></i>
                                 </div>
                                 <div class="col-8">
-                                    <h1 class="card-title">{{ $statistics['total'] }} de 50</h1>
+                                    <h1 class="card-title">{{ $statistics['total'] }} de N/A</h1>
                                     <p class="card-text h4">Documentos<br>Emitidos</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-md-3 text-center">
                     <div class="card shadow ">
@@ -61,7 +61,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 text-center">
-                    <div class="card">
+                    <a href="{{route("business.clientes")}}" class="card text-decoration-none">
                         <div class="card-body shadow bg-light btn">
                             <div class="row py-2 justify-content-center">
                                 <div class="col-3">
@@ -74,10 +74,10 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <div class="col-md-3 text-center">
-                    <div class="card">
+                    <a href="{{route("business.productos")}}" class="card text-decoration-none">
                         <div class="card-body shadow bg-light btn">
                             <div class="row py-2 justify-content-center">
                                 <div class="col-3">
@@ -85,12 +85,12 @@
                                     <i class="fa fa-box-open text-warning fa-4x"></i>
                                 </div>
                                 <div class="col-8">
-                                    <h1 class="card-title">0</h1>
+                                    <h1 class="card-title">{{$productos}}</h1>
                                     <p class="card-text h4">Productos<br>Registrados</p>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
             </div>
             <div class="row my-4">
