@@ -44,6 +44,7 @@ Route::group(['prefix' => 'business', 'middleware' => ['auth', 'role:negocio|ven
     Route::get('sucursales' , [BusinessController::class, 'sucursales'])->name('business.sucursales');
     Route::get('productos', [ProductsController::class, 'index'])->name('business.productos');
     Route::post('productos', [ProductsController::class, 'store'])->name('business.productos.store');
+    Route::delete('productos/{id}', [ProductsController::class, 'delete'])->name('business.productos.destroy');
     Route::get('dtes', [BusinessController::class, 'dtes'])->name('business.dtes');
     Route::post("/enviar_dte", [MailController::class, "mandar_correo"])->name("invoices.send");
     Route::post('factura', [BusinessController::class, 'send_dte'])->name('business.factura.send');

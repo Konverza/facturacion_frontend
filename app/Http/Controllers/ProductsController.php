@@ -12,8 +12,11 @@ class ProductsController extends Controller
 {
     public function index()
     {
+        $business_user = BusinessUser::where('user_id', auth()->id())->first();
+        $business_id = $business_user->business_id;
         $tributos = Tributes::all();
-        return view('business.productos', compact('tributos'));
+        $productos = BusinessProduct::where('business_id', $business_id)->get();
+        return view('business.productos', compact('tributos', 'productos'));
     }
 
     public function store(Request $request)
@@ -35,7 +38,7 @@ class ProductsController extends Controller
             "business_id" => $business_id,
             "tipoItem" => $request->input('tipoItem'),
             "codigo" => $request->input('codigo'),
-            "uniMedida" => $request->input('uniMedida'),
+            "uniMedida" => explode(" - ", $request->input('uniMedida'))[0],
             "descripcion" => $request->input('descripcion'),
             "precioUni" => $request->input('precioUni'),
             "precioSinTributos" => $request->input('precioSinTributos'),
@@ -44,5 +47,12 @@ class ProductsController extends Controller
 
         $product->save();
         return response()->json(["success" => true, "message" => "Producto guardado"]);
+    }
+
+    public function delete($id)
+    {
+        $product = BusinessProduct::find($id);
+        $product->delete();
+        return redirect()->route('business.productos')->with('success', 'Producto eliminado');
     }
 }
