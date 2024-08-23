@@ -69,7 +69,7 @@
                                     <i class="fas fa-user fa-4x"></i>
                                 </div>
                                 <div class="col-8">
-                                    <h1 class="card-title">0</h1>
+                                    <h1 class="card-title">{{$customers}}</h1>
                                     <p class="card-text h4">Clientes <br>Registrados </p>
                                 </div>
                             </div>
