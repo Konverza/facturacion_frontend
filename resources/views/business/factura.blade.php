@@ -40,214 +40,21 @@
                     <div class="card-body bg-light ">
                         <h4>Datos de la factura</h4>
                         <!-- Button trigger modal Agregar Ítem-->
-                        <div class="dropdown">
-                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                                Agregar Detalle
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#aggitem"
-                                        href="#aggitem">Producto o Servicio</a></li>
-                                <li><a class="dropdown-item" href="#">Monto No Afecto</a></li>
-                                <li><a class="dropdown-item">Impuestos/Tasas con afectación al IVA</a></li>
-                            </ul>
-                        </div>
-                        <!-- Modal Producto o Servicio  -->
-                        <div class="modal modal-xl fade" id="aggitem" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="aggitem">Ítem DTE</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                            aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <form class="col-12 p-3">
-                                            <div class="card">
-                                                <div class="card-header bg-light">
-                                                    Adición de detalle DTE
-                                                </div>
-                                                <div class="card-body bg-light">
-                                                    <div class="row">
-                                                        <div class="col-1">
-                                                            <label for="tipo" class="form-label">Tipo:</label>
-                                                        </div>
-                                                        <div class="col-2">
-                                                            <div class="mb-3">
-                                                                <select id="tipo" class="form-select">
-                                                                    <option value="1" selected>1 - Bien</option>
-                                                                    <option value="2">2 - Servicio</option>
-                                                                    <option value="3">3 - Bien y Servicio</option>
-                                                                    <option value="4">4 - Otros Tributos</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-2">
-                                                            <div class="mb-3">
-                                                                <label for="cantidad" class="form-label">Cantidad:</label>
-                                                                <input type="number" class="form-control" id="cantidad"
-                                                                    value="" step="0.000001">
-                                                                <small class="form-text text-danger">Requerido.</small>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-2">
-                                                            <div class="mb-3">
-                                                                <label for="unidad" class="form-label">Unidad:</label>
-                                                                <select id="unidad" class="form-select">
-                                                                    <option value="">-- Seleccionar --</option>
-                                                                    <option value="01">01 - Metro</option>
-                                                                    <option value="02">02 - Yarda</option>
-                                                                    <option value="03">03 - Vara</option>
-                                                                    <option value="04">04 - Pie</option>
-                                                                    <option value="05">05 - Pulgada</option>
-                                                                    <option value="06">06 - Milímetro</option>
-                                                                    <option value="08">08 - Milla cuadrada</option>
-                                                                    <option value="09">09 - Kilómetro cuadrado</option>
-                                                                    <option value="10">10 - Hectárea</option>
-                                                                    <option value="11">11 - Manzana</option>
-                                                                    <option value="12">12 - Acre</option>
-                                                                    <option value="13">13 - Metro cuadrado</option>
-                                                                    <option value="14">14 - Yarda cuadrada</option>
-                                                                    <option value="15">15 - Vara cuadrada</option>
-                                                                    <option value="16">16 - Pie cuadrado</option>
-                                                                    <option value="17">17 - Pulgada cuadrada</option>
-                                                                    <option value="18">18 - Metro cúbico</option>
-                                                                    <option value="19">19 - Yarda cúbica</option>
-                                                                    <option value="20">20 - Barril</option>
-                                                                    <option value="21">21 - Pie cúbico</option>
-                                                                    <option value="22">22 - Galón</option>
-                                                                    <option value="23">23 - Litro</option>
-                                                                    <option value="24">24 - Botella</option>
-                                                                    <option value="25">25 - Pulgada cúbica</option>
-                                                                    <option value="26">26 - Mililitro</option>
-                                                                    <option value="27">27 - Onza fluida</option>
-                                                                    <option value="29">29 - Tonelada métrica</option>
-                                                                    <option value="30">30 - Tonelada</option>
-                                                                    <option value="31">31 - Quintal métrico</option>
-                                                                    <option value="32">32 - Quintal</option>
-                                                                    <option value="33">33 - Arroba</option>
-                                                                    <option value="34">34 - Kilogramo</option>
-                                                                    <option value="35">35 - Libra troy</option>
-                                                                    <option value="36">36 - Libra</option>
-                                                                    <option value="37">37 - Onza troy</option>
-                                                                    <option value="38">38 - Onza</option>
-                                                                    <option value="39">39 - Gramo</option>
-                                                                    <option value="40">40 - Miligramo</option>
-                                                                    <option value="42">42 - Megawatt</option>
-                                                                    <option value="43">43 - Kilowatt</option>
-                                                                    <option value="44">44 - Watt</option>
-                                                                    <option value="45">45 - Megavoltio-amperio</option>
-                                                                    <option value="46">46 - Kilovoltio-amperio</option>
-                                                                    <option value="47">47 - Voltio-amperio</option>
-                                                                    <option value="49">49 - Gigawatt-hora</option>
-                                                                    <option value="50">50 - Megawatt-hora</option>
-                                                                    <option value="51">51 - Kilowatt-hora</option>
-                                                                    <option value="52">52 - Watt-hora</option>
-                                                                    <option value="53">53 - Kilovoltio</option>
-                                                                    <option value="54">54 - Voltio</option>
-                                                                    <option value="55">55 - Millar</option>
-                                                                    <option value="56">56 - Medio millar</option>
-                                                                    <option value="57">57 - Ciento</option>
-                                                                    <option value="58">58 - Docena</option>
-                                                                    <option value="59">59 - Unidad</option>
-                                                                    <option value="99">99 - Otra</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-4">
-                                                            <div class="mb-3">
-                                                                <label for="producto" class="form-label">Producto:</label>
-                                                                <input type="text" class="form-control" id="producto"
-                                                                    value="">
-                                                                <small class="form-text text-danger">Requerido.</small>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-2">
-                                                            <div class="mb-3">
-                                                                <label for="tipoVenta" class="form-label">Tipo
-                                                                    Venta:</label>
-                                                                <select id="tipoVenta" class="form-select">
-                                                                    <option value="gravada" selected>Gravada</option>
-                                                                    <option value="exenta">Exenta</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-2">
-                                                            <div class="mb-3">
-                                                                <label for="precio" class="form-label">Precio:</label>
-                                                                <input type="number" class="form-control" id="precio"
-                                                                    step="0.00001">
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label"><b>Información de los
-                                                                tributos:</b></label>
-                                                        <div class="row">
-                                                            <div class="col-2">
-                                                                <div class="dropdown">
-                                                                    <button type="button"
-                                                                        class="btn btn-primary dropdown-toggle"
-                                                                        id="dropdownMenuButton1" data-bs-toggle="dropdown"
-                                                                        aria-haspopup="true" aria-expanded="false">
-                                                                        Impuesto
-                                                                    </button>
-                                                                    <div class="dropdown-menu"
-                                                                        aria-labelledby="dropdownMenuButton1">
-                                                                        <a class="dropdown-item" href="#">20 -
-                                                                            Impuesto al
-                                                                            Valor Agregado 13%</a>
-                                                                        <a class="dropdown-item" href="#">D1 -
-                                                                            FOVIAL ($0.20
-                                                                            Ctvs. por galón)</a>
-                                                                        <a class="dropdown-item" href="#">C8 -
-                                                                            COTRANS
-                                                                            ($0.10 Ctvs. por galón)</a>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-10">
-                                                                <div class="alert alert-secondary">
-                                                                    20 - Impuesto al Valor Agregado 13%
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-3"></div>
-                                                        <div class="col-3"></div>
-                                                        <div class="col-3">
-                                                            <div class="mb-3">
-                                                                <label for="descuento"
-                                                                    class="form-label">Descuento</label>
-                                                                <input type="text" class="form-control" id="descuento"
-                                                                    placeholder="Descuento">
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-3">
-                                                            <div class="mb-3">
-                                                                <label for="total" class="form-label">Total:</label>
-                                                                <input type="text" class="form-control" id="total"
-                                                                    value="" readonly>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer bg-light d-flex justify-content-start">
-                                        <button type="button" class="btn btn-primary" id="agregar_item">Agregar
-                                            Ítem</button>
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Cerrar</button>
-                                    </div>
-                                </div>
+                        <div class="d-flex">
+                            <div class="dropdown me-2">
+                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Agregar Detalle
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#aggitem"
+                                            href="#aggitem">Producto o Servicio</a></li>
+                                    <li><a class="dropdown-item" href="#">Monto No Afecto</a></li>
+                                    <li><a class="dropdown-item">Impuestos/Tasas con afectación al IVA</a></li>
+                                </ul>
                             </div>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                                data-bs-target="#prodExistenteModal">Añadir Producto Existente</button>
                         </div>
                         <div class="row">
                             <div class="col-sm-12">
@@ -259,7 +66,7 @@
                                                 <th>Descripción</th>
                                                 <th>Cantidad</th>
                                                 <th>Precio</th>
-                                                <th>Descuento</th>
+                                                <th>Descuento por ítem</th>
                                                 <th>Sub Total</th>
                                                 <th></th>
                                             </tr>
@@ -270,102 +77,61 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td class="text-end fw-bold">Retención IVA</td>
-                                            <td id="reteIVA"></td>
-                                            <td></td>
-
-                                        </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td class="text-end fw-bold">Retención Renta</td>
-                                            <td id="reteRenta"></td>
-                                            <td></td>
-
-                                        </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
                                             <td></td>
                                             <td class="text-end fw-bold">Sub Total</td>
                                             <td id="subTotalGeneral"></td>
-                                            <td></td>
-
                                         </tr>
+                                        <tbody id="tributos">
+                                        </tbody>
                                         <tr>
                                             <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td class="text-end fw-bold">Descuento a Operación</td>
-                                            <td id="descuentosTotal"></td>
-                                            <td></td>
-
-                                        </tr>
-                                        <tr>
                                             <td></td>
                                             <td></td>
                                             <td></td>
                                             <td class="text-end fw-bold">Monto Total de la operación</td>
                                             <td id="montoTotalOperacion"></td>
+                                        </tr>
+                                        <tr>
                                             <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="text-end fw-bold">Retención IVA</td>
+                                            <td id="reteIVA"></td>
 
                                         </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="text-end fw-bold">Retención Renta</td>
+                                            <td id="reteRenta"></td>
+
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="text-end fw-bold">Descuento a Operación</td>
+                                            <td id="descuentosTotal"></td>
+                                        </tr>
+
                                         <tr class="table-active">
+                                            <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
                                             <td class="text-end fw-bold">Total Pagar</td>
                                             <td id="totalPagar"></td>
-                                            <td></td>
-
                                         </tr>
                                     </table>
                                     <!-- Button trigger modal Agregar Descuento -->
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#exampleModal">
+                                        data-bs-target="#aggDescuentoModal">
                                         Agregar Descuento
                                     </button>
-
-                                    <!-- Modal Agregar Descuento -->
-                                    <div class="modal modal-xl fade" id="exampleModal" tabindex="-1"
-                                        aria-labelledby="aggdescuento" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="aggdescuento">Descuentos Generales al
-                                                        Resumen</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="card">
-                                                        <div class="card-header bg-light">
-                                                            <h5 class="card-title text-muted text-dark font-weight-normal">
-                                                                Descuentos al total del documento</h5>
-                                                        </div>
-                                                        <div class="card-body bg-light">
-                                                            <form action="#" method="get">
-                                                                <div class="form-group">
-                                                                    <label for="telefono">Ventas
-                                                                        Gravadas:</label>
-                                                                    <input type="text" class="form-control"
-                                                                        id="descVentasGravadas" required
-                                                                        placeholder="Número de ventas gravadas"
-                                                                        value="0">
-                                                                </div>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary"
-                                                            data-bs-dismiss="modal">Cerrar</button>
-                                                        <button type="button" id="guardarDescuento" class="btn btn-primary">Guardar</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -382,9 +148,9 @@
                                     aria-controls="receptor-pane" aria-selected="true">Receptor</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="emisor" data-bs-toggle="tab"
-                                    data-bs-target="#emisor-pane" type="button" role="tab"
-                                    aria-controls="emisor-pane" aria-selected="false">Emisor</button>
+                                <button class="nav-link" id="emisor" data-bs-toggle="tab" data-bs-target="#emisor-pane"
+                                    type="button" role="tab" aria-controls="emisor-pane"
+                                    aria-selected="false">Emisor</button>
                             </li>
                         </ul>
                         <div class="tab-content" id="myTabContent">
@@ -404,7 +170,8 @@
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox"
                                                                             value="" id="checkContribuyente">
-                                                                        <label for="checkContribuyente" class="form-check-label">
+                                                                        <label for="checkContribuyente"
+                                                                            class="form-check-label">
                                                                             No Ingresar Datos del Cliente
                                                                         </label>
                                                                     </div>
@@ -530,12 +297,14 @@
                                                         aria-labelledby="emisor-tab">
                                                         <form>
                                                             <div class="form-group">
-                                                                <input type="hidden" name="nit" id="nit" value="{{$datos_empresa["nit"]}}">
+                                                                <input type="hidden" name="nit" id="nit"
+                                                                    value="{{ $datos_empresa['nit'] }}">
                                                                 <label for="actividadEconomica">Actividad
                                                                     Económica:</label>
                                                                 <input type="text" class="form-control"
                                                                     id="actividadEconomica"
-                                                                    value="{{$datos_empresa["codActividad"]}} - {{$datos_empresa["descActividad"]}}" readonly>
+                                                                    value="{{ $datos_empresa['codActividad'] }} - {{ $datos_empresa['descActividad'] }}"
+                                                                    readonly>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label for="tipoEstablecimiento">Tipo de
@@ -547,7 +316,7 @@
                                                                 <label for="direccion">Establecimiento /
                                                                     Dirección:</label>
                                                                 <input type="text" class="form-control" id="direccion"
-                                                                    value="{{$datos_empresa["complemento"]}}">
+                                                                    value="{{ $datos_empresa['complemento'] }}">
                                                             </div>
                                                             <div class="row">
                                                                 <div class="col">
@@ -555,14 +324,15 @@
                                                                         <label for="correo">Correo electrónico:</label>
                                                                         <input type="email" class="form-control"
                                                                             id="correo"
-                                                                            value="{{$datos_empresa["correo"]}}">
+                                                                            value="{{ $datos_empresa['correo'] }}">
                                                                     </div>
                                                                 </div>
                                                                 <div class="col">
                                                                     <div class="form-group">
                                                                         <label for="telefono">Teléfono:</label>
                                                                         <input type="text" class="form-control"
-                                                                            id="telefono" value="{{$datos_empresa["telefono"]}}">
+                                                                            id="telefono"
+                                                                            value="{{ $datos_empresa['telefono'] }}">
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -624,106 +394,6 @@
                                                     data-bs-target="#aggdteDig" href="#">Digital</a></li>
                                         </ul>
                                     </div>
-                                    <!-- Modal DTE Fisico -->
-                                    <div class="modal modal-lg fade" id="aggdteFis" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="aggdteFis">Agregar DTE Físico</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="card">
-                                                        <div class="card-header">
-                                                            <h5 class="card-title text-muted text-dark font-weight-normal">
-                                                                Relación Doc. Físico</h5>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            <form action="#" method="get">
-                                                                <div class="form-group">
-                                                                    <label for="tipdoc">Tipo de Documento:</label>
-                                                                    <select class="form-select" id="tipdoc">
-                                                                        <option value="remision">Nota de Remisón
-                                                                        </option>
-                                                                        <option value="comliquidacion">Comprobante
-                                                                            de Liquidación</option>
-                                                                        <option value="docliquidacion">Documento
-                                                                            Contable de Liquidación</option>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="form-group">
-                                                                    <label for="telefono">Número de
-                                                                        Documento:</label>
-                                                                    <input type="text" class="form-control"
-                                                                        id="telefonoDoc" required
-                                                                        placeholder="Número Doc.">
-                                                                </div>
-                                                                <label for="fechaDTE">Fecha de Generación:</label>
-                                                                <input type="date" class="form-control" id="fechaDTE"
-                                                                    required>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">Cerrar</button>
-                                                    <button type="button" class="btn btn-primary">Guardar DTE</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Modal DTE Digital -->
-                                    <div class="modal modal-lg fade" id="aggdteDig" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="aggdteDig">Agregar DTE Digital</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="card">
-                                                        <div class="card-header">
-                                                            <h5 class="card-title text-muted text-dark font-weight-normal">
-                                                                Relación Doc. Digital</h5>
-                                                        </div>
-                                                        <div class="card-body">
-                                                            <form action="#" method="get">
-                                                                <div class="form-group">
-                                                                    <label for="tipdoc">Tipo de Documento:</label>
-                                                                    <select class="form-select" id="tipdoc">
-                                                                        <option value="remision">Nota de Remisón
-                                                                        </option>
-                                                                        <option value="comliquidacion">Comprobante
-                                                                            de Liquidación</option>
-                                                                        <option value="docliquidacion">Documento
-                                                                            Contable de Liquidación</option>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="form-group">
-                                                                    <label for="telefono">Número de
-                                                                        Documento:</label>
-                                                                    <input type="text" class="form-control"
-                                                                        id="telefonoDoc" required
-                                                                        placeholder="Número Doc.">
-                                                                </div>
-                                                                <label for="fechaDTE">Fecha de Generación:</label>
-                                                                <input type="date" class="form-control" id="fechaDTE"
-                                                                    required>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">Cerrar</button>
-                                                    <button type="button" class="btn btn-primary">Guardar DTE</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="terceros-pane" role="tabpanel"
@@ -757,99 +427,6 @@
                                         data-bs-target="#otrosdoc">
                                         Agregar Documentos
                                     </button>
-
-                                    <!-- Modal Otros Doc Asociados -->
-                                    <div class="modal modal-lg fade" id="otrosdoc" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="otrosdoc">Información del Documento
-                                                        Asociado
-                                                    </h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <form class="col-12 p-3">
-                                                        <div class="card">
-                                                            <div class="card-header">
-                                                                <h5
-                                                                    class="card-title text-muted text-dark font-weight-normal">
-                                                                    Datos generales del documento</h5>
-                                                            </div>
-                                                            <div class="card-body shadow bg-light">
-                                                                <div class="form-group">
-                                                                    <label for="otrosdoc">Documento
-                                                                        Asociado:</label>
-                                                                    <select class="form-control" id="otrosdoc">
-                                                                        <option value="emisor2">Emisor</option>
-                                                                        <option value="receptor2">Receptor</option>
-                                                                        <option value="medico">Médico</option>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="form-group">
-                                                                    <label for="telefono">Identificación del
-                                                                        Documento:</label>
-                                                                    <input type="text" class="form-control"
-                                                                        id="otrosdoc" required
-                                                                        placeholder="Identificación del nombre del documento asociado">
-                                                                </div>
-                                                                <div class="form-group">
-                                                                    <label for="nombreComercial">Descripción del
-                                                                        documento:</label>
-                                                                    <input type="text" class="form-control"
-                                                                        id="otrosdoc"
-                                                                        placeholder="Descripción de datos importantes del documento asociado">
-                                                                </div>
-                                                                <div class="form-group">
-                                                                    <button type="submit"
-                                                                        class="btn btn-primary">Agregar</button>
-                                                                    <button type="reset"
-                                                                        class="btn btn-danger">Cancelar</button>
-                                                                </div>
-                                                                <!-- Parte selección médico
-                                                                            <div class="form-group">
-                                                                                <label for="nombreComercial">Tipo de Servicio:</label>
-                                                                                <select class="form-control" id="otrosdoc">
-                                                                                    <option value="cirugia">Cirugía</option>
-                                                                                    <option value="receptor2">Operación</option>
-                                                                                    <option value="medico">Tratamiento Médico</option>
-                                                                                    <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                                    <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                                    <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
-                                                                                </select>
-                                                                            </div>
-                                                                            <div class="form-group">
-                                                                                <label for="nombre">Nombre:</label>
-                                                                                <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
-                                                                            </div>
-                                                                            <div class="form-group">
-                                                                                <div class="row">
-                                                                                    <div class="col-sm-6">
-                                                                                        <label for="tiponit">Tipo de Documento:</label>
-                                                                                        <select class="form-control" id="tiponit">
-                                                                                            <option value="NIT">NIT</option>
-                                                                                            <option value="otro">Otro</option>
-                                                                                        </select>
-                                                                                    </div>
-                                                                                    <div class="col-sm-6">
-                                                                                        <label for="nit">NIT:</label>
-                                                                                        <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div> -->
-                                                            </div>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Cerrar</button>
-                                            <button type="button" class="btn btn-primary">Guardar DTE</button>
-                                        </div>
-                                    </div>
                                     <hr>
                                     <h5>Otros Documentos Asociados</h5>
                                     <hr>
@@ -1009,6 +586,430 @@
                             <button class="btn btn-primary" id="generarDocumento">Generar Documento</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Producto o Servicio  -->
+    <div class="modal modal-xl fade" id="aggitem" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aggitem">Ítem DTE</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="col-12 p-3">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                Adición de detalle DTE
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="row">
+                                    <div class="col-1">
+                                        <label for="tipoItem" class="form-label">Tipo:</label>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="mb-3">
+                                            <select id="tipoItem" class="form-select">
+                                                <option value="1" selected>1 - Bien</option>
+                                                <option value="2">2 - Servicio</option>
+                                                <option value="3">3 - Bien y Servicio</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-2">
+                                        <div class="mb-3">
+                                            <label for="cantidad" class="form-label">Cantidad:</label>
+                                            <input type="number" class="form-control" id="cantidad" value=""
+                                                step="0.000001">
+                                            <small class="form-text text-danger">Requerido.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="mb-3">
+                                            <label for="unidad" class="form-label">Unidad:</label>
+                                            <select id="unidad" class="form-select">
+                                                <option value="">-- Seleccionar --</option>
+                                                @foreach ($catalogos['CAT_014'] as $uni_medida)
+                                                    <option value="{{ $uni_medida->codigo }}">
+                                                        {{ $uni_medida->valores }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="mb-3">
+                                            <label for="producto" class="form-label">Producto:</label>
+                                            <input type="text" class="form-control" id="producto" value="">
+                                            <small class="form-text text-danger">Requerido.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="mb-3">
+                                            <label for="tipoVenta" class="form-label">Tipo
+                                                Venta:</label>
+                                            <select id="tipoVenta" class="form-select">
+                                                <option value="gravada" selected>Gravada</option>
+                                                <option value="exenta">Exenta</option>
+                                                <option value="noSujeta">No Sujeta</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-2">
+                                        <div class="mb-3">
+                                            <label for="precio" class="form-label">Precio (IVA Incluido):</label>
+                                            <input type="number" class="form-control" id="precio" step="0.00001">
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label"><b>Información de los
+                                            tributos:</b></label>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-group mb-3">
+                                                <p class="form-label">Tributos que aplican a este producto:</p>
+                                                @foreach ($tributos as $tributo)
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" value="{{ $tributo->codigo }}"
+                                                            id="{{ $tributo->codigo }}" name="tributos[]"
+                                                            data-valor="{{ $tributo->valor }}" data-porcentaje="{{ $tributo->es_porcentaje }}"
+                                                            @if ($tributo->codigo == '20') checked disabled @endif>
+                                                        <label class="form-check-label" for="{{ $tributo->codigo }}">
+                                                            {{ $tributo->descripcion }}
+                                                        </label>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        <div class="col-6" id="tributosAplicados">
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-3"></div>
+                                    <div class="col-3"></div>
+                                    <div class="col-3">
+                                        <div class="mb-3">
+                                            <label for="descuento" class="form-label">Descuento</label>
+                                            <input type="text" class="form-control" id="descuento"
+                                                placeholder="Descuento">
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <div class="mb-3">
+                                            <label for="total" class="form-label">Total:</label>
+                                            <input type="text" class="form-control" id="total" value=""
+                                                readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light d-flex justify-content-start">
+                    <button type="button" class="btn btn-primary" id="agregar_item">Agregar
+                        Ítem</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Descuento -->
+    <div class="modal modal-xl fade" id="aggDescuentoModal" tabindex="-1" aria-labelledby="aggdescuento"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aggdescuento">Descuentos Generales al
+                        Resumen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title text-muted text-dark font-weight-normal">
+                                Descuentos al total del documento</h5>
+                        </div>
+                        <div class="card-body bg-light">
+                            <form action="#" method="get">
+                                <div class="form-group">
+                                    <label for="telefono">Ventas
+                                        Gravadas:</label>
+                                    <input type="text" class="form-control" id="descVentasGravadas" required
+                                        placeholder="Número de ventas gravadas" value="0">
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" id="guardarDescuento" class="btn btn-primary">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal DTE Fisico -->
+    <div class="modal modal-lg fade" id="aggdteFis" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aggdteFis">Agregar DTE Físico</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title text-muted text-dark font-weight-normal">
+                                Relación Doc. Físico</h5>
+                        </div>
+                        <div class="card-body">
+                            <form action="#" method="get">
+                                <div class="form-group">
+                                    <label for="tipdoc">Tipo de Documento:</label>
+                                    <select class="form-select" id="tipdoc">
+                                        <option value="remision">Nota de Remisón
+                                        </option>
+                                        <option value="comliquidacion">Comprobante
+                                            de Liquidación</option>
+                                        <option value="docliquidacion">Documento
+                                            Contable de Liquidación</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="telefono">Número de
+                                        Documento:</label>
+                                    <input type="text" class="form-control" id="telefonoDoc" required
+                                        placeholder="Número Doc.">
+                                </div>
+                                <label for="fechaDTE">Fecha de Generación:</label>
+                                <input type="date" class="form-control" id="fechaDTE" required>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary">Guardar DTE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal DTE Digital -->
+    <div class="modal modal-lg fade" id="aggdteDig" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aggdteDig">Agregar DTE Digital</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title text-muted text-dark font-weight-normal">
+                                Relación Doc. Digital</h5>
+                        </div>
+                        <div class="card-body">
+                            <form action="#" method="get">
+                                <div class="form-group">
+                                    <label for="tipdoc">Tipo de Documento:</label>
+                                    <select class="form-select" id="tipdoc">
+                                        <option value="remision">Nota de Remisón
+                                        </option>
+                                        <option value="comliquidacion">Comprobante
+                                            de Liquidación</option>
+                                        <option value="docliquidacion">Documento
+                                            Contable de Liquidación</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="telefono">Número de
+                                        Documento:</label>
+                                    <input type="text" class="form-control" id="telefonoDoc" required
+                                        placeholder="Número Doc.">
+                                </div>
+                                <label for="fechaDTE">Fecha de Generación:</label>
+                                <input type="date" class="form-control" id="fechaDTE" required>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary">Guardar DTE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Otros Doc Asociados -->
+    <div class="modal modal-lg fade" id="otrosdoc" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="otrosdoc">Información del Documento
+                        Asociado
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="col-12 p-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title text-muted text-dark font-weight-normal">
+                                    Datos generales del documento</h5>
+                            </div>
+                            <div class="card-body shadow bg-light">
+                                <div class="form-group">
+                                    <label for="otrosdoc">Documento
+                                        Asociado:</label>
+                                    <select class="form-control" id="otrosdoc">
+                                        <option value="emisor2">Emisor</option>
+                                        <option value="receptor2">Receptor</option>
+                                        <option value="medico">Médico</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="telefono">Identificación del
+                                        Documento:</label>
+                                    <input type="text" class="form-control" id="otrosdoc" required
+                                        placeholder="Identificación del nombre del documento asociado">
+                                </div>
+                                <div class="form-group">
+                                    <label for="nombreComercial">Descripción del
+                                        documento:</label>
+                                    <input type="text" class="form-control" id="otrosdoc"
+                                        placeholder="Descripción de datos importantes del documento asociado">
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary">Agregar</button>
+                                    <button type="reset" class="btn btn-danger">Cancelar</button>
+                                </div>
+                                <!-- Parte selección médico
+                                                            <div class="form-group">
+                                                                <label for="nombreComercial">Tipo de Servicio:</label>
+                                                                <select class="form-control" id="otrosdoc">
+                                                                    <option value="cirugia">Cirugía</option>
+                                                                    <option value="receptor2">Operación</option>
+                                                                    <option value="medico">Tratamiento Médico</option>
+                                                                    <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
+                                                                    <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
+                                                                    <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="nombre">Nombre:</label>
+                                                                <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <div class="row">
+                                                                    <div class="col-sm-6">
+                                                                        <label for="tiponit">Tipo de Documento:</label>
+                                                                        <select class="form-control" id="tiponit">
+                                                                            <option value="NIT">NIT</option>
+                                                                            <option value="otro">Otro</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="col-sm-6">
+                                                                        <label for="nit">NIT:</label>
+                                                                        <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
+                                                                    </div>
+                                                                </div>
+                                                            </div> -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="button" class="btn btn-primary">Guardar DTE</button>
+        </div>
+    </div>
+
+    <!-- Modal Producto Existente -->
+    <div class="modal modal-xl fade" id="prodExistenteModal" tabindex="-1" aria-labelledby="prodExistenteModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="prodExistenteModalLabel">Seleccionar Producto</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12">
+                                <table id="tablaProds" class="table table-bordered table-striped table-hover w-100">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Descripción</th>
+                                            <th>Precio</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                            <hr>
+                            <div class="col-12 d-none" id="prodSeleccionado">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <p class="h4">Producto: <span id="prodDesc"></span></p>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="mb-3">
+                                            <label for="cantidadExistente" class="form-label">Cantidad:</label>
+                                            <input type="number" class="form-control" id="cantidadExistente" value=""
+                                                step="0.000001">
+                                            <small class="form-text text-danger">Requerido.</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="mb-3">
+                                            <label for="tipoVentaExistente" class="form-label">Tipo
+                                                Venta:</label>
+                                            <select id="tipoVentaExistente" class="form-select">
+                                                <option value="gravada" selected>Gravada</option>
+                                                <option value="exenta">Exenta</option>
+                                                <option value="noSujeta">No Sujeta</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="mb-3">
+                                            <label for="descuentoExistente" class="form-label">Descuento</label>
+                                            <input type="number" class="form-control" id="descuentoExistente"
+                                                placeholder="Descuento">
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="mb-3">
+                                            <label for="totalExistente" class="form-label">Total</label>
+                                            <input type="number" class="form-control" id="totalExistente"
+                                                placeholder="Total" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <button class="btn btn-success" id="btnAgregarProd">Añadir Producto</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>

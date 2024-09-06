@@ -6,6 +6,10 @@
       "resources/js/autocomplete.js"
     ]
   },
+  "_maska-X9fHs--r.js": {
+    "file": "assets/maska-X9fHs--r.js",
+    "name": "maska"
+  },
   "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf": {
     "file": "assets/fa-brands-400-DHHcbFjz.ttf",
     "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf"
@@ -49,18 +53,25 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-CSz3TPX1.js",
+    "file": "assets/app-Cln34ztu.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
-      "resources/js/autocomplete.js"
+      "resources/js/autocomplete.js",
+      "_maska-X9fHs--r.js"
     ]
   },
   "resources/js/autocomplete.js": {
     "file": "assets/autocomplete-BhlH6aML.js",
     "name": "autocomplete",
     "src": "resources/js/autocomplete.js",
+    "isEntry": true
+  },
+  "resources/js/business_dashboard.js": {
+    "file": "assets/business_dashboard-CYHFgXS5.js",
+    "name": "business_dashboard",
+    "src": "resources/js/business_dashboard.js",
     "isEntry": true
   },
   "resources/js/clients.js": {
@@ -73,8 +84,19 @@
       "resources/js/autocomplete.js"
     ]
   },
+  "resources/js/customers.js": {
+    "file": "assets/customers-L3YBjDJD.js",
+    "name": "customers",
+    "src": "resources/js/customers.js",
+    "isEntry": true,
+    "imports": [
+      "_autocomplete-i5sh6eXG.js",
+      "_maska-X9fHs--r.js",
+      "resources/js/autocomplete.js"
+    ]
+  },
   "resources/js/factura.js": {
-    "file": "assets/factura-D_5hNOYv.js",
+    "file": "assets/factura-D3Fl1Hgp.js",
     "name": "factura",
     "src": "resources/js/factura.js",
     "isEntry": true
@@ -84,6 +106,16 @@
     "name": "invoices",
     "src": "resources/js/invoices.js",
     "isEntry": true
+  },
+  "resources/js/producto.js": {
+    "file": "assets/producto-ClgVgnTk.js",
+    "name": "producto",
+    "src": "resources/js/producto.js",
+    "isEntry": true,
+    "imports": [
+      "_autocomplete-i5sh6eXG.js",
+      "resources/js/autocomplete.js"
+    ]
   },
   "resources/sass/app.scss": {
     "file": "assets/app-Br0lsFUV.css",

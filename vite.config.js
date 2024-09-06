@@ -15,11 +15,12 @@ export default defineConfig({
                 'resources/js/clients.js',
                 'resources/js/producto.js',
                 'resources/js/customers.js',
+                'resources/js/business_dashboard.js'
             ],
             refresh: true,
         }),
     ],
-    // server: {
-    //     https: true, // Asegura que Vite use HTTPS
-    // },
+    server: {
+        https: true, // Asegura que Vite use HTTPS
+    },
 });

@@ -40,7 +40,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'role:super-admin']]
 // Rutas para negocio
 Route::group(['prefix' => 'business', 'middleware' => ['auth', 'role:negocio|vendedor']], function () {
     Route::get('dashboard', [BusinessController::class, 'dashboard'])->name('business.dashboard');
-    Route::get('factura', [BusinessController::class, 'factura'])->name('business.factura');
+    Route::get('dte', [BusinessController::class, 'factura'])->name('business.factura');
     Route::get('clientes', [BusinessCustomerController::class, 'index'])->name('business.clientes');
     Route::post('clientes', [BusinessCustomerController::class, 'store'])->name('business.clientes.store');
     Route::get('sucursales' , [BusinessController::class, 'sucursales'])->name('business.sucursales');
@@ -50,6 +50,10 @@ Route::group(['prefix' => 'business', 'middleware' => ['auth', 'role:negocio|ven
     Route::get('dtes', [BusinessController::class, 'dtes'])->name('business.dtes');
     Route::post("/enviar_dte", [MailController::class, "mandar_correo"])->name("invoices.send");
     Route::post('factura', [BusinessController::class, 'send_dte'])->name('business.factura.send');
+    Route::get("/actividades", [BusinessController::class, 'cod_actividad_paginado'])->name("business.actividades");
+
+    Route::post("/obtener_productos", [BusinessController::class, 'tabla_productos'])->name("business.obtener_productos");
+    Route::get("/obtener_producto/{id}", [BusinessController::class, 'get_producto'])->name("business.obtener_producto");
 });
 
 Route::get('/catalogo/{codigo}', [CatalogoController::class, 'getValues'])->name('catalogo.getValues');

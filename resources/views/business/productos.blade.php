@@ -15,8 +15,8 @@
                     <form method="POST" action="{{route("business.productos.store")}}" id="formProducto">
                         @csrf
                         <div class="form-group mb-3">
-                            <label for="tipo">Tipo de Producto:</label>
-                            <select id="tipo" class="form-select" name="tipoItem" required>
+                            <label for="tipoItem">Tipo de Producto:</label>
+                            <select id="tipoItem" class="form-select" name="tipoItem" required>
                                 <option selected value="1">1 - Bien</option>
                                 <option value="2">2 - Servicio</option>
                                 <option value="3">3 - Bien y Servicio</option>

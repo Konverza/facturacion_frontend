@@ -9,6 +9,7 @@
         '98' => 'Evento de Contingencia',
         '99' => 'Evento de Invalidación',
     ];
+    $dtes_plan = json_decode($business_plan["dtes"], true);
 
 @endphp
 @extends('layouts.app')
@@ -29,7 +30,7 @@
         <div class="container-fluid">
             <div class="row my-4">
                 <div class="col-md-3 text-center">
-                    <a href="{{route("business.dtes")}}" class="card text-decoration-none">
+                    <a href="{{ route('business.dtes') }}" class="card text-decoration-none">
                         <div class="card-body shadow bg-light btn">
                             <div class="row py-2 justify-content-center">
                                 <div class="col-3">
@@ -61,7 +62,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 text-center">
-                    <a href="{{route("business.clientes")}}" class="card text-decoration-none">
+                    <a href="{{ route('business.clientes') }}" class="card text-decoration-none">
                         <div class="card-body shadow bg-light btn">
                             <div class="row py-2 justify-content-center">
                                 <div class="col-3">
@@ -69,7 +70,7 @@
                                     <i class="fas fa-user fa-4x"></i>
                                 </div>
                                 <div class="col-8">
-                                    <h1 class="card-title">{{$customers}}</h1>
+                                    <h1 class="card-title">{{ $customers }}</h1>
                                     <p class="card-text h4">Clientes <br>Registrados </p>
                                 </div>
                             </div>
@@ -77,7 +78,7 @@
                     </a>
                 </div>
                 <div class="col-md-3 text-center">
-                    <a href="{{route("business.productos")}}" class="card text-decoration-none">
+                    <a href="{{ route('business.productos') }}" class="card text-decoration-none">
                         <div class="card-body shadow bg-light btn">
                             <div class="row py-2 justify-content-center">
                                 <div class="col-3">
@@ -85,7 +86,7 @@
                                     <i class="fa fa-box-open text-warning fa-4x"></i>
                                 </div>
                                 <div class="col-8">
-                                    <h1 class="card-title">{{$productos}}</h1>
+                                    <h1 class="card-title">{{ $productos }}</h1>
                                     <p class="card-text h4">Productos<br>Registrados</p>
                                 </div>
                             </div>
@@ -108,10 +109,11 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (array_slice($dtes, 0, 5) as $invoice)
+                                    @foreach (array_reverse(array_slice($dtes, -5)) as $invoice)
                                         <tr>
                                             <td>{{ $tiposDte[$invoice['tipo_dte']] }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($invoice['fhProcesamiento'])->format('d/m/Y H:i:s') }}</td>
+                                            <td>{{ \Carbon\Carbon::parse($invoice['fhProcesamiento'])->format('d/m/Y H:i:s') }}
+                                            </td>
                                             <td>{{ $invoice['codGeneracion'] }}</td>
                                             @if ($invoice['estado'] == 'PROCESADO')
                                                 <td class="text-success"><i class="fa-solid fa-check"></i> Procesado</td>
@@ -153,13 +155,14 @@
                     <div class="card shadow card-body">
                         <h4 class="text-center mb-3">Acciones Rápidas</h4>
                         <div class="btn-toolbar justify-content-center" role="group" aria-label="Basic outlined example">
-                            <a type="button" href="{{ route('business.factura') }}" class="btn btn-info mx-1">
+                            <button type="button" data-bs-toggle="modal" data-bs-target="#nuevoDTEModal"
+                                class="btn btn-info mx-1">
                                 <i class="fa fa-cart-plus"></i> Generar DTE
-                            </a>
-                            <a href="{{route("business.clientes")}}" type="button" class="btn btn-dark mx-1">
+                            </button>
+                            <a href="{{ route('business.clientes') }}" type="button" class="btn btn-dark mx-1">
                                 <i class="fa fa-user-plus"></i> Nuevo Cliente
                             </a>
-                            <a href="{{route("business.productos")}}" type="button" class="btn btn-warning mx-1">
+                            <a href="{{ route('business.productos') }}" type="button" class="btn btn-warning mx-1">
                                 <i class="fa fa-dolly"></i> Nuevo Producto
                             </a>
                         </div>
@@ -181,4 +184,30 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="nuevoDTEModal" tabindex="-1" aria-labelledby="nuevoDTEModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="nuevoDTEModalLabel">Generar un Nuevo DTE</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="dteGenerar" class="form-label">¿Qué documento desea emitir?</label>
+                    <select name="dteGenerar" id="dteGenerar" class="form-select">
+                        <option value="">-- Seleccione Uno --</option>
+                        @foreach ($dtes_plan as $dte)
+                            <option value="{{ $dte }}">{{ $tiposDte[$dte] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGenerar" disabled>Generar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @vite('resources/js/business_dashboard.js')
 @endsection
