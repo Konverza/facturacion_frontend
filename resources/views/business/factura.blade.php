@@ -67,13 +67,18 @@
                                                 <th>Cantidad</th>
                                                 <th>Precio</th>
                                                 <th>Descuento por ítem</th>
-                                                <th>Sub Total</th>
+                                                <th>V. Gravada</th>
+                                                <th>V. Exenta</th>
+                                                <th>V. No Sujeta</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
                                         <tbody id="items">
                                         </tbody>
                                         <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
@@ -88,6 +93,9 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
                                             <td class="text-end fw-bold">Monto Total de la operación</td>
                                             <td id="montoTotalOperacion"></td>
                                         </tr>
@@ -96,20 +104,43 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td class="text-end fw-bold">Retención IVA</td>
+                                            <td></td>
+                                            <td></td>
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value=""
+                                                        id="checkIvaRete1">
+                                                    <label class="form-check-label" for="checkIvaRete1">
+                                                        ¿Retener IVA?
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td class="text-end fw-bold">Retención IVA (1%)</td>
                                             <td id="reteIVA"></td>
-
                                         </tr>
                                         <tr>
                                             <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value=""
+                                                        id="checkReteRenta">
+                                                    <label class="form-check-label" for="checkReteRenta">
+                                                        ¿Retener Renta?
+                                                    </label>
+                                                </div>
+                                            </td>
                                             <td class="text-end fw-bold">Retención Renta</td>
                                             <td id="reteRenta"></td>
-
                                         </tr>
                                         <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
@@ -117,8 +148,10 @@
                                             <td class="text-end fw-bold">Descuento a Operación</td>
                                             <td id="descuentosTotal"></td>
                                         </tr>
-
                                         <tr class="table-active">
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
@@ -177,8 +210,9 @@
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-md-6 mb-3">
-                                                                    <button type="button" id="aggCliente" class="btn btn-success" data-bs-toggle="modal"
-                                                                    data-bs-target="#clienteExistenteModal">
+                                                                    <button type="button" id="aggCliente"
+                                                                        class="btn btn-success" data-bs-toggle="modal"
+                                                                        data-bs-target="#clienteExistenteModal">
                                                                         Seleccionar Cliente Existente
                                                                     </button>
                                                                 </div>
@@ -343,14 +377,14 @@
                     </div>
                     <div class="card-body bg-light">
                         <ul class="nav nav-tabs" id="myTab" role="tablist">
-                            <li class="nav-item" role="presentation">
+                            {{-- <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="documentos" data-bs-toggle="tab"
                                     data-bs-target="#documentos-pane" type="button" role="tab"
                                     aria-controls="documentos-pane" aria-selected="true">Documentos
                                     Relacionados</button>
-                            </li>
+                            </li> --}}
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="terceros" data-bs-toggle="tab"
+                                <button class="nav-link active" id="terceros" data-bs-toggle="tab"
                                     data-bs-target="#terceros-pane" type="button" role="tab"
                                     aria-controls="terceros-pane" aria-selected="false">Venta a cuenta de
                                     terceros</button>
@@ -363,7 +397,7 @@
                             </li>
                         </ul>
                         <div class="tab-content" id="myTabOtraInfo">
-                            <div class="tab-pane fade show active" id="documentos-pane" role="tabpanel"
+                            <div class="tab-pane fade" id="documentos-pane" role="tabpanel"
                                 aria-labelledby="documentos-pane" tabindex="0">
                                 <!-- Contenido de Documentos -->
                                 <div class="mb-3 mt-3">
@@ -382,22 +416,22 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="tab-pane fade" id="terceros-pane" role="tabpanel"
+                            <div class="tab-pane fade show active" id="terceros-pane" role="tabpanel"
                                 aria-labelledby="terceros-pane" tabindex="0">
                                 <!-- Contenido de Ventas a Terceros -->
                                 <div class="card-body bg-light">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label class="mb-3" for="nitContribuyente">NIT:</label>
-                                                <input type="email" class="form-control" id="nitContribuyente"
+                                                <label class="mb-3" for="nitVentaTerceros">NIT:</label>
+                                                <input type="email" class="form-control" id="nitVentaTerceros"
                                                     placeholder="NIT del contribuyente">
                                             </div>
                                         </div>
                                         <div class="col">
                                             <div class="form-group">
-                                                <label class="mb-3" for="nombreContribuyente">Nombre:</label>
-                                                <input type="text" class="form-control" id="nombreContribuyente"
+                                                <label class="mb-3" for="nombreVentaTerceros">Nombre:</label>
+                                                <input type="text" class="form-control" id="nombreVentaTerceros"
                                                     placeholder="Nombre del contribuyente">
                                             </div>
                                         </div>
@@ -662,9 +696,10 @@
                                                 <p class="form-label">Tributos que aplican a este producto:</p>
                                                 @foreach ($tributos as $tributo)
                                                     <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" value="{{ $tributo->codigo }}"
-                                                            id="{{ $tributo->codigo }}" name="tributos[]"
-                                                            data-valor="{{ $tributo->valor }}" data-porcentaje="{{ $tributo->es_porcentaje }}"
+                                                        <input class="form-check-input" type="checkbox"
+                                                            value="{{ $tributo->codigo }}" id="{{ $tributo->codigo }}"
+                                                            name="tributos[]" data-valor="{{ $tributo->valor }}"
+                                                            data-porcentaje="{{ $tributo->es_porcentaje }}"
                                                             @if ($tributo->codigo == '20') checked disabled @endif>
                                                         <label class="form-check-label" for="{{ $tributo->codigo }}">
                                                             {{ $tributo->descripcion }}
@@ -674,7 +709,7 @@
                                             </div>
                                         </div>
                                         <div class="col-6" id="tributosAplicados">
-                                            
+
                                         </div>
                                     </div>
                                 </div>
@@ -882,36 +917,36 @@
                                     <button type="reset" class="btn btn-danger">Cancelar</button>
                                 </div>
                                 <!-- Parte selección médico
-                                                            <div class="form-group">
-                                                                <label for="nombreComercial">Tipo de Servicio:</label>
-                                                                <select class="form-control" id="otrosdoc">
-                                                                    <option value="cirugia">Cirugía</option>
-                                                                    <option value="receptor2">Operación</option>
-                                                                    <option value="medico">Tratamiento Médico</option>
-                                                                    <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                    <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                    <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="form-group">
-                                                                <label for="nombre">Nombre:</label>
-                                                                <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
-                                                            </div>
-                                                            <div class="form-group">
-                                                                <div class="row">
-                                                                    <div class="col-sm-6">
-                                                                        <label for="tiponit">Tipo de Documento:</label>
-                                                                        <select class="form-control" id="tiponit">
-                                                                            <option value="NIT">NIT</option>
-                                                                            <option value="otro">Otro</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="col-sm-6">
-                                                                        <label for="nit">NIT:</label>
-                                                                        <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
-                                                                    </div>
+                                                                <div class="form-group">
+                                                                    <label for="nombreComercial">Tipo de Servicio:</label>
+                                                                    <select class="form-control" id="otrosdoc">
+                                                                        <option value="cirugia">Cirugía</option>
+                                                                        <option value="receptor2">Operación</option>
+                                                                        <option value="medico">Tratamiento Médico</option>
+                                                                        <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
+                                                                        <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
+                                                                        <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
+                                                                    </select>
                                                                 </div>
-                                                            </div> -->
+                                                                <div class="form-group">
+                                                                    <label for="nombre">Nombre:</label>
+                                                                    <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
+                                                                </div>
+                                                                <div class="form-group">
+                                                                    <div class="row">
+                                                                        <div class="col-sm-6">
+                                                                            <label for="tiponit">Tipo de Documento:</label>
+                                                                            <select class="form-control" id="tiponit">
+                                                                                <option value="NIT">NIT</option>
+                                                                                <option value="otro">Otro</option>
+                                                                            </select>
+                                                                        </div>
+                                                                        <div class="col-sm-6">
+                                                                            <label for="nit">NIT:</label>
+                                                                            <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
+                                                                        </div>
+                                                                    </div>
+                                                                </div> -->
                             </div>
                         </div>
                     </form>
@@ -925,7 +960,8 @@
     </div>
 
     <!-- Modal Producto Existente -->
-    <div class="modal modal-xl fade" id="prodExistenteModal" tabindex="-1" aria-labelledby="prodExistenteModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal modal-xl fade" id="prodExistenteModal" tabindex="-1" aria-labelledby="prodExistenteModalLabel"
+        aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -956,8 +992,8 @@
                                     <div class="col-4">
                                         <div class="mb-3">
                                             <label for="cantidadExistente" class="form-label">Cantidad:</label>
-                                            <input type="number" class="form-control" id="cantidadExistente" value=""
-                                                step="0.000001">
+                                            <input type="number" class="form-control" id="cantidadExistente"
+                                                value="" step="0.000001">
                                             <small class="form-text text-danger">Requerido.</small>
                                         </div>
                                     </div>
@@ -1002,7 +1038,9 @@
     </div>
 
     <!-- Modal Cliente Existente -->
-    <div class="modal modal-xl fade" id="clienteExistenteModal" tabindex="-1" aria-labelledby="clienteExistenteModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal modal-xl fade" id="clienteExistenteModal" tabindex="-1"
+        aria-labelledby="clienteExistenteModalLabel" aria-hidden="true" data-bs-backdrop="static"
+        data-bs-keyboard="false">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1027,7 +1065,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="cerrarModalCliente" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="cerrarModalCliente"
+                        data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>

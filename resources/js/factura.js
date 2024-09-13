@@ -9,6 +9,8 @@ let tributos_dte = [];
 let total_tributos = 0;
 
 let descuentosTotal = 0;
+let reteIva1 = 0;
+let reteRenta = 0;
 
 $(function () {
 
@@ -123,7 +125,24 @@ $(function () {
         itemNuevo.descripcion = descripcion;
         itemNuevo.cantidad = cantidad;
 
+        switch ($("#tipoVenta").val()) {
+            case "gravada":
+                itemNuevo.ventaGravada = $("#total").val();
+                itemNuevo.ivaItem = (($("#total").val() / 1.13) * 0.13).toFixed(4);
+                break;
+            case "exenta":
+                itemNuevo.ventaExenta = $("#total").val();
+                itemNuevo.ivaItem = 0
+                break;
+            case "noSujeta":
+                itemNuevo.ventaNoSuj = $("#total").val();
+                itemNuevo.ivaItem = 0
+                break;
+        }
+
+
         items.push(itemNuevo);
+        reiniciar_item();
         cargar_items();
 
         $("#cantidad").val("");
@@ -309,22 +328,7 @@ $(function () {
     })
 
     $("#aggitem").on("show.bs.modal", function (e) {
-        itemNuevo = {
-            id: items.length + 1,
-            tipoItem: null,
-            cantidad: null,
-            codigo: null,
-            uniMedida: null,
-            descripcion: null,
-            precioUni: 0,
-            montoDescu: 0,
-            ventaNoSuj: 0,
-            ventaExenta: 0,
-            ventaGravada: 0,
-            tributos: [],
-            psv: 0,
-            ivaItem: 0,
-        };
+        reiniciar_item();
     });
 
     $("#aggitem .form-check-input").on("change", function () {
@@ -364,16 +368,18 @@ $(function () {
         switch ($("#tipoVentaExistente").val()) {
             case "gravada":
                 itemSeleccionado.ventaGravada = $("#totalExistente").val();
+                itemSeleccionado.ivaItem = (($("#totalExistente").val() / 1.13) * 0.13).toFixed(4);
                 break;
             case "exenta":
                 itemSeleccionado.ventaExenta = $("#totalExistente").val();
+                itemSeleccionado.ivaItem = 0
                 break;
             case "noSujeta":
                 itemSeleccionado.ventaNoSuj = $("#totalExistente").val();
+                itemSeleccionado.ivaItem = 0
                 break;
         }
 
-        itemSeleccionado.ivaItem = (($("#totalExistente").val() / 1.13) * 0.13).toFixed(4);
 
         items.push(itemSeleccionado);
         cargar_items();
@@ -381,6 +387,33 @@ $(function () {
         $("#cantidadExistente").val("");
         $("#descuentoExistente").val("");
         $("#totalExistente").val("");
+        calcular_totales();
+    });
+
+
+    $("#checkIvaRete1").on("change", function () {
+        if ($(this).prop("checked")) {
+            let sumaGravada = 0;
+            items.forEach(item => {
+                sumaGravada += parseFloat(item.ventaGravada);
+            });
+            reteIva1 = (sumaGravada / 1.13) * 0.01;
+        } else {
+            reteIva1 = 0;
+        }
+        calcular_totales();
+    });
+
+    $("#checkReteRenta").on("change", function () {
+        if ($(this).prop("checked")) {
+            let sumaGravada = 0;
+            items.forEach(item => {
+                sumaGravada += parseFloat(item.ventaGravada);
+            });
+            reteRenta = (sumaGravada / 1.13) * 0.1;
+        } else {
+            reteRenta = 0;
+        }
         calcular_totales();
     });
 });
@@ -391,8 +424,6 @@ function calcular_subtotal_item(cantidad = 0, precio = 0, descuento = 0) {
 
 function calcular_totales() {
     mostrar_tributos();
-    let reteIva = 0;
-    let reteRenta = 0;
     let subTotalGeneral = 0;
     let montoTotalOperacion = 0;
     let totalPagar = 0;
@@ -400,9 +431,9 @@ function calcular_totales() {
         subTotalGeneral += parseFloat(item.ventaGravada) + parseFloat(item.ventaExenta) + parseFloat(item.ventaNoSuj);
     });
     montoTotalOperacion = subTotalGeneral - descuentosTotal + total_tributos;
-    totalPagar = montoTotalOperacion + reteIva + reteRenta;
+    totalPagar = montoTotalOperacion - reteIva1 - reteRenta;
 
-    $("#reteIVA").text("$" + reteIva.toFixed(2));
+    $("#reteIVA").text("$" + reteIva1.toFixed(2));
     $("#reteRenta").text("$" + reteRenta.toFixed(2));
     $("#subTotalGeneral").text("$" + subTotalGeneral.toFixed(2));
     $("#montoTotalOperacion").text("$" + montoTotalOperacion.toFixed(2));
@@ -448,8 +479,8 @@ function generar_documento() {
             "descuExtenta": 0,
             "descuGravada": 0,
             "porcentajeDescuento": 0,
-            "ivaRete1": 0,
-            "reteRenta": 0,
+            "ivaRete1": reteIva1.toFixed(2),
+            "reteRenta": reteRenta.toFixed(2),
             "saldoFavor": 0,
             "condicionOperacion": 1
         },
@@ -457,6 +488,13 @@ function generar_documento() {
         "apendice": null,
         "pagos": null,
         "numPagoElectronico": null,
+    }
+
+    if($("#nitVentaTerceros").val() != "" && $("#nombreVentaTerceros").val() != ""){
+        dte.ventaTercero = {
+            "nit": $("#nitVentaTerceros").val(),
+            "nombre": $("#nombreVentaTerceros").val()
+        }
     }
 
     items.forEach(item => {
@@ -538,9 +576,13 @@ function cargar_items(){
                 <td>$${parseFloat(item.precioUni).toFixed(2)}</td>
                 <td>$${parseFloat(item.montoDescu).toFixed(2)}</td>
                 <td>
-                    $${parseFloat(item.ventaGravada).toFixed(4)} (Gravada) <br>
-                    $${parseFloat(item.ventaExenta).toFixed(4)} (Exenta) <br>
-                    $${parseFloat(item.ventaNoSuj).toFixed(4)} (No Sujeta)
+                    $${parseFloat(item.ventaGravada).toFixed(4)}
+                </td>
+                <td>
+                    $${parseFloat(item.ventaExenta).toFixed(4)}
+                </td>
+                <td>
+                    $${parseFloat(item.ventaNoSuj).toFixed(4)}
                 </td>
                 <td>
                     <button type="button" class="btn btn-danger btn-sm eliminar" data-id="${item.id}">Eliminar</button>
@@ -635,9 +677,31 @@ function mostrar_tributos(){
                 <td></td>
                 <td></td>
                 <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
                 <td class="text-end fw-bold">${trib.descripcion}</td>
                 <td>$${trib.valor.toFixed(2)}</td>
             </tr>
         `);
     })
+}
+
+function reiniciar_item(){
+    itemNuevo = {
+        id: 1,
+        tipoItem: null,
+        cantidad: null,
+        codigo: null,
+        uniMedida: null,
+        descripcion: null,
+        precioUni: 0,
+        montoDescu: 0,
+        ventaNoSuj: 0,
+        ventaExenta: 0,
+        ventaGravada: 0,
+        tributos: [],
+        psv: 0,
+        ivaItem: 0,
+    };
 }
