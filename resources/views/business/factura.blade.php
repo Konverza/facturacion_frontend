@@ -166,7 +166,7 @@
                                                         aria-labelledby="receptor">
                                                         <form>
                                                             <div class="row">
-                                                                <div class="col-md-12 mb-3">
+                                                                <div class="col-md-6 mb-3">
                                                                     <div class="form-check">
                                                                         <input class="form-check-input" type="checkbox"
                                                                             value="" id="checkContribuyente">
@@ -175,6 +175,12 @@
                                                                             No Ingresar Datos del Cliente
                                                                         </label>
                                                                     </div>
+                                                                </div>
+                                                                <div class="col-md-6 mb-3">
+                                                                    <button type="button" id="aggCliente" class="btn btn-success" data-bs-toggle="modal"
+                                                                    data-bs-target="#clienteExistenteModal">
+                                                                        Seleccionar Cliente Existente
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                             <div class="row">
@@ -217,24 +223,6 @@
                                                                         <label for="departamento">Departamento:</label>
                                                                         <select class="form-select"
                                                                             id="departamentoContribuyente">
-                                                                            <option value="01">01 - AHUACHAPAN</option>
-                                                                            <option value="02">02 - SANTA ANA</option>
-                                                                            <option value="03">03 - SONSONATE</option>
-                                                                            <option value="04">04 - CHALATENANGO
-                                                                            </option>
-                                                                            <option value="05">05 - LA LIBERTAD
-                                                                            </option>
-                                                                            <option value="06" selected>06 - SAN
-                                                                                SALVADOR</option>
-                                                                            <option value="07">07 - CUSCATLAN</option>
-                                                                            <option value="08">08 - LA PAZ</option>
-                                                                            <option value="09">09 - CABAÑAS</option>
-                                                                            <option value="10">10 - SAN VICENTE
-                                                                            </option>
-                                                                            <option value="11">11 - USULUTAN</option>
-                                                                            <option value="12">12 - SAN MIGUEL</option>
-                                                                            <option value="13">13 - MORAZAN</option>
-                                                                            <option value="14">14 - LA UNION</option>
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -243,8 +231,6 @@
                                                                         <label for="municipio">Municipio:</label>
                                                                         <select class="form-select"
                                                                             id="municipioContribuyente">
-                                                                            <option value="14" selected>14 - SAN
-                                                                                SALVADOR</option>
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -1010,6 +996,38 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cliente Existente -->
+    <div class="modal modal-xl fade" id="clienteExistenteModal" tabindex="-1" aria-labelledby="clienteExistenteModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="clienteExistenteModalLabel">Seleccionar Cliente</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12">
+                                <table id="tablaClientes" class="table table-bordered table-striped table-hover w-100">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Identificación</th>
+                                            <th>Nombre</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" id="cerrarModalCliente" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </div>
         </div>

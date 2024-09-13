@@ -140,4 +140,57 @@ class BusinessController extends Controller
         unset($product["tributos_bd"]);
         return response()->json($product);
     }
+
+    public function tabla_clientes(Request $request)
+    {
+        // Page Length
+        $pageNumber = ($request->start / $request->length) + 1;
+        $pageLength = $request->length;
+        $skip       = ($pageNumber-1) * $pageLength;
+
+        //Page Order
+        $orderColumnIndex = $request->order[0]['column'] ?? '0';
+        $orderBy = $request->order[0]['dir'] ?? 'desc';
+
+        //Get data from products
+        $business_user = BusinessUser::where('user_id', auth()->id())->first();
+        $business = Business::find($business_user->business_id);
+
+        $query = DB::table('business_customers')->select('*');
+        $query->where('business_id', $business->id);
+
+        //Search
+        $search = $request->search;
+        $query = $query->where(function ($query) use ($search) {
+            $query->where('numDocumento', 'like', '%' . $search . '%')
+                ->orWhere('nombre', 'like', '%' . $search . '%')
+                ->orWhere('nombreComercial', 'like', '%' . $search . '%');
+        });
+
+        $orderByName = 'numDocumento';
+        switch ($orderColumnIndex) {
+            case '0':
+                $orderByName = 'numDocumento';
+                break;
+            case '1':
+                $orderByName = 'nombre';
+                break;
+        }
+        $query->orderBy($orderByName, $orderBy);
+        $recordsFiltered = $recordsTotal = $query->count();
+        $products = $query->skip($skip)->take($pageLength)->get();
+
+        return response()->json([
+            'draw' => $request->draw,
+            'recordsTotal' => $recordsTotal,
+            'recordsFiltered' => $recordsFiltered,
+            'data' => $products
+        ], 200);
+    }
+
+    public function get_cliente(Request $request)
+    {
+        $customer = BusinessCustomer::find($request->id)->toArray();
+        return response()->json($customer);
+    }
 }

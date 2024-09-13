@@ -54,6 +54,9 @@ Route::group(['prefix' => 'business', 'middleware' => ['auth', 'role:negocio|ven
 
     Route::post("/obtener_productos", [BusinessController::class, 'tabla_productos'])->name("business.obtener_productos");
     Route::get("/obtener_producto/{id}", [BusinessController::class, 'get_producto'])->name("business.obtener_producto");
+
+    Route::post("/obtener_clientes", [BusinessController::class,"tabla_clientes"])->name("business.obtener_clientes");
+    Route::get("/obtener_cliente/{id}", [BusinessController::class, 'get_cliente'])->name("business.obtener_cliente");
 });
 
 Route::get('/catalogo/{codigo}', [CatalogoController::class, 'getValues'])->name('catalogo.getValues');

@@ -1,4 +1,5 @@
 let tablaProds = null;
+let tablaClientes = null;
 
 let items = [];
 let itemSeleccionado = null;
@@ -115,6 +116,7 @@ $(function () {
         // let total = $("#total").val();
         let descripcion = $("#producto").val();
         
+        itemNuevo.id = items.length + 1;
         itemNuevo.tipoItem = $("#tipoItem").val();
         itemNuevo.uniMedida = unidad_id;
         itemNuevo.montoDescu = descuento;
@@ -122,7 +124,7 @@ $(function () {
         itemNuevo.cantidad = cantidad;
 
         items.push(itemNuevo);
-        cargar_items(items);
+        cargar_items();
 
         $("#cantidad").val("");
         $("#precio").val("");
@@ -132,13 +134,15 @@ $(function () {
         calcular_totales();
     });
 
+    // Eliminar Items que se hayan agregado al carrito
     $("#items").on("click", ".eliminar", function () {
         let id = $(this).data("id");
         items = items.filter(item => item.id !== id);
-        $(this).closest("tr").remove();
+        cargar_items();
         calcular_totales();
     });
 
+    // Guardar descuentos globales
     $("#guardarDescuento").on("click", function () {
         let descuento = $("#descVentasGravadas").val();
         descuentosTotal = parseFloat(descuento);
@@ -146,10 +150,12 @@ $(function () {
         $("#descuentosTotal").text("$" + descuentosTotal.toFixed(2));
     });
 
+    // Generar DTE y enviarlo
     $("#generarDocumento").on("click", function () {
         generar_documento();
     });
 
+    
     $("#prodExistenteModal").on("show.bs.modal", function (e) {
         itemSeleccionado = null;
         $("#prodSeleccionado").addClass("d-none");
@@ -214,8 +220,88 @@ $(function () {
                     success: function (response) {
                         $("#prodSeleccionado").removeClass("d-none");
                         itemSeleccionado = response;
-                        console.log(itemSeleccionado);
                         $("#prodDesc").text(itemSeleccionado.descripcion);
+                    }
+                });
+            });
+        }
+    })
+
+    // Al abrir modal de clientes
+    $("#clienteExistenteModal").on("show.bs.modal", function (e) {
+        $.ajaxSetup({
+            Headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        if (tablaClientes) {
+            tablaClientes.ajax.reload();
+        } else {
+            tablaClientes = $("#tablaClientes").DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '/business/obtener_clientes',
+                    type: 'POST',
+                    data: function (data) {
+                        data._token = $('meta[name="csrf-token"]').attr('content');
+                        data.search = $('input[type="search"]').val();
+                    }
+                },
+                order: ['1', 'DESC'],
+                pageLength: 10,
+                searching: true,
+                aoColumns: [
+                    {
+                        data: 'numDocumento',
+                        render: function (data, type, row) {
+                            if(row.tipoDocumento == "13"){
+                                return row.numDocumento.slice(0, -1) + '-' + row.numDocumento.slice(-1)
+                            } else {
+                                return row.numDocumento
+                            }
+                        }
+                    },
+                    {
+                        data: 'nombre',
+                    },
+                    {
+                        data: 'id',
+                        width: "20%",
+                        render: function (data, type, row) {
+                            return `
+                                <button type="button" class="btn btn-primary btn-sm btnSeleccionarCliente" data-id="${row.id}">Seleccionar</button>
+                            `;
+                        }
+                    }
+                ],
+                buttons: [],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/2.1.5/i18n/es-ES.json',
+                }
+            });
+
+            tablaClientes.on('click', '.btnSeleccionarCliente', function () {
+                const id = $(this).data('id');
+                $.ajax({
+                    url: `/business/obtener_cliente/${id}`,
+                    success: function (response) {
+                        $("#tipoDoc").val(response.tipoDocumento);
+                        if(response.tipoDocumento == "13"){
+                            $("#nitContribuyente").val(response.numDocumento.slice(0, -1) + '-' + response.numDocumento.slice(-1))
+                        } else{
+                            $("#nitContribuyente").val(response.numDocumento)
+                        }
+                        $("#nombreContribuyente").val(response.nombre)
+                        $("#departamentoContribuyente").val(response.departamento)
+                        $("#departamentoContribuyente").trigger("change")
+                        $("#municipioContribuyente").val(response.municipio)
+                        $("#complementoContribuyente").val(response.complemento)
+                        $("#correoContribuyente").val(response.correo)
+                        $("#telefonoContribuyente").val(response.telefono)
+
+                        $("#cerrarModalCliente").trigger("click")
                     }
                 });
             });
@@ -257,6 +343,7 @@ $(function () {
     $("#btnAgregarProd").on("click", function () {
         let cantidad = $("#cantidadExistente").val() || 0;
         let descuento = $("#descuentoExistente").val() || 0;
+        itemSeleccionado.id = items.length + 1;
         itemSeleccionado.cantidad = cantidad;
         itemSeleccionado.montoDescu = descuento;
         itemSeleccionado.ventaGravada = 0;
@@ -289,7 +376,7 @@ $(function () {
         itemSeleccionado.ivaItem = (($("#totalExistente").val() / 1.13) * 0.13).toFixed(4);
 
         items.push(itemSeleccionado);
-        cargar_items(items);
+        cargar_items();
 
         $("#cantidadExistente").val("");
         $("#descuentoExistente").val("");
@@ -439,7 +526,7 @@ function generar_documento() {
     });
 }
 
-function cargar_items(items){
+function cargar_items(){
     let tbody = $("#items");
     tbody.empty();
     items.forEach(item => {
@@ -461,7 +548,6 @@ function cargar_items(items){
             </tr>
         `);
     });
-    console.log(items);
 }
 
 function calcular_tributos_item(){
@@ -515,8 +601,10 @@ function calcular_tributos_item(){
 }
 
 function calcular_tributos_dte(){
+    tributos_dte = []
     total_tributos = 0;
     items.forEach(item => {
+        console.log(item);
         item.tributos.forEach(trib => {
             if(trib.codigo !== "20"){
                 if(!tributos_dte.some(tributo => tributo.codigo === trib.codigo)){
@@ -532,6 +620,8 @@ function calcular_tributos_dte(){
             }
         });
     });
+
+    console.log(tributos_dte);
 }
 
 function mostrar_tributos(){
