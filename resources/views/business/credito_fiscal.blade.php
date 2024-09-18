@@ -10,7 +10,7 @@
     <div class="container mt-5">
         <div class="row">
             <div class="col-sm">
-                <h3>Factura</h3>
+                <h3>Comprobante de Crédito Fiscal</h3>
             </div>
             <div class="col-sm">
                 <div class="form-group">
@@ -33,142 +33,6 @@
         <div class="row">
             <div class="col-sm-12">
                 <div class="card mb-3 shadow mt-3">
-                    <div class="card-header">
-                        <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-info"></i>
-                            Detalle de factura</h5>
-                    </div>
-                    <div class="card-body bg-light ">
-                        <h4>Datos de la factura</h4>
-                        <!-- Button trigger modal Agregar Ítem-->
-                        <div class="d-flex">
-                            <div class="dropdown me-2">
-                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    Agregar Detalle
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#aggitem"
-                                            href="#aggitem">Producto o Servicio</a></li>
-                                    <li><a class="dropdown-item" href="#">Monto No Afecto</a></li>
-                                    <li><a class="dropdown-item">Impuestos/Tasas con afectación al IVA</a></li>
-                                </ul>
-                            </div>
-                            <button type="button" class="btn btn-success" data-bs-toggle="modal"
-                                data-bs-target="#prodExistenteModal">Añadir Producto Existente</button>
-                        </div>
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="container mt-5">
-                                    <table class="table table-light border-less">
-                                        <thead>
-                                            <tr>
-                                                <th>Unidad de Medida</th>
-                                                <th>Descripción</th>
-                                                <th>Cantidad</th>
-                                                <th>Precio</th>
-                                                <th>Descuento por ítem</th>
-                                                <th>V. Gravada</th>
-                                                <th>V. Exenta</th>
-                                                <th>V. No Sujeta</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="items">
-                                        </tbody>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td class="text-end fw-bold">Sub Total</td>
-                                            <td id="subTotalGeneral"></td>
-                                        </tr>
-                                        <tbody id="tributos">
-                                        </tbody>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td class="text-end fw-bold">Monto Total de la operación</td>
-                                            <td id="montoTotalOperacion"></td>
-                                        </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value=""
-                                                        id="checkIvaRete1">
-                                                    <label class="form-check-label" for="checkIvaRete1">
-                                                        ¿Retener IVA?
-                                                    </label>
-                                                </div>
-                                            </td>
-                                            <td class="text-end fw-bold">Retención IVA (1%)</td>
-                                            <td id="reteIVA"></td>
-                                        </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value=""
-                                                        id="checkReteRenta">
-                                                    <label class="form-check-label" for="checkReteRenta">
-                                                        ¿Retener Renta?
-                                                    </label>
-                                                </div>
-                                            </td>
-                                            <td class="text-end fw-bold">Retención Renta</td>
-                                            <td id="reteRenta"></td>
-                                        </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td class="text-end fw-bold">Descuento a Operación</td>
-                                            <td id="descuentosTotal"></td>
-                                        </tr>
-                                        <tr class="table-active">
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td class="text-end fw-bold">Total Pagar</td>
-                                            <td id="totalPagar"></td>
-                                        </tr>
-                                    </table>
-                                    <!-- Button trigger modal Agregar Descuento -->
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#aggDescuentoModal">
-                                        Agregar Descuento
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="card-header">
                         <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fa-solid fa-file"></i>
                             Datos del Emisor y Receptor</h5>
@@ -200,16 +64,6 @@
                                                         <form>
                                                             <div class="row">
                                                                 <div class="col-md-6 mb-3">
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input" type="checkbox"
-                                                                            value="" id="checkContribuyente">
-                                                                        <label for="checkContribuyente"
-                                                                            class="form-check-label">
-                                                                            No Ingresar Datos del Cliente
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-6 mb-3">
                                                                     <button type="button" id="aggCliente"
                                                                         class="btn btn-success" data-bs-toggle="modal"
                                                                         data-bs-target="#clienteExistenteModal">
@@ -220,36 +74,40 @@
                                                             <div class="row">
                                                                 <div class="col-sm-6">
                                                                     <div class="form-group">
-                                                                        <label for="tipoDoc">Tipo de
-                                                                            Documento:</label>
-                                                                        <select class="form-select" id="tipoDoc">
-                                                                            <option value="00">-- Seleccione --
-                                                                            </option>
-                                                                            <option value="36">NIT</option>
-                                                                            <option value="13">DUI</option>
-                                                                            <option value="03">PASAPORTE</option>
-                                                                            <option value="02">CARNÉT RESIDENTE
-                                                                            </option>
-                                                                            <option value="37">OTRO</option>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-sm-6">
-                                                                    <div class="form-group">
-                                                                        <label for="nitContribuyente">Número de
-                                                                            Documento:</label>
+                                                                        <label for="nitContribuyente">NIT/DUI</label>
                                                                         <input type="text" class="form-control"
                                                                             id="nitContribuyente"
                                                                             placeholder="Número de documento">
                                                                     </div>
                                                                 </div>
+                                                                <div class="col-sm-6">
+                                                                    <div class="form-group">
+                                                                        <label for="nrcContribuyente">Número de
+                                                                            Registro de Contribuyente (NRC):</label>
+                                                                        <input type="text" class="form-control"
+                                                                            id="nrcContribuyente"
+                                                                            placeholder="Número de documento">
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                             <div class="form-group">
-                                                                <label for="nombreComercial">Nombre, denominación o razón
+                                                                <label for="nombre">Nombre, denominación o razón
                                                                     social del contribuyente:</label>
                                                                 <input type="text" class="form-control"
-                                                                    id="nombreContribuyente"
-                                                                    placeholder="Nombre completo del receptor">
+                                                                    id="nombre"
+                                                                    placeholder="Nombre del receptor">
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <label for="nombreComercial">Nombre Comercial:</label>
+                                                                <input type="text" class="form-control"
+                                                                    id="nombreComercial"
+                                                                    placeholder="Nombre Comercial del receptor">
+                                                            </div>
+                                                            <div class="form-group mb-3">
+                                                                <label for="codActividad">Actividad
+                                                                    Económica:</label>
+                                                                <input type="text" name="codActividad" id="codActividad"
+                                                                    class="form-control" autocomplete="off">
                                                             </div>
                                                             <div class="row">
                                                                 <div class="col">
@@ -368,6 +226,161 @@
                                     </div>
                                 </div>
 
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-info"></i>
+                            Detalle de Crédito Fiscal</h5>
+                    </div>
+                    <div class="card-body bg-light ">
+                        <h4>Cuerpo del Documento</h4>
+                        <!-- Button trigger modal Agregar Ítem-->
+                        <div class="d-flex">
+                            <div class="dropdown me-2">
+                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Agregar Detalle
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#aggitem"
+                                            href="#aggitem">Producto o Servicio</a></li>
+                                    <li><a class="dropdown-item" href="#">Monto No Afecto</a></li>
+                                    <li><a class="dropdown-item">Impuestos/Tasas con afectación al IVA</a></li>
+                                </ul>
+                            </div>
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                                data-bs-target="#prodExistenteModal">Añadir Producto Existente</button>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="container mt-5">
+                                    <table class="table table-light border-less">
+                                        <thead>
+                                            <tr>
+                                                <th>Unidad de Medida</th>
+                                                <th>Descripción</th>
+                                                <th>Cantidad</th>
+                                                <th>Precio</th>
+                                                <th>Descuento por ítem</th>
+                                                <th>V. Gravada</th>
+                                                <th>V. Exenta</th>
+                                                <th>V. No Sujeta</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="items">
+                                        </tbody>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="text-end fw-bold">Sub Total</td>
+                                            <td id="subTotalGeneral"></td>
+                                        </tr>
+                                        <tbody id="tributos">
+                                        </tbody>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="text-end fw-bold">Monto Total de la operación</td>
+                                            <td id="montoTotalOperacion"></td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value=""
+                                                        id="checkIvaRete1">
+                                                    <label class="form-check-label" for="checkIvaRete1">
+                                                        ¿Retener IVA?
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td class="text-end fw-bold">Retención IVA (1%)</td>
+                                            <td id="reteIVA"></td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value=""
+                                                        id="checkIvaPerci1">
+                                                    <label class="form-check-label" for="checkIvaPerci1">
+                                                        ¿Percibir IVA?
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td class="text-end fw-bold">Percepción IVA (1%)</td>
+                                            <td id="perciIVA"></td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" value=""
+                                                        id="checkReteRenta">
+                                                    <label class="form-check-label" for="checkReteRenta">
+                                                        ¿Retener Renta?
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td class="text-end fw-bold">Retención Renta</td>
+                                            <td id="reteRenta"></td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="text-end fw-bold">Descuento a Operación</td>
+                                            <td id="descuentosTotal"></td>
+                                        </tr>
+                                        <tr class="table-active">
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td class="text-end fw-bold">Total Pagar</td>
+                                            <td id="totalPagar"></td>
+                                        </tr>
+                                    </table>
+                                    <!-- Button trigger modal Agregar Descuento -->
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                        data-bs-target="#aggDescuentoModal">
+                                        Agregar Descuento
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -681,7 +694,7 @@
                                     </div>
                                     <div class="col-2">
                                         <div class="mb-3">
-                                            <label for="precio" class="form-label">Precio (IVA Incluido):</label>
+                                            <label for="precio" class="form-label">Precio (sin IVA):</label>
                                             <input type="number" class="form-control" id="precio" step="0.00001">
                                         </div>
                                     </div>
@@ -917,36 +930,36 @@
                                     <button type="reset" class="btn btn-danger">Cancelar</button>
                                 </div>
                                 <!-- Parte selección médico
-                                                                <div class="form-group">
-                                                                    <label for="nombreComercial">Tipo de Servicio:</label>
-                                                                    <select class="form-control" id="otrosdoc">
-                                                                        <option value="cirugia">Cirugía</option>
-                                                                        <option value="receptor2">Operación</option>
-                                                                        <option value="medico">Tratamiento Médico</option>
-                                                                        <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                        <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                        <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
-                                                                    </select>
-                                                                </div>
-                                                                <div class="form-group">
-                                                                    <label for="nombre">Nombre:</label>
-                                                                    <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
-                                                                </div>
-                                                                <div class="form-group">
-                                                                    <div class="row">
-                                                                        <div class="col-sm-6">
-                                                                            <label for="tiponit">Tipo de Documento:</label>
-                                                                            <select class="form-control" id="tiponit">
-                                                                                <option value="NIT">NIT</option>
-                                                                                <option value="otro">Otro</option>
-                                                                            </select>
-                                                                        </div>
-                                                                        <div class="col-sm-6">
-                                                                            <label for="nit">NIT:</label>
-                                                                            <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
-                                                                        </div>
+                                                                    <div class="form-group">
+                                                                        <label for="nombreComercial">Tipo de Servicio:</label>
+                                                                        <select class="form-control" id="otrosdoc">
+                                                                            <option value="cirugia">Cirugía</option>
+                                                                            <option value="receptor2">Operación</option>
+                                                                            <option value="medico">Tratamiento Médico</option>
+                                                                            <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
+                                                                            <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
+                                                                            <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
+                                                                        </select>
                                                                     </div>
-                                                                </div> -->
+                                                                    <div class="form-group">
+                                                                        <label for="nombre">Nombre:</label>
+                                                                        <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
+                                                                    </div>
+                                                                    <div class="form-group">
+                                                                        <div class="row">
+                                                                            <div class="col-sm-6">
+                                                                                <label for="tiponit">Tipo de Documento:</label>
+                                                                                <select class="form-control" id="tiponit">
+                                                                                    <option value="NIT">NIT</option>
+                                                                                    <option value="otro">Otro</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="col-sm-6">
+                                                                                <label for="nit">NIT:</label>
+                                                                                <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div> -->
                             </div>
                         </div>
                     </form>
@@ -1071,5 +1084,5 @@
             </div>
         </div>
     </div>
-    @vite('resources/js/factura.js')
+    @vite('resources/js/credito_fiscal.js')
 @endsection

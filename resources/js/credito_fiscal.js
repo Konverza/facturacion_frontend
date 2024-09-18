@@ -1,7 +1,10 @@
+import { Autocomplete } from './autocomplete';
+
 let tablaProds = null;
 let tablaClientes = null;
 let itemSeleccionado = null;
 let itemNuevo = null;
+let actividades = null;
 
 let tributos_dte = [];
 let total_tributos = 0;
@@ -11,6 +14,8 @@ let descuentosTotal = 0;
 let items = [];
 let reteIva1 = 0;
 let reteRenta = 0;
+let perciIva1 = 0;
+
 
 if (localStorage.getItem("items")) {
     items = JSON.parse(localStorage.getItem("items"));
@@ -25,6 +30,15 @@ if (localStorage.getItem("reteIva1")) {
     calcular_tributos_dte();
     calcular_totales();
 }
+
+if (localStorage.getItem("perciIva1")) {
+    perciIva1 = parseFloat(localStorage.getItem("perciIva1"));
+    $("#checkIvaPerci1").prop("checked", true)
+    cargar_items();
+    calcular_tributos_dte();
+    calcular_totales();
+}
+
 if (localStorage.getItem("reteRenta")) {
     reteRenta = parseFloat(localStorage.getItem("reteRenta"));
     $("#checkReteRenta").prop("checked", true)
@@ -34,6 +48,21 @@ if (localStorage.getItem("reteRenta")) {
 }
 
 $(function () {
+
+    // Cargar actividades económicas
+    $.ajax({
+        url: '/catalogo/cat_019',
+        success: function (response) {
+            const field_actividad_economica = document.getElementById('codActividad');
+            const ac_actividad_economica = new Autocomplete(field_actividad_economica, {
+                data: response,
+                maximumItems: 5,
+                threshold: 1,
+                fullWidth: true,
+            });
+            actividades = response;
+        }
+    })
 
     // Cargar Departamentos en Select
     $.ajax({
@@ -106,29 +135,6 @@ $(function () {
         calcular_tributos_item();
     });
 
-    // Manejar el cambio de la casilla de verificación de contribuyente
-    $("#checkContribuyente").on("change", function () {
-        if ($(this).prop("checked")) {
-            $("#nombreContribuyente").prop("disabled", true);
-            $("#telefonoContribuyente").prop("disabled", true);
-            $("#correoContribuyente").prop("disabled", true);
-            $("#departamentoContribuyente").prop("disabled", true);
-            $("#municipioContribuyente").prop("disabled", true);
-            $("#complementoContribuyente").prop("disabled", true);
-            $("#tipoDoc").prop("disabled", true);
-            $("#nitContribuyente").prop("disabled", true);
-        } else {
-            $("#nombreContribuyente").prop("disabled", false);
-            $("#telefonoContribuyente").prop("disabled", false);
-            $("#correoContribuyente").prop("disabled", false);
-            $("#departamentoContribuyente").prop("disabled", false);
-            $("#municipioContribuyente").prop("disabled", false);
-            $("#complementoContribuyente").prop("disabled", false);
-            $("#tipoDoc").prop("disabled", false);
-            $("#nitContribuyente").prop("disabled", false);
-        }
-    });
-
     // Agregar Item que no está en BD
     $("#agregar_item").on("click", function () {
         let unidad_id = $("#unidad").val();
@@ -148,16 +154,13 @@ $(function () {
 
         switch ($("#tipoVenta").val()) {
             case "gravada":
-                itemNuevo.ventaGravada = $("#total").val();
-                itemNuevo.ivaItem = (($("#total").val() / 1.13) * 0.13).toFixed(4);
+                itemNuevo.ventaGravada = itemNuevo.precioUni * cantidad;
                 break;
             case "exenta":
-                itemNuevo.ventaExenta = $("#total").val();
-                itemNuevo.ivaItem = 0
+                itemNuevo.ventaExenta = itemNuevo.precioUni * cantidad;
                 break;
             case "noSujeta":
-                itemNuevo.ventaNoSuj = $("#total").val();
-                itemNuevo.ivaItem = 0
+                itemNuevo.ventaNoSuj = itemNuevo.precioUni * cantidad;
                 break;
         }
 
@@ -236,7 +239,7 @@ $(function () {
                         data: 'descripcion',
                     },
                     {
-                        data: 'precioUni',
+                        data: 'precioSinTributos',
                         render: function (data, type, row) {
                             return `$${parseFloat(data).toFixed(2)}`;
                         }
@@ -264,6 +267,7 @@ $(function () {
                     success: function (response) {
                         $("#prodSeleccionado").removeClass("d-none");
                         itemSeleccionado = response;
+                        itemSeleccionado.precioUni = itemSeleccionado.precioSinTributos;
                         $("#prodDesc").text(itemSeleccionado.descripcion);
                     }
                 });
@@ -332,20 +336,24 @@ $(function () {
                     url: `/business/obtener_cliente/${id}`,
                     success: function (response) {
                         $("#tipoDoc").val(response.tipoDocumento);
-                        if (response.tipoDocumento == "13") {
-                            $("#nitContribuyente").val(response.numDocumento.slice(0, -1) + '-' + response.numDocumento.slice(-1))
-                        } else {
-                            $("#nitContribuyente").val(response.numDocumento)
-                        }
-                        $("#nombreContribuyente").val(response.nombre)
+
+                        $("#nitContribuyente").val(response.numDocumento)
+                        $("#nrcContribuyente").val(response.nrc.replace(/-/g, ''))
+                        $("#nombre").val(response.nombre)
+                        $("#nombreComercial").val(response.nombreComercial)
                         $("#departamentoContribuyente").val(response.departamento)
                         $("#departamentoContribuyente").trigger("change")
                         $("#municipioContribuyente").val(response.municipio)
                         $("#complementoContribuyente").val(response.complemento)
                         $("#correoContribuyente").val(response.correo)
                         $("#telefonoContribuyente").val(response.telefono)
-
                         $("#cerrarModalCliente").trigger("click")
+
+                        // Search actividades económicas, given that the structure is {value: '', label: ''}
+                        const actividad = actividades.find(act => act.value === response.codActividad);
+                        if (actividad) {
+                            $('#codActividad').val(actividad.label);
+                        }
                     }
                 });
             });
@@ -378,29 +386,22 @@ $(function () {
         itemSeleccionado.ventaExenta = 0;
         itemSeleccionado.ventaNoSuj = 0;
         itemSeleccionado.tributos.forEach(trib => {
-            if (trib.codigo == "20") {
-                trib.calculado = ((itemSeleccionado.precioUni / 1.13) * trib.valor) * itemSeleccionado.cantidad;
-            } else {
-                if (trib.es_porcentaje) {
-                    trib.calculado = (itemSeleccionado.precioUni * trib.valor) * itemSeleccionado.cantidad;
-                } else {
-                    trib.calculado = trib.valor * itemSeleccionado.cantidad;
-                }
-            }
-        });
+        if (trib.es_porcentaje) {
+            trib.calculado = (itemSeleccionado.precioUni * trib.valor) * itemSeleccionado.cantidad;
+        } else {
+            trib.calculado = trib.valor * itemSeleccionado.cantidad;
+        }
+    });
 
         switch ($("#tipoVentaExistente").val()) {
             case "gravada":
                 itemSeleccionado.ventaGravada = $("#totalExistente").val();
-                itemSeleccionado.ivaItem = (($("#totalExistente").val() / 1.13) * 0.13).toFixed(4);
                 break;
             case "exenta":
                 itemSeleccionado.ventaExenta = $("#totalExistente").val();
-                itemSeleccionado.ivaItem = 0
                 break;
             case "noSujeta":
                 itemSeleccionado.ventaNoSuj = $("#totalExistente").val();
-                itemSeleccionado.ivaItem = 0
                 break;
         }
 
@@ -423,7 +424,7 @@ $(function () {
             items.forEach(item => {
                 sumaGravada += parseFloat(item.ventaGravada);
             });
-            reteIva1 = (sumaGravada / 1.13) * 0.01;
+            reteIva1 = sumaGravada * 0.01;
             localStorage.setItem('reteIva1', reteIva1);
         } else {
             reteIva1 = 0;
@@ -439,11 +440,26 @@ $(function () {
             items.forEach(item => {
                 sumaGravada += parseFloat(item.ventaGravada);
             });
-            reteRenta = (sumaGravada / 1.13) * 0.1;
+            reteRenta = sumaGravada * 0.1;
             localStorage.setItem("reteRenta", reteRenta);
         } else {
             reteRenta = 0;
             localStorage.removeItem("reteRenta");
+        }
+        calcular_totales();
+    });
+
+    $("#checkIvaPerci1").on("change", function () {
+        if ($(this).prop("checked")) {
+            let sumaGravada = 0;
+            items.forEach(item => {
+                sumaGravada += parseFloat(item.ventaGravada);
+            });
+            perciIva1 = sumaGravada * 0.01;
+            localStorage.setItem("perciIva1", perciIva1);
+        } else {
+            perciIva1 = 0;
+            localStorage.removeItem("perciIva1");
         }
         calcular_totales();
     });
@@ -482,10 +498,11 @@ function calcular_totales() {
         subTotalGeneral += parseFloat(item.ventaGravada) + parseFloat(item.ventaExenta) + parseFloat(item.ventaNoSuj);
     });
     montoTotalOperacion = subTotalGeneral - descuentosTotal + total_tributos;
-    totalPagar = montoTotalOperacion - reteIva1 - reteRenta;
+    totalPagar = montoTotalOperacion - reteIva1 - reteRenta + perciIva1;
 
     $("#reteIVA").text("$" + reteIva1.toFixed(2));
     $("#reteRenta").text("$" + reteRenta.toFixed(2));
+    $("#perciIVA").text("$" + perciIva1.toFixed(2));
     $("#subTotalGeneral").text("$" + subTotalGeneral.toFixed(2));
     $("#montoTotalOperacion").text("$" + montoTotalOperacion.toFixed(2));
     $("#totalPagar").text("$" + totalPagar.toFixed(2));
@@ -494,29 +511,24 @@ function calcular_totales() {
 
 function generar_documento() {
     $("#loadingOverlay").removeClass("d-none")
-    let receptor = {};
-    if ($("#checkContribuyente").prop("checked")) {
-        receptor = {
-            "nombre": "Consumidor Final",
-            "telefono": null,
-            "correo": null,
-            "direccion": null,
-            "tipoDocumento": null,
-            "numDocumento": null
-        }
-    } else {
-        receptor = {
-            "nombre": $("#nombreContribuyente").val(),
-            "telefono": $("#telefonoContribuyente").val(),
-            "correo": $("#correoContribuyente").val(),
-            "direccion": {
-                "departamento": $("#departamentoContribuyente").val(),
-                "municipio": $("#municipioContribuyente").val(),
-                "complemento": $("#complementoContribuyente").val()
-            },
-            "tipoDocumento": $("#tipoDoc").val(),
-            "numDocumento": $("#nitContribuyente").val()
-        }
+
+    const codActividad = actividades.find(act => act.label === $('#codActividad').val())?.value;
+    const descActividad = $('#codActividad').val().split('-').pop().trim();
+
+    let receptor = {
+        "nombre": $("#nombre").val(),
+        "nombreComercial": $("#nombreComercial").val(),
+        "codActividad": codActividad,
+        "descActividad": descActividad,
+        "telefono": $("#telefonoContribuyente").val(),
+        "correo": $("#correoContribuyente").val(),
+        "direccion": {
+            "departamento": $("#departamentoContribuyente").val(),
+            "municipio": $("#municipioContribuyente").val(),
+            "complemento": $("#complementoContribuyente").val()
+        },
+        "nit": $("#nitContribuyente").val(),
+        "nrc": $("#nrcContribuyente").val(),
     }
 
     let dte = {
@@ -531,6 +543,7 @@ function generar_documento() {
             "descuGravada": 0,
             "porcentajeDescuento": 0,
             "ivaRete1": reteIva1.toFixed(2),
+            "ivaPerci1": perciIva1.toFixed(2),
             "reteRenta": reteRenta.toFixed(2),
             "saldoFavor": 0,
             "condicionOperacion": 1
@@ -575,7 +588,6 @@ function generar_documento() {
             "ventaGravada": item.ventaGravada,
             "tributos": tributos_item,
             "psv": item.precioUni,
-            "ivaItem": item.ivaItem,
             "noGravado": 0,
         });
     });
@@ -583,7 +595,7 @@ function generar_documento() {
     dte.resumen.tributos = tributos_dte;
 
     $.ajax({
-        url: "/business/factura?dte=factura",
+        url: "/business/factura?dte=credito_fiscal",
         method: "POST",
         data: JSON.stringify(dte),
         contentType: "application/json",
@@ -698,31 +710,25 @@ function calcular_tributos_item() {
     });
 
     let alerts = "";
+    let sumaTributos = 0;
     itemNuevo.tributos.forEach(trib => {
         let valorTributo = 0;
-        if (trib.codigo == "20") {
-            valorTributo = ((itemNuevo.precioUni / 1.13) * trib.valor) * itemNuevo.cantidad;
-            alerts += `
-                <div class="alert alert-info" role="alert">
-                    ${trib.descripcion}: $${valorTributo.toFixed(4)}
-                </div>
-            `;
-            trib.calculado = valorTributo;
+        if (trib.es_porcentaje) {
+            valorTributo = (itemNuevo.precioUni * trib.valor) * itemNuevo.cantidad;
         } else {
-            if (trib.es_porcentaje) {
-                valorTributo = (itemNuevo.precioUni * trib.valor) * itemNuevo.cantidad;
-            } else {
-                valorTributo = trib.valor * itemNuevo.cantidad;
-            }
-            alerts += `
-                <div class="alert alert-info" role="alert">
-                    ${trib.descripcion}: $${valorTributo.toFixed(4)}
-                </div>
-            `;
-            trib.calculado = valorTributo;
+            valorTributo = trib.valor * itemNuevo.cantidad;
         }
+        alerts += `
+            <div class="alert alert-info" role="alert">
+                ${trib.descripcion}: $${valorTributo.toFixed(4)}
+            </div>
+        `;
+        trib.calculado = valorTributo;
+        sumaTributos += valorTributo;
     });
     $("#tributosAplicados").html(alerts);
+    const venta = itemNuevo.precioUni * itemNuevo.cantidad + sumaTributos;
+    $("#total").val(venta.toFixed(4));
     // console.log(itemNuevo.tributos);
 }
 
@@ -731,18 +737,16 @@ function calcular_tributos_dte() {
     total_tributos = 0;
     items.forEach(item => {
         item.tributos.forEach(trib => {
-            if (trib.codigo !== "20") {
-                if (!tributos_dte.some(tributo => tributo.codigo === trib.codigo)) {
-                    tributos_dte.push({
-                        "codigo": trib.codigo,
-                        "descripcion": trib.descripcion,
-                        "valor": trib.calculado,
-                    });
-                } else {
-                    tributos_dte.find(tributo => tributo.codigo === trib.codigo).valor += trib.calculado;
-                }
-                total_tributos += trib.calculado;
+            if (!tributos_dte.some(tributo => tributo.codigo === trib.codigo)) {
+                tributos_dte.push({
+                    "codigo": trib.codigo,
+                    "descripcion": trib.descripcion,
+                    "valor": trib.calculado,
+                });
+            } else {
+                tributos_dte.find(tributo => tributo.codigo === trib.codigo).valor += trib.calculado;
             }
+            total_tributos += trib.calculado;
         });
     });
 
@@ -784,6 +788,5 @@ function reiniciar_item() {
         ventaGravada: 0,
         tributos: [],
         psv: 0,
-        ivaItem: 0,
     };
 }

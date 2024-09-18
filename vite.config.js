@@ -10,12 +10,14 @@ export default defineConfig({
                 'resources/js/autocomplete.js',
 
                 'resources/js/admin.js',
-                'resources/js/factura.js',
                 'resources/js/invoices.js',
                 'resources/js/clients.js',
                 'resources/js/producto.js',
                 'resources/js/customers.js',
-                'resources/js/business_dashboard.js'
+                'resources/js/business_dashboard.js',
+
+                'resources/js/factura.js',
+                'resources/js/credito_fiscal.js',
             ],
             refresh: true,
         }),

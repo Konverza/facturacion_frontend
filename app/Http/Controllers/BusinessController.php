@@ -29,7 +29,7 @@ class BusinessController extends Controller
         return view('business.dashboard', compact('statistics', 'datos_empresa', 'dtes', 'pruebas', 'productos', 'customers', 'business_plan'));
     }
 
-    public function factura()
+    public function factura(Request $request)
     {
         $business_user = BusinessUser::where('user_id', auth()->id())->first();
         $business = Business::find($business_user->business_id);
@@ -42,7 +42,20 @@ class BusinessController extends Controller
             "CAT_021" => DB::table('cat_021')->select('codigo', 'valores')->get(),
         ];
         $tributos = Tributes::all();
-        return view('business.factura', compact('datos_empresa', 'catalogos', 'tributos'));
+
+        switch($request->dte)
+        {
+            case '01':
+                $view = "business.factura";
+                break;
+            case '03':
+                $view = "business.credito_fiscal";
+                break;
+            default:
+                return redirect()->route("business.dashboard");
+        }
+
+        return view($view, compact('datos_empresa', 'catalogos', 'tributos'));
     }
 
     public function sucursales()
@@ -74,8 +87,9 @@ class BusinessController extends Controller
 
     public function send_dte(Request $request)
     {
+        $dte = $request->dte;
         // Send the same request to the API
-        $response = Http::post(env("OCTOPUS_API_URL").'/factura/', $request->all());
+        $response = Http::post(env("OCTOPUS_API_URL")."/".$dte."/", $request->all());
         // Redirect back with a success message
         return response()->json([
             "status" => $response->status(),
