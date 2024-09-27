@@ -84,6 +84,16 @@
       "resources/js/autocomplete.js"
     ]
   },
+  "resources/js/credito_fiscal.js": {
+    "file": "assets/credito_fiscal-Df54hOzn.js",
+    "name": "credito_fiscal",
+    "src": "resources/js/credito_fiscal.js",
+    "isEntry": true,
+    "imports": [
+      "_autocomplete-i5sh6eXG.js",
+      "resources/js/autocomplete.js"
+    ]
+  },
   "resources/js/customers.js": {
     "file": "assets/customers-L3YBjDJD.js",
     "name": "customers",
@@ -96,7 +106,7 @@
     ]
   },
   "resources/js/factura.js": {
-    "file": "assets/factura-D3Fl1Hgp.js",
+    "file": "assets/factura-DNvUqbB2.js",
     "name": "factura",
     "src": "resources/js/factura.js",
     "isEntry": true
