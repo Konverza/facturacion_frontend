@@ -39,7 +39,11 @@ class BusinessController extends Controller
             "CAT_014" => DB::table('cat_014')->select('codigo', 'valores')->get(),
             "CAT_017" => DB::table('cat_017')->select('codigo', 'valores')->get(),
             "CAT_018" => DB::table('cat_018')->select('codigo', 'valores')->get(),
+            "CAT_020" => DB::table('cat_020')->select('codigo', 'valores')->get(),
             "CAT_021" => DB::table('cat_021')->select('codigo', 'valores')->get(),
+            "CAT_027" => DB::table('cat_027')->select('codigo', 'valores')->get(),
+            "CAT_028" => DB::table('cat_028')->select('codigo', 'valores')->get(),
+            "CAT_031" => DB::table('cat_031')->select('codigo', 'valores')->get(),
         ];
         $tributos = Tributes::all();
 
@@ -50,6 +54,9 @@ class BusinessController extends Controller
                 break;
             case '03':
                 $view = "business.credito_fiscal";
+                break;
+            case '11':
+                $view = "business.exportacion";
                 break;
             default:
                 return redirect()->route("business.dashboard");
