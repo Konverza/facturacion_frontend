@@ -128,7 +128,7 @@
                             </table>
                         </div>
                     </div>
-                    <div class="row">
+                    {{-- <div class="row">
                         <div class="card-body shadow card">
                             <h4 class="mb-3">Pruebas Realizadas (Según el Ministerio de Hacienda):</h4>
                             <table class="table table-striped table-bordered table-lg">
@@ -149,7 +149,7 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
                 <div class="col-md-5">
                     <div class="card shadow card-body">

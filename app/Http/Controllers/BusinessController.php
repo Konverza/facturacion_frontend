@@ -23,7 +23,7 @@ class BusinessController extends Controller
         $statistics = Http::get(env("OCTOPUS_API_URL").'/dtes/statistics/?nit='.$business->nit)->json();
         $datos_empresa = Http::get(env("OCTOPUS_API_URL").'/datos_empresa/nit/'.$business->nit)->json();
         $dtes = Http::get(env("OCTOPUS_API_URL").'/dtes/?nit='.$business->nit)->json();
-        $pruebas = Http::get(env("OCTOPUS_API_URL").'/datos_empresa/pruebas/'.$business->nit)->json();
+        $pruebas = [];
         $productos = BusinessProduct::where('business_id', $business->id)->count('id');
         $customers = BusinessCustomer::where('business_id', $business->id)->count('id');
         return view('business.dashboard', compact('statistics', 'datos_empresa', 'dtes', 'pruebas', 'productos', 'customers', 'business_plan'));
