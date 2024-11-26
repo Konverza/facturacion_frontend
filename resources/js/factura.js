@@ -12,21 +12,21 @@ let items = [];
 let reteIva1 = 0;
 let reteRenta = 0;
 
-if (localStorage.getItem("items")) {
-    items = JSON.parse(localStorage.getItem("items"));
+if (localStorage.getItem("items_fe")) {
+    items = JSON.parse(localStorage.getItem("items_fe"));
     cargar_items();
     calcular_tributos_dte();
     calcular_totales();
 }
-if (localStorage.getItem("reteIva1")) {
-    reteIva1 = parseFloat(localStorage.getItem("reteIva1"));
+if (localStorage.getItem("reteIva1_fe")) {
+    reteIva1 = parseFloat(localStorage.getItem("reteIva1_fe"));
     $("#checkIvaRete1").prop("checked", true)
     cargar_items();
     calcular_tributos_dte();
     calcular_totales();
 }
-if (localStorage.getItem("reteRenta")) {
-    reteRenta = parseFloat(localStorage.getItem("reteRenta"));
+if (localStorage.getItem("reteRenta_fe")) {
+    reteRenta = parseFloat(localStorage.getItem("reteRenta_fe"));
     $("#checkReteRenta").prop("checked", true)
     cargar_items();
     calcular_tributos_dte();
@@ -427,7 +427,7 @@ $(function () {
             localStorage.setItem('reteIva1', reteIva1);
         } else {
             reteIva1 = 0;
-            localStorage.removeItem("reteIva1")
+            localStorage.removeItem("reteIva1_fe")
         }
         // Guardar items en localStorage
         calcular_totales();
@@ -440,10 +440,10 @@ $(function () {
                 sumaGravada += parseFloat(item.ventaGravada);
             });
             reteRenta = (sumaGravada / 1.13) * 0.1;
-            localStorage.setItem("reteRenta", reteRenta);
+            localStorage.setItem("reteRenta_fe", reteRenta);
         } else {
             reteRenta = 0;
-            localStorage.removeItem("reteRenta");
+            localStorage.removeItem("reteRenta_fe");
         }
         calcular_totales();
     });
@@ -460,9 +460,9 @@ $(function () {
             cancelButtonText: "No"
         }).then((result) => {
             if (result.isConfirmed) {
-                localStorage.removeItem("items")
-                localStorage.removeItem("reteIva1")
-                localStorage.removeItem("reteRenta")
+                localStorage.removeItem("items_fe")
+                localStorage.removeItem("reteIva1_fe")
+                localStorage.removeItem("reteRenta_fe")
                 window.location = "/business/dashboard"
             }
         });
@@ -531,7 +531,7 @@ function generar_documento() {
             "descuGravada": 0,
             "porcentajeDescuento": 0,
             "ivaRete1": reteIva1.toFixed(2),
-            "reteRenta": reteRenta.toFixed(2),
+            "reteRenta_fe": reteRenta.toFixed(2),
             "saldoFavor": 0,
             "condicionOperacion": 1
         },
@@ -598,9 +598,9 @@ function generar_documento() {
                         timer: 2000
                     }).then(() => {
                         $("#loadingOverlay").addClass("d-none")
-                        localStorage.removeItem("items")
-                        localStorage.removeItem("reteIva1")
-                        localStorage.removeItem("reteRenta")
+                        localStorage.removeItem("items_fe")
+                        localStorage.removeItem("reteIva1_fe")
+                        localStorage.removeItem("reteRenta_fe")
                         window.location.href = "/business/dtes";
                     })
                 } else if (response.message.estado == "CONTINGENCIA") {
