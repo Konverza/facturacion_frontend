@@ -169,7 +169,7 @@ $(function () {
         reiniciar_item();
         cargar_items();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('items_ccf', JSON.stringify(items));
 
         $("#cantidad").val("");
         $("#precio").val("");
@@ -186,7 +186,7 @@ $(function () {
         cargar_items();
         calcular_totales();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('items_ccf', JSON.stringify(items));
     });
 
     // Guardar descuentos globales
@@ -379,6 +379,7 @@ $(function () {
     $("#btnAgregarProd").on("click", function () {
         let cantidad = $("#cantidadExistente").val() || 0;
         let descuento = $("#descuentoExistente").val() || 0;
+        let tipoVenta = $("#tipoVentaExistente").val();
         itemSeleccionado.id = items.length + 1;
         itemSeleccionado.cantidad = cantidad;
         itemSeleccionado.montoDescu = descuento;
@@ -386,14 +387,19 @@ $(function () {
         itemSeleccionado.ventaExenta = 0;
         itemSeleccionado.ventaNoSuj = 0;
         itemSeleccionado.tributos.forEach(trib => {
-        if (trib.es_porcentaje) {
-            trib.calculado = (itemSeleccionado.precioUni * trib.valor) * itemSeleccionado.cantidad;
-        } else {
-            trib.calculado = trib.valor * itemSeleccionado.cantidad;
-        }
-    });
+            if(trib.codigo == "20" && tipoVenta != "gravada") {
+                // Remove this tributo and continue to the next one
+                itemSeleccionado.tributos = itemSeleccionado.tributos.filter(tributo => tributo.codigo !== "20");
+                return;
+            }
+            if (trib.es_porcentaje) {
+                trib.calculado = (itemSeleccionado.precioUni * trib.valor) * itemSeleccionado.cantidad;
+            } else {
+                trib.calculado = trib.valor * itemSeleccionado.cantidad;
+            }
+        });
 
-        switch ($("#tipoVentaExistente").val()) {
+        switch (tipoVenta) {
             case "gravada":
                 itemSeleccionado.ventaGravada = $("#totalExistente").val();
                 break;
@@ -409,7 +415,7 @@ $(function () {
         items.push(itemSeleccionado);
         cargar_items();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('items_ccf', JSON.stringify(items));
 
         $("#cantidadExistente").val("");
         $("#descuentoExistente").val("");

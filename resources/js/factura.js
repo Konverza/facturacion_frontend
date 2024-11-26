@@ -166,7 +166,7 @@ $(function () {
         reiniciar_item();
         cargar_items();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('items_fe', JSON.stringify(items));
 
         $("#cantidad").val("");
         $("#precio").val("");
@@ -183,7 +183,7 @@ $(function () {
         cargar_items();
         calcular_totales();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('items_fe', JSON.stringify(items));
     });
 
     // Guardar descuentos globales
@@ -408,7 +408,7 @@ $(function () {
         items.push(itemSeleccionado);
         cargar_items();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('items_fe', JSON.stringify(items));
 
         $("#cantidadExistente").val("");
         $("#descuentoExistente").val("");
