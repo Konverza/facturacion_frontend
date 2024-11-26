@@ -22,7 +22,7 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    // server: {
-    //     https: true, // Asegura que Vite use HTTPS
-    // },
+    server: {
+        https: true, // Asegura que Vite use HTTPS
+    },
 });
