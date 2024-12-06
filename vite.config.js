@@ -18,6 +18,7 @@ export default defineConfig({
 
                 'resources/js/factura.js',
                 'resources/js/credito_fiscal.js',
+                'resources/js/nota_credito.js',
             ],
             refresh: true,
         }),

@@ -55,6 +55,9 @@ class BusinessController extends Controller
             case '03':
                 $view = "business.credito_fiscal";
                 break;
+            case '05':
+                $view = "business.nota_credito";
+                break;
             case '11':
                 $view = "business.exportacion";
                 break;

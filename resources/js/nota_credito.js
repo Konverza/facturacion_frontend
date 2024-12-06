@@ -17,30 +17,30 @@ let reteRenta = 0;
 let perciIva1 = 0;
 
 
-if (localStorage.getItem("items_ccf")) {
-    items = JSON.parse(localStorage.getItem("items_ccf"));
+if (localStorage.getItem("items_nc")) {
+    items = JSON.parse(localStorage.getItem("items_nc"));
     cargar_items();
     calcular_tributos_dte();
     calcular_totales();
 }
-if (localStorage.getItem("reteIva1_ccf")) {
-    reteIva1 = parseFloat(localStorage.getItem("reteIva1_ccf"));
+if (localStorage.getItem("reteIva1_nc")) {
+    reteIva1 = parseFloat(localStorage.getItem("reteIva1_nc"));
     $("#checkIvaRete1").prop("checked", true)
     cargar_items();
     calcular_tributos_dte();
     calcular_totales();
 }
 
-if (localStorage.getItem("perciIva1_ccf")) {
-    perciIva1 = parseFloat(localStorage.getItem("perciIva1_ccf"));
+if (localStorage.getItem("perciIva1_nc")) {
+    perciIva1 = parseFloat(localStorage.getItem("perciIva1_nc"));
     $("#checkIvaPerci1").prop("checked", true)
     cargar_items();
     calcular_tributos_dte();
     calcular_totales();
 }
 
-if (localStorage.getItem("reteRenta_ccf")) {
-    reteRenta = parseFloat(localStorage.getItem("reteRenta_ccf"));
+if (localStorage.getItem("reteRenta_nc")) {
+    reteRenta = parseFloat(localStorage.getItem("reteRenta_nc"));
     $("#checkReteRenta").prop("checked", true)
     cargar_items();
     calcular_tributos_dte();
@@ -169,7 +169,7 @@ $(function () {
         reiniciar_item();
         cargar_items();
         // Guardar items en localStorage
-        localStorage.setItem('items_ccf', JSON.stringify(items));
+        localStorage.setItem('items_nc', JSON.stringify(items));
 
         $("#cantidad").val("");
         $("#precio").val("");
@@ -186,7 +186,7 @@ $(function () {
         cargar_items();
         calcular_totales();
         // Guardar items en localStorage
-        localStorage.setItem('items_ccf', JSON.stringify(items));
+        localStorage.setItem('items_nc', JSON.stringify(items));
     });
 
     // Guardar descuentos globales
@@ -415,7 +415,7 @@ $(function () {
         items.push(itemSeleccionado);
         cargar_items();
         // Guardar items en localStorage
-        localStorage.setItem('items_ccf', JSON.stringify(items));
+        localStorage.setItem('items_nc', JSON.stringify(items));
 
         $("#cantidadExistente").val("");
         $("#descuentoExistente").val("");
@@ -434,7 +434,7 @@ $(function () {
             localStorage.setItem('reteIva1', reteIva1);
         } else {
             reteIva1 = 0;
-            localStorage.removeItem("reteIva1_ccf")
+            localStorage.removeItem("reteIva1_nc")
         }
         // Guardar items en localStorage
         calcular_totales();
@@ -447,10 +447,10 @@ $(function () {
                 sumaGravada += parseFloat(item.ventaGravada);
             });
             reteRenta = sumaGravada * 0.1;
-            localStorage.setItem("reteRenta_ccf", reteRenta);
+            localStorage.setItem("reteRenta_nc", reteRenta);
         } else {
             reteRenta = 0;
-            localStorage.removeItem("reteRenta_ccf");
+            localStorage.removeItem("reteRenta_nc");
         }
         calcular_totales();
     });
@@ -462,10 +462,10 @@ $(function () {
                 sumaGravada += parseFloat(item.ventaGravada);
             });
             perciIva1 = sumaGravada * 0.01;
-            localStorage.setItem("perciIva1_ccf", perciIva1);
+            localStorage.setItem("perciIva1_nc", perciIva1);
         } else {
             perciIva1 = 0;
-            localStorage.removeItem("perciIva1_ccf");
+            localStorage.removeItem("perciIva1_nc");
         }
         calcular_totales();
     });
@@ -482,9 +482,9 @@ $(function () {
             cancelButtonText: "No"
         }).then((result) => {
             if (result.isConfirmed) {
-                localStorage.removeItem("items_ccf")
-                localStorage.removeItem("reteIva1_ccf")
-                localStorage.removeItem("reteRenta_ccf")
+                localStorage.removeItem("items_nc")
+                localStorage.removeItem("reteIva1_nc")
+                localStorage.removeItem("reteRenta_nc")
                 window.location = "/business/dashboard"
             }
         });
@@ -550,7 +550,7 @@ function generar_documento() {
             "porcentajeDescuento": 0,
             "ivaRete1": reteIva1.toFixed(2),
             "ivaPerci1": perciIva1.toFixed(2),
-            "reteRenta_ccf": reteRenta.toFixed(2),
+            "reteRenta_nc": reteRenta.toFixed(2),
             "saldoFavor": 0,
             "condicionOperacion": 1
         },
@@ -626,9 +626,9 @@ function generar_documento() {
                         timer: 2000
                     }).then(() => {
                         $("#loadingOverlay").addClass("d-none")
-                        localStorage.removeItem("items_ccf")
-                        localStorage.removeItem("reteIva1_ccf")
-                        localStorage.removeItem("reteRenta_ccf")
+                        localStorage.removeItem("items_nc")
+                        localStorage.removeItem("reteIva1_nc")
+                        localStorage.removeItem("reteRenta_nc")
                         window.location.href = "/business/dtes";
                     })
                 } else if (response.message.estado == "CONTINGENCIA") {

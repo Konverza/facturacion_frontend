@@ -571,34 +571,34 @@
                         <div class="card-body fw-bold bg-light">
                             <div class="form-group row">
                                 <div class="col-md-2">
-                                    <label class="col-form-label" for="documentoEmitir">No. Documento</label>
+                                    <label class="col-form-label" for="docuEntrega">No. Documento</label>
                                 </div>
                                 <div class="col-md-4">
                                     <input type="text" placeholder="Responsable de emitir el documento"
-                                        class="form-control" id="responsable2">
+                                        class="form-control" id="docuEntrega">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="col-form-label" for="nombreEmitir">Nombre</label>
+                                    <label class="col-form-label" for="nombEntrega">Nombre</label>
                                 </div>
                                 <div class="col-md-4">
                                     <input type="text" placeholder="Responsable de emitir el documento"
-                                        class="form-control" id="responsable2">
+                                        class="form-control" id="nombEntrega">
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <div class="col-md-2">
-                                    <label class="col-form-label" for="documentoRecibir">No. Documento</label>
+                                    <label class="col-form-label" for="docuRecibe">No. Documento</label>
                                 </div>
                                 <div class="col-md-4">
                                     <input type="text" placeholder="Responsable de recibir el documento"
-                                        class="form-control" id="responsable2">
+                                        class="form-control" id="docuRecibe">
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="col-form-label" for="nombreRecibir">Nombre</label>
+                                    <label class="col-form-label" for="nombRecibe">Nombre</label>
                                 </div>
                                 <div class="col-md-4">
                                     <input type="text" placeholder="Responsable de recibir el documento"
-                                        class="form-control" id="responsable2">
+                                        class="form-control" id="nombRecibe">
                                 </div>
                             </div>
                         </div>
