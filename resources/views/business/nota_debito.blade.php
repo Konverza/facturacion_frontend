@@ -265,7 +265,7 @@
                             </div>
                             <div class="card-header">
                                 <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-info"></i>
-                                    Detalle de la Nota de Crédito</h5>
+                                    Detalle de la Nota de Débito</h5>
                             </div>
                             <div class="card-body bg-light ">
                                 <h4>Cuerpo del Documento</h4>

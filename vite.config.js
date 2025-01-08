@@ -19,7 +19,8 @@ export default defineConfig({
                 'resources/js/factura.js',
                 'resources/js/credito_fiscal.js',
                 'resources/js/nota_credito.js',
-                'resources/js/nota_debito.js'
+                'resources/js/nota_debito.js',
+                'resources/js/comprobante_retencion.js',
             ],
             refresh: true,
         }),
