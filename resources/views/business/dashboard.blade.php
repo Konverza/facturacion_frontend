@@ -3,6 +3,7 @@
         '01' => 'Factura Electrónica',
         '03' => 'Crédito Fiscal',
         '05' => 'Nota de Crédito',
+        '06' => 'Nota de Débito',
         '07' => 'Comprobante de Retención',
         '11' => 'Factura de Exportación',
         '14' => 'Factura de Sujeto Excluido',

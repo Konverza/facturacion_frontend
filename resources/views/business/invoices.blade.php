@@ -3,12 +3,13 @@
         '01' => 'Factura Electrónica',
         '03' => 'Crédito Fiscal',
         '05' => 'Nota de Crédito',
+        '06' => 'Nota de Débito',
         '07' => 'Comprobante de Retención',
         '11' => 'Factura de Exportación',
         '14' => 'Factura de Sujeto Excluido',
     ];
 
-    $receptores_nit = ['03', '05'];
+    $receptores_nit = ['03', '05', '06'];
     $receptores_num = ['01', '07', '11', '14'];
 @endphp
 @extends('layouts.app')

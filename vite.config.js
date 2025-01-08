@@ -19,11 +19,12 @@ export default defineConfig({
                 'resources/js/factura.js',
                 'resources/js/credito_fiscal.js',
                 'resources/js/nota_credito.js',
+                'resources/js/nota_debito.js'
             ],
             refresh: true,
         }),
     ],
-    server: {
-        https: true, // Asegura que Vite use HTTPS
-    },
+    // server: {
+    //     https: true, // Asegura que Vite use HTTPS
+    // },
 });
