@@ -84,8 +84,18 @@
       "resources/js/autocomplete.js"
     ]
   },
+  "resources/js/comprobante_retencion.js": {
+    "file": "assets/comprobante_retencion-BRFtuROY.js",
+    "name": "comprobante_retencion",
+    "src": "resources/js/comprobante_retencion.js",
+    "isEntry": true,
+    "imports": [
+      "_autocomplete-i5sh6eXG.js",
+      "resources/js/autocomplete.js"
+    ]
+  },
   "resources/js/credito_fiscal.js": {
-    "file": "assets/credito_fiscal-CLv9hC6Y.js",
+    "file": "assets/credito_fiscal-Cpt8tP1n.js",
     "name": "credito_fiscal",
     "src": "resources/js/credito_fiscal.js",
     "isEntry": true,
@@ -118,9 +128,19 @@
     "isEntry": true
   },
   "resources/js/nota_credito.js": {
-    "file": "assets/nota_credito-CobCzm-A.js",
+    "file": "assets/nota_credito-V-LeM9nO.js",
     "name": "nota_credito",
     "src": "resources/js/nota_credito.js",
+    "isEntry": true,
+    "imports": [
+      "_autocomplete-i5sh6eXG.js",
+      "resources/js/autocomplete.js"
+    ]
+  },
+  "resources/js/nota_debito.js": {
+    "file": "assets/nota_debito-D2rCV5YX.js",
+    "name": "nota_debito",
+    "src": "resources/js/nota_debito.js",
     "isEntry": true,
     "imports": [
       "_autocomplete-i5sh6eXG.js",
