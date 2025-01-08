@@ -95,6 +95,42 @@ class BusinessController extends Controller
         return view('business.invoices', ['invoices' => $dtes]);
     }
 
+    public function buscar_dtes(Request $request){
+        $business_user = BusinessUser::where('user_id', auth()->id())->first();
+        $business = Business::find($business_user->business_id);
+        $response = Http::get(env("OCTOPUS_API_URL").'/dtes/?nit=' . $business->nit);
+        $dtes = $response->json();
+
+        $nitBusqueda = $request->nitBusqueda;
+        $tipoDocumentoElectronico = $request->tipoDocumentoElectronico;
+        $desdeBusqueda = \Carbon\Carbon::parse($request->desdeBusqueda);
+        $hastaBusqueda = \Carbon\Carbon::parse($request->hastaBusqueda);
+
+        // Filter the invoices based on the search criteria
+        $dtes_matching = [];
+        foreach($dtes as $dte){
+            if($dte["tipo_dte"] == $tipoDocumentoElectronico){
+                if($dte["estado"] == "PROCESADO"){
+                    $fechaDte = \Carbon\Carbon::parse($dte["fhProcesamiento"]);
+                    if($fechaDte->between($desdeBusqueda, $hastaBusqueda)){
+                        $documento = json_decode($dte["documento"]);
+                        $receptor = $documento->receptor;
+                        if($receptor->nit == $nitBusqueda){
+                            $monto = ($tipoDocumentoElectronico == "07") ? $documento->resumen->totalIVAretenido : $documento->resumen->totalPagar;
+                            $dtes_matching[] = [
+                                "tipo_dte" => $dte["tipo_dte"],
+                                "fecha_emision" => $fechaDte->format('Y-m-d'),
+                                "codigo_generacion" => $dte["codGeneracion"],
+                                "monto" => $monto
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+        return response()->json($dtes_matching);
+    }
+
     public function send_dte(Request $request)
     {
         $dte = $request->dte;

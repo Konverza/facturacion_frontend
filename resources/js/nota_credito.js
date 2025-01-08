@@ -12,10 +12,22 @@ let total_tributos = 0;
 let descuentosTotal = 0;
 
 let items = [];
+let documentosRelacionados = [];
 let reteIva1 = 0;
 let reteRenta = 0;
 let perciIva1 = 0;
 
+let tiposDoc = [
+    { numero: "03", descripcion: "Comprobante de Crédito Fiscal" },
+    { numero: "07", descripcion: "Comprobante de Retención" },
+]
+
+let tiposGeneracion = [
+    { numero: 1, descripcion: "Físico" },
+    { numero: 2, descripcion: "Electrónico" },
+]
+
+let dtesResultado = []
 
 if (localStorage.getItem("items_nc")) {
     items = JSON.parse(localStorage.getItem("items_nc"));
@@ -151,6 +163,7 @@ $(function () {
         itemNuevo.montoDescu = descuento;
         itemNuevo.descripcion = descripcion;
         itemNuevo.cantidad = cantidad;
+        itemNuevo.numeroDocumento = $("#documentoRelacionado").val();
 
         switch ($("#tipoVenta").val()) {
             case "gravada":
@@ -386,6 +399,7 @@ $(function () {
         itemSeleccionado.ventaGravada = 0;
         itemSeleccionado.ventaExenta = 0;
         itemSeleccionado.ventaNoSuj = 0;
+        itemSeleccionado.numeroDocumento = $("#documentoRelacionadoExistente").val();
         itemSeleccionado.tributos.forEach(trib => {
             if(trib.codigo == "20" && tipoVenta != "gravada") {
                 // Remove this tributo and continue to the next one
@@ -489,6 +503,81 @@ $(function () {
             }
         });
     })
+
+    // Documentos relacionados
+    $("#guardarDocFisico").on("click", function () {
+        documentosRelacionados.push({
+            "tipoDocumento": $("#tipoDocumentoFisico").val(),
+            "tipoGeneracion": 1,
+            "numeroDocumento": $("#numeroDocumentoFisico").val(),
+            "fechaEmision": $("#fechaEmisionFisico").val()
+        });
+        mostrar_documentos_relacionados();
+    });
+
+    $("#docElectronico").on("show.bs.modal", function (e) {
+        if($("#nitContribuyente").val() == ""){
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Debe ingresar el NIT del contribuyente antes de continuar',
+            })
+            e.preventDefault()
+        } else {
+            $("#nitBusqueda").val($("#nitContribuyente").val());
+        }
+    });
+
+    $("#buscarDTE").on("click", function () {
+        $("#loadingOverlay").removeClass("d-none")
+        $.ajax({
+            url: "/business/buscar_dte",
+            method: "POST",
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                nitBusqueda: $("#nitBusqueda").val(),
+                tipoDocumentoElectronico: $("#tipoDocumentoElectronico").val(),
+                desdeBusqueda: $("#desdeBusqueda").val(),
+                hastaBusqueda: $("#hastaBusqueda").val()
+            },
+            success: function(response){
+                dtesResultado = response;
+                $("#loadingOverlay").addClass("d-none")
+                if(dtesResultado.length > 0){
+                    $("#resultadosDte").html("");
+                    dtesResultado.forEach(dte => {
+                        $("#resultadosDte").append(`
+                            <tr>
+                                <td>${dte.fecha_emision}</td>
+                                <td>${dte.codigo_generacion}</td>
+                                <td>$${dte.monto.toFixed(2)}</td>
+                                <td>
+                                    <button type="button" class="btn btn-primary btn-sm btnSeleccionarDTE" data-id="${dte.codigo_generacion}">Seleccionar</button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                } else {
+                    $("#resultadosDte").html(`
+                        <tr>
+                            <td colspan="4" class="text-center">No se encontraron resultados</td>
+                        </tr>
+                    `);
+                }
+            }
+        });
+    });
+
+    $(document).on("click", ".btnSeleccionarDTE", function () {
+        let dteSeleccionado = dtesResultado.find(dte => dte.codigo_generacion == $(this).data("id"));
+        documentosRelacionados.push({
+            "tipoDocumento": dteSeleccionado.tipo_dte,
+            "tipoGeneracion": 2,
+            "numeroDocumento": dteSeleccionado.codigo_generacion,
+            "fechaEmision": dteSeleccionado.fecha_emision
+        });
+        mostrar_documentos_relacionados();
+    });
 });
 
 function calcular_subtotal_item(cantidad = 0, precio = 0, descuento = 0) {
@@ -541,7 +630,7 @@ function generar_documento() {
         "nit": $("#nit").val(),
         "receptor": receptor,
         "cuerpoDocumento": [],
-        "documentoRelacionado": null,
+        "documentoRelacionado": documentosRelacionados,
         "ventaTercero": null,
         "resumen": {
             "descuNoSuj": 0,
@@ -550,7 +639,7 @@ function generar_documento() {
             "porcentajeDescuento": 0,
             "ivaRete1": reteIva1.toFixed(2),
             "ivaPerci1": perciIva1.toFixed(2),
-            "reteRenta_nc": reteRenta.toFixed(2),
+            "reteRenta": reteRenta.toFixed(2),
             "saldoFavor": 0,
             "condicionOperacion": 1
         },
@@ -602,16 +691,17 @@ function generar_documento() {
             "ventaExenta": item.ventaExenta,
             "ventaGravada": item.ventaGravada,
             "tributos": tributos_item,
-            "psv": item.precioUni,
             "noGravado": 0,
+            "numeroDocumento": item.numeroDocumento
         });
     });
 
     dte.resumen.tributos = tributos_dte;
 
+    console.log(dte);
 
     $.ajax({
-        url: "/business/factura?dte=credito_fiscal",
+        url: "/business/factura?dte=nota_credito",
         method: "POST",
         data: JSON.stringify(dte),
         contentType: "application/json",
@@ -620,8 +710,8 @@ function generar_documento() {
                 if (response.message.estado == "PROCESADO") {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Factura generada',
-                        text: 'La factura ha sido generada exitosamente',
+                        title: 'Nota de Crédito generada',
+                        text: 'La Nota de Crédito ha sido generada exitosamente',
                         showConfirmButton: false,
                         timer: 2000
                     }).then(() => {
@@ -634,8 +724,8 @@ function generar_documento() {
                 } else if (response.message.estado == "CONTINGENCIA") {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Factura generada en CONTINGENCIA',
-                        text: 'Se generó la factura, pero no se envió a MH',
+                        title: 'Nota de Crédito generada en CONTINGENCIA',
+                        text: 'Se generó la Nota de Crédito, pero no se envió a MH',
                         showConfirmButton: false,
                         timer: 2000
                     }).then(() => {
@@ -645,7 +735,7 @@ function generar_documento() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Factura Rechazada',
+                        title: 'Nota de Crédito Rechazada',
                         text: `Motivo: ${response.message.observaciones}`,
                     }).then(() => {
                         $("#loadingOverlay").addClass("d-none")
@@ -654,7 +744,7 @@ function generar_documento() {
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'La factura no se envió',
+                    title: 'La Nota de Crédito no se envió',
                     text: 'Ha ocurrido un error, verifica los datos e intenta de nuevo',
                     showConfirmButton: false,
                     timer: 2000
@@ -668,7 +758,7 @@ function generar_documento() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Ha ocurrido un error al generar la factura',
+                text: 'Ha ocurrido un error al generar la Nota de Crédito',
                 showConfirmButton: false,
                 timer: 2000
             })
@@ -810,4 +900,35 @@ function reiniciar_item() {
         tributos: [],
         psv: 0,
     };
+}
+
+function mostrar_documentos_relacionados(){
+    let tbody = $("#documentosRelacionados");
+    let selectNuevo = $("#documentoRelacionado");
+    let selectExistente = $("#documentoRelacionadoExistente");
+    tbody.empty();
+    selectNuevo.empty();
+    documentosRelacionados.forEach(doc => {
+        tbody.append(`
+            <tr>
+                <td>${
+                    tiposDoc.find(tipo => tipo.numero === doc.tipoDocumento).descripcion
+                }</td>
+                <td>${
+                    tiposGeneracion.find(tipo => tipo.numero === doc.tipoGeneracion).descripcion
+                }</td>
+                <td>${doc.numeroDocumento}</td>
+                <td>${doc.fechaEmision}</td>
+            </tr>
+        `);
+        selectNuevo.append(new Option(
+            `${doc.numeroDocumento} - ${tiposDoc.find(tipo => tipo.numero === doc.tipoDocumento).descripcion}`,
+            doc.numeroDocumento
+        ));
+        selectExistente.append(new Option(
+            `${doc.numeroDocumento} - ${tiposDoc.find(tipo => tipo.numero === doc.tipoDocumento).descripcion}`,
+            doc.numeroDocumento
+        ));
+    });
+
 }

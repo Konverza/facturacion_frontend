@@ -219,7 +219,6 @@
                                                         </form>
                                                     </div>
                                                 </div>
-                                                <a href="#" role="button">Actualizar</a>
                                             </div>
 
                                         </div>
@@ -773,7 +772,14 @@
                                             </div>
                                         </div>
                                         <div class="row">
-                                            <div class="col-3"></div>
+                                            <div class="col-3">
+                                                <div class="mb-3">
+                                                    <label for="documentoRelacionado" class="form-label">Documento Relacionado</label>
+                                                    <select id="documentoRelacionado" class="form-select">
+                                                        <option value="">-- Seleccionar --</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <div class="col-3"></div>
                                             <div class="col-3">
                                                 <div class="mb-3">
@@ -1088,6 +1094,14 @@
                                                         placeholder="Total" readonly>
                                                 </div>
                                             </div>
+                                            <div class="col-4">
+                                                <div class="mb-3">
+                                                    <label for="documentoRelacionadoExistente" class="form-label">Documento Relacionado</label>
+                                                    <select id="documentoRelacionadoExistente" class="form-select">
+                                                        <option value="">-- Seleccionar --</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <div class="col-12">
                                                 <button class="btn btn-success" id="btnAgregarProd">Añadir
                                                     Producto</button>
@@ -1176,7 +1190,7 @@
             </div>
 
             <!-- Modal DTE ELectrónico -->
-            <div class="modal fade" id="docElectronico" tabindex="-1" aria-labelledby="docElectronicoLabel" aria-hidden="true">
+            <div class="modal modal-lg fade" id="docElectronico" tabindex="-1" aria-labelledby="docElectronicoLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -1193,16 +1207,64 @@
                                     <div class="row">
                                         <div class="col-lg-6">
                                             <div class="form-group">
-                                                <label for="" class="form-label"></label>
+                                                <label for="nitBusqueda" class="form-label">NIT del Receptor</label>
+                                                <input type="text" class="form-control" id="nitBusqueda" readonly>
                                             </div>
                                         </div>
-                                        <div class="col-lg-6"></div>
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label for="tipoDocumentoElectronico" class="form-label">Tipo de Documento</label>
+                                                <select name="tipoDocumentoElectronico" id="tipoDocumentoElectronico" class="form-select">
+                                                    <option value="03">Comprobante de Crédito Fiscal</option>
+                                                    <option value="07">Comprobante de Retención</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <div class="row mb-3">
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label for="desdeBusqueda" class="form-label">Fecha Emitido Desde:</label>
+                                                <input type="datetime-local" name="" id="desdeBusqueda" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label for="hastaBusqueda" class="form-label">Fecha Emitido Hasta:</label>
+                                                <input type="datetime-local" name="" id="hastaBusqueda" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-lg-12">
+                                            <button class="btn btn-primary" id="buscarDTE">
+                                                <i class="fas fa-search"></i> Buscar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Resultados de Búsqueda -->
+                            <div class="card mt-2">
+                                <div class="card-header">
+                                    <h5 class="card-title">Resultados</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered table-hover">
+                                        <thead>
+                                            <th>Fecha de Emisión</th>
+                                            <th>Código de Generación</th>
+                                            <th>Monto</th>
+                                            <th>Seleccionar</th>
+                                        </thead>
+                                        <tbody id="resultadosDte">
+                                            
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-primary" id="guardarDocElectronico">Guardar</button>
                             <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
                         </div>
                     </div>

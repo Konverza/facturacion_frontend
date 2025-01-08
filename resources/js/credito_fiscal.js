@@ -620,8 +620,8 @@ function generar_documento() {
                 if (response.message.estado == "PROCESADO") {
                     Swal.fire({
                         icon: 'success',
-                        title: 'Factura generada',
-                        text: 'La factura ha sido generada exitosamente',
+                        title: 'Crédito Fiscal generado',
+                        text: 'El Crédito Fiscal ha sido generado exitosamente',
                         showConfirmButton: false,
                         timer: 2000
                     }).then(() => {
@@ -634,8 +634,8 @@ function generar_documento() {
                 } else if (response.message.estado == "CONTINGENCIA") {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Factura generada en CONTINGENCIA',
-                        text: 'Se generó la factura, pero no se envió a MH',
+                        title: 'Crédito Fiscal generado en CONTINGENCIA',
+                        text: 'Se generó el Crédito Fiscal, pero no se envió a MH',
                         showConfirmButton: false,
                         timer: 2000
                     }).then(() => {
@@ -645,7 +645,7 @@ function generar_documento() {
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Factura Rechazada',
+                        title: 'Crédito Fiscal Rechazado',
                         text: `Motivo: ${response.message.observaciones}`,
                     }).then(() => {
                         $("#loadingOverlay").addClass("d-none")
@@ -654,7 +654,7 @@ function generar_documento() {
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'La factura no se envió',
+                    title: 'El Crédito Fiscal no se envió',
                     text: 'Ha ocurrido un error, verifica los datos e intenta de nuevo',
                     showConfirmButton: false,
                     timer: 2000
@@ -668,7 +668,7 @@ function generar_documento() {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'Ha ocurrido un error al generar la factura',
+                text: 'Ha ocurrido un error al generar el Crédito Fiscal',
                 showConfirmButton: false,
                 timer: 2000
             })
