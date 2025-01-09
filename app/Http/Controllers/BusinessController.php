@@ -121,20 +121,88 @@ class BusinessController extends Controller
                     if($fechaDte->between($desdeBusqueda, $hastaBusqueda)){
                         $documento = json_decode($dte["documento"]);
                         $receptor = $documento->receptor;
-                        if($receptor->nit == $nitBusqueda){
-                            $monto = ($tipoDocumentoElectronico == "07") ? $documento->resumen->totalIVAretenido : $documento->resumen->totalPagar;
-                            $dtes_matching[] = [
-                                "tipo_dte" => $dte["tipo_dte"],
-                                "fecha_emision" => $fechaDte->format('Y-m-d'),
-                                "codigo_generacion" => $dte["codGeneracion"],
-                                "monto" => $monto
-                            ];
+                        if($tipoDocumentoElectronico == "01"){
+                            if($receptor->numDocumento == $nitBusqueda){
+                                $dtes_matching[] = [
+                                    "tipo_dte" => $dte["tipo_dte"],
+                                    "fecha_emision" => $fechaDte->format('Y-m-d'),
+                                    "codigo_generacion" => $dte["codGeneracion"],
+                                    "monto" => $monto
+                                ];
+                            }
+                        } else {
+                            if($receptor->nit == $nitBusqueda){
+                                $monto = ($tipoDocumentoElectronico == "07") ? $documento->resumen->totalIVAretenido : $documento->resumen->totalPagar;
+                                $dtes_matching[] = [
+                                    "tipo_dte" => $dte["tipo_dte"],
+                                    "fecha_emision" => $fechaDte->format('Y-m-d'),
+                                    "codigo_generacion" => $dte["codGeneracion"],
+                                    "monto" => $monto
+                                ];
+                            }
                         }
                     }
                 }
             }
         }
         return response()->json($dtes_matching);
+    }
+
+    public function anular_dte(Request $request){
+        $codGeneracion = $request->codGeneracion;
+        $motivo = $request->motivo;
+        $dte = Http::get(env("OCTOPUS_API_URL").'/dtes/' . $codGeneracion)->json();
+        $documento = json_decode($dte["documento"]);
+
+        $business_user = BusinessUser::where('user_id', auth()->id())->first();
+        $business = Business::find($business_user->business_id);
+        $nit = $business->nit;
+
+        $tipoDoc = null;
+        $nombre = null;
+        $numDocumento = null;
+
+
+        if ($dte['tipo_dte'] == '14') {
+            $receptor = $documento->sujetoExcluido;
+        } else {
+            $receptor = $documento->receptor;
+        }
+
+        $nombre = $receptor->nombre;
+        if (in_array($dte['tipo_dte'], ['03', '05', '06'])) {
+            $tipoDoc = "36";
+            $numDocumento = $receptor->nit;
+        } else {
+            $tipoDoc = $receptor->tipoDocumento;
+            $numDocumento = $receptor->numDocumento;
+        }
+
+        $response = Http::post(env("OCTOPUS_API_URL").'/anulacion/', [
+            "nit" => $nit,
+            "documento" => [
+                "codigoGeneracion" => $codGeneracion,
+                "fechaEmision" => $documento->identificacion->fecEmi,
+                "horaEmision" => $documento->identificacion->horEmi,
+                "codigoGeneracionR" => null,
+            ],
+            "motivo" => [
+                "tipoAnulacion" => 2,
+                "motivoAnulacion" => $motivo,
+                "nombreResponsable" => auth()->user()->name,
+                "tipoDocResponsable" => "36",
+                "numDocResponsable" => $nit,
+                "nombreSolicita" => $nombre,
+                "tipoDocSolicita" => $tipoDoc,
+                "numDocSolicita" => $numDocumento,
+            ]
+        ]);
+        $data = $response->json();
+        if($response->status() == 201){
+            return redirect()->route('business.dtes')->with('success', $data["descripcionMsg"]);
+        } else {
+            return redirect()->route('business.dtes')->with('error', $data["detail"]["descripcionMsg"]);
+        }
     }
 
     public function send_dte(Request $request)

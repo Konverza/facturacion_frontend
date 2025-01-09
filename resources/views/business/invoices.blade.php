@@ -26,6 +26,16 @@
                 });
             </script>
         @endif
+        @if (session("error"))
+            <script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: '{{ session('error') }}',
+                    confirmButtonText: 'Aceptar'
+                });
+            </script>
+        @endif
         <div class="row justify-content-center">
             <div class="col-md-12">
                 <div class="row mt-5 mb-2">
@@ -41,7 +51,7 @@
                     </div>
                 </div>
                 <div class="row my-4">
-                    <table class="table table-bordered table-hover table-striped w-100 align-middle" id="invoicesTable">
+                    <table class="table small table-bordered table-hover table-striped w-100 align-middle" id="invoicesTable">
                         <thead>
                             <tr class="align-middle text-center">
                                 <th style="width: 5%;">ID</th>
@@ -140,23 +150,58 @@
                                 <td>
                                     @if ($invoice['estado'] === 'CONTINGENCIA' || $invoice['estado'] === 'RECHAZADO')
                                     @else
-                                        <div class="d-inline-flex">
-                                            <a href="{{ $invoice['enlace_pdf'] }}"
-                                                class="btn btn-sm btn-danger ms-1 d-flex align-items-center"
-                                                target="_blank">PDF</a>
-                                            <a href="{{ $invoice['enlace_json'] }}"
-                                                class="btn btn-sm btn-success ms-1 d-flex align-items-center"
-                                                target="_blank">JSON</a>
-                                            <a href="{{ $invoice['enlace_rtf'] }}"
-                                                class="btn btn-sm btn-warning ms-1 d-flex align-items-center"
-                                                target="_blank">Tiquete</a>
-                                            <button type="button"
-                                                class="btn btn-primary btn-sm ms-1 btn-modal d-flex align-items-center"
-                                                data-bs-toggle="modal" data-bs-target="#mailModal"
-                                                data-id="{{ $invoice['codGeneracion'] }}">
-                                                Reenviar Correo
+                                    <div class="d-inline-flex align-items-center">
+                                        <div class="dropdown d-inline-flex">
+                                            <button class="btn btn-primary dropdown-toggle" type="button"
+                                                id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
                                             </button>
+                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                <li>
+                                                    <a href="{{ $invoice['enlace_pdf'] }}" class="dropdown-item"
+                                                        target="_blank">
+                                                        <i class="fas fa-file-pdf me-2"></i> Ver PDF
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="{{ $invoice['enlace_json'] }}" class="dropdown-item"
+                                                        target="_blank">
+                                                        <i class="fas fa-file-code me-2"></i> Ver JSON
+                                                    </a>
+                                                </li>
+                                                @if($invoice['enlace_rtf'])
+                                                    <li>
+                                                        <a href="{{ $invoice['enlace_rtf'] }}" class="dropdown-item"
+                                                            target="_blank">
+                                                            <i class="fas fa-file-alt me-2"></i> Ver Tiquete
+                                                        </a>
+                                                    </li>
+                                                @endif
+                                                <li>
+                                                    <button type="button" class="dropdown-item btn-modal"
+                                                        data-bs-toggle="modal" data-bs-target="#mailModal"
+                                                        data-id="{{ $invoice['codGeneracion'] }}">
+                                                        <i class="fas fa-envelope me-2"></i> Reenviar Correo
+                                                    </button>
+                                                </li>
+                                            </ul>
                                         </div>
+                                        @if($invoice["estado"] == "PROCESADO")
+                                            @php
+                                                $fecha_procesado = \Carbon\Carbon::parse($invoice['fhProcesamiento']);
+                                            @endphp
+                                            @if(in_array($invoice['tipo_dte'], ['01', '11']) && $fecha_procesado->diffInDays() < 90)
+                                                <button type="button" class="btn btn-danger btn-anular ms-2"data-bs-toggle="modal" data-bs-target="#anularModal"
+                                                data-id="{{ $invoice['codGeneracion'] }}">
+                                                    <i class="fas fa-times-circle me-2"></i> Anular
+                                                </button>
+                                            @elseif($fecha_procesado->diffInDays() > 1)
+                                                <button type="button" class="btn btn-danger btn-anular ms-2"data-bs-toggle="modal" data-bs-target="#anularModal"
+                                                data-id="{{ $invoice['codGeneracion'] }}">
+                                                    <i class="fas fa-times-circle me-2"></i> Anular
+                                                </button>
+                                            @endif
+                                        @endif
                                     @endif
                                 </td>
                                 </tr>
@@ -180,7 +225,7 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Mail Modal -->
     <div class="modal fade" id="mailModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -201,6 +246,35 @@
                         </div>
                         <div class="form-group mt-2">
                             <input type="submit" value="Enviar Correo" class="btn btn-success">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anular Modal -->
+    <div class="modal fade" id="anularModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Anular DTE</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('business.anulacion') }}" method="POST">
+                        @csrf
+                        <div class="form-group">
+                            <label for="motivo">Motivo de Invalidación:</label>
+                            <input type="text" name="motivo" id="motivo" class="form-control" required>
+                            <small id="emailHelp" class="form-text text-muted">Motivo por el cual se invalida este DTE</small>
+                        </div>
+                        <div class="form-group mt-2">
+                            <input type="hidden" name="codGeneracion" value="" id="codGeneracionAnular">
+                            <input type="submit" value="Anular DTE" class="btn btn-success">
                         </div>
                     </form>
                 </div>

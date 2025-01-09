@@ -120,6 +120,8 @@
                                                 <td class="text-success"><i class="fa-solid fa-check"></i> Procesado</td>
                                             @elseif ($invoice['estado'] == 'RECHAZADO')
                                                 <td class="text-danger"><i class="fa-solid fa-times"></i> Rechazado</td>
+                                            @elseif ($invoice['estado'] == 'ANULADO')
+                                                <td class="text-black"><i class="fa-solid fa-file-circle-xmark"></i> Anulado</td>
                                             @else
                                                 <td class="text-warning"><i class="fa-solid fa-clock"></i> Contingencia</td>
                                             @endif

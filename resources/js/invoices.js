@@ -61,3 +61,10 @@ $(".btn-modal").on("click", function (e) {
     console.log(codGeneracion);
     $('#codGeneracion').val(codGeneracion);
 });
+
+$(".btn-anular").on("click", function (e) {
+    var button = $(e.target);
+    var codGeneracion = button.data('id');
+    console.log(codGeneracion);
+    $('#codGeneracionAnular').val(codGeneracion);
+});
