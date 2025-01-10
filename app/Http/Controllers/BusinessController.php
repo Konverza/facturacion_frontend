@@ -192,9 +192,9 @@ class BusinessController extends Controller
                 "nombreResponsable" => auth()->user()->name,
                 "tipoDocResponsable" => "36",
                 "numDocResponsable" => $nit,
-                "nombreSolicita" => $nombre,
-                "tipoDocSolicita" => $tipoDoc,
-                "numDocSolicita" => $numDocumento,
+                "nombreSolicita" => $nombre ?? auth()->user()->name,
+                "tipoDocSolicita" => $tipoDoc ?? "36",
+                "numDocSolicita" => $numDocumento ?? $nit,
             ]
         ]);
         $data = $response->json();
