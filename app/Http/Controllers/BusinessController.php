@@ -67,6 +67,9 @@ class BusinessController extends Controller
             case '11':
                 $view = "business.exportacion";
                 break;
+            case '14':
+                $view = "business.sujeto_excluido";
+                break;
             default:
                 return redirect()->route("business.dashboard");
         }
