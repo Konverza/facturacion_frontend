@@ -120,6 +120,7 @@ $(function () {
         let precio = $("#precio").val();
         let descuento = $("#descuento").val();
         let subtotal = calcular_subtotal_item(cantidad, precio, descuento);
+        console.log(subtotal);
         $("#total").val(subtotal);
         itemNuevo.cantidad = cantidad;
         itemNuevo.precioUni = precio;
@@ -132,7 +133,7 @@ $(function () {
         } else if (tipoVenta == "noSujeta") {
             itemNuevo.ventaNoSuj = subtotal;
         }
-        calcular_tributos_item(tipoVenta);
+        calcular_tributos_item(tipoVenta, descuento);
     });
 
     // Agregar Item que no está en BD
@@ -365,7 +366,7 @@ $(function () {
     });
 
     $("#aggitem .form-check-input").on("change", function () {
-        calcular_tributos_item($("#tipoVenta").val());
+        calcular_tributos_item($("#tipoVenta").val(), $("#descuento").val());
     });
 
     $("#cantidadExistente, #descuentoExistente").on("change", function () {
@@ -704,7 +705,7 @@ function cargar_items() {
     });
 }
 
-function calcular_tributos_item(tipoVenta = "gravada") {
+function calcular_tributos_item(tipoVenta = "gravada", descuento = 0) {
     $(".form-check-input").each(function () {
         if ($(this).prop("checked")) {
             // Append the value to the tributos array if it's not already there
@@ -735,7 +736,8 @@ function calcular_tributos_item(tipoVenta = "gravada") {
         }
         let valorTributo = 0;
         if (trib.es_porcentaje) {
-            valorTributo = (itemNuevo.precioUni * trib.valor) * itemNuevo.cantidad;
+            // valorTributo = (itemNuevo.precioUni * trib.valor) * itemNuevo.cantidad;
+            valorTributo = ((itemNuevo.precioUni * itemNuevo.cantidad) - descuento) * trib.valor;
         } else {
             valorTributo = trib.valor * itemNuevo.cantidad;
         }
@@ -748,7 +750,7 @@ function calcular_tributos_item(tipoVenta = "gravada") {
         sumaTributos += valorTributo;
     });
     $("#tributosAplicados").html(alerts);
-    const venta = itemNuevo.precioUni * itemNuevo.cantidad + sumaTributos;
+    const venta = ((itemNuevo.precioUni * itemNuevo.cantidad) - descuento) + sumaTributos;
     $("#total").val(venta.toFixed(4));
     // console.log(itemNuevo.tributos);
 }
