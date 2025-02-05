@@ -155,13 +155,13 @@ $(function () {
 
         switch ($("#tipoVenta").val()) {
             case "gravada":
-                itemNuevo.ventaGravada = itemNuevo.precioUni * cantidad;
+                itemNuevo.ventaGravada = (itemNuevo.precioUni * cantidad) - descuento;
                 break;
             case "exenta":
-                itemNuevo.ventaExenta = itemNuevo.precioUni * cantidad;
+                itemNuevo.ventaExenta = (itemNuevo.precioUni * cantidad) - descuento;
                 break;
             case "noSujeta":
-                itemNuevo.ventaNoSuj = itemNuevo.precioUni * cantidad;
+                itemNuevo.ventaNoSuj = (itemNuevo.precioUni * cantidad) - descuento;
                 break;
         }
 
@@ -394,7 +394,7 @@ $(function () {
                 return;
             }
             if (trib.es_porcentaje) {
-                trib.calculado = (itemSeleccionado.precioUni * trib.valor) * itemSeleccionado.cantidad;
+                trib.calculado = ((itemSeleccionado.precioUni * cantidad) - descuento) * trib.valor;
             } else {
                 trib.calculado = trib.valor * itemSeleccionado.cantidad;
             }
