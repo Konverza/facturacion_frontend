@@ -43,6 +43,10 @@ Route::group(['prefix' => 'business', 'middleware' => ['auth', 'role:negocio|ven
     Route::get('dte', [BusinessController::class, 'factura'])->name('business.factura');
     Route::get('clientes', [BusinessCustomerController::class, 'index'])->name('business.clientes');
     Route::post('clientes', [BusinessCustomerController::class, 'store'])->name('business.clientes.store');
+    Route::get('clientes/{id}', [BusinessCustomerController::class, 'show'])->name('business.clientes.show');
+    Route::put('clientes/{id}', [BusinessCustomerController::class, 'update'])->name('business.clientes.update');
+    Route::delete('clientes/{id}', [BusinessCustomerController::class, 'destroy'])->name('business.clientes.destroy');
+
     Route::get('sucursales' , [BusinessController::class, 'sucursales'])->name('business.sucursales');
     Route::get('productos', [ProductsController::class, 'index'])->name('business.productos');
     Route::post('productos', [ProductsController::class, 'store'])->name('business.productos.store');

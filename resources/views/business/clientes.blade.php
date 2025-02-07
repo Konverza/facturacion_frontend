@@ -180,8 +180,14 @@
                                 <td>{{ $customer->nrc }}</td>
                                 <td>{{ $customer->nombre }}</td>
                                 <td>
-                                    <button class="btn shadow btn-sm btn-primary">Editar</button>
-                                    <button class="btn shadow btn-sm btn-danger">Eliminar</button>
+                                    <button class="btn shadow btn-sm btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#aggCliente" data-id="{{$customer->id}}">Editar</button>
+                                    <form action="{{ route('business.clientes.destroy', $customer->id) }}" method="POST"
+                                        class="d-inline frm-delete">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn shadow btn-sm btn-danger">Eliminar</button>
+                                    </form>
                                 </td>
                             </tr>
                         @endforeach
