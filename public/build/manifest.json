@@ -115,6 +115,16 @@
       "resources/js/autocomplete.js"
     ]
   },
+  "resources/js/exportacion.js": {
+    "file": "assets/exportacion-Du3N2UEd.js",
+    "name": "exportacion",
+    "src": "resources/js/exportacion.js",
+    "isEntry": true,
+    "imports": [
+      "_autocomplete-i5sh6eXG.js",
+      "resources/js/autocomplete.js"
+    ]
+  },
   "resources/js/factura.js": {
     "file": "assets/factura-Ca8VwPmp.js",
     "name": "factura",

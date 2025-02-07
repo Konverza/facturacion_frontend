@@ -101,22 +101,21 @@
                                                             <div class="form-group mb-3">
                                                                 <label for="nombre">Nombre, denominación o razón
                                                                     social del contribuyente:</label>
-                                                                <input type="text" class="form-control"
-                                                                    id="nombre"
+                                                                <input type="text" class="form-control" id="nombre"
                                                                     placeholder="Nombre del receptor">
                                                             </div>
                                                             <div class="form-group mb-3">
                                                                 <label for="codActividad">Actividad
                                                                     Económica:</label>
-                                                                <input type="text" name="codActividad" id="codActividad"
-                                                                    class="form-control" autocomplete="off">
+                                                                <input type="text" name="codActividad"
+                                                                    id="codActividad" class="form-control"
+                                                                    autocomplete="off">
                                                             </div>
                                                             <div class="row mb-3">
                                                                 <div class="col">
                                                                     <div class="form-group">
                                                                         <label for="departamento">Tipo Persona:</label>
-                                                                        <select class="form-select"
-                                                                            id="tipoPersona">
+                                                                        <select class="form-select" id="tipoPersona">
                                                                             <option value="01">Jurídica</option>
                                                                             <option value="02">Natural</option>
                                                                         </select>
@@ -124,14 +123,10 @@
                                                                 </div>
                                                                 <div class="col">
                                                                     <div class="form-group">
-                                                                        <label for="municipio">País:</label>
-                                                                        <select class="form-select"
-                                                                            id="codPais">
-                                                                            @foreach ($catalogos["CAT_020"] as $pais)
-                                                                                <option value="{{ $pais->codigo }}">
-                                                                                    {{ ucwords($pais->valores) }}</option>
-                                                                            @endforeach
-                                                                        </select>
+                                                                        <label for="codActividad">País:</label>
+                                                                        <input type="text" name="codPais"
+                                                                            id="codPais" class="form-control"
+                                                                            autocomplete="off">
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -252,16 +247,27 @@
                         <div class="form-group mb-3">
                             <label for="recinto">Recinto Fiscal</label>
                             <select class="form-select" id="recinto">
-                                @foreach ($catalogos["CAT_027"] as $recinto)
-                                    <option value="{{ $recinto->codigo }}">{{ $recinto->codigo }} - {{ $recinto->valores }}</option>
+                                @foreach ($catalogos['CAT_027'] as $recinto)
+                                    <option value="{{ $recinto->codigo }}">{{ $recinto->codigo }} -
+                                        {{ $recinto->valores }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="form-group mb-3">
                             <label for="recinto">Régimen de Exportación</label>
-                            <select class="form-select" id="recinto">
-                                @foreach ($catalogos["CAT_028"] as $regimen)
-                                    <option value="{{ $regimen->codigo }}">{{ $regimen->codigo }} - {{ $regimen->valores }}</option>
+                            <select class="form-select" id="regimen">
+                                @foreach ($catalogos['CAT_028'] as $regimen)
+                                    <option value="{{ $regimen->codigo }}">{{ $regimen->codigo }} -
+                                        {{ $regimen->valores }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="recinto">INCOTERMS</label>
+                            <select class="form-select" id="incoterms">
+                                @foreach ($catalogos['CAT_031'] as $regimen)
+                                    <option value="{{ $regimen->codigo }}">{{ $regimen->codigo }} -
+                                        {{ $regimen->valores }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -274,25 +280,17 @@
                         <h4>Cuerpo del Documento</h4>
                         <!-- Button trigger modal Agregar Ítem-->
                         <div class="d-flex">
-                            <div class="dropdown me-2">
-                                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    Agregar Detalle
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#aggitem"
-                                            href="#aggitem">Producto o Servicio</a></li>
-                                    <li><a class="dropdown-item" href="#">Monto No Afecto</a></li>
-                                    <li><a class="dropdown-item">Impuestos/Tasas con afectación al IVA</a></li>
-                                </ul>
-                            </div>
+                            <button class="btn btn-primary me-2" type="button" data-bs-toggle="modal"
+                                data-bs-target="#aggitem">
+                                Agregar Producto
+                            </button>
                             <button type="button" class="btn btn-success" data-bs-toggle="modal"
                                 data-bs-target="#prodExistenteModal">Añadir Producto Existente</button>
                         </div>
                         <div class="row">
                             <div class="col-sm-12">
                                 <div class="container mt-5">
-                                    <table class="table table-light border-less">
+                                    <table class="table table-light">
                                         <thead>
                                             <tr>
                                                 <th>Unidad de Medida</th>
@@ -300,18 +298,12 @@
                                                 <th>Cantidad</th>
                                                 <th>Precio</th>
                                                 <th>Descuento por ítem</th>
-                                                <th>V. Gravada</th>
-                                                <th>V. Exenta</th>
-                                                <th>V. No Sujeta</th>
                                                 <th></th>
                                             </tr>
                                         </thead>
                                         <tbody id="items">
                                         </tbody>
                                         <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
@@ -326,9 +318,6 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
                                             <td class="text-end fw-bold">Monto Total de la operación</td>
                                             <td id="montoTotalOperacion"></td>
                                         </tr>
@@ -337,73 +326,24 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td></td>
-                                            <td></td>
+                                            <td class="text-end fw-bold">Seguro</td>
                                             <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value=""
-                                                        id="checkIvaRete1">
-                                                    <label class="form-check-label" for="checkIvaRete1">
-                                                        ¿Retener IVA?
-                                                    </label>
-                                                </div>
+                                                <input type="number" class="form-control" id="seguro" value="0"
+                                                    step="0.01">
                                             </td>
-                                            <td class="text-end fw-bold">Retención IVA (1%)</td>
-                                            <td id="reteIVA"></td>
                                         </tr>
                                         <tr>
                                             <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td></td>
-                                            <td></td>
+                                            <td class="text-end fw-bold">Flete</td>
                                             <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value=""
-                                                        id="checkIvaPerci1">
-                                                    <label class="form-check-label" for="checkIvaPerci1">
-                                                        ¿Percibir IVA?
-                                                    </label>
-                                                </div>
+                                                <input type="number" class="form-control" id="flete" value="0"
+                                                    step="0.01">
                                             </td>
-                                            <td class="text-end fw-bold">Percepción IVA (1%)</td>
-                                            <td id="perciIVA"></td>
-                                        </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value=""
-                                                        id="checkReteRenta">
-                                                    <label class="form-check-label" for="checkReteRenta">
-                                                        ¿Retener Renta?
-                                                    </label>
-                                                </div>
-                                            </td>
-                                            <td class="text-end fw-bold">Retención Renta</td>
-                                            <td id="reteRenta"></td>
-                                        </tr>
-                                        <tr>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td class="text-end fw-bold">Descuento a Operación</td>
-                                            <td id="descuentosTotal"></td>
                                         </tr>
                                         <tr class="table-active">
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
@@ -412,184 +352,76 @@
                                             <td id="totalPagar"></td>
                                         </tr>
                                     </table>
-                                    <!-- Button trigger modal Agregar Descuento -->
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#aggDescuentoModal">
-                                        Agregar Descuento
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="card-header">
-                        <h5 class="card-title text-muted text-dark font-weight-normal"><i
-                                class="fa-solid fa-arrow-down"></i> Otra información del DTE</h5>
+                        <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-info"></i>
+                            Observaciones</h5>
                     </div>
-                    <div class="card-body bg-light">
-                        <ul class="nav nav-tabs" id="myTab" role="tablist">
-                            {{-- <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="documentos" data-bs-toggle="tab"
-                                    data-bs-target="#documentos-pane" type="button" role="tab"
-                                    aria-controls="documentos-pane" aria-selected="true">Documentos
-                                    Relacionados</button>
-                            </li> --}}
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="terceros" data-bs-toggle="tab"
-                                    data-bs-target="#terceros-pane" type="button" role="tab"
-                                    aria-controls="terceros-pane" aria-selected="false">Venta a cuenta de
-                                    terceros</button>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="otrosdoc1" data-bs-toggle="tab"
-                                    data-bs-target="#otrosdoc-pane" type="button" role="tab"
-                                    aria-controls="otrosdoc-pane" aria-selected="false">Otros Documentos
-                                    Asociados</button>
-                            </li>
-                        </ul>
-                        <div class="tab-content" id="myTabOtraInfo">
-                            <div class="tab-pane fade" id="documentos-pane" role="tabpanel"
-                                aria-labelledby="documentos-pane" tabindex="0">
-                                <!-- Contenido de Documentos -->
-                                <div class="mb-3 mt-3">
-                                    <!-- Button trigger modal Agregar DTE-->
-                                    <div class="dropdown">
-                                        <button class="btn btn-primary dropdown-toggle" type="button"
-                                            data-bs-toggle="dropdown" aria-expanded="false">
-                                            Agregar DTE
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" data-bs-toggle="modal"
-                                                    data-bs-target="#aggdteFis" href="#">Físico</a></li>
-                                            <li><a class="dropdown-item" data-bs-toggle="modal"
-                                                    data-bs-target="#aggdteDig" href="#">Digital</a></li>
-                                        </ul>
-                                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <textarea class="form-control" id="observacionesDoc" placeholder="Observaciones al documento"></textarea>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-info"></i>
+                            Condición de la Operación</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="condicionOperacion" class="form-label">Condición de la Operación:</label>
+                            <select id="condicionOperacion" class="form-select">
+                                <option>Contado</option>
+                                <option>Crédito</option>
+                                <option>Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-header">
+                        <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-dollar-sign"></i>
+                            Forma de Pago</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="row">
+                                <div class="fw-bold col-3">
+                                    <label for="condicionOperacion" class="form-label">Forma de Pago</label>
+                                    <select id="condicionOperacion" class="form-select">
+                                        <option>Billetes y Monedas</option>
+                                        <option>Tarjeta Débito</option>
+                                        <option>Tarjeta Crédito</option>
+                                        <option>Cheque</option>
+                                        <option>Transferencia Depósito Bancario</option>
+                                        <option>Vales o Cupones</option>
+                                        <option>Dinero Electrónico</option>
+                                        <option>Monedero Electrónico</option>
+                                        <option>Certificado o Tarjeta de Regalo</option>
+                                        <option>Bitcoin</option>
+                                        <option>Bitcoin</option>
+                                        <option>Otras Criptomonedas</option>
+                                        <option>Cuentas por Pagar del Receptor</option>
+                                        <option>Giro Bancario</option>
+                                        <option>Otros (se debe indicar el medio de pago)</option>
+                                    </select>
                                 </div>
-                            </div>
-                            <div class="tab-pane fade show active" id="terceros-pane" role="tabpanel"
-                                aria-labelledby="terceros-pane" tabindex="0">
-                                <!-- Contenido de Ventas a Terceros -->
-                                <div class="card-body bg-light">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label class="mb-3" for="nitVentaTerceros">NIT:</label>
-                                                <input type="email" class="form-control" id="nitVentaTerceros"
-                                                    placeholder="NIT del contribuyente">
-                                            </div>
-                                        </div>
-                                        <div class="col">
-                                            <div class="form-group">
-                                                <label class="mb-3" for="nombreVentaTerceros">Nombre:</label>
-                                                <input type="text" class="form-control" id="nombreVentaTerceros"
-                                                    placeholder="Nombre del contribuyente">
-                                            </div>
-                                        </div>
-                                    </div>
+                                <div class="fw-bold col-3">
+                                    <label for="monto" class="form-label">Monto:</label>
+                                    <input type="number" class="form-control" id="monto" value="">
                                 </div>
-                            </div>
-                            <!-- Contenido de Otros Documentos Asociados -->
-                            <div class="tab-pane fade" id="otrosdoc-pane" role="tabpanel"
-                                aria-labelledby="otrosdoc-pane" tabindex="0">
-                                <div class="mb-3 mt-3">
-                                    <!-- Button trigger modal Otros Doc Asociados-->
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#otrosdoc">
-                                        Agregar Documentos
-                                    </button>
-                                    <hr>
-                                    <h5>Otros Documentos Asociados</h5>
-                                    <hr>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <thead>
-                                                <tr>
-                                                    <th>Código de Documento</th>
-                                                    <th>Descripción del Documento</th>
-                                                    <th>Detalle del Documento</th>
-                                                    <th></th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>Emisor</td>
-                                                    <td>0001</td>
-                                                    <td>Factura de Venta</td>
-                                                    <td><button class="btn btn-danger">X</button></td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <div class="fw-bold col-3">
+                                    <label for="numDoc" class="form-label">N° Doc.</label>
+                                    <input type="number" class="form-control" id="numDoc">
                                 </div>
-                            </div>
-                        </div>
-                        <div class="card-header">
-                            <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-info"></i>
-                                Observaciones</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <textarea class="form-control" id="observacionesDoc" placeholder="Observaciones al documento"></textarea>
-                            </div>
-                        </div>
-                        <div class="card-header">
-                            <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-info"></i>
-                                Condición de la Operación</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <label for="condicionOperacion" class="form-label">Condición de la Operación:</label>
-                                <select id="condicionOperacion" class="form-select">
-                                    <option>Contado</option>
-                                    <option>Crédito</option>
-                                    <option>Otro</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="card-header">
-                            <h5 class="card-title text-muted text-dark font-weight-normal"><i
-                                    class="fas fa-dollar-sign"></i>
-                                Forma de Pago</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <div class="row">
-                                    <div class="fw-bold col-3">
-                                        <label for="condicionOperacion" class="form-label">Forma de Pago</label>
-                                        <select id="condicionOperacion" class="form-select">
-                                            <option>Billetes y Monedas</option>
-                                            <option>Tarjeta Débito</option>
-                                            <option>Tarjeta Crédito</option>
-                                            <option>Cheque</option>
-                                            <option>Transferencia Depósito Bancario</option>
-                                            <option>Vales o Cupones</option>
-                                            <option>Dinero Electrónico</option>
-                                            <option>Monedero Electrónico</option>
-                                            <option>Certificado o Tarjeta de Regalo</option>
-                                            <option>Bitcoin</option>
-                                            <option>Bitcoin</option>
-                                            <option>Otras Criptomonedas</option>
-                                            <option>Cuentas por Pagar del Receptor</option>
-                                            <option>Giro Bancario</option>
-                                            <option>Otros (se debe indicar el medio de pago)</option>
-                                        </select>
-                                    </div>
-                                    <div class="fw-bold col-3">
-                                        <label for="monto" class="form-label">Monto:</label>
-                                        <input type="number" class="form-control" id="monto" value="">
-                                    </div>
-                                    <div class="fw-bold col-3">
-                                        <label for="numDoc" class="form-label">N° Doc.</label>
-                                        <input type="number" class="form-control" id="numDoc">
-                                    </div>
-                                    {{-- <div class="col-3">
+                                {{-- <div class="col-3">
                                         <label for="formPago" class="form-label"></label><br>
                                         <button type="button" class="btn btn-primary"><i
                                                 class="fas fa-money-bill-alt"></i> Agregar Forma de Pago</button>
                                     </div> --}}
-                                </div>
                             </div>
-                            {{-- <div class="table-responsive">
+                        </div>
+                        {{-- <div class="table-responsive">
                                 <table class="table table-bordered">
                                     <thead>
                                         <tr>
@@ -613,52 +445,14 @@
                                     </tbody>
                                 </table>
                             </div> --}}
-                        </div>
-                        <div class="card-header">
-                            <h5 class="card-title text-muted text-dark font-weight-normal"><i class="fas fa-gift"></i>
-                                Datos adicionales entrega</h5>
-                        </div>
-                        <div class="card-body fw-bold bg-light">
-                            <div class="form-group row">
-                                <div class="col-md-2">
-                                    <label class="col-form-label" for="documentoEmitir">No. Documento</label>
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="text" placeholder="Responsable de emitir el documento"
-                                        class="form-control" id="responsable2">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="col-form-label" for="nombreEmitir">Nombre</label>
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="text" placeholder="Responsable de emitir el documento"
-                                        class="form-control" id="responsable2">
-                                </div>
-                            </div>
-                            <div class="form-group row">
-                                <div class="col-md-2">
-                                    <label class="col-form-label" for="documentoRecibir">No. Documento</label>
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="text" placeholder="Responsable de recibir el documento"
-                                        class="form-control" id="responsable2">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="col-form-label" for="nombreRecibir">Nombre</label>
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="text" placeholder="Responsable de recibir el documento"
-                                        class="form-control" id="responsable2">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <button class="btn btn-primary" id="generarDocumento">Generar Documento</button>
-                        </div>
                     </div>
+                </div>
+                <div class="text-end">
+                    <button class="btn btn-primary" id="generarDocumento">Generar Documento</button>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- Modal Producto o Servicio  -->
@@ -673,7 +467,7 @@
                     <form class="col-12 p-3">
                         <div class="card">
                             <div class="card-header bg-light">
-                                Adición de detalle DTE
+                                Datos del Producto / Servicio
                             </div>
                             <div class="card-body bg-light">
                                 <div class="row">
@@ -720,18 +514,7 @@
                                     </div>
                                     <div class="col-2">
                                         <div class="mb-3">
-                                            <label for="tipoVenta" class="form-label">Tipo
-                                                Venta:</label>
-                                            <select id="tipoVenta" class="form-select">
-                                                <option value="gravada" selected>Gravada</option>
-                                                <option value="exenta">Exenta</option>
-                                                <option value="noSujeta">No Sujeta</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-2">
-                                        <div class="mb-3">
-                                            <label for="precio" class="form-label">Precio (sin IVA):</label>
+                                            <label for="precio" class="form-label">Precio:</label>
                                             <input type="number" class="form-control" id="precio" step="0.00001">
                                         </div>
                                     </div>
@@ -744,22 +527,8 @@
                                         <div class="col-6">
                                             <div class="form-group mb-3">
                                                 <p class="form-label">Tributos que aplican a este producto:</p>
-                                                @foreach ($tributos as $tributo)
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox"
-                                                            value="{{ $tributo->codigo }}" id="{{ $tributo->codigo }}"
-                                                            name="tributos[]" data-valor="{{ $tributo->valor }}"
-                                                            data-porcentaje="{{ $tributo->es_porcentaje }}"
-                                                            @if ($tributo->codigo == '20') checked disabled @endif>
-                                                        <label class="form-check-label" for="{{ $tributo->codigo }}">
-                                                            {{ $tributo->descripcion }}
-                                                        </label>
-                                                    </div>
-                                                @endforeach
+                                                <p class="fw-bold">Impuesto al Valor Agregado (exportaciones): 0%</p>
                                             </div>
-                                        </div>
-                                        <div class="col-6" id="tributosAplicados">
-
                                         </div>
                                     </div>
                                 </div>
@@ -782,7 +551,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </form>
                 </div>
@@ -794,221 +562,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Modal Agregar Descuento -->
-    <div class="modal modal-xl fade" id="aggDescuentoModal" tabindex="-1" aria-labelledby="aggdescuento"
-        aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="aggdescuento">Descuentos Generales al
-                        Resumen</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h5 class="card-title text-muted text-dark font-weight-normal">
-                                Descuentos al total del documento</h5>
-                        </div>
-                        <div class="card-body bg-light">
-                            <form action="#" method="get">
-                                <div class="form-group">
-                                    <label for="telefono">Ventas
-                                        Gravadas:</label>
-                                    <input type="text" class="form-control" id="descVentasGravadas" required
-                                        placeholder="Número de ventas gravadas" value="0">
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" id="guardarDescuento" class="btn btn-primary">Guardar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal DTE Fisico -->
-    <div class="modal modal-lg fade" id="aggdteFis" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="aggdteFis">Agregar DTE Físico</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title text-muted text-dark font-weight-normal">
-                                Relación Doc. Físico</h5>
-                        </div>
-                        <div class="card-body">
-                            <form action="#" method="get">
-                                <div class="form-group">
-                                    <label for="tipdoc">Tipo de Documento:</label>
-                                    <select class="form-select" id="tipdoc">
-                                        <option value="remision">Nota de Remisón
-                                        </option>
-                                        <option value="comliquidacion">Comprobante
-                                            de Liquidación</option>
-                                        <option value="docliquidacion">Documento
-                                            Contable de Liquidación</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="telefono">Número de
-                                        Documento:</label>
-                                    <input type="text" class="form-control" id="telefonoDoc" required
-                                        placeholder="Número Doc.">
-                                </div>
-                                <label for="fechaDTE">Fecha de Generación:</label>
-                                <input type="date" class="form-control" id="fechaDTE" required>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary">Guardar DTE</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Modal DTE Digital -->
-    <div class="modal modal-lg fade" id="aggdteDig" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="aggdteDig">Agregar DTE Digital</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title text-muted text-dark font-weight-normal">
-                                Relación Doc. Digital</h5>
-                        </div>
-                        <div class="card-body">
-                            <form action="#" method="get">
-                                <div class="form-group">
-                                    <label for="tipdoc">Tipo de Documento:</label>
-                                    <select class="form-select" id="tipdoc">
-                                        <option value="remision">Nota de Remisón
-                                        </option>
-                                        <option value="comliquidacion">Comprobante
-                                            de Liquidación</option>
-                                        <option value="docliquidacion">Documento
-                                            Contable de Liquidación</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="telefono">Número de
-                                        Documento:</label>
-                                    <input type="text" class="form-control" id="telefonoDoc" required
-                                        placeholder="Número Doc.">
-                                </div>
-                                <label for="fechaDTE">Fecha de Generación:</label>
-                                <input type="date" class="form-control" id="fechaDTE" required>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary">Guardar DTE</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Modal Otros Doc Asociados -->
-    <div class="modal modal-lg fade" id="otrosdoc" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="otrosdoc">Información del Documento
-                        Asociado
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form class="col-12 p-3">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title text-muted text-dark font-weight-normal">
-                                    Datos generales del documento</h5>
-                            </div>
-                            <div class="card-body shadow bg-light">
-                                <div class="form-group">
-                                    <label for="otrosdoc">Documento
-                                        Asociado:</label>
-                                    <select class="form-control" id="otrosdoc">
-                                        <option value="emisor2">Emisor</option>
-                                        <option value="receptor2">Receptor</option>
-                                        <option value="medico">Médico</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="telefono">Identificación del
-                                        Documento:</label>
-                                    <input type="text" class="form-control" id="otrosdoc" required
-                                        placeholder="Identificación del nombre del documento asociado">
-                                </div>
-                                <div class="form-group">
-                                    <label for="nombreComercial">Descripción del
-                                        documento:</label>
-                                    <input type="text" class="form-control" id="otrosdoc"
-                                        placeholder="Descripción de datos importantes del documento asociado">
-                                </div>
-                                <div class="form-group">
-                                    <button type="submit" class="btn btn-primary">Agregar</button>
-                                    <button type="reset" class="btn btn-danger">Cancelar</button>
-                                </div>
-                                <!-- Parte selección médico
-                                                                    <div class="form-group">
-                                                                        <label for="nombreComercial">Tipo de Servicio:</label>
-                                                                        <select class="form-control" id="otrosdoc">
-                                                                            <option value="cirugia">Cirugía</option>
-                                                                            <option value="receptor2">Operación</option>
-                                                                            <option value="medico">Tratamiento Médico</option>
-                                                                            <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                            <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                            <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="nombre">Nombre:</label>
-                                                                        <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <div class="row">
-                                                                            <div class="col-sm-6">
-                                                                                <label for="tiponit">Tipo de Documento:</label>
-                                                                                <select class="form-control" id="tiponit">
-                                                                                    <option value="NIT">NIT</option>
-                                                                                    <option value="otro">Otro</option>
-                                                                                </select>
-                                                                            </div>
-                                                                            <div class="col-sm-6">
-                                                                                <label for="nit">NIT:</label>
-                                                                                <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
-                                                                            </div>
-                                                                        </div>
-                                                                    </div> -->
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            <button type="button" class="btn btn-primary">Guardar DTE</button>
-        </div>
-    </div>
-
     <!-- Modal Producto Existente -->
     <div class="modal modal-xl fade" id="prodExistenteModal" tabindex="-1" aria-labelledby="prodExistenteModalLabel"
         aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -1045,17 +598,6 @@
                                             <input type="number" class="form-control" id="cantidadExistente"
                                                 value="" step="0.000001">
                                             <small class="form-text text-danger">Requerido.</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-4">
-                                        <div class="mb-3">
-                                            <label for="tipoVentaExistente" class="form-label">Tipo
-                                                Venta:</label>
-                                            <select id="tipoVentaExistente" class="form-select">
-                                                <option value="gravada" selected>Gravada</option>
-                                                <option value="exenta">Exenta</option>
-                                                <option value="noSujeta">No Sujeta</option>
-                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-4">
@@ -1121,5 +663,5 @@
             </div>
         </div>
     </div>
-    @vite('resources/js/credito_fiscal.js')
+    @vite('resources/js/exportacion.js')
 @endsection

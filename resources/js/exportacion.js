@@ -4,6 +4,7 @@ let tablaProds = null;
 let tablaClientes = null;
 let itemSeleccionado = null;
 let itemNuevo = null;
+let paises = null;
 let actividades = null;
 
 let tributos_dte = [];
@@ -17,33 +18,9 @@ let reteRenta = 0;
 let perciIva1 = 0;
 
 
-if (localStorage.getItem("items")) {
-    items = JSON.parse(localStorage.getItem("items"));
+if (localStorage.getItem("items_fex")) {
+    items = JSON.parse(localStorage.getItem("items_fex"));
     cargar_items();
-    calcular_tributos_dte();
-    calcular_totales();
-}
-if (localStorage.getItem("reteIva1")) {
-    reteIva1 = parseFloat(localStorage.getItem("reteIva1"));
-    $("#checkIvaRete1").prop("checked", true)
-    cargar_items();
-    calcular_tributos_dte();
-    calcular_totales();
-}
-
-if (localStorage.getItem("perciIva1")) {
-    perciIva1 = parseFloat(localStorage.getItem("perciIva1"));
-    $("#checkIvaPerci1").prop("checked", true)
-    cargar_items();
-    calcular_tributos_dte();
-    calcular_totales();
-}
-
-if (localStorage.getItem("reteRenta")) {
-    reteRenta = parseFloat(localStorage.getItem("reteRenta"));
-    $("#checkReteRenta").prop("checked", true)
-    cargar_items();
-    calcular_tributos_dte();
     calcular_totales();
 }
 
@@ -51,10 +28,25 @@ $(function () {
 
     // Cargar actividades económicas
     $.ajax({
+        url: '/catalogo/cat_020',
+        success: function (response) {
+            const field_pais = document.getElementById('codPais');
+            const ac_pais = new Autocomplete(field_pais, {
+                data: response,
+                maximumItems: 5,
+                threshold: 1,
+                fullWidth: true,
+            });
+            paises = response;
+        }
+    })
+
+    // Cargar actividades económicas
+    $.ajax({
         url: '/catalogo/cat_019',
         success: function (response) {
-            const field_actividad_economica = document.getElementById('codActividad');
-            const ac_actividad_economica = new Autocomplete(field_actividad_economica, {
+            const field_actividad = document.getElementById('codActividad');
+            const ac_actividad = new Autocomplete(field_actividad, {
                 data: response,
                 maximumItems: 5,
                 threshold: 1,
@@ -62,7 +54,7 @@ $(function () {
             });
             actividades = response;
         }
-    })
+    }) 
 
     // Cargar Departamentos en Select
     $.ajax({
@@ -124,25 +116,14 @@ $(function () {
         itemNuevo.cantidad = cantidad;
         itemNuevo.precioUni = precio;
         itemNuevo.montoDescu = descuento;
-        let tipoVenta = $("#tipoVenta").val();
-        if (tipoVenta == "gravada") {
-            itemNuevo.ventaGravada = subtotal;
-        } else if (tipoVenta == "exenta") {
-            itemNuevo.ventaExenta = subtotal;
-        } else if (tipoVenta == "noSujeta") {
-            itemNuevo.ventaNoSuj = subtotal;
-        }
-        calcular_tributos_item();
+        itemNuevo.ventaGravada = subtotal;
     });
 
     // Agregar Item que no está en BD
     $("#agregar_item").on("click", function () {
         let unidad_id = $("#unidad").val();
-        // let unidad = $("#unidad option:selected").text();
         let cantidad = $("#cantidad").val();
-        // let precio = $("#precio").val();
         let descuento = $("#descuento").val() || 0;
-        // let total = $("#total").val();
         let descripcion = $("#producto").val();
 
         itemNuevo.id = items.length + 1;
@@ -151,25 +132,13 @@ $(function () {
         itemNuevo.montoDescu = descuento;
         itemNuevo.descripcion = descripcion;
         itemNuevo.cantidad = cantidad;
-
-        switch ($("#tipoVenta").val()) {
-            case "gravada":
-                itemNuevo.ventaGravada = itemNuevo.precioUni * cantidad;
-                break;
-            case "exenta":
-                itemNuevo.ventaExenta = itemNuevo.precioUni * cantidad;
-                break;
-            case "noSujeta":
-                itemNuevo.ventaNoSuj = itemNuevo.precioUni * cantidad;
-                break;
-        }
-
+        itemNuevo.ventaGravada = itemNuevo.precioUni * cantidad;
 
         items.push(itemNuevo);
         reiniciar_item();
         cargar_items();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('items_fex', JSON.stringify(items));
 
         $("#cantidad").val("");
         $("#precio").val("");
@@ -186,15 +155,7 @@ $(function () {
         cargar_items();
         calcular_totales();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
-    });
-
-    // Guardar descuentos globales
-    $("#guardarDescuento").on("click", function () {
-        let descuento = $("#descVentasGravadas").val();
-        descuentosTotal = parseFloat(descuento);
-        calcular_totales();
-        $("#descuentosTotal").text("$" + descuentosTotal.toFixed(2));
+        localStorage.setItem('items_fex', JSON.stringify(items));
     });
 
     // Generar DTE y enviarlo
@@ -335,24 +296,33 @@ $(function () {
                 $.ajax({
                     url: `/business/obtener_cliente/${id}`,
                     success: function (response) {
-                        $("#tipoDoc").val(response.tipoDocumento);
+                        if(!response.codPais){
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'El cliente seleccionado no tiene información de exportación en su perfil',
+                                showConfirmButton: false,
+                                timer: 2000
+                            })
+                        } else {
+                            $("#tipoDoc").val(response.tipoDocumento);
+                            $("#nitContribuyente").val(response.numDocumento)
+                            $("#nombre").val(response.nombre)
+                            $("#tipoPersona").val(response.tipoPersona)
+                            $("#complementoContribuyente").val(response.complemento)
+                            $("#correoContribuyente").val(response.correo)
+                            $("#telefonoContribuyente").val(response.telefono)
+                            $("#cerrarModalCliente").trigger("click")
 
-                        $("#nitContribuyente").val(response.numDocumento)
-                        $("#nrcContribuyente").val(response.nrc.replace(/-/g, ''))
-                        $("#nombre").val(response.nombre)
-                        $("#nombreComercial").val(response.nombreComercial)
-                        $("#departamentoContribuyente").val(response.departamento)
-                        $("#departamentoContribuyente").trigger("change")
-                        $("#municipioContribuyente").val(response.municipio)
-                        $("#complementoContribuyente").val(response.complemento)
-                        $("#correoContribuyente").val(response.correo)
-                        $("#telefonoContribuyente").val(response.telefono)
-                        $("#cerrarModalCliente").trigger("click")
+                            const pais = paises.find(act => act.value === response.codPais);
+                            if (pais) {
+                                $('#codPais').val(pais.label);
+                            }
 
-                        // Search actividades económicas, given that the structure is {value: '', label: ''}
-                        const actividad = actividades.find(act => act.value === response.codActividad);
-                        if (actividad) {
-                            $('#codActividad').val(actividad.label);
+                            const actividad = actividades.find(act => act.value === response.codActividad);
+                            if (actividad) {
+                                $('#codActividad').val(actividad.label);
+                            }
                         }
                     }
                 });
@@ -382,85 +352,16 @@ $(function () {
         itemSeleccionado.id = items.length + 1;
         itemSeleccionado.cantidad = cantidad;
         itemSeleccionado.montoDescu = descuento;
-        itemSeleccionado.ventaGravada = 0;
-        itemSeleccionado.ventaExenta = 0;
-        itemSeleccionado.ventaNoSuj = 0;
-        itemSeleccionado.tributos.forEach(trib => {
-        if (trib.es_porcentaje) {
-            trib.calculado = (itemSeleccionado.precioUni * trib.valor) * itemSeleccionado.cantidad;
-        } else {
-            trib.calculado = trib.valor * itemSeleccionado.cantidad;
-        }
-    });
-
-        switch ($("#tipoVentaExistente").val()) {
-            case "gravada":
-                itemSeleccionado.ventaGravada = $("#totalExistente").val();
-                break;
-            case "exenta":
-                itemSeleccionado.ventaExenta = $("#totalExistente").val();
-                break;
-            case "noSujeta":
-                itemSeleccionado.ventaNoSuj = $("#totalExistente").val();
-                break;
-        }
-
+        itemSeleccionado.ventaGravada = $("#totalExistente").val();
 
         items.push(itemSeleccionado);
         cargar_items();
         // Guardar items en localStorage
-        localStorage.setItem('items', JSON.stringify(items));
+        localStorage.setItem('items_fex', JSON.stringify(items));
 
         $("#cantidadExistente").val("");
         $("#descuentoExistente").val("");
         $("#totalExistente").val("");
-        calcular_totales();
-    });
-
-
-    $("#checkIvaRete1").on("change", function () {
-        if ($(this).prop("checked")) {
-            let sumaGravada = 0;
-            items.forEach(item => {
-                sumaGravada += parseFloat(item.ventaGravada);
-            });
-            reteIva1 = sumaGravada * 0.01;
-            localStorage.setItem('reteIva1', reteIva1);
-        } else {
-            reteIva1 = 0;
-            localStorage.removeItem("reteIva1")
-        }
-        // Guardar items en localStorage
-        calcular_totales();
-    });
-
-    $("#checkReteRenta").on("change", function () {
-        if ($(this).prop("checked")) {
-            let sumaGravada = 0;
-            items.forEach(item => {
-                sumaGravada += parseFloat(item.ventaGravada);
-            });
-            reteRenta = sumaGravada * 0.1;
-            localStorage.setItem("reteRenta", reteRenta);
-        } else {
-            reteRenta = 0;
-            localStorage.removeItem("reteRenta");
-        }
-        calcular_totales();
-    });
-
-    $("#checkIvaPerci1").on("change", function () {
-        if ($(this).prop("checked")) {
-            let sumaGravada = 0;
-            items.forEach(item => {
-                sumaGravada += parseFloat(item.ventaGravada);
-            });
-            perciIva1 = sumaGravada * 0.01;
-            localStorage.setItem("perciIva1", perciIva1);
-        } else {
-            perciIva1 = 0;
-            localStorage.removeItem("perciIva1");
-        }
         calcular_totales();
     });
 
@@ -476,13 +377,16 @@ $(function () {
             cancelButtonText: "No"
         }).then((result) => {
             if (result.isConfirmed) {
-                localStorage.removeItem("items")
-                localStorage.removeItem("reteIva1")
-                localStorage.removeItem("reteRenta")
+                localStorage.removeItem("items_fex")
                 window.location = "/business/dashboard"
             }
         });
     })
+
+    $("#seguro, #flete").on("change", function () {
+        calcular_totales();
+    });
+
 });
 
 function calcular_subtotal_item(cantidad = 0, precio = 0, descuento = 0) {
@@ -490,19 +394,17 @@ function calcular_subtotal_item(cantidad = 0, precio = 0, descuento = 0) {
 }
 
 function calcular_totales() {
-    mostrar_tributos();
     let subTotalGeneral = 0;
     let montoTotalOperacion = 0;
     let totalPagar = 0;
+    let seguro = $("#seguro").val() || 0;
+    let flete = $("#flete").val() || 0;
     items.forEach(item => {
-        subTotalGeneral += parseFloat(item.ventaGravada) + parseFloat(item.ventaExenta) + parseFloat(item.ventaNoSuj);
+        subTotalGeneral += parseFloat(item.ventaGravada);
     });
-    montoTotalOperacion = subTotalGeneral - descuentosTotal + total_tributos;
-    totalPagar = montoTotalOperacion - reteIva1 - reteRenta + perciIva1;
+    montoTotalOperacion = subTotalGeneral - descuentosTotal;
+    totalPagar = montoTotalOperacion + parseFloat(seguro) + parseFloat(flete);
 
-    $("#reteIVA").text("$" + reteIva1.toFixed(2));
-    $("#reteRenta").text("$" + reteRenta.toFixed(2));
-    $("#perciIVA").text("$" + perciIva1.toFixed(2));
     $("#subTotalGeneral").text("$" + subTotalGeneral.toFixed(2));
     $("#montoTotalOperacion").text("$" + montoTotalOperacion.toFixed(2));
     $("#totalPagar").text("$" + totalPagar.toFixed(2));
@@ -512,90 +414,66 @@ function calcular_totales() {
 function generar_documento() {
     $("#loadingOverlay").removeClass("d-none")
 
-    const codActividad = actividades.find(act => act.label === $('#codActividad').val())?.value;
+    const codActividad = paises.find(act => act.label === $('#codActividad').val())?.value;
     const descActividad = $('#codActividad').val().split('-').pop().trim();
 
+    const codPais = paises.find(act => act.label === $('#codPais').val())?.value;
+    const nombrePais = $('#codPais').val().split('-').pop().trim();
+
+    const codIncoterms = $('#incoterms').val();
+    const descIncoterms = $('#incoterms option:selected').text();
+
     let receptor = {
+        "tipoDocumento": $("#tipoDoc").val(),
+        "numDocumento": $("#nitContribuyente").val(),
         "nombre": $("#nombre").val(),
-        "nombreComercial": $("#nombreComercial").val(),
-        "codActividad": codActividad,
+        "nombreComercial": $("#nombre").val(),
         "descActividad": descActividad,
+        "codPais": codPais,
+        "nombrePais": nombrePais,
+        "complemento": $("#complementoContribuyente").val(),
         "telefono": $("#telefonoContribuyente").val(),
         "correo": $("#correoContribuyente").val(),
-        "direccion": {
-            "departamento": $("#departamentoContribuyente").val(),
-            "municipio": $("#municipioContribuyente").val(),
-            "complemento": $("#complementoContribuyente").val()
-        },
-        "nit": $("#nitContribuyente").val(),
-        "nrc": $("#nrcContribuyente").val(),
+        "tipoPersona": $("#tipoPersona").val(),
     }
 
     let dte = {
         "nit": $("#nit").val(),
+        "emisor": {
+            "regimen": $("#regimen").val(),
+            "recintoFiscal": $("#recinto").val(),
+            "tipoItemExpor": $("#tipoItemExpor").val(),
+        },
         "receptor": receptor,
         "cuerpoDocumento": [],
-        "documentoRelacionado": null,
-        "ventaTercero": null,
+        "otrosDocumentos": null,
         "resumen": {
-            "descuNoSuj": 0,
-            "descuExtenta": 0,
-            "descuGravada": 0,
             "porcentajeDescuento": 0,
-            "ivaRete1": reteIva1.toFixed(2),
-            "ivaPerci1": perciIva1.toFixed(2),
-            "reteRenta": reteRenta.toFixed(2),
-            "saldoFavor": 0,
-            "condicionOperacion": 1
+            "condicionOperacion": 1,
+            "codIncoterms": codIncoterms,
+            "descIncoterms": descIncoterms,
+            "flete": $("#flete").val(),
+            "seguro": $("#seguro").val(),
+            "descuento": 0
         },
-        "extension": null,
-        "apendice": null,
-        "pagos": null,
-        "numPagoElectronico": null,
-    }
-
-    if ($("#nitVentaTerceros").val() != "" && $("#nombreVentaTerceros").val() != "") {
-        dte.ventaTercero = {
-            "nit": $("#nitVentaTerceros").val(),
-            "nombre": $("#nombreVentaTerceros").val()
-        }
+        "apendice": null
     }
 
     items.forEach(item => {
-        let tributos_item = [];
-        item.tributos.forEach(trib => {
-            if (trib.codigo !== "20") {
-                tributos_item.push(trib.codigo);
-            }
-        });
-
-        if (tributos_item.length == 0) {
-            tributos_item = null;
-        }
-
         dte.cuerpoDocumento.push({
-            "tipoItem": item.tipoItem,
-            "numeroDocumento": null,
             "cantidad": item.cantidad,
             "codigo": item.codigo || null,
-            "codTributo": null,
             "uniMedida": item.uniMedida,
             "descripcion": item.descripcion,
             "precioUni": item.precioUni,
             "montoDescu": item.montoDescu,
-            "ventaNoSuj": item.ventaNoSuj,
-            "ventaExenta": item.ventaExenta,
             "ventaGravada": item.ventaGravada,
-            "tributos": tributos_item,
-            "psv": item.precioUni,
-            "noGravado": 0,
+            "noGravado": 0
         });
     });
 
-    dte.resumen.tributos = tributos_dte;
-
     $.ajax({
-        url: "/business/factura?dte=credito_fiscal",
+        url: "/business/factura?dte=factura_exportacion",
         method: "POST",
         data: JSON.stringify(dte),
         contentType: "application/json",
@@ -610,7 +488,7 @@ function generar_documento() {
                         timer: 2000
                     }).then(() => {
                         $("#loadingOverlay").addClass("d-none")
-                        localStorage.removeItem("items")
+                        localStorage.removeItem("items_fex")
                         localStorage.removeItem("reteIva1")
                         localStorage.removeItem("reteRenta")
                         window.location.href = "/business/dtes";
@@ -675,102 +553,11 @@ function cargar_items() {
                     $${parseFloat(item.ventaGravada).toFixed(4)}
                 </td>
                 <td>
-                    $${parseFloat(item.ventaExenta).toFixed(4)}
-                </td>
-                <td>
-                    $${parseFloat(item.ventaNoSuj).toFixed(4)}
-                </td>
-                <td>
                     <button type="button" class="btn btn-danger btn-sm eliminar" data-id="${item.id}">Eliminar</button>
                 </td>
             </tr>
         `);
     });
-}
-
-function calcular_tributos_item() {
-    $(".form-check-input").each(function () {
-        if ($(this).prop("checked")) {
-            // Append the value to the tributos array if it's not already there
-            let tributo = {
-                codigo: $(this).val(),
-                descripcion: $(this).next('label').text().trim(),
-                valor: $(this).data('valor'),
-                es_porcentaje: $(this).data('porcentaje'),
-                calculado: 0
-            };
-
-            if (!itemNuevo.tributos.some(trib => trib.codigo === tributo.codigo)) {
-                itemNuevo.tributos.push(tributo);
-            }
-        } else {
-            // Remove the value from the tributos array if it's there
-            itemNuevo.tributos = itemNuevo.tributos.filter(trib => trib.codigo !== $(this).val());
-        }
-    });
-
-    let alerts = "";
-    let sumaTributos = 0;
-    itemNuevo.tributos.forEach(trib => {
-        let valorTributo = 0;
-        if (trib.es_porcentaje) {
-            valorTributo = (itemNuevo.precioUni * trib.valor) * itemNuevo.cantidad;
-        } else {
-            valorTributo = trib.valor * itemNuevo.cantidad;
-        }
-        alerts += `
-            <div class="alert alert-info" role="alert">
-                ${trib.descripcion}: $${valorTributo.toFixed(4)}
-            </div>
-        `;
-        trib.calculado = valorTributo;
-        sumaTributos += valorTributo;
-    });
-    $("#tributosAplicados").html(alerts);
-    const venta = itemNuevo.precioUni * itemNuevo.cantidad + sumaTributos;
-    $("#total").val(venta.toFixed(4));
-    // console.log(itemNuevo.tributos);
-}
-
-function calcular_tributos_dte() {
-    tributos_dte = []
-    total_tributos = 0;
-    items.forEach(item => {
-        item.tributos.forEach(trib => {
-            if (!tributos_dte.some(tributo => tributo.codigo === trib.codigo)) {
-                tributos_dte.push({
-                    "codigo": trib.codigo,
-                    "descripcion": trib.descripcion,
-                    "valor": trib.calculado,
-                });
-            } else {
-                tributos_dte.find(tributo => tributo.codigo === trib.codigo).valor += trib.calculado;
-            }
-            total_tributos += trib.calculado;
-        });
-    });
-
-}
-
-function mostrar_tributos() {
-    calcular_tributos_dte();
-    let tbody = $("#tributos");
-    tbody.empty();
-    tributos_dte.forEach(trib => {
-        tbody.append(`
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td class="text-end fw-bold">${trib.descripcion}</td>
-                <td>$${trib.valor.toFixed(2)}</td>
-            </tr>
-        `);
-    })
 }
 
 function reiniciar_item() {
@@ -783,10 +570,6 @@ function reiniciar_item() {
         descripcion: null,
         precioUni: 0,
         montoDescu: 0,
-        ventaNoSuj: 0,
-        ventaExenta: 0,
-        ventaGravada: 0,
-        tributos: [],
-        psv: 0,
+        ventaGravada: 0
     };
 }

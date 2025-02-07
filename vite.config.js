@@ -22,6 +22,7 @@ export default defineConfig({
                 'resources/js/nota_debito.js',
                 'resources/js/comprobante_retencion.js',
                 'resources/js/sujeto_excluido.js',
+                'resources/js/exportacion.js',
             ],
             refresh: true,
         }),
