@@ -43,8 +43,13 @@
                         <div class="header-content">
                             <div class="row">
                                 <div class="col-lg-4"></div>
-                                <div class="col-lg-4">
+                                <div class="col-lg-4 justify-content-center">
                                     <h1 class="header-title text-center">Documentos Emitidos</h1>
+                                    {{-- Button that triggers a modal --}}
+                                    <button type="button" class="btn btn-primary text-center" data-bs-toggle="modal"
+                                        data-bs-target="#reporteModal">
+                                        <i class="fas fa-file-download me-2"></i> Descargar Anexo f07
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -284,5 +289,44 @@
             </div>
         </div>
     </div>
+
+    <!-- Reporte Modal -->
+    <div class="modal fade" id="reporteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Descargar Anexo f07</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="{{ route('business.anexos') }}" method="POST">
+                        @csrf
+                        <div class="form-group">
+                            <label for="tipo">Tipo de Anexo:</label>
+                            <select name="tipo" id="tipo" class="form-control" required>
+                                <option value="1">Detalle de Ventas al Contribuyente</option>
+                                <option value="2">Detalle de Ventas al Consumidor Final</option>
+                            </select>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="fecha_inicio">Desde:</label>
+                            <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <label for="fecha_fin">Hasta:</label>
+                            <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" required>
+                        </div>
+                        <div class="form-group mt-2">
+                            <input type="submit" value="Descargar Anexo" class="btn btn-success">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @vite('resources/js/invoices.js')
 @endsection

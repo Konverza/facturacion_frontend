@@ -65,6 +65,8 @@ Route::group(['prefix' => 'business', 'middleware' => ['auth', 'role:negocio|ven
     Route::post("/buscar_dte", [BusinessController::class, 'buscar_dtes'])->name("business.buscar_dtes");
 
     Route::post("/anulacion", [BusinessController::class, 'anular_dte'])->name("business.anulacion");
+
+    Route::post("/anexos", [BusinessController::class, 'anexos'])->name("business.anexos");
 });
 
 Route::get('/catalogo/{codigo}', [CatalogoController::class, 'getValues'])->name('catalogo.getValues');
