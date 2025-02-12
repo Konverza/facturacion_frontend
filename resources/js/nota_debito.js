@@ -641,7 +641,7 @@ function generar_documento() {
             "ivaPerci1": perciIva1.toFixed(2),
             "reteRenta": reteRenta.toFixed(2),
             "saldoFavor": 0,
-            "condicionOperacion": 1
+            "condicionOperacion": $("#condicionOperacion").val(),
         },
         "extension": null,
         "apendice": null,
@@ -662,6 +662,12 @@ function generar_documento() {
             "nombEntrega": $("#nombEntrega").val(),
             "docuRecibe": $("#docuRecibe").val(),
             "nombRecibe": $("#nombRecibe").val()
+        }
+    }
+
+    if($("#observacionesDoc").val() != "") {
+        dte.extension = {
+            "observaciones": $("#observacionesDoc").val()
         }
     }
 

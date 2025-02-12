@@ -298,7 +298,8 @@ function generar_documento() {
             "descu": descuentosTotal,
             "totalDescu": 0,
             "ivaRete1": reteIva1,
-            "condicionOperacion": 1
+            "condicionOperacion": $("#condicionOperacion").val(),
+            "observaciones": $("#observacionesDoc").val(),
         },
         "apendice": null,
     }

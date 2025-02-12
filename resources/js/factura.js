@@ -533,7 +533,7 @@ function generar_documento() {
             "ivaRete1": reteIva1.toFixed(2),
             "reteRenta_fe": reteRenta.toFixed(2),
             "saldoFavor": 0,
-            "condicionOperacion": 1
+            "condicionOperacion": $("#condicionOperacion").val(),
         },
         "extension": null,
         "apendice": null,
@@ -545,6 +545,21 @@ function generar_documento() {
         dte.ventaTercero = {
             "nit": $("#nitVentaTerceros").val(),
             "nombre": $("#nombreVentaTerceros").val()
+        }
+    }
+
+    if($("#docuEntrega").val() != "" && $("#nombEntrega").val() != "" && $("#docuRecibe").val() != "" && $("#nombRecibe").val() != "") {
+        dte.extension = {
+            "docuEntrega": $("#docuEntrega").val(),
+            "nombEntrega": $("#nombEntrega").val(),
+            "docuRecibe": $("#docuRecibe").val(),
+            "nombRecibe": $("#nombRecibe").val()
+        }
+    }
+
+    if($("#observacionesDoc").val() != "") {
+        dte.extension = {
+            "observaciones": $("#observacionesDoc").val()
         }
     }
 
