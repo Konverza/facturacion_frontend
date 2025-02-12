@@ -489,9 +489,11 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <label for="condicionOperacion" class="form-label">Condición de la Operación:</label>
-                                <option value="1">Contado</option>
-                                <option value="2">Crédito</option>
-                                <option value="3">Otro</option>
+                                <select id="condicionOperacion" class="form-select">
+                                    <option value="1">Contado</option>
+                                    <option value="2">Crédito</option>
+                                    <option value="3">Otro</option>
+                                </select>
                             </div>
                         </div>
                         <div class="card-header">
