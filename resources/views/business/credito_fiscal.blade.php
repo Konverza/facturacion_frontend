@@ -8,7 +8,7 @@
         </div>
     </div>
     <div class="container mt-5">
-        <div class="row">
+        <div class="row d-flex align-items-center">
             <div class="col-sm">
                 <h3>Comprobante de Crédito Fiscal</h3>
             </div>
@@ -22,6 +22,16 @@
                 <div class="form-group">
                     <label for="horaDTE">Hora:</label>
                     <input type="time" class="form-control" id="horaDTE">
+                </div>
+            </div>
+            <div class="col-sm">
+                <div class="form-group">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="checkFecha">
+                        <label class="form-check-label" for="checkFecha">
+                            ¿Enviar con otra fecha?
+                        </label>
+                    </div>
                 </div>
             </div>
             <div class="col-sm text-right">
@@ -93,8 +103,7 @@
                                                             <div class="form-group">
                                                                 <label for="nombre">Nombre, denominación o razón
                                                                     social del contribuyente:</label>
-                                                                <input type="text" class="form-control"
-                                                                    id="nombre"
+                                                                <input type="text" class="form-control" id="nombre"
                                                                     placeholder="Nombre del receptor">
                                                             </div>
                                                             <div class="form-group">
@@ -106,8 +115,9 @@
                                                             <div class="form-group mb-3">
                                                                 <label for="codActividad">Actividad
                                                                     Económica:</label>
-                                                                <input type="text" name="codActividad" id="codActividad"
-                                                                    class="form-control" autocomplete="off">
+                                                                <input type="text" name="codActividad"
+                                                                    id="codActividad" class="form-control"
+                                                                    autocomplete="off">
                                                             </div>
                                                             <div class="row">
                                                                 <div class="col">
@@ -930,36 +940,36 @@
                                     <button type="reset" class="btn btn-danger">Cancelar</button>
                                 </div>
                                 <!-- Parte selección médico
-                                                                    <div class="form-group">
-                                                                        <label for="nombreComercial">Tipo de Servicio:</label>
-                                                                        <select class="form-control" id="otrosdoc">
-                                                                            <option value="cirugia">Cirugía</option>
-                                                                            <option value="receptor2">Operación</option>
-                                                                            <option value="medico">Tratamiento Médico</option>
-                                                                            <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                            <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
-                                                                            <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
-                                                                        </select>
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <label for="nombre">Nombre:</label>
-                                                                        <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
-                                                                    </div>
-                                                                    <div class="form-group">
-                                                                        <div class="row">
-                                                                            <div class="col-sm-6">
-                                                                                <label for="tiponit">Tipo de Documento:</label>
-                                                                                <select class="form-control" id="tiponit">
-                                                                                    <option value="NIT">NIT</option>
-                                                                                    <option value="otro">Otro</option>
-                                                                                </select>
-                                                                            </div>
-                                                                            <div class="col-sm-6">
-                                                                                <label for="nit">NIT:</label>
-                                                                                <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
-                                                                            </div>
+                                                                        <div class="form-group">
+                                                                            <label for="nombreComercial">Tipo de Servicio:</label>
+                                                                            <select class="form-control" id="otrosdoc">
+                                                                                <option value="cirugia">Cirugía</option>
+                                                                                <option value="receptor2">Operación</option>
+                                                                                <option value="medico">Tratamiento Médico</option>
+                                                                                <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
+                                                                                <option value="medico">Cirugía Instituto Salvadoreño de Bienestar Magisterial</option>
+                                                                                <option value="medico">Tratamiento Médico Instituo Salvadoreño de Bienestar Magisterial</option>
+                                                                            </select>
                                                                         </div>
-                                                                    </div> -->
+                                                                        <div class="form-group">
+                                                                            <label for="nombre">Nombre:</label>
+                                                                            <input type="text" class="form-control" id="otrosdoc" required placeholder="Nombre del Médico">
+                                                                        </div>
+                                                                        <div class="form-group">
+                                                                            <div class="row">
+                                                                                <div class="col-sm-6">
+                                                                                    <label for="tiponit">Tipo de Documento:</label>
+                                                                                    <select class="form-control" id="tiponit">
+                                                                                        <option value="NIT">NIT</option>
+                                                                                        <option value="otro">Otro</option>
+                                                                                    </select>
+                                                                                </div>
+                                                                                <div class="col-sm-6">
+                                                                                    <label for="nit">NIT:</label>
+                                                                                    <input type="text" class="form-control" id="nit" required placeholder="Número documento de identificación">
+                                                                                </div>
+                                                                            </div>
+                                                                        </div> -->
                             </div>
                         </div>
                     </form>

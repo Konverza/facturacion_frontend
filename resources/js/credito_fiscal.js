@@ -98,17 +98,46 @@ $(function () {
         }
     })
 
-    // Set a timeout to update #horaDTE every second
-    setInterval(() => {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
+    let intervalId; // Variable para almacenar el intervalo
 
-        const timeString = `${hours}:${minutes}:${seconds}`;
+    function startClock() {
+        intervalId = setInterval(() => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
 
-        $('#horaDTE').val(timeString);
-    }, 1000);
+            const timeString = `${hours}:${minutes}:${seconds}`;
+
+            $('#horaDTE').val(timeString);
+        }, 1000);
+    }
+
+    // Iniciar el reloj al cargar la página
+    startClock();
+
+    $(document).on('change', '#checkFecha', function () {
+        if (this.checked) {
+            Swal.fire({
+                title: "¿Desea cambiar la fecha y hora del DTE?",
+                text: "Tome en cuenta que enviar una fecha distinta a la actual puede ser observado por el Ministerio de Hacienda, ¿Desea continuar?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Sí, Cambiar",
+                cancelButtonText: "No"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    clearInterval(intervalId); // Detener el intervalo
+                } else {
+                    $('#checkFecha').prop('checked', false);
+                }
+            });
+        } else {
+            startClock(); // Reiniciar el intervalo
+        }
+    });
 
 
     // Set the current date on #fechaDTE
@@ -388,7 +417,7 @@ $(function () {
         itemSeleccionado.ventaExenta = 0;
         itemSeleccionado.ventaNoSuj = 0;
         itemSeleccionado.tributos.forEach(trib => {
-            if(trib.codigo == "20" && tipoVenta != "gravada") {
+            if (trib.codigo == "20" && tipoVenta != "gravada") {
                 // Remove this tributo and continue to the next one
                 itemSeleccionado.tributos = itemSeleccionado.tributos.filter(tributo => tributo.codigo !== "20");
                 return;
@@ -561,6 +590,11 @@ function generar_documento() {
         "numPagoElectronico": null,
     }
 
+    if($("#checkFecha").prop("checked")) {
+        dte.fecEmi = $("#fechaDTE").val();
+        dte.horEmi = $("#horaDTE").val();
+    }
+
     if ($("#nitVentaTerceros").val() != "" && $("#nombreVentaTerceros").val() != "") {
         dte.ventaTercero = {
             "nit": $("#nitVentaTerceros").val(),
@@ -568,7 +602,7 @@ function generar_documento() {
         }
     }
 
-    if($("#docuEntrega").val() != "" && $("#nombEntrega").val() != "" && $("#docuRecibe").val() != "" && $("#nombRecibe").val() != "") {
+    if ($("#docuEntrega").val() != "" && $("#nombEntrega").val() != "" && $("#docuRecibe").val() != "" && $("#nombRecibe").val() != "") {
         dte.extension = {
             "docuEntrega": $("#docuEntrega").val(),
             "nombEntrega": $("#nombEntrega").val(),
@@ -577,7 +611,7 @@ function generar_documento() {
         }
     }
 
-    if($("#observacionesDoc").val() != "") {
+    if ($("#observacionesDoc").val() != "") {
         dte.extension = {
             "observaciones": $("#observacionesDoc").val()
         }
@@ -735,7 +769,7 @@ function calcular_tributos_item(tipoVenta = "gravada", descuento = 0) {
     let alerts = "";
     let sumaTributos = 0;
     itemNuevo.tributos.forEach(trib => {
-        if(trib.codigo == "20" && tipoVenta != "gravada") {
+        if (trib.codigo == "20" && tipoVenta != "gravada") {
             // Remove this tributo and continue to the next one
             itemNuevo.tributos = itemNuevo.tributos.filter(tributo => tributo.codigo !== "20");
             return;
