@@ -24,7 +24,7 @@
                                 <br>
                                 <i class="fas fa-briefcase text-danger fa-4x"></i>
                             </div>
-                            <div class="col-8">
+                            <div class="col-md-8">
                                 <h1 class="card-title">{{ count($clientes) }}</h1>
                                 <p class="card-text h5">Clientes <br>Activos</p>
                             </div>
@@ -40,7 +40,7 @@
                                 <br>
                                 <i class="fas fa-file text-info fa-4x"></i>
                             </div>
-                            <div class="col-8">
+                            <div class="col-md-8">
                                 <h1 class="card-title">{{ $octopus_statistics["total"] }}</h1>
                                 <p class="card-text h5">DTEs <br> Emitidos</p>
                             </div>
@@ -56,7 +56,7 @@
                                 <br>
                                 <i class="fas fa-sack-dollar text-warning fa-4x"></i>
                             </div>
-                            <div class="col-8">
+                            <div class="col-md-8">
                                 <h1 class="card-title">${{ number_format($octopus_statistics["total_facturado"], 2) }}</h1>
                                 <p class="card-text h5">Ventas <br>Registradas</p>
                             </div>
@@ -72,7 +72,7 @@
                                 <br>
                                 <i class="fas fa-chart-line text-success fa-4x"></i>
                             </div>
-                            <div class="col-8">
+                            <div class="col-md-8">
                                 <h1 class="card-title">$0.00</h1>
                                 <p class="card-text h5">Ingresos por <br>Planes</p>
                             </div>

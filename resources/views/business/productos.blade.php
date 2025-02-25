@@ -10,9 +10,9 @@
         </div>
         <div class="row my-4">
             <div class="col-md-5">
-                <div class="card shadow bg-light card-body">
+                <div class="card shadow bg-light card-body mb-3">
                     <h3>Añadir Producto</h3>
-                    <form method="POST" action="{{route("business.productos.store")}}" id="formProducto">
+                    <form method="POST" action="{{ route('business.productos.store') }}" id="formProducto">
                         @csrf
                         <div class="form-group mb-3">
                             <label for="tipoItem">Tipo de Producto:</label>
@@ -84,64 +84,67 @@
             <div class="col-md-7">
                 <div class="card shadow bg-light card-body">
                     <p class="h4">Productos Registrados</p>
-                    <table class="table table-bordered table-hover table-striped w-100 align-middle" id="productosTable">
-                        <thead>
-                            <tr class="align-middle text-center">
-                                <th style="width: 5%;">Código</th>
-                                <th style="width: 10%;">Descripción</th>
-                                <th style="width: 15%;">Precios</th>
-                                <th style="width: 30%;">Tributos</th>
-                                <th style="width: 20%;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($productos as $producto)
-                                <tr class="align-middle">
-                                    <td>{{ $producto->codigo }}</td>
-                                    <td>{{ $producto->descripcion }}</td>
-                                    <td>
-                                        <p class="m-0">Precio sin IVA: ${{ $producto->precioSinTributos }}</p>
-                                        <p class="m-0">Precio con IVA: ${{ $producto->precioUni }}</p>
-                                    </td>
-                                    <td>
-                                        @php
-                                            $tributos_producto = json_decode($producto->tributos);
-                                            $texto_tributos = [];
-                                            // Buscar el código de tributo en la lista de tributos
-                                            foreach ($tributos_producto as $tributo) {
-                                                $tributo_encontrado = $tributos->where('codigo', $tributo)->first();
-                                                if ($tributo_encontrado) {
-                                                    $texto_tributos[] = $tributo_encontrado->descripcion;
-                                                }
-                                            }
-                                        @endphp
-                                        <ul>
-                                            @foreach ($texto_tributos as $tributo)
-                                                <li>{{ $tributo }}</li>
-                                            @endforeach
-                                        </ul>
-                                    </td>
-                                    <td>
-                                        <form action="{{ route('business.productos.destroy', $producto->id) }}"
-                                            method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger">Eliminar</button>
-                                        </form>
-                                    </td>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100 align-middle"
+                            id="productosTable">
+                            <thead>
+                                <tr class="align-middle text-center">
+                                    <th style="width: 5%;">Código</th>
+                                    <th style="width: 10%;">Descripción</th>
+                                    <th style="width: 15%;">Precios</th>
+                                    <th style="width: 30%;">Tributos</th>
+                                    <th style="width: 20%;">Acciones</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr class="align-middle text-center">
-                                <th>Código</th>
-                                <th>Unidad de Medida</th>
-                                <th>Descripción</th>
-                                <th>Precios</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </tfoot>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($productos as $producto)
+                                    <tr class="align-middle">
+                                        <td>{{ $producto->codigo }}</td>
+                                        <td>{{ $producto->descripcion }}</td>
+                                        <td>
+                                            <p class="m-0">Precio sin IVA: ${{ $producto->precioSinTributos }}</p>
+                                            <p class="m-0">Precio con IVA: ${{ $producto->precioUni }}</p>
+                                        </td>
+                                        <td>
+                                            @php
+                                                $tributos_producto = json_decode($producto->tributos);
+                                                $texto_tributos = [];
+                                                // Buscar el código de tributo en la lista de tributos
+                                                foreach ($tributos_producto as $tributo) {
+                                                    $tributo_encontrado = $tributos->where('codigo', $tributo)->first();
+                                                    if ($tributo_encontrado) {
+                                                        $texto_tributos[] = $tributo_encontrado->descripcion;
+                                                    }
+                                                }
+                                            @endphp
+                                            <ul>
+                                                @foreach ($texto_tributos as $tributo)
+                                                    <li>{{ $tributo }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </td>
+                                        <td>
+                                            <form action="{{ route('business.productos.destroy', $producto->id) }}"
+                                                method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr class="align-middle text-center">
+                                    <th>Código</th>
+                                    <th>Unidad de Medida</th>
+                                    <th>Descripción</th>
+                                    <th>Precios</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

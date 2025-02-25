@@ -42,20 +42,21 @@
                     <div class="col-md-12">
                         <div class="header-content">
                             <div class="row">
-                                <div class="col-lg-4"></div>
-                                <div class="col-lg-4 justify-content-center">
-                                    <h1 class="header-title text-center">Documentos Emitidos</h1>
-                                    {{-- Button that triggers a modal --}}
-                                    <button type="button" class="btn btn-primary text-center" data-bs-toggle="modal"
-                                        data-bs-target="#reporteModal">
-                                        <i class="fas fa-file-download me-2"></i> Descargar Anexo f07
-                                    </button>
+                                <div class="col-lg-10">
+                                    <div class="d-flex justify-content-between">
+                                        <h1 class="header-title text-center">Documentos Emitidos</h1>
+                                        {{-- Button that triggers a modal --}}
+                                        <button type="button" class="btn btn-primary text-center" data-bs-toggle="modal"
+                                            data-bs-target="#reporteModal">
+                                            <i class="fas fa-file-download me-2"></i> Descargar Anexo f07
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="row my-4">
+                <div class="row my-4 table-responsive">
                     <table class="table small table-bordered table-hover table-striped w-100 align-middle" id="invoicesTable">
                         <thead>
                             <tr class="align-middle text-center">

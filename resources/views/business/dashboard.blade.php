@@ -10,7 +10,7 @@
         '98' => 'Evento de Contingencia',
         '99' => 'Evento de Invalidación',
     ];
-    $dtes_plan = json_decode($business_plan["dtes"], true);
+    $dtes_plan = json_decode($business_plan['dtes'], true);
 
 @endphp
 @extends('layouts.app')
@@ -38,7 +38,7 @@
                                     <br>
                                     <i class="fas fa-file-lines text-info fa-4x"></i>
                                 </div>
-                                <div class="col-8">
+                                <div class="col-md-8">
                                     <h1 class="card-title">{{ $statistics['total'] }} de N/A</h1>
                                     <p class="card-text h4">Documentos<br>Emitidos</p>
                                 </div>
@@ -54,7 +54,7 @@
                                     <br>
                                     <i class="fas fa-circle-check text-success fa-4x"></i>
                                 </div>
-                                <div class="col-8">
+                                <div class="col-md-8">
                                     <h1 class="card-title">Operativo</h1>
                                     <p class="card-text h4">Estado<br>Hacienda</p>
                                 </div>
@@ -70,7 +70,7 @@
                                     <br>
                                     <i class="fas fa-user fa-4x"></i>
                                 </div>
-                                <div class="col-8">
+                                <div class="col-md-8">
                                     <h1 class="card-title">{{ $customers }}</h1>
                                     <p class="card-text h4">Clientes <br>Registrados </p>
                                 </div>
@@ -86,7 +86,7 @@
                                     <br>
                                     <i class="fa fa-box-open text-warning fa-4x"></i>
                                 </div>
-                                <div class="col-8">
+                                <div class="col-md-8">
                                     <h1 class="card-title">{{ $productos }}</h1>
                                     <p class="card-text h4">Productos<br>Registrados</p>
                                 </div>
@@ -100,35 +100,40 @@
                     <div class="row mb-3">
                         <div class="card-body shadow card">
                             <h4 class="mb-3">Últimos Documentos Emitidos:</h4>
-                            <table class="table table-striped table-bordered table-lg">
-                                <thead>
-                                    <tr>
-                                        <th>Tipo de Documento</th>
-                                        <th>Fecha de Emisión</th>
-                                        <th>Código de Generación</th>
-                                        <th>Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (array_reverse(array_slice($dtes, -5)) as $invoice)
+                            <div class="table-responsive">
+                                <table class="table table-striped table-bordered table-lg">
+                                    <thead>
                                         <tr>
-                                            <td>{{ $tiposDte[$invoice['tipo_dte']] }}</td>
-                                            <td>{{ \Carbon\Carbon::parse($invoice['fhProcesamiento'])->format('d/m/Y H:i:s') }}
-                                            </td>
-                                            <td>{{ $invoice['codGeneracion'] }}</td>
-                                            @if ($invoice['estado'] == 'PROCESADO')
-                                                <td class="text-success"><i class="fa-solid fa-check"></i> Procesado</td>
-                                            @elseif ($invoice['estado'] == 'RECHAZADO')
-                                                <td class="text-danger"><i class="fa-solid fa-times"></i> Rechazado</td>
-                                            @elseif ($invoice['estado'] == 'ANULADO')
-                                                <td class="text-black"><i class="fa-solid fa-file-circle-xmark"></i> Anulado</td>
-                                            @else
-                                                <td class="text-warning"><i class="fa-solid fa-clock"></i> Contingencia</td>
-                                            @endif
+                                            <th>Tipo de Documento</th>
+                                            <th>Fecha de Emisión</th>
+                                            <th>Código de Generación</th>
+                                            <th>Estado</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (array_reverse(array_slice($dtes, -5)) as $invoice)
+                                            <tr>
+                                                <td>{{ $tiposDte[$invoice['tipo_dte']] }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($invoice['fhProcesamiento'])->format('d/m/Y H:i:s') }}
+                                                </td>
+                                                <td>{{ $invoice['codGeneracion'] }}</td>
+                                                @if ($invoice['estado'] == 'PROCESADO')
+                                                    <td class="text-success"><i class="fa-solid fa-check"></i> Procesado
+                                                    </td>
+                                                @elseif ($invoice['estado'] == 'RECHAZADO')
+                                                    <td class="text-danger"><i class="fa-solid fa-times"></i> Rechazado</td>
+                                                @elseif ($invoice['estado'] == 'ANULADO')
+                                                    <td class="text-black"><i class="fa-solid fa-file-circle-xmark"></i>
+                                                        Anulado</td>
+                                                @else
+                                                    <td class="text-warning"><i class="fa-solid fa-clock"></i> Contingencia
+                                                    </td>
+                                                @endif
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                     {{-- <div class="row">

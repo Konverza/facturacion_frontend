@@ -90,7 +90,8 @@
                                                                 </div>
                                                                 <div class="col-sm-4">
                                                                     <div class="form-group">
-                                                                        <label for="nitContribuyente">Número de Documento</label>
+                                                                        <label for="nitContribuyente">Número de
+                                                                            Documento</label>
                                                                         <input type="text" class="form-control"
                                                                             id="nitContribuyente"
                                                                             placeholder="Número de documento">
@@ -109,8 +110,7 @@
                                                             <div class="form-group">
                                                                 <label for="nombre">Nombre, denominación o razón
                                                                     social del contribuyente:</label>
-                                                                <input type="text" class="form-control"
-                                                                    id="nombre"
+                                                                <input type="text" class="form-control" id="nombre"
                                                                     placeholder="Nombre del receptor">
                                                             </div>
                                                             <div class="form-group">
@@ -122,8 +122,9 @@
                                                             <div class="form-group mb-3">
                                                                 <label for="codActividad">Actividad
                                                                     Económica:</label>
-                                                                <input type="text" name="codActividad" id="codActividad"
-                                                                    class="form-control" autocomplete="off">
+                                                                <input type="text" name="codActividad"
+                                                                    id="codActividad" class="form-control"
+                                                                    autocomplete="off">
                                                             </div>
                                                             <div class="row">
                                                                 <div class="col">
@@ -266,7 +267,7 @@
                         </div>
                         <div class="row">
                             <div class="col-sm-12">
-                                <div class="container mt-5">
+                                <div class="container mt-5 table-responsive">
                                     <table class="table table-light border-less">
                                         <thead>
                                             <tr>
@@ -300,8 +301,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="docFisicoLabel">Documento Físico</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -325,7 +325,8 @@
                     </div>
                     <div class="form-group">
                         <label for="montoRetencionFisico" class="form-label">Monto Sujeto a Retención</label>
-                        <input type="number" step="0.01" min="0" class="form-control" id="montoRetencionFisico">
+                        <input type="number" step="0.01" min="0" class="form-control"
+                            id="montoRetencionFisico">
                     </div>
                     <div class="form-group">
                         <label for="tipoRetencionFisico" class="form-label">Tipo de Retención</label>
@@ -348,13 +349,13 @@
     </div>
 
     <!-- Modal DTE ELectrónico -->
-    <div class="modal modal-lg fade" id="docElectronico" tabindex="-1" aria-labelledby="docElectronicoLabel" aria-hidden="true">
+    <div class="modal modal-lg fade" id="docElectronico" tabindex="-1" aria-labelledby="docElectronicoLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="docElectronicoLabel">Documento Electrónico</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="card">
@@ -372,7 +373,8 @@
                                 <div class="col-lg-6">
                                     <div class="form-group">
                                         <label for="tipoDocumentoElectronico" class="form-label">Tipo de Documento</label>
-                                        <select name="tipoDocumentoElectronico" id="tipoDocumentoElectronico" class="form-select">
+                                        <select name="tipoDocumentoElectronico" id="tipoDocumentoElectronico"
+                                            class="form-select">
                                             <option value="01">Factura</option>
                                             <option value="03">Comprobante de Crédito Fiscal</option>
                                         </select>
@@ -383,13 +385,15 @@
                                 <div class="col-lg-6">
                                     <div class="form-group">
                                         <label for="desdeBusqueda" class="form-label">Fecha Emitido Desde:</label>
-                                        <input type="datetime-local" name="" id="desdeBusqueda" class="form-control">
+                                        <input type="datetime-local" name="" id="desdeBusqueda"
+                                            class="form-control">
                                     </div>
                                 </div>
                                 <div class="col-lg-6">
                                     <div class="form-group">
                                         <label for="hastaBusqueda" class="form-label">Fecha Emitido Hasta:</label>
-                                        <input type="datetime-local" name="" id="hastaBusqueda" class="form-control">
+                                        <input type="datetime-local" name="" id="hastaBusqueda"
+                                            class="form-control">
                                     </div>
                                 </div>
                             </div>
@@ -408,17 +412,19 @@
                             <h5 class="card-title">Resultados</h5>
                         </div>
                         <div class="card-body">
-                            <table class="table table-bordered table-hover">
-                                <thead>
-                                    <th>Fecha de Emisión</th>
-                                    <th>Código de Generación</th>
-                                    <th>Monto</th>
-                                    <th>Seleccionar</th>
-                                </thead>
-                                <tbody id="resultadosDte">
-                                    
-                                </tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                        <th>Fecha de Emisión</th>
+                                        <th>Código de Generación</th>
+                                        <th>Monto</th>
+                                        <th>Seleccionar</th>
+                                    </thead>
+                                    <tbody id="resultadosDte">
+
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -442,8 +448,9 @@
                 <div class="modal-body">
                     <div class="container">
                         <div class="row">
-                            <div class="col-12">
-                                <table id="tablaClientes" class="table table-bordered table-striped table-hover w-100">
+                            <div class="col-12 table-responsive">
+                                <table id="tablaClientes"
+                                    class="table small table-bordered table-striped table-hover w-100">
                                     <thead class="table-dark">
                                         <tr>
                                             <th>Identificación</th>

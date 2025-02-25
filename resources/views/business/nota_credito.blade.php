@@ -684,7 +684,7 @@
                                             <div class="col-1">
                                                 <label for="tipoItem" class="form-label">Tipo:</label>
                                             </div>
-                                            <div class="col-2">
+                                            <div class="col-md-2">
                                                 <div class="mb-3">
                                                     <select id="tipoItem" class="form-select">
                                                         <option value="1" selected>1 - Bien</option>
@@ -695,7 +695,7 @@
                                             </div>
                                         </div>
                                         <div class="row">
-                                            <div class="col-2">
+                                            <div class="col-md-2">
                                                 <div class="mb-3">
                                                     <label for="cantidad" class="form-label">Cantidad:</label>
                                                     <input type="number" class="form-control" id="cantidad"
@@ -703,7 +703,7 @@
                                                     <small class="form-text text-danger">Requerido.</small>
                                                 </div>
                                             </div>
-                                            <div class="col-2">
+                                            <div class="col-md-2">
                                                 <div class="mb-3">
                                                     <label for="unidad" class="form-label">Unidad:</label>
                                                     <select id="unidad" class="form-select">
@@ -715,7 +715,7 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-4">
+                                            <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label for="producto" class="form-label">Producto:</label>
                                                     <input type="text" class="form-control" id="producto"
@@ -723,7 +723,7 @@
                                                     <small class="form-text text-danger">Requerido.</small>
                                                 </div>
                                             </div>
-                                            <div class="col-2">
+                                            <div class="col-md-2">
                                                 <div class="mb-3">
                                                     <label for="tipoVenta" class="form-label">Tipo
                                                         Venta:</label>
@@ -734,7 +734,7 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-2">
+                                            <div class="col-md-2">
                                                 <div class="mb-3">
                                                     <label for="precio" class="form-label">Precio (sin IVA):</label>
                                                     <input type="number" class="form-control" id="precio"
@@ -747,7 +747,7 @@
                                             <label class="form-label"><b>Información de los
                                                     tributos:</b></label>
                                             <div class="row">
-                                                <div class="col-6">
+                                                <div class="col-md-6">
                                                     <div class="form-group mb-3">
                                                         <p class="form-label">Tributos que aplican a este producto:</p>
                                                         @foreach ($tributos as $tributo)
@@ -766,7 +766,7 @@
                                                         @endforeach
                                                     </div>
                                                 </div>
-                                                <div class="col-6" id="tributosAplicados">
+                                                <div class="col-md-6" id="tributosAplicados">
 
                                                 </div>
                                             </div>
@@ -1061,7 +1061,7 @@
                                             <div class="col-12">
                                                 <p class="h4">Producto: <span id="prodDesc"></span></p>
                                             </div>
-                                            <div class="col-4">
+                                            <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label for="cantidadExistente" class="form-label">Cantidad:</label>
                                                     <input type="number" class="form-control" id="cantidadExistente"
@@ -1069,7 +1069,7 @@
                                                     <small class="form-text text-danger">Requerido.</small>
                                                 </div>
                                             </div>
-                                            <div class="col-4">
+                                            <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label for="tipoVentaExistente" class="form-label">Tipo
                                                         Venta:</label>
@@ -1080,21 +1080,21 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="col-4">
+                                            <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label for="descuentoExistente" class="form-label">Descuento</label>
                                                     <input type="number" class="form-control" id="descuentoExistente"
                                                         placeholder="Descuento">
                                                 </div>
                                             </div>
-                                            <div class="col-4">
+                                            <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label for="totalExistente" class="form-label">Total</label>
                                                     <input type="number" class="form-control" id="totalExistente"
                                                         placeholder="Total" readonly>
                                                 </div>
                                             </div>
-                                            <div class="col-4">
+                                            <div class="col-md-4">
                                                 <div class="mb-3">
                                                     <label for="documentoRelacionadoExistente" class="form-label">Documento Relacionado</label>
                                                     <select id="documentoRelacionadoExistente" class="form-select">

@@ -440,7 +440,7 @@
                                     <div class="col-1">
                                         <label for="tipoItem" class="form-label">Tipo:</label>
                                     </div>
-                                    <div class="col-2">
+                                    <div class="col-md-2">
                                         <div class="mb-3">
                                             <select id="tipoItem" class="form-select">
                                                 <option value="1" selected>1 - Bien</option>
@@ -471,14 +471,14 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-4">
+                                    <div class="col-md-4">
                                         <div class="mb-3">
                                             <label for="producto" class="form-label">Producto:</label>
                                             <input type="text" class="form-control" id="producto" value="">
                                             <small class="form-text text-danger">Requerido.</small>
                                         </div>
                                     </div>
-                                    <div class="col-2">
+                                    <div class="col-md-2">
                                         <div class="mb-3">
                                             <label for="precio" class="form-label">Precio:</label>
                                             <input type="number" class="form-control" id="precio" step="0.00001">
