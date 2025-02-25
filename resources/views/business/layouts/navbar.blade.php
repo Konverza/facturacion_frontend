@@ -47,7 +47,19 @@
         </ul>
     </div>
 </nav>
-
+<div class="container-fluid my-2">
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info text-center" role="alert">
+                <p class="h4">
+                    <strong>✨ ¡Algo nuevo está en camino! ✨</strong> <br>
+                    Pronto renovaremos nuestra interfaz para ofrecerte más funcionalidades y una mejor experiencia. 🚀<br>
+                    ¡Gracias por ser parte de esta evolución!
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 @if (env('APP_ENV') == 'local')
     <div class="container-fluid my-2">
         <div class="row">
