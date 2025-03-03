@@ -52,10 +52,10 @@
                             <div class="row py-2 justify-content-center">
                                 <div class="col-3">
                                     <br>
-                                    <i class="fas fa-circle-check text-success fa-4x"></i>
+                                    <i class="fas fa-warning text-warning fa-4x"></i>
                                 </div>
                                 <div class="col-md-8">
-                                    <h1 class="card-title">Operativo</h1>
+                                    <h1 class="card-title">Intermitente</h1>
                                     <p class="card-text h4">Estado<br>Hacienda</p>
                                 </div>
                             </div>

@@ -50,12 +50,21 @@
 <div class="container-fluid my-2">
     <div class="row">
         <div class="col-12">
-            <div class="alert alert-info text-center" role="alert">
+            <div class="alert alert-dismissible alert-info text-center" role="alert">
                 <p class="h4">
                     <strong>✨ ¡Algo nuevo está en camino! ✨</strong> <br>
                     Pronto renovaremos nuestra interfaz para ofrecerte más funcionalidades y una mejor experiencia. 🚀<br>
                     ¡Gracias por ser parte de esta evolución!
                 </p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div class="alert alert-dismissible alert-warning text-center" role="alert">
+                <p class="h4">
+                    <strong>Estimado Usuario:</strong> <br>
+                    Actualmente el Sistema de Transmisión del Ministerio de Hacienda está presentando intermitencia, por lo que algunos DTE pueden no enviarse.
+                    Agradecemos su comprensión y paciencia, hemos notificado al Ministerio de Hacienda para que resuelvan el inconveniente.
+                </p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         </div>
     </div>
