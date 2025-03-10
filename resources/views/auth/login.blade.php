@@ -2,7 +2,7 @@
 @section('title', 'Iniciar sesión')
 @section('content')
     <section class="flex h-screen w-full items-center justify-center">
-        <div class="w-[420px] rounded-lg border bg-white shadow-lg p-6">
+        <div class="w-[420px] rounded-lg border bg-white dark:bg-black shadow-lg p-6">
             <div class="overflow-hidden rounded-full">
                 <img src="{{ asset('images/only-icon.png') }}" alt="Logo Konverza" class="mx-auto w-32 object-cover">
             </div>
