@@ -16,6 +16,7 @@ class UsuarioMail extends Mailable
     protected $nombre;
     protected $email;
     protected $password;
+
     /**
      * Create a new message instance.
      */
@@ -27,18 +28,16 @@ class UsuarioMail extends Mailable
     }
 
     /**
-     * Build the message.
-     *
-     * @return $this
+     * Get the message envelope.
      */
     public function build()
     {
-        return $this->subject('Registro en Facturación Electrónica')
+        return $this->subject('Registro en facturación electrónica')
             ->view('mail.usuario')
             ->with([
-                'nombre' => $this->nombre,
-                'correo' => $this->email,
-                'contrasena' => $this->password
+                'name' => $this->nombre,
+                'email' => $this->email,
+                'password' => $this->password
             ]);
     }
 }

@@ -1,0 +1,480 @@
+@import url("datatable.css");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+
+    --primary: #0a1d7d;
+    --primary-50: #e5e7f6;
+    --primary-100: #bcc1ec;
+    --primary-200: #9199e1;
+    --primary-300: #6771d7;
+    --primary-400: #4554cc;
+    --primary-500: #0a1d7d;
+    --primary-600: #081769;
+    --primary-700: #061256;
+    --primary-800: #040c42;
+    --primary-900: #02062e;
+    --primary-950: #010318;
+}
+
+/* plus-jakarta-sans-latin-wght-normal */
+@font-face {
+    font-family: "Plus Jakarta Sans Variable";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 200 800;
+    src: url(https://cdn.jsdelivr.net/fontsource/fonts/plus-jakarta-sans:vf@latest/latin-wght-normal.woff2)
+        format("woff2-variations");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+        U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122,
+        U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* rubik-latin-wght-normal */
+@font-face {
+    font-family: "Rubik Variable";
+    font-style: normal;
+    font-display: swap;
+    font-weight: 300 900;
+    src: url(https://cdn.jsdelivr.net/fontsource/fonts/rubik:vf@latest/latin-wght-normal.woff2)
+        format("woff2-variations");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+        U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122,
+        U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body {
+    font-family: "Plus Jakarta Sans Variable", sans-serif, system-ui;
+}
+
+input,
+select,
+p,
+small,
+a,
+button,
+textarea,
+label,
+span {
+    font-family: "Plus Jakarta Sans Variable", sans-serif, system-ui;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: "Rubik Variable", sans-serif, system-ui;
+}
+
+.is-invalid {
+    @apply border border-red-500 ring-2 ring-red-100 dark:border-red-900 dark:ring-red-900/20 !important;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+.theme-selected {
+    @apply bg-gray-200 dark:bg-gray-900 text-gray-800 dark:text-gray-100;
+}
+
+/*Remove styles datatable */
+
+#dt-search-0,
+.dt-search {
+    display: none;
+}
+
+div.dt-container.dt-empty-footer tbody > tr:last-child > *,
+html.dark .dt-container.dt-empty-footer table.dataTable {
+    @apply border-gray-300 dark:border-gray-800 border-b;
+}
+
+div.dt-container div.dt-layout-row {
+    margin: 0px !important;
+}
+
+html.dark table.dataTable > thead > tr > th,
+html.dark table.dataTable > thead > tr > td {
+    border-bottom: 0px !important;
+}
+
+/* div.dt-container.dt-empty-footer tbody > tr:last-child > *,
+html.dark .dt-container.dt-empty-footer table.dataTable {
+    border-bottom: 0px !important;
+} */
+
+div.dt-layout-cell.dt-layout-start {
+    width: 100%;
+}
+
+div.dt-container .dt-paging {
+    @apply p-2 w-max;
+}
+
+.dataTables_paginate a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    text-decoration: none;
+}
+
+html .dt-container .dt-paging .dt-paging-button.disabled {
+    @apply bg-gray-200 hover:bg-gray-200 dark:bg-gray-800 px-4 py-1.5 border text-xs cursor-not-allowed;
+}
+
+div.dt-container .dt-paging .dt-paging-button {
+    @apply border-gray-300 dark:border-gray-800 dark:bg-gray-900 px-4 py-1.5 border text-xs
+    dark:hover:bg-gray-800 dark:hover:border-gray-800 rounded-md;
+}
+
+.dark div.dt-container .dt-paging .dt-paging-button.last,
+html .dt-container .dt-paging .dt-paging-button.disabled.last {
+    @apply rounded-e-lg !important;
+}
+
+.dark div.dt-container .dt-paging .dt-paging-button.first,
+html .dt-container .dt-paging .dt-paging-button.disabled.first {
+    @apply rounded-s-lg;
+}
+
+.dark div.dt-container .dt-paging .dt-paging-button {
+    color: #fff !important;
+}
+
+div.dt-container .dt-paging .dt-paging-button:hover {
+    @apply bg-gray-200 dark:hover:bg-gray-800 dark:bg-gray-800 dark:hover:border-gray-800;
+}
+
+html .dt-container .dt-paging .dt-paging-button.current {
+    @apply bg-primary-500 dark:hover:bg-primary-400 hover:bg-primary-700 dark:bg-primary-300 border-primary-500 dark:hover:border-primary-400 dark:border-primary-300 text-primary-500 dark:text-primary-300 text-xs;
+}
+
+html .dt-container .dt-paging .dt-paging-button.current {
+    color: #fff !important;
+}
+
+html .dt-container .dt-paging .dt-paging-button.current:hover {
+    color: #fff !important;
+}
+
+div.dt-container .dt-paging .ellipsis {
+    @apply text-gray-950 dark:text-gray-200;
+}
+
+.dt-length {
+    @apply p-2 w-full text-gray-500 dark:text-gray-400 text-sm !important;
+}
+
+.dt-empty {
+    @apply p-4 text-center;
+}
+
+.dt-paging.paging_full_numbers {
+    margin-inline: auto !important;
+}
+
+.dt-info {
+    @apply p-2 w-full text-gray-500 dark:text-gray-400 text-sm !important;
+}
+
+div.dt-container .dt-input,
+#dt-length-0,
+#dt-length-1 {
+    @apply dark:bg-gray-900 me-4 px-4 border-gray-300 dark:border-gray-800 rounded-lg w-28 min-w-28 max-w-28 text-sm;
+}
+
+/* .dt-paging {
+    display: none;
+} */
+
+nav {
+    background-color: transparent !important;
+}
+
+.bg-gray-900\/50.dark\:bg-gray-900\/80.fixed.inset-0.z-40 {
+    display: none;
+}
+
+div[drawer-backdrop] {
+    @apply bg-gray-200/50 dark:bg-gray-900/50 z-30 !important;
+}
+
+.is-rotated {
+    @apply rotate-180 transition-transform duration-300 ease-in-out transform;
+}
+
+.not-rotated {
+    @apply rotate-0 transition-transform duration-300 ease-in-out transform;
+}
+
+.admin {
+    @apply lg:ml-56;
+}
+
+.business {
+    @apply lg:ml-64;
+}
+
+.business.collapsed-sidebar {
+    @apply lg:ml-16;
+}
+
+/* Loader */
+/* From Uiverse.io by ZacharyCrespin2 */
+.loader {
+    width: 6em;
+    height: 6em;
+}
+
+.loader-ring {
+    animation: ringA 2s linear infinite;
+}
+
+.loader-ring-a {
+    stroke: #6771d7;
+}
+
+.loader-ring-b {
+    animation-name: ringB;
+    stroke: #0a1d7d;
+}
+
+.loader-ring-c {
+    animation-name: ringC;
+    stroke: #9199e1;
+}
+
+.loader-ring-d {
+    animation-name: ringD;
+    stroke: #061256;
+}
+
+/* Animations */
+@keyframes ringA {
+    from,
+    4% {
+        stroke-dasharray: 0 660;
+        stroke-width: 20;
+        stroke-dashoffset: -330;
+    }
+
+    12% {
+        stroke-dasharray: 60 600;
+        stroke-width: 30;
+        stroke-dashoffset: -335;
+    }
+
+    32% {
+        stroke-dasharray: 60 600;
+        stroke-width: 30;
+        stroke-dashoffset: -595;
+    }
+
+    40%,
+    54% {
+        stroke-dasharray: 0 660;
+        stroke-width: 20;
+        stroke-dashoffset: -660;
+    }
+
+    62% {
+        stroke-dasharray: 60 600;
+        stroke-width: 30;
+        stroke-dashoffset: -665;
+    }
+
+    82% {
+        stroke-dasharray: 60 600;
+        stroke-width: 30;
+        stroke-dashoffset: -925;
+    }
+
+    90%,
+    to {
+        stroke-dasharray: 0 660;
+        stroke-width: 20;
+        stroke-dashoffset: -990;
+    }
+}
+
+@keyframes ringB {
+    from,
+    12% {
+        stroke-dasharray: 0 220;
+        stroke-width: 20;
+        stroke-dashoffset: -110;
+    }
+
+    20% {
+        stroke-dasharray: 20 200;
+        stroke-width: 30;
+        stroke-dashoffset: -115;
+    }
+
+    40% {
+        stroke-dasharray: 20 200;
+        stroke-width: 30;
+        stroke-dashoffset: -195;
+    }
+
+    48%,
+    62% {
+        stroke-dasharray: 0 220;
+        stroke-width: 20;
+        stroke-dashoffset: -220;
+    }
+
+    70% {
+        stroke-dasharray: 20 200;
+        stroke-width: 30;
+        stroke-dashoffset: -225;
+    }
+
+    90% {
+        stroke-dasharray: 20 200;
+        stroke-width: 30;
+        stroke-dashoffset: -305;
+    }
+
+    98%,
+    to {
+        stroke-dasharray: 0 220;
+        stroke-width: 20;
+        stroke-dashoffset: -330;
+    }
+}
+
+@keyframes ringC {
+    from {
+        stroke-dasharray: 0 440;
+        stroke-width: 20;
+        stroke-dashoffset: 0;
+    }
+
+    8% {
+        stroke-dasharray: 40 400;
+        stroke-width: 30;
+        stroke-dashoffset: -5;
+    }
+
+    28% {
+        stroke-dasharray: 40 400;
+        stroke-width: 30;
+        stroke-dashoffset: -175;
+    }
+
+    36%,
+    58% {
+        stroke-dasharray: 0 440;
+        stroke-width: 20;
+        stroke-dashoffset: -220;
+    }
+
+    66% {
+        stroke-dasharray: 40 400;
+        stroke-width: 30;
+        stroke-dashoffset: -225;
+    }
+
+    86% {
+        stroke-dasharray: 40 400;
+        stroke-width: 30;
+        stroke-dashoffset: -395;
+    }
+
+    94%,
+    to {
+        stroke-dasharray: 0 440;
+        stroke-width: 20;
+        stroke-dashoffset: -440;
+    }
+}
+
+@keyframes ringD {
+    from,
+    8% {
+        stroke-dasharray: 0 440;
+        stroke-width: 20;
+        stroke-dashoffset: 0;
+    }
+
+    16% {
+        stroke-dasharray: 40 400;
+        stroke-width: 30;
+        stroke-dashoffset: -5;
+    }
+
+    36% {
+        stroke-dasharray: 40 400;
+        stroke-width: 30;
+        stroke-dashoffset: -175;
+    }
+
+    44%,
+    50% {
+        stroke-dasharray: 0 440;
+        stroke-width: 20;
+        stroke-dashoffset: -220;
+    }
+
+    58% {
+        stroke-dasharray: 40 400;
+        stroke-width: 30;
+        stroke-dashoffset: -225;
+    }
+
+    78% {
+        stroke-dasharray: 40 400;
+        stroke-width: 30;
+        stroke-dashoffset: -395;
+    }
+
+    86%,
+    to {
+        stroke-dasharray: 0 440;
+        stroke-width: 20;
+        stroke-dashoffset: -440;
+    }
+}
+
+#sidebar,
+.business,
+#navbar {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.collapsed {
+    width: 4rem !important; /* Reduce el ancho */
+}
+
+.collapsed span {
+    display: none; /* Oculta los textos */
+}
+
+.collapsed ul {
+    padding: 0; /* Ajusta el padding */
+}
+
+.collapsed .group {
+    justify-content: center; /* Centra los íconos */
+}
+
+.collapsed .group a {
+    padding-left: 0;
+    padding-right: 0;
+}

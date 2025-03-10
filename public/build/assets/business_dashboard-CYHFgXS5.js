@@ -1,1 +1,0 @@
-$(function(){$("#dteGenerar").on("change",function(){$(this).val()!=""?$("#btnGenerar").prop("disabled",!1):$("#btnGenerar").prop("disabled",!0)}),$("#btnGenerar").on("click",function(){let e=`/business/dte/?dte=${$("#dteGenerar").val()}`;window.location.href=e})});

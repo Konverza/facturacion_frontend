@@ -20,5 +20,19 @@ class BusinessProduct extends Model
         'precioUni',
         'precioSinTributos',
         'tributos',
+        'stockInicial',
+        'stockActual',
+        'stockMinimo',
+        'estado_stock',
     ];
+
+    public function business()
+    {
+        return $this->belongsTo(Business::class);
+    }
+
+    public function movements()
+    {
+        return $this->hasMany(BusinessProductMovement::class);
+    }
 }

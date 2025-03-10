@@ -1,0 +1,1194 @@
+<?php
+
+namespace App\Http\Controllers\Business;
+
+use App\Http\Controllers\Controller;
+use App\Models\Business;
+use App\Models\BusinessCustomer;
+use App\Models\BusinessProduct;
+use App\Models\BusinessProductMovement;
+use App\Models\BusinessUser;
+use App\Models\CuentasCobrar;
+use App\Models\DTE;
+use App\Models\Tributes;
+use App\Services\OctopusService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
+
+class DTEController extends Controller
+{
+    public $octopus_service;
+    public $unidades_medidas;
+    public $departamentos;
+    public $tipos_documentos;
+    public $actividades_economicas;
+    public $countries;
+    public $recinto_fiscal;
+    public $regimen_exportacion;
+    public $tipos_establecimientos;
+    public $formas_pago;
+    public $tipo_servicio;
+    public $modo_transporte;
+    public $dte;
+
+    public function __construct()
+    {
+        $this->octopus_service = new OctopusService();
+        $this->unidades_medidas = $this->octopus_service->getCatalog("CAT-014");
+        $this->departamentos = $this->octopus_service->getCatalog("CAT-012");
+        $this->tipos_documentos = $this->octopus_service->getCatalog("CAT-022");
+        $this->actividades_economicas = $this->octopus_service->getCatalog("CAT-019", null, true, true);
+        $this->countries = $this->octopus_service->getCatalog("CAT-020");
+        $this->recinto_fiscal = $this->octopus_service->getCatalog("CAT-027", null, true, true);
+        $this->regimen_exportacion = $this->octopus_service->getCatalog("CAT-028", null, true, true);
+        $this->tipos_establecimientos = $this->octopus_service->getCatalog("CAT-009");
+        $this->formas_pago = $this->octopus_service->getCatalog("CAT-017");
+        $this->tipo_servicio = $this->octopus_service->getCatalog("CAT-010");
+        $this->modo_transporte = $this->octopus_service->getCatalog("CAT-030");
+        $this->dte = session("dte", []);
+    }
+
+    public function create(Request $request)
+    {
+        try {
+            $business_user = BusinessUser::where("business_id", session("business"))->first();
+            $number = $request->input("document_type");
+            $id = $request->input("id") ?? "";
+            $business_products = BusinessProduct::where("business_id", session("business"))
+                ->whereIn("estado_stock", ["disponible", "por_agotarse"])
+                ->get();
+            $business_customers = BusinessCustomer::where("business_id", $business_user->business_id)->get();
+            $business = Business::find($business_user->business_id);
+            $datos_empresa = $this->octopus_service->get("/datos_empresa/nit/" . $business->nit);
+            $dtes = Http::timeout(30)->get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
+
+            $dtes = collect($dtes)
+                ->filter(function ($dte) {
+                    return $dte["estado"] === "PROCESADO";
+                });
+
+            if ($number === "05" || $number === "06") {
+                $dtes = $dtes->filter(function ($dte) {
+                    return in_array($dte["tipo_dte"], ["03", "07"]);
+                })->toArray();
+            } else if ($number === "07") {
+                $dtes = $dtes->filter(function ($dte) {
+                    return in_array($dte["tipo_dte"], ["01", "03", "14"]);
+                })->toArray();
+            }
+
+            if ($id) {
+                $dte = DTE::find($id);
+                $this->dte = json_decode($dte->content, true);
+                $this->dte["id"] = $id;
+                $this->dte["type"] = $dte->type;
+            }
+
+            if (session()->has("dte") && session("dte.type") !== $number) {
+                session()->forget("dte");
+                $this->dte = [];
+            }
+
+            $this->dte["type"] = $number;
+            session(["dte" => $this->dte]);
+
+            $types = [
+                '01' => 'Factura Electrónica',
+                '03' => 'Comprobante de crédito fiscal',
+                '05' => 'Nota de crédito',
+                '06' => 'Nota de débito',
+                '07' => 'Comprobante de retención',
+                '11' => 'Factura de exportación',
+                '14' => 'Factura de sujeto excluido'
+            ];
+
+            $document_type = $types[$number];
+            $currentDate = date("Y-m-d");
+
+            if (!$id || $id !== "") {
+                $dteProductController = new DTEProductController();
+                $dteProductController->totals();
+            }
+
+            $data = [
+                "document_type" => $document_type,
+                "currentDate" => $currentDate,
+                "departamentos" => $this->departamentos,
+                "number" => $number,
+                "recintoFiscal" => $this->recinto_fiscal,
+                "regimenExportacion" => $this->regimen_exportacion,
+                "business_products" => $business_products,
+                "business_customers" => $business_customers,
+                "unidades_medidas" => $this->unidades_medidas,
+                "tipos_documentos" => $this->tipos_documentos,
+                "actividades_economicas" => $this->actividades_economicas,
+                "countries" => $this->countries,
+                "datos_empresa" => $datos_empresa,
+                "tipos_establecimientos" => $this->tipos_establecimientos,
+                "dte" => $this->dte,
+                "municipios" => isset($this->dte["customer"]) ? $this->getMunicipios($this->dte["customer"]["departamento"]) : [],
+                "metodos_pago" => $this->formas_pago,
+                "tipo_servicio" => $this->tipo_servicio,
+                "modo_transporte" => $this->modo_transporte,
+                "dtes" => $dtes
+            ];
+
+            $view = "";
+            switch ($number) {
+                case "01":
+                    $view = "business.dtes.factura";
+                    break;
+
+                case "03":
+                    $view = "business.dtes.comprobante_credito_fiscal";
+                    break;
+
+                case "05":
+                    $view = "business.dtes.nota_credito";
+                    break;
+
+                case "06":
+                    $view = "business.dtes.nota_debito";
+                    break;
+
+                case "07":
+                    $view = "business.dtes.comprobante_retencion";
+                    break;
+
+                case "11":
+                    $view = "business.dtes.factura_exportacion";
+                    break;
+
+                case "14":
+                    $view = "business.dtes.factura_sujeto_excluido";
+                    break;
+            }
+            return view($view, $data);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            return redirect()->route("business.index")
+                ->with("error", "Error")->with("error_message", "Ha ocurrido un error al cargar la vista");
+        }
+    }
+
+    public function cancel()
+    {
+        session()->forget('dte');
+        return redirect()->route("business.index");
+    }
+
+    public function factura(Request $request)
+    {
+        $numero_documento = $request->numero_documento;
+        if ($request->tipo_documento === "36") {
+            if (strlen($numero_documento) !== 14) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
+            }
+        } else if ($request->tipo_documento === "13") {
+            if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+            }
+        }
+
+        $data = $this->processDTE($request, "01", "/factura/");
+        $this->handleResponse($data, $request);
+    }
+
+    public function credito_fiscal(Request $request)
+    {
+        $request->validate([
+            "nrc_customer" => "required|string",
+        ]);
+
+        $numero_documento = $request->numero_documento;
+        $isNIT = strlen($numero_documento) === 14 && ctype_digit($numero_documento);
+        $isDUI = strlen($numero_documento) === 9 && ctype_digit($numero_documento);
+
+        if (
+            !$isNIT && !$isDUI
+        ) {
+            return redirect()->back()->withErrors([
+                'numero_documento' => 'El número de documento debe tener exactamente 14 o 9 dígitos'
+            ]);
+        }
+
+        if ($request->nrc_customer && strlen($request->nrc_customer) > 8) {
+            return redirect()->back()->withErrors([
+                'nrc_customer' => 'El NRC debe tener como máximo 8 dígitos.'
+            ]);
+        }
+        $data = $this->processDTE($request, "03", "/credito_fiscal/");
+        $response = $this->handleResponse($data, $request);
+        if ($response === "PROCESADO") {
+            return redirect()->route('business.documents.index')
+                ->with([
+                    'success' => "Exito",
+                    'success_message' => "Documento generado correctamente",
+                ]);
+        } elseif ($response === "BORRADOR") {
+            return redirect()->route('business.index')
+                ->with('success', "Exito")
+                ->with(
+                    "success_message",
+                    "Documento guardado como borrador"
+                );
+        } else {
+            return redirect()->route('business.documents.index')
+                ->with('error', "Error")
+                ->with(
+                    "error_message",
+                    "Ha ocurrido un error al generar el documento."
+                );
+        }
+    }
+
+    public function nota_credito(Request $request)
+    {
+        $request->validate([
+            "nrc_customer" => "required|string",
+        ]);
+
+        $numero_documento = $request->numero_documento;
+        $isNIT = strlen($numero_documento) === 14 && ctype_digit($numero_documento);
+        $isDUI = strlen($numero_documento) === 9 && ctype_digit($numero_documento);
+        if (
+            !$isNIT && !$isDUI
+        ) {
+            return redirect()->back()->withErrors([
+                'numero_documento' => 'El número de documento debe tener exactamente 14 o 9 dígitos'
+            ]);
+        }
+
+        if ($request->nrc_customer && strlen($request->nrc_customer) > 8) {
+            return redirect()->back()->withErrors([
+                'nrc_customer' => 'El NRC debe tener como máximo 8 dígitos.'
+            ]);
+        }
+
+        $data = $this->processDTE($request, "05", "/nota_credito/");
+        $response = $this->handleResponse($data, $request);
+        if ($response === "PROCESADO") {
+            return redirect()->route('business.documents.index')
+                ->with([
+                    'success' => "Exito",
+                    'success_message' => "Documento generado correctamente",
+                ]);
+        } elseif ($response === "BORRADOR") {
+            return redirect()->route('business.index')
+                ->with('success', "Exito")
+                ->with(
+                    "success_message",
+                    "Documento guardado como borrador"
+                );
+        } else {
+            return redirect()->route('business.documents.index')
+                ->with('error', "Error")
+                ->with(
+                    "error_message",
+                    "Ha ocurrido un error al generar el documento."
+                );
+        }
+    }
+
+    public function nota_debito(Request $request)
+    {
+        $request->validate([
+            "nrc_customer" => "required|string",
+        ]);
+
+        $numero_documento = $request->numero_documento;
+        $isNIT = strlen($numero_documento) === 14 && ctype_digit($numero_documento);
+        $isDUI = strlen($numero_documento) === 9 && ctype_digit($numero_documento);
+        if (
+            !$isNIT && !$isDUI
+        ) {
+            return redirect()->back()->withErrors([
+                'numero_documento' => 'El número de documento debe tener exactamente 14 o 9 dígitos'
+            ]);
+        }
+
+        if ($request->nrc_customer && strlen($request->nrc_customer) > 8) {
+            return redirect()->back()->withErrors([
+                'nrc_customer' => 'El NRC debe tener como máximo 8 dígitos.'
+            ]);
+        }
+
+        $data = $this->processDTE($request, "06", "/nota_debito/");
+        $this->handleResponse($data, $request);
+    }
+
+    public function comprobante_retencion(Request $request)
+    {
+        $numero_documento = $request->numero_documento;
+        if ($request->tipo_documento === "36") {
+            if (strlen($numero_documento) !== 14) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
+            }
+        } else if ($request->tipo_documento === "13") {
+            if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+            }
+        }
+
+        if ($request->nrc_customer && strlen($request->nrc_customer) > 8) {
+            return redirect()->back()->withErrors([
+                'nrc_customer' => 'El NRC debe tener como máximo 8 dígitos.'
+            ]);
+        }
+
+        $data = $this->processDTE($request, "07", "/comprobante_retencion/");
+        $this->handleResponse($data, $request);
+    }
+
+    public function factura_exportacion(Request $request)
+    {
+
+        $request->validate([
+            "regimen_exportacion" => "required|string",
+            "recinto_fiscal" => "required|string",
+            "tipo_item_exportar" => "required|string",
+            "codigo_pais" => "required|string",
+            "tipo_persona" => "required|string",
+        ]);
+
+        $numero_documento = $request->numero_documento;
+        if ($request->tipo_documento === "36") {
+            if (strlen($numero_documento) !== 14) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
+            }
+        } else if ($request->tipo_documento === "13") {
+            if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+            }
+        }
+
+        $data = $this->processDTE($request, "11", "/factura_exportacion/");
+        $this->handleResponse($data, $request);
+    }
+
+    public function factura_sujeto_excluido(Request $request)
+    {
+        $numero_documento = $request->numero_documento;
+        if ($request->tipo_documento === "36") {
+            if (strlen($numero_documento) !== 14) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
+            }
+        } else if ($request->tipo_documento === "13") {
+            if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+            }
+        }
+
+        $data = $this->processDTE($request, "14", "/sujeto_excluido/");
+        $this->handleResponse($data, $request);
+    }
+
+    public function buildDTE(Request $request, $type, $business_id)
+    {
+        $business = Business::find($business_id);
+        $receptor = $this->getReceptorData($request, $type);
+
+        $dte = [
+            "nit" => $business->nit,
+            "cuerpoDocumento" => [],
+            "documentoRelacionado" => $this->documentosRelacionados(),
+            "otrosDocumentos" => $this->otrosDocumentos(),
+            "ventaTercero" => $this->ventaTerceros($request),
+            "resumen" => [],
+            "extension" => $this->extension($request),
+            "apendice" => null,
+            "numPagoElectronico" => null,
+        ];
+
+        if ($type === "14") {
+            $dte["sujetoExcluido"] = $receptor;
+        } else {
+            $dte["receptor"] = $receptor;
+        }
+
+        if ($type === "11") {
+            $dte["emisor"]["regimen"] = $request->regimen_exportacion;
+            $dte["emisor"]["recintoFiscal"] = $request->recinto_fiscal;
+            $dte["emisor"]["tipoItemExpor"] = $request->tipo_item_exportar;
+
+            $this->dte["emisor"]["regimen"] = $request->regimen_exportacion;
+            $this->dte["emisor"]["recintoFiscal"] = $request->recinto_fiscal;
+            $this->dte["emisor"]["tipoItemExpor"] = $request->tipo_item_exportar;
+            session(["dte" => $this->dte]);
+        }
+
+        if ($type === "07") {
+            $dte["resumen"]["totalSujetoRetencion"] = round((float)$this->dte["monto_sujeto_retencion_total"] ?? 0, 2);
+            $dte["resumen"]["totalIVAretenido"] = round((float)$this->dte["total_iva_retenido"] ?? 0, 2);
+        } elseif ($type === "11") {
+            $dte["resumen"]["totalGravada"] = round((float)$this->dte["total_ventas_gravadas"] ?? 0, 2);
+            $dte["resumen"]["descuento"] = round((float)$this->dte["descuento_venta_gravada"] ?? 0, 2);
+            $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
+            $dte["resumen"]["pagos"] = $this->pagos();
+            $dte["resumen"]["flete"] = round((float)$this->dte["flete"] ?? 0, 2);
+            $dte["resumen"]["seguro"] = round((float)$this->dte["seguro"] ?? 0, 2);
+        } elseif ($type === "14") {
+            $dte["resumen"]["descu"] = round((float)$this->dte["total_descuentos"] ?? 0, 2);
+            $dte["resumen"]["totalDescu"] = round((float)$this->dte["total_descuentos"] ?? 0, 2);
+            $dte["resumen"]["ivaRete1"] = $this->dte["retener_iva"] === "active" ? round((float)$this->dte["total_iva_retenido"] ?? 0, 2) : 0;
+            $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
+            $dte["resumen"]["reteRenta"] = round((float)$this->dte["isr"] ?? 0, 2);
+        } else {
+            $dte["resumen"]["descuNoSuj"] = round((float)$this->dte["descuento_venta_no_sujeta"] ?? 0, 2);
+            $dte["resumen"]["descuExtenta"] = round((float)$this->dte["descuento_venta_exenta"] ?? 0, 2);
+            $dte["resumen"]["descuGravada"] = round((float)$this->dte["descuento_venta_gravada"] ?? 0, 2);
+            $dte["resumen"]["porcentajeDescuento"] = 0;
+            $dte["resumen"]["ivaRete1"] = $this->dte["retener_iva"] === "active" ? round((float)$this->dte["total_iva_retenido"] ?? 0, 2) : 0;
+            $dte["resumen"]["reteRenta"] = $this->dte["retener_renta"] === "active" ? round((float)$this->dte["isr"] ?? 0, 2) : 0;
+            $dte["resumen"]["saldoFavor"] = 0;
+            $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
+            $dte["resumen"]["pagos"] = $this->pagos();
+        }
+
+        if ($type === "03" || $type === "05" || $type === "06") {
+            $dte["resumen"]["ivaPerci1"] = $this->dte["percibir_iva"] === "active" ? round((float)$this->dte["total_iva_retenido"] ?? 0, 2) : 0;
+        }
+
+        if ($type !== "14") {
+            $dte["resumen"]["tributos"] = $this->getTributos();
+        }
+
+        if ($type === "07") {
+            $dte["cuerpoDocumento"] = $this->getCuerpoDocumentoComprobanteRetencion();
+        } else {
+            if (isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
+                foreach ($this->dte["products"] as $product) {
+                    $dte["cuerpoDocumento"][] = $this->getProductData($product, $type);
+                }
+            }
+        }
+
+        return $dte;
+    }
+
+    public function processDTE(Request $request, $type, $endpoint)
+    {
+        try {
+            if ($this->dte["type"] !== "07") {
+                if (!isset($this->dte["products"]) || count($this->dte["products"]) === 0) {
+                    return redirect()->back()->with([
+                        'error' => "Error",
+                        'error_message' => "Debe agregar al menos un producto"
+                    ])->send();
+                }
+            }
+
+            if (isset($this->dte["documentos_relacionados"]) && count($this->dte["documentos_relacionados"]) > 0 && isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
+                foreach ($this->dte["documentos_relacionados"] as $documento) {
+                    $related = false;
+                    foreach ($this->dte["products"] as $product) {
+                        if (isset($product["documento_relacionado"]) && $product["documento_relacionado"] === $documento["numero_documento"]) {
+                            $related = true;
+                            break;
+                        }
+                    }
+                    if (!$related) {
+                        return redirect()->back()->with([
+                            'error' => "Error",
+                            'error_message' => "Cada documento relacionado debe estar asociado al menos a un producto ingresado."
+                        ])->send();
+                    }
+                }
+            }
+
+            if (isset($this->dte["monto_abonado"]) && isset($this->dte["total_pagar"])) {
+                if ($this->dte["monto_abonado"] != $this->dte["total_pagar"]) {
+                    return redirect()->back()->with([
+                        'error' => "Error",
+                        'error_message' => "El monto total pagado no coincide con el total a pagar."
+                    ])->send();
+                }
+            }
+
+            $business_id = Session::get('business') ?? null;
+            $dte = $this->buildDTE($request, $type, $business_id);
+
+            if ($request->input("action") === "draft") {
+                if ($request->id_dte !== "" && $request->id_dte !== null) {
+                    $this->updateDtePending($request->id_dte, "pending", "Documento actualizado como borrador");
+                } else {
+                    $this->createDtePending("Documento guardado como borrador");
+                }
+                session()->forget('dte');
+                return $data = [
+                    "estado" => "BORRADOR",
+                    "observaciones" => "Documento guardado como borrador"
+                ];
+            }
+
+            //dd($dte);
+            $response = Http::timeout(30)->post(env("OCTOPUS_API_URL") . $endpoint, $dte);
+            $data = json_decode($response->body(), true);
+            return $data;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+            $this->createDtePending($e->getMessage(), "error");
+            return $data = [
+                "estado" => "RECHAZADO",
+                "observaciones" => $e->getMessage()
+            ];
+        }
+    }
+
+    public function handleResponse($data, $request)
+    {
+        $business_id = Session::get('business') ?? null;
+        if (isset($data["estado"])) {
+            if ($data["estado"] === "PROCESADO") {
+                if ($this->dte["type"] !== "07" && $this->dte["type"] !== "14") {
+                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida");
+                    if ($request->condicion_operacion === 2) {
+                        $this->createCXC($data, $request);
+                    }
+                }
+
+                if ($request->id_dte !== "" && $request->id_dte !== null) {
+                    DTE::where("id", $request->id_dte)->delete();
+                }
+
+                session()->forget('dte');
+                return redirect()->route('business.documents.index')
+                    ->with([
+                        'success' => "Exito",
+                        'success_message' => "Documento generado correctamente",
+                    ])->send();
+            } elseif ($data["estado"] === "RECHAZADO") {
+                if ($request->id_dte !== "" && $request->id_dte !== null) {
+                    $this->updateDtePending($request->id_dte, "error", $data["observaciones"] ?? "Error al generar el documento");
+                } else {
+                    $this->createDtePending($data["observaciones"] ?? "Error al generar el documento", "error");
+                }
+                return redirect()->route('business.documents.index')
+                    ->with('error', "Error")
+                    ->with(
+                        "error_message",
+                        "Ha ocurrido un error al generar el documento."
+                    )->send();
+            } elseif ($data["estado"] === "BORRADOR") {
+                return redirect()->route('business.index')
+                    ->with('success', "Exito")
+                    ->with(
+                        "success_message",
+                        "Documento guardado como borrador"
+                    )->send();
+            }
+        } else {
+            Log::error($data);
+            $this->createDtePending(json_encode($data), "error");
+            return redirect()->route('business.documents.index')
+                ->with('error', "Error")
+                ->with(
+                    "error_message",
+                    "Ha ocurrido un error al generar el documento."
+                )->send();
+        }
+    }
+
+    public function getReceptorData(Request $request, $type)
+    {
+
+        $actividad = $this->actividades_economicas[$request->actividad_economica] ?? null;
+        $descActividad = explode("-", $actividad);
+        $descActividad = $descActividad[1] ?? null;
+
+        if (!isset($this->dte["customer"])) {
+            $this->dte["customer"] = [
+                "tipoDocumento" => $request->tipo_documento,
+                "numDocumento" => $request->numero_documento,
+                "nrc" => $request->nrc_customer,
+                "nombre" => $request->nombre_customer,
+                "codActividad" => $request->actividad_economica,
+                "nombreComercial" => $request->nombre_comercial,
+                "departamento" => $request->departamento,
+                "municipio" => $request->municipio,
+                "complemento" => $request->complemento,
+                "telefono" => $request->telefono,
+                "correo" => $request->correo,
+                "tipoPersona" => $request->tipo_persona,
+            ];
+        }
+
+
+        switch ($type) {
+            case "01":
+                return $request->has("omitir_datos_receptor") ?
+                    [
+                        "nombre" => "Clientes Varios",
+                        "telefono" => null,
+                        "correo" => null,
+                        "direccion" => null,
+                        "tipoDocumento" => null,
+                        "numDocumento" => null
+                    ] :
+                    [
+                        "nombre" => $request->nombre_receptor,
+                        "telefono" => $request->telefono,
+                        "correo" => $request->correo,
+                        "direccion" => [
+                            "departamento" => $request->departamento,
+                            "municipio" => $request->municipio,
+                            "complemento" => $request->complemento
+                        ],
+                        "tipoDocumento" => $request->tipo_documento,
+                        "numDocumento" => $request->numero_documento
+                    ];
+                break;
+
+            case "03":
+                return [
+                    "nombre" => $request->nombre_customer,
+                    "nombreComercial" => $request->nombre_comercial,
+                    "codActividad" => $request->actividad_economica,
+                    "descActividad" => $descActividad,
+                    "telefono" => $request->telefono,
+                    "correo" => $request->correo,
+                    "direccion" => [
+                        "departamento" => $request->departamento,
+                        "municipio" => $request->municipio,
+                        "complemento" => $request->complemento
+                    ],
+                    "nit" => $request->numero_documento,
+                    "nrc" => $request->nrc_customer,
+                ];
+                break;
+
+            case "05":
+            case "06":
+                return [
+                    "nrc" => $request->nrc_customer,
+                    "nombre" => $request->nombre_customer,
+                    "codActividad" => $request->actividad_economica,
+                    "descActividad" => $descActividad,
+                    "direccion" => [
+                        "departamento" => $request->departamento,
+                        "municipio" => $request->municipio,
+                        "complemento" => $request->complemento
+                    ],
+                    "telefono" => $request->telefono,
+                    "correo" => $request->correo,
+                    "nit" => $request->numero_documento,
+                    "nombreComercial" => $request->nombre_comercial,
+                ];
+                break;
+
+            case "07":
+                $actividad = $this->actividades_economicas[$request->actividad_economica] ?? null;
+                $descActividad = explode("-", $actividad);
+                $descActividad = trim($descActividad[1] ?? null);
+                return [
+                    "tipoDocumento" => $request->tipo_documento,
+                    "numDocumento" => $request->numero_documento,
+                    "nrc" => $request->nrc_customer,
+                    "nombre" => $request->nombre_customer,
+                    "nombreComercial" => $request->nombre_comercial,
+                    "codActividad" => $request->actividad_economica,
+                    "descActividad" => $descActividad,
+                    "direccion" => [
+                        "departamento" => $request->departamento,
+                        "municipio" => $request->municipio,
+                        "complemento" => $request->complemento
+                    ],
+                    "telefono" => $request->telefono,
+                    "correo" => $request->correo,
+                ];
+                break;
+            case "11":
+                $pais = $this->countries[$request->codigo_pais] ?? null;
+                return [
+                    "tipoDocumento" => $request->tipo_documento,
+                    "numDocumento" => $request->numero_documento,
+                    "nombre" => $request->nombre_customer,
+                    "descActividad" => $descActividad,
+                    "codPais" => $request->codigo_pais,
+                    "nombrePais" => $pais,
+                    "complemento" => $request->complemento,
+                    "nombreComercial" => $request->nombre_customer,
+                    "tipoPersona" => $request->tipo_persona,
+                    "telefono" => $request->telefono,
+                    "correo" => $request->correo,
+                ];
+                break;
+            case "14":
+                $numero_documento = str_replace("-", "", $request->numero_documento);
+                return [
+                    "tipoDocumento" => $request->tipo_documento,
+                    "numDocumento" => $numero_documento,
+                    "nombre" => $request->nombre_customer,
+                    "codActividad" => $request->actividad_economica,
+                    "descActividad" => $descActividad,
+                    "direccion" => [
+                        "departamento" => $request->departamento,
+                        "municipio" => $request->municipio,
+                        "complemento" => $request->complemento
+                    ],
+                    "telefono" => $request->telefono,
+                    "correo" => $request->correo,
+                ];
+            default:
+                return [];
+        }
+    }
+
+    public function getProductData($product, $type)
+    {
+        if ($type !== "14") {
+            $tributos = json_decode($product["product"]["tributos"], true);
+            $tributos = array_filter($tributos, function ($value) {
+                return $value != "20";
+            });
+            $tributos = array_values($tributos);
+        }
+
+        if ($type === "11") {
+            return [
+                "cantidad" => $product["cantidad"],
+                "codigo" => strval($product["product"]["id"]),
+                "uniMedida" => $product["unidad_medida"],
+                "descripcion" => $product["descripcion"],
+                "precioUni" => round($product["precio_sin_tributos"], 2),
+                "montoDescu" => round($product["descuento"], 2),
+                "ventaGravada" => round($product["ventas_gravadas"], 2),
+                "tributos" => count($tributos) > 0 ? $tributos : null,
+                "noGravado" => 0,
+            ];
+        } elseif ($type === "14") {
+            return [
+                "tipoItem" => $product["tipo_item"],
+                "cantidad" => $product["cantidad"],
+                "codigo" => null,
+                "uniMedida" => $product["unidad_medida"],
+                "descripcion" => $product["descripcion"],
+                "precioUni" => round($product["precio"], 2),
+                "montoDescu" => round($product["descuento"], 2),
+                "compra" => round($product["ventas_gravadas"], 2),
+            ];
+        } else {
+            return  [
+                "tipoItem" => $product["product"]["tipoItem"],
+                "numeroDocumento" => isset($product["documento_relacionado"]) && $product["documento_relacionado"] !== null ? $product["documento_relacionado"] : null,
+                "cantidad" => $product["cantidad"],
+                "codigo" => strval($product["product"]["id"]),
+                "codTributo" => null,
+                "uniMedida" => $product["unidad_medida"],
+                "descripcion" => $product["descripcion"],
+                "precioUni" => round(($type === "03" ? $product["precio_sin_tributos"] : $product["precio"]), 2),
+                "montoDescu" => round($product["descuento"], 2),
+                "ventaNoSuj" => round($product["ventas_no_sujetas"], 2),
+                "ventaExenta" => round($product["ventas_exentas"], 2),
+                "ventaGravada" => round($product["ventas_gravadas"], 2),
+                "tributos" => count($tributos) > 0 ? $tributos : null,
+                "psv" => round((float)$product["precio"], 2),
+                "ivaItem" => round($product["iva"], 2),
+                "noGravado" => 0,
+            ];
+        }
+    }
+
+    public function getCuerpoDocumentoComprobanteRetencion()
+    {
+        $documentos_relacionados = [];
+        $num = 0;
+        foreach ($this->dte["documentos_retencion"] as $documento) {
+            $num++;
+            $documentos_relacionados[] = [
+                "numItem" => $num,
+                "tipoDte" => $documento["tipo_generacion"],
+                "tipoDoc" => intval($documento["tipo_documento"]),
+                "numDocumento" => $documento["numero_documento"],
+                "fechaEmision" => $documento["fecha_documento"],
+                "montoSujetoGrav" => round((float)$documento["monto_sujeto_retencion"], 2),
+                "codigoRetencionMH" => $documento["codigo_retencion"],
+                "ivaRetenido" => round((float)$documento["iva_retenido"], 2),
+                "descripcion" => $documento["descripcion_retencion"],
+            ];
+        }
+        return $documentos_relacionados;
+    }
+
+    public function createCXC($data, $request)
+    {
+        try {
+            DB::beginTransaction();
+            CuentasCobrar::create([
+                "numero_factura" => $data["codGeneracion"],
+                "cliente" => $request->nombre_receptor,
+                "monto" => $this->dte["total_pagar"],
+                "saldo" => $this->dte["total_pagar"],
+                "estado" => "pendiente",
+                "fecha_vencimiento" => now()->addDays(30),
+            ]);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return redirect()->route('business.documents.index')
+                ->with('error', "Error")
+                ->with(
+                    "error_message",
+                    "Ha ocurrido un error al crear la cuenta por cobrar."
+                )->send();
+        }
+    }
+
+    public function createDtePending($error, $status = "pending")
+    {
+        try {
+            DB::beginTransaction();
+            DTE::create([
+                "business_id" => session("business"),
+                "content" => json_encode($this->dte),
+                "type" => $this->dte["type"],
+                "status" => $status,
+                "error_message" => $error
+            ]);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return redirect()->route('business.documents.index')
+                ->with('error', "Error")
+                ->with(
+                    "error_message",
+                    "Ha ocurrido un error al crear el borrador del documento."
+                )->send();
+        }
+    }
+
+    public function updateDtePending($id, $status = "pending", $error)
+    {
+        try {
+            DB::beginTransaction();
+            DTE::where("id", $id)->update([
+                "content" => json_encode($this->dte),
+                "status" => $status,
+                "error_message" => $error
+            ]);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return redirect()->route('business.documents.index')
+                ->with('error', "Error")
+                ->with(
+                    "error_message",
+                    "Ha ocurrido un error al actualizar el borrador del documento."
+                )->send();
+        }
+    }
+
+    public function documentosRelacionados()
+    {
+        if (!empty($this->dte["documentos_relacionados"])) {
+            return array_map(function ($documento) {
+                return [
+                    "tipoDocumento" => $documento["tipo_documento"],
+                    "tipoGeneracion" => intval($documento["tipo_generacion"]),
+                    "numeroDocumento" => $documento["numero_documento"],
+                    "fechaEmision" => $documento["fecha_documento"]
+                ];
+            }, $this->dte["documentos_relacionados"]);
+        }
+        return null;
+    }
+
+    public function otrosDocumentos()
+    {
+        if (empty($this->dte["otros_documentos"])) {
+            return null;
+        }
+
+        return array_map(function ($documento) {
+            $otros_documentos = [
+                "codDocAsociado" => intval($documento["documento_asociado"]),
+                "descDocumento" => $documento["descripcion_documento"] ?? null,
+                "detalleDocumento" => $documento["identificacion_documento"] ?? null,
+            ];
+
+            if (isset($documento["medico"]) && !is_null($documento["medico"])) {
+                $otros_documentos["medico"] = [
+                    "nombre" => $documento["medico"]["nombre"] ?? null,
+                    "nit" => isset($documento["medico"]["tipo_documento"]) && $documento["medico"]["tipo_documento"] === "1"
+                        ? ($documento["medico"]["numero_documento"] ?? null)
+                        : null,
+                    "docIdentificacion" => isset($documento["medico"]["tipo_documento"]) && $documento["medico"]["tipo_documento"] !== "1"
+                        ? ($documento["medico"]["numero_documento"] ?? null)
+                        : null,
+                    "tipoServicio" => isset($documento["medico"]["tipo_servicio"]) ? intval($documento["medico"]["tipo_servicio"]) : null,
+                ];
+            } elseif ($this->dte["type"] === "11") {
+                $otros_documentos["placaTrans"] = $documento["placas"] ?? null;
+                $otros_documentos["modoTransp"] = $documento["modo_transporte"] ?? null;
+                $otros_documentos["numConductor"] = $documento["numero_identificacion"] ?? null;
+                $otros_documentos["nombreConductor"] = $documento["nombre_conductor"] ?? null;
+            }
+
+            return $otros_documentos;
+        }, $this->dte["otros_documentos"]);
+    }
+
+
+    public function pagos()
+    {
+        if (isset($this->dte["metodos_pago"])) {
+            $metodos_pago = [];
+            foreach ($this->dte["metodos_pago"] as $pago) {
+                $metodos_pago[] = [
+                    "codigo" => $pago["forma_pago"],
+                    "montoPago" => round((float)$pago["monto"], 2),
+                    "referencia" => $pago["numero_documento"],
+                    "plazo" => $pago["plazo"] ?? null,
+                    "periodo" => $pago["periodo"] ?? null,
+                ];
+            }
+            return $metodos_pago;
+        } else {
+            return null;
+        }
+    }
+
+    public function extension($request)
+    {
+        if ($request->documento_emitir !== "" && $request->nombre_emitir !== "" && $request->documento_recibir !== "" && $request->nombre_recibir !== "") {
+            $extension = [
+                "docuEntrega" => $request->documento_emitir,
+                "nombEntrega" => $request->nombre_emitir,
+                "docuRecibe" => $request->documento_recibir,
+                "nombRecibe" => $request->nombre_recibir
+            ];
+            $this->dte["extension"] = $extension;
+        }
+
+        if ($request->observaciones !== "") {
+            $extension["observaciones"] = $request->observaciones;
+            $this->dte["extension"]["observaciones"] = $request->observaciones;
+        }
+
+        session(["dte" => $this->dte]);
+        return $extension ?? null;
+    }
+
+    public function ventaTerceros($request)
+    {
+        if ($request->nit_terceros !== "" && $request->nombre_terceros) {
+            $dte["ventaTercero"] = [
+                "nit" => $request->nit_terceros,
+                "nombre" => $request->nombre_terceros
+            ];
+            $this->dte["venta_tercero"] = $dte["ventaTercero"];
+            session(["dte" => $this->dte]);
+            return $dte["ventaTercero"];
+        }
+    }
+
+    public function getTributos()
+    {
+        $tributos_dte = [];
+
+        if (isset($this->dte["turismo_por_alojamiento"]) && $this->dte["turismo_por_alojamiento"] > 0) {
+            $tributos_dte[] = [
+                "codigo" => "59",
+                "descripcion" => Tributes::where("codigo", "59")->first()->descripcion,
+                "valor" => round($this->dte["turismo_por_alojamiento"], 2)
+            ];
+        }
+
+        if ($this->dte["turismo_salida_pais_via_aerea"] > 0) {
+            $tributos_dte[] = [
+                "codigo" => "71",
+                "descripcion" => Tributes::where("codigo", "71")->first()->descripcion,
+                "valor" => round($this->dte["turismo_salida_pais_via_aerea"], 2)
+            ];
+        }
+
+        if ($this->dte["fovial"] > 0) {
+            $tributos_dte[] = [
+                "codigo" => "D1",
+                "descripcion" => Tributes::where("codigo", "D1")->first()->descripcion,
+                "valor" => round($this->dte["fovial"], 2)
+            ];
+        }
+
+        if ($this->dte["contrans"] > 0) {
+            $tributos_dte[] = [
+                "codigo" => "C8",
+                "descripcion" => Tributes::where("codigo", "C8")->first()->descripcion,
+                "valor" => round($this->dte["contrans"], 2)
+            ];
+        }
+
+        if ($this->dte["bebidas_alcoholicas"] > 0) {
+            $tributos_dte[] = [
+                "codigo" => "C5",
+                "descripcion" => Tributes::where("codigo", "C5")->first()->descripcion,
+                "valor" => round($this->dte["bebidas_alcoholicas"], 2)
+            ];
+        }
+
+        if ($this->dte["tabaco_cigarillos"] > 0) {
+            $tributos_dte[] = [
+                "codigo" => "C6",
+                "descripcion" => Tributes::where("codigo", "C6")->first()->descripcion,
+                "valor" => round($this->dte["tabaco_cigarillos"], 2)
+            ];
+        }
+
+        if ($this->dte["tabaco_cigarros"] > 0) {
+            $tributos_dte[] = [
+                "codigo" => "C7",
+                "descripcion" => Tributes::where("codigo", "C7")->first()->descripcion,
+                "valor" => round($this->dte["tabaco_cigarros"], 2)
+            ];
+        }
+
+        return $tributos_dte;
+    }
+
+    public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida")
+    {
+        $business_products = BusinessProduct::where("business_id", $business_id)->get();
+        foreach ($productsDTE as $product) {
+            foreach ($business_products as $dbProduct) {
+                if (is_array($product)) {
+                    $searchProduct = BusinessProduct::find($product["product"]["id"]);
+                } else {
+                    $searchProduct = BusinessProduct::find($product->codigo);
+                }
+
+                if ($searchProduct->id === $dbProduct->id) {
+                    $stockAnterior = $dbProduct->stockActual;
+                    if ($tipo === "salida") {
+                        $dbProduct->stockActual -= is_array($product) ? $product["cantidad"] : $product->cantidad;
+                    } elseif ($tipo === "entrada") {
+                        $dbProduct->stockActual += is_array($product) ? $product["cantidad"] : $product->cantidad;
+                    }
+
+                    $stockActual = $dbProduct->stockActual;
+                    if ($stockActual <= $dbProduct->stockMinimo) {
+                        $dbProduct->estado_stock = "agotado";
+                    } elseif (($stockActual - $dbProduct->stockMinimo) <= 2) {
+                        $dbProduct->estado_stock = "por_agotarse";
+                    } else {
+                        $dbProduct->estado_stock = "disponible";
+                    }
+
+                    $diferencia = abs($stockAnterior - $stockActual);
+                    if ($diferencia >= 1) {
+                        BusinessProductMovement::create([
+                            "business_product_id" => $dbProduct->id,
+                            "numero_factura" => $codGeneracion,
+                            "tipo" => $tipo,
+                            "cantidad" => is_array($product) ? $product["cantidad"] : $product->cantidad,
+                            "precio_unitario" => $dbProduct->precioUni,
+                            "producto" => $dbProduct->descripcion,
+                            "descripcion" => $tipo === "salida" ? "Venta de producto" : "Anulación de documento",
+                        ]);
+                    }
+                    $dbProduct->save();
+                }
+            }
+        }
+    }
+
+    public function getMunicipios($departamento)
+    {
+        $municipios = $this->octopus_service->getCatalog("CAT-012", $departamento);
+        return $municipios;
+    }
+
+    public function delete(string $id)
+    {
+        try {
+            DB::beginTransaction();
+            DTE::where("id", $id)->delete();
+            DB::commit();
+            return redirect()->route("business.index")
+                ->with("success", "Exito")
+                ->with("success_message", "Documento eliminado correctamente");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+            return redirect()->route("business.index")
+                ->with("error", "Error")
+                ->with("error_message", "Ha ocurrido un error al eliminar el documento");
+        }
+    }
+
+    public function anular(Request $request)
+    {
+        try {
+            $codGeneracion = $request->codGeneracion;
+            $motivo = $request->input("motivo");
+            $business_id = Session::get('business') ?? null;
+
+            $dte = Http::get(env("OCTOPUS_API_URL") . "/dtes/" . $codGeneracion)->json();
+            $documento = json_decode($dte["documento"]);
+            $products_dte = $documento->cuerpoDocumento;
+            $business = Business::find($business_id);
+            $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada");
+
+            $nit = $business->nit;
+            $tipoDoc = null;
+            $nombre = null;
+            $numDocumento = null;
+
+            if ($dte['tipo_dte'] === '14') {
+                $receptor = $documento->sujetoExcluido;
+            } else {
+                $receptor = $documento->receptor ?? "";
+            }
+
+            $nombre = $receptor->nombre ?? "";
+            if (in_array($dte['tipo_dte'], ['03', '05', '06'])) {
+                $tipoDoc = "36";
+                $numDocumento = $receptor->nit;
+            } else {
+                $tipoDoc = $receptor->tipoDocumento;
+                $numDocumento = $receptor->numDocumento;
+            }
+
+            $response = Http::post(env("OCTOPUS_API_URL") . '/anulacion/', [
+                "nit" => $nit,
+                "documento" => [
+                    "codigoGeneracion" => $codGeneracion,
+                    "fechaEmision" => $documento->identificacion->fecEmi,
+                    "horaEmision" => $documento->identificacion->horEmi,
+                    "codigoGeneracionR" => null,
+                ],
+                "motivo" => [
+                    "tipoAnulacion" => 2,
+                    "motivoAnulacion" => $motivo,
+                    "nombreResponsable" => auth()->user()->name,
+                    "tipoDocResponsable" => "36",
+                    "numDocResponsable" => $nit,
+                    "nombreSolicita" => $nombre ?? auth()->user()->name,
+                    "tipoDocSolicita" => $tipoDoc ?? "36",
+                    "numDocSolicita" => $numDocumento ?? $nit,
+                ]
+            ]);
+            $data = $response->json();
+            if ($response->status() == 201) {
+                return redirect()->route('business.documents.index')
+                    ->with('success', "Documento anulado correctamente")
+                    ->with("success_message", $data["descripcionMsg"]);
+            } else {
+                return redirect()->route('business.documents.index')
+                    ->with('error', "Error al anular el documento")
+                    ->with("error_message", $data["detail"]["descripcionMsg"]);
+            }
+        } catch (\Exception $e) {
+            return redirect()->route('business.documents.index')
+                ->with([
+                    'error' => "Error",
+                    'error_message' => "Ha ocurrido un error al anular el documento"
+                ]);
+        }
+    }
+}

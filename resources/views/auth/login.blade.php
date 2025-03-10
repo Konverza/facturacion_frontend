@@ -1,60 +1,38 @@
-@extends('layouts.app')
-
+@extends('layouts.template')
+@section('title', 'Iniciar sesión')
 @section('content')
-    <div class="container mt-5">
-        <div class="row">
-            <div class="col-md-6 mx-auto">
-                <div class="card">
-                    <div class="card-header text-center">
-                        <img src="storage/img/konverza_black.jpg" alt="Logo VENTAS" class="img-thumbnail mx-auto d-block mb-3"
-                            style="width: 35%;">
-                        <h2>Facturación KONVERZA</h2>
+    <section class="flex h-screen w-full items-center justify-center">
+        <div class="w-[420px] rounded-lg border bg-white shadow-lg p-6">
+            <div class="overflow-hidden rounded-full">
+                <img src="{{ asset('images/only-icon.png') }}" alt="Logo Konverza" class="mx-auto w-32 object-cover">
+            </div>
+            <div class="text-center">
+                <h1 class="text-2xl font-bold uppercase text-primary-500 dark:text-primary-300">
+                    Facturación Konverza
+                </h1>
+                <p class="mb-4 text-base text-gray-600 dark:text-gray-300">Ingresa tus datos para continuar</p>
+            </div>
+            <form action="{{ Route('validate') }}" method="POST" class="flex flex-col gap-4">
+                @csrf
+                <x-input type="email" name="email" icon="email" placeholder="Ingresar tu correo electrónico"
+                    label="Correo electrónico" value="{{ old('email') }}" />
+                <x-input type="password" name="password" icon="lock" placeholder="Ingresar tu contraseña"
+                    label="Contraseña" />
+                <div class="flex items-center justify-between">
+                    <div>
+                        <x-input type="checkbox" name="remember" id="remember" label="Recuerdáme" />
                     </div>
-                    <div class="card-body">
-                        <form method="post" action="{{ route('login') }}">
-                            @csrf
-                            <div class="mb-3">
-                                <label for="usuario" class="form-label">Correo</label>
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Contraseña</label>
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
-
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-    
-                                        <label class="form-check-label" for="remember">
-                                            Mantener sesión iniciada
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="d-grid mt-4">
-                                <button type="submit" class="btn btn-primary">Iniciar sesión</button>
-                                @if (Route::has('password.request'))
-                                    <a class="btn btn-link" href="{{ route('password.request') }}">
-                                        ¿Olvidó su contraseña?
-                                    </a>
-                                @endif
-                            </div>
-                        </form>
+                    <div>
+                        <a href="{{ Route('reset-password') }}"
+                            class="text-sm font-semibold text-primary-500 hover:underline dark:text-primary-300">
+                            ¿Olvidaste tu contraseña?
+                        </a>
                     </div>
                 </div>
-            </div>
+                <div class="mt-4 flex items-center justify-center">
+                    <x-button type="submit" typeButton="primary" text="Iniciar sesión" icon="login" />
+                </div>
+            </form>
         </div>
-    </div>
+    </section>
 @endsection

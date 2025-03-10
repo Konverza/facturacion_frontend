@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -12,7 +11,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            \App\Services\OctopusService::class,
+            function () {
+                return new \App\Services\OctopusService();
+            }
+        );
     }
 
     /**
@@ -20,9 +24,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Implicitly grant "Super Admin" role all permission checks using can()
-        Gate::before(function ($user, $ability) {
-            return $user->hasRole('super-admin') ? true : null;
-        });
+        //
     }
 }

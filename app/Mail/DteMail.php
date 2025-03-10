@@ -8,9 +8,6 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Mail\Mailables\Attachment;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 
 class DteMail extends Mailable
 {
@@ -22,8 +19,6 @@ class DteMail extends Mailable
 
     /**
      * Create a new message instance.
-     *
-     * @return void
      */
     public function __construct($codGeneracion, $pdfPath, $jsonPath)
     {
@@ -31,15 +26,9 @@ class DteMail extends Mailable
         $this->pdfPath = $pdfPath;
         $this->jsonPath = $jsonPath;
     }
-
-    /**
-     * Build the message.
-     *
-     * @return $this
-     */
     public function build()
     {
-        return $this->subject('Facturación Electrónica')
+        return $this->subject('Facturación Electrónica Konverza')
             ->view('mail.dte')
             ->with([
                 'codGeneracion' => $this->codGeneracion,

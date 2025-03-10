@@ -10,23 +10,28 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
+    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'email_verified_at',
+        'remember_token',
+        'status',
+        'last_login_at',
     ];
 
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = [
         'password',
@@ -46,4 +51,8 @@ class User extends Authenticatable
         ];
     }
 
+    public function businesses()
+    {
+        return $this->hasMany(BusinessUser::class, 'user_id', 'id');
+    }
 }

@@ -1,181 +1,35 @@
 {
-  "_autocomplete-i5sh6eXG.js": {
-    "file": "assets/autocomplete-i5sh6eXG.js",
-    "name": "autocomplete",
-    "imports": [
-      "resources/js/autocomplete.js"
-    ]
+  "_alert-Cg1FgE4f.js": {
+    "file": "assets/alert-Cg1FgE4f.js",
+    "name": "alert"
   },
-  "_maska-X9fHs--r.js": {
-    "file": "assets/maska-X9fHs--r.js",
-    "name": "maska"
-  },
-  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf": {
-    "file": "assets/fa-brands-400-DHHcbFjz.ttf",
-    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf"
-  },
-  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2": {
-    "file": "assets/fa-brands-400-Ch568Ea9.woff2",
-    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2"
-  },
-  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.ttf": {
-    "file": "assets/fa-regular-400-C54-fRIQ.ttf",
-    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.ttf"
-  },
-  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff2": {
-    "file": "assets/fa-regular-400-9VThgXHM.woff2",
-    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff2"
-  },
-  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf": {
-    "file": "assets/fa-solid-900-Cm9M9sZB.ttf",
-    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf"
-  },
-  "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2": {
-    "file": "assets/fa-solid-900-QWY35r5r.woff2",
-    "src": "node_modules/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2"
-  },
-  "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff": {
-    "file": "assets/bootstrap-icons-BOrJxbIo.woff",
-    "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff"
-  },
-  "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2": {
-    "file": "assets/bootstrap-icons-BtvjY1KL.woff2",
-    "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2"
-  },
-  "resources/js/admin.js": {
-    "file": "assets/admin-WjBRgyWM.js",
-    "name": "admin",
-    "src": "resources/js/admin.js",
-    "isEntry": true,
-    "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "resources/js/autocomplete.js"
-    ]
+  "resources/css/app.css": {
+    "file": "assets/app-BfieGDvm.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-Cln34ztu.js",
+    "file": "assets/app-BvC3LZGg.js",
     "name": "app",
     "src": "resources/js/app.js",
-    "isEntry": true,
-    "imports": [
-      "resources/js/autocomplete.js",
-      "_maska-X9fHs--r.js"
-    ]
-  },
-  "resources/js/autocomplete.js": {
-    "file": "assets/autocomplete-BhlH6aML.js",
-    "name": "autocomplete",
-    "src": "resources/js/autocomplete.js",
     "isEntry": true
   },
-  "resources/js/business_dashboard.js": {
-    "file": "assets/business_dashboard-CYHFgXS5.js",
-    "name": "business_dashboard",
-    "src": "resources/js/business_dashboard.js",
-    "isEntry": true
-  },
-  "resources/js/clients.js": {
-    "file": "assets/clients-CGSKd3X1.js",
-    "name": "clients",
-    "src": "resources/js/clients.js",
+  "resources/js/dte.js": {
+    "file": "assets/dte-B4Kmmfqx.js",
+    "name": "dte",
+    "src": "resources/js/dte.js",
     "isEntry": true,
     "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "resources/js/autocomplete.js"
+      "_alert-Cg1FgE4f.js"
     ]
   },
-  "resources/js/comprobante_retencion.js": {
-    "file": "assets/comprobante_retencion-BRFtuROY.js",
-    "name": "comprobante_retencion",
-    "src": "resources/js/comprobante_retencion.js",
+  "resources/js/password.js": {
+    "file": "assets/password-BgYsK9kF.js",
+    "name": "password",
+    "src": "resources/js/password.js",
     "isEntry": true,
     "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "resources/js/autocomplete.js"
+      "_alert-Cg1FgE4f.js"
     ]
-  },
-  "resources/js/credito_fiscal.js": {
-    "file": "assets/credito_fiscal-D5hRLKI3.js",
-    "name": "credito_fiscal",
-    "src": "resources/js/credito_fiscal.js",
-    "isEntry": true,
-    "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "resources/js/autocomplete.js"
-    ]
-  },
-  "resources/js/customers.js": {
-    "file": "assets/customers-Df0jlb06.js",
-    "name": "customers",
-    "src": "resources/js/customers.js",
-    "isEntry": true,
-    "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "_maska-X9fHs--r.js",
-      "resources/js/autocomplete.js"
-    ]
-  },
-  "resources/js/exportacion.js": {
-    "file": "assets/exportacion-Du3N2UEd.js",
-    "name": "exportacion",
-    "src": "resources/js/exportacion.js",
-    "isEntry": true,
-    "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "resources/js/autocomplete.js"
-    ]
-  },
-  "resources/js/factura.js": {
-    "file": "assets/factura-VMudcdRY.js",
-    "name": "factura",
-    "src": "resources/js/factura.js",
-    "isEntry": true
-  },
-  "resources/js/invoices.js": {
-    "file": "assets/invoices-_Jcruf1L.js",
-    "name": "invoices",
-    "src": "resources/js/invoices.js",
-    "isEntry": true
-  },
-  "resources/js/nota_credito.js": {
-    "file": "assets/nota_credito-B7DTVePI.js",
-    "name": "nota_credito",
-    "src": "resources/js/nota_credito.js",
-    "isEntry": true,
-    "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "resources/js/autocomplete.js"
-    ]
-  },
-  "resources/js/nota_debito.js": {
-    "file": "assets/nota_debito-DxEiTsPH.js",
-    "name": "nota_debito",
-    "src": "resources/js/nota_debito.js",
-    "isEntry": true,
-    "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "resources/js/autocomplete.js"
-    ]
-  },
-  "resources/js/producto.js": {
-    "file": "assets/producto-ClgVgnTk.js",
-    "name": "producto",
-    "src": "resources/js/producto.js",
-    "isEntry": true,
-    "imports": [
-      "_autocomplete-i5sh6eXG.js",
-      "resources/js/autocomplete.js"
-    ]
-  },
-  "resources/js/sujeto_excluido.js": {
-    "file": "assets/sujeto_excluido-DiOTwt8D.js",
-    "name": "sujeto_excluido",
-    "src": "resources/js/sujeto_excluido.js",
-    "isEntry": true
-  },
-  "resources/sass/app.scss": {
-    "file": "assets/app-Br0lsFUV.css",
-    "src": "resources/sass/app.scss",
-    "isEntry": true
   }
 }

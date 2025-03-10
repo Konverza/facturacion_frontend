@@ -6,8 +6,6 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
-use App\Models\User;
 
 class RoleSeeder extends Seeder
 {
@@ -16,47 +14,66 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
-
-        //Create some permissions
-        Permission::create(['name' => 'create negocios']);
-        Permission::create(['name' => 'read negocios']);
-        Permission::create(['name' => 'update negocios']);
-        Permission::create(['name' => 'delete negocios']);
-
-        Permission::create(['name' => 'create planes']);
-        Permission::create(['name' => 'read planes']);
-        Permission::create(['name' => 'update planes']);
-        Permission::create(['name' => 'delete planes']);
-
-        Permission::create(['name' => 'create usuarios']);
-        Permission::create(['name' => 'read usuarios']);
-        Permission::create(['name' => 'update usuarios']);
-        Permission::create(['name' => 'delete usuarios']);
-
-        // Create roles
-        $super_admin_role = Role::create(['name' => 'super-admin']);
-        $negocio_role = Role::create(['name' => 'negocio']);
-        $vendedor_role = Role::create(['name' => 'vendedor']);
-
-        // Assign permissions to roles
-        $negocio_role->givePermissionTo(
-            'create negocios',
-            'read negocios',
-            'update negocios',
-            'delete negocios',
-        );
-        $vendedor_role->givePermissionTo(
-            'read negocios',
-        );
-
-        // Create users
-        $super_admin = User::factory()->create([
-            'name' => 'Super Admin',
-            'email' => 'admin@konverza.digital',
-            'password' => bcrypt('password')
+        $admin = Role::create([
+            "name" => "admin",
         ]);
-        // Assign roles to users
-        $super_admin->assignRole($super_admin_role);
+
+        $business = Role::create([
+            "name" => "business",
+        ]);
+
+        $atm = Role::create([
+            "name" => "atm",
+        ]);
+
+        $permissions = [
+            'business' => ['show', 'create', 'edit', 'disable'],
+            'plans' => ['show', 'create', 'edit', 'delete'],
+            'users' => ['show', 'create', 'edit', 'delete'],
+            'dtes' => ['create', 'show', 'cancel'],
+            'products' => ['create', 'show', 'edit', 'delete'],
+            'customers' => ['create', 'show', 'edit', 'delete'],
+        ];
+
+        foreach ($permissions as $module => $actions) {
+            foreach ($actions as $action) {
+                Permission::create(["name" => "{$action}-{$module}"]);
+            }
+        }
+
+        $admin->givePermissionTo([
+            "show-business",
+            "create-business",
+            "edit-business",
+            "disable-business",
+            "show-plans",
+            "create-plans",
+            "edit-plans",
+            "delete-plans",
+            "show-users",
+            "create-users",
+            "edit-users",
+            "delete-users",
+        ]);
+
+        $business->givePermissionTo([
+            "create-dtes",
+            "show-dtes",
+            "cancel-dtes",
+            "create-products",
+            "show-products",
+            "edit-products",
+            "delete-products",
+            "create-customers",
+            "show-customers",
+            "edit-customers",
+            "delete-customers",
+        ]);
+
+        $atm->givePermissionTo([
+            "show-dtes",
+            "create-dtes",
+            "create-customers"
+        ]);
     }
 }
