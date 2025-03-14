@@ -13,7 +13,7 @@
                 value="{{ old('documento_emitir', isset($dte['extension']) ? $dte['extension']['docuEntrega'] ?? '' : '') }}" />
         </div>
         <div class="flex-1">
-            <x-input type="text" label="Nombre" name="nombre_emitir" placeholder="Resposanble de emitir el documento"
+            <x-input type="text" label="Nombre" name="nombre_emitir" placeholder="Responsable de emitir el documento"
                 value="{{ old('nombre_emitir', isset($dte['extension']) ? $dte['extension']['nombEntrega'] ?? '' : '') }}" />
         </div>
     </div>
@@ -25,7 +25,7 @@
         </div>
         <div class="flex-1">
             <x-input type="text" label="Nombre" name="nombre_recibir"
-                placeholder="Resposanble de recibir el documento"
+                placeholder="Responsable de recibir el documento"
                 value="{{ old('nombre_recibir', isset($dte['extension']) ? $dte['extension']['nombRecibe'] ?? '' : '') }}" />
         </div>
     </div>

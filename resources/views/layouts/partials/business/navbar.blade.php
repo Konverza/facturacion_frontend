@@ -2,7 +2,7 @@
     <div class="fixed top-0 z-[90] flex h-12 w-full items-center justify-center bg-red-500 px-2 text-white sm:h-8">
         <span class="flex items-center gap-2 text-xs font-semibold sm:text-sm">
             <x-icon icon="info-circle" class="h-4 w-4 min-w-4 max-w-4" />
-            Advertencia: Está en el ambiente de pruebas. Los documetos emitidos no tienen validez legal.
+            Advertencia: Está en el ambiente de pruebas. Los documentos emitidos no tienen validez legal.
         </span>
     </div>
 @endif

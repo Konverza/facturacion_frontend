@@ -1088,7 +1088,7 @@
                             </div>
                             <div class="flex-1">
                                 <x-input type="text" label="Nombre" name=""
-                                    placeholder="Resposanble de emitir el documento" />
+                                    placeholder="Responsable de emitir el documento" />
                             </div>
                         </div>
                         <div class="mt-4 flex flex-col gap-4 sm:flex-row">
@@ -1098,7 +1098,7 @@
                             </div>
                             <div class="flex-1">
                                 <x-input type="text" label="Nombre" name=""
-                                    placeholder="Resposanble de recibir el documento" />
+                                    placeholder="Responsable de recibir el documento" />
                             </div>
                         </div>
                     </div>
