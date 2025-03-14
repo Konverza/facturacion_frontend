@@ -31,8 +31,7 @@ class CustomerContoller extends Controller
     public function index()
     {
         try {
-            $business_user = BusinessUser::where("business_id", session("business"))->first();
-            $business_customers = BusinessCustomer::where("business_id", $business_user->business_id)->get();
+            $business_customers = BusinessCustomer::where("business_id", session("business"))->orderBy("id", "desc")->get();
             return view('business.customers.index', [
                 'business_customers' => $business_customers
             ]);

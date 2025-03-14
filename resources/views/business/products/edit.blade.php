@@ -49,7 +49,7 @@
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Precio con IVA"
                             name="precio" step="0.01" value="{{ old('precio', $product->precioUni) }}"
-                            id="price-with-iva" readonly />
+                            id="price-with-iva" />
                     </div>
                     <div class="flex-1">
                         <x-input type="number" required label="Stock inicial" name="stock_inicial" placeholder="0"

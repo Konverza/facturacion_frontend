@@ -30,7 +30,7 @@
                 <x-slot name="tbody">
                     @foreach ($business_customers as $customer)
                         <x-tr :last="$loop->last">
-                            <x-td>1</x-td>
+                            <x-td>{{$loop->iteration}}</x-td>
                             <x-td>
                                 {{ $customer->numDocumento }}
                             </x-td>

@@ -26,7 +26,7 @@ class ProductController extends Controller
     public function index()
     {
         try {
-            $business_products = BusinessProduct::where("business_id", session("business"))->get();
+            $business_products = BusinessProduct::where("business_id", session("business"))->orderBy("id", "desc")->get();
             $tributes = Tributes::all();
             $business_products->each(function ($product) use ($tributes) {
                 $tributos_producto = json_decode($product->tributos);

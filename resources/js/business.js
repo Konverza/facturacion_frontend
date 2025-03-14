@@ -147,6 +147,14 @@ $(document).ready(function () {
         );
     });
 
+    $("#price-with-iva").on("input", function () {
+        $("#price-not-iva").val(
+            (
+                parseFloat($(this).val())/(1.13)
+            ).toFixed(2)
+        );
+    });
+
     if($("#price-not-iva").length > 0){
           $("#price-with-iva").val(
               (

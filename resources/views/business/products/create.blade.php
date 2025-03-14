@@ -56,7 +56,7 @@
                     </div>
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Precio con IVA"
-                            name="precio" step="0.01" value="{{ old('precio') }}" id="price-with-iva" readonly />
+                            name="precio" step="0.01" value="{{ old('precio') }}" id="price-with-iva" />
                     </div>
                     <div class="flex-1">
                         <x-input type="number" required label="Stock inicial" name="stock_inicial" placeholder="0"
