@@ -7,16 +7,6 @@
         foreach ($plan_dtes as $dte) {
             $dte_options[$dte] = $types[$dte];
         }
-
-        $dte_options = [
-        '01' => 'Factura Electrónica',
-        '03' => 'Comprobante de crédito fiscal',
-        '05' => 'Nota de crédito',
-        '06' => 'Nota de débito',
-        '07' => 'Comprobante de retención',
-        '11' => 'Factura de exportación',
-        '14' => 'Factura de sujeto excluido'
-    ]
     @endphp
 
     <section class="my-4 px-4 pb-4">

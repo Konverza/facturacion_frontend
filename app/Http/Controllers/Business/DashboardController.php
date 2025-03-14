@@ -40,7 +40,7 @@ class DashboardController extends Controller
             $user = User::with('businesses.business')->find(auth()->user()->id);
             $business_user = BusinessUser::where("user_id", $user->id)->first();
             $business = Business::find($business_id ?? $business_user->business_id);
-            $business_plan = BusinessPlan::find($business_user->business_id);
+            $business_plan = BusinessPlan::find($business_id ?? $business_user->business_id);
             $dtes_pending = DTE::where('business_id', $business->id)->get();
 
             if (!$business) {
