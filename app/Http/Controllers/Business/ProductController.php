@@ -198,4 +198,45 @@ class ProductController extends Controller
             return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al actualizar el stock");
         }
     }
+
+    public function remove_stock(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:business_product,id',
+            'cantidad' => 'required|numeric|min:1',
+            'descripcion' => 'required|string'
+        ]);
+
+        try {
+            DB::beginTransaction();
+            $product = BusinessProduct::find($request->id);
+            $product->stockActual -= $request->cantidad;
+            BusinessProductMovement::create([
+                'business_product_id' => $product->id,
+                'numero_factura' => "Salida de Stock",
+                'tipo' => "salida",
+                'cantidad' => $request->cantidad,
+                'precio_unitario' => $product->precioUni,
+                'producto' => $product->descripcion,
+                'descripcion' => $request->descripcion
+            ]);
+
+            if ($product->stockActual <= $product->stockMinimo) {
+                $product->estado_stock = "agotado";
+            } elseif (($product->stockActual - $product->stockMinimo) <= 2) {
+                $product->estado_stock = "por_agotarse";
+            } else {
+                $product->estado_stock = "disponible";
+            }
+
+            $product->save();
+            DB::commit();
+            return redirect()->route('business.products.index')
+                ->with('success', 'Stock actualizado')
+                ->with("success_message", "El stock ha sido actualizado correctamente");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al actualizar el stock");
+        }
+    }
 }

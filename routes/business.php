@@ -28,6 +28,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::resource("/documents", DocumentController::class);
     Route::resource("/products", ProductController::class);
     Route::post("/products/add-stock", [ProductController::class, "add_stock"])->name('products.add-stock');
+    Route::post("/products/remove-stock", [ProductController::class, "remove_stock"])->name('products.remove-stock');
     Route::resource("/customers", CustomerContoller::class);
     Route::resource("/movements", MovementController::class);
     Route::resource("/cuentas-por-cobrar", CuentasCobrarController::class);

@@ -19,7 +19,7 @@ class MovementController extends Controller
         try {
             $business_id = Session::get('business') ?? null;
             $business = Business::find($business_id ?? $business_id);
-            $movements = BusinessProductMovement::all();
+            $movements = BusinessProductMovement::orderBy('created_at', 'desc')->get();
             $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
 
             $dteByCodGeneracion = [];
@@ -41,9 +41,9 @@ class MovementController extends Controller
                 "movimientos" => $movements
             ]);
         } catch (\Exception $e) {
-            return redirect()->route('business.movements.index')->with([
+            return redirect()->route('business.dashboard')->with([
                 'error' => 'Error',
-                'error_message' => 'Error al cargar los movimientos'
+                'error_message' => 'Error al cargar los movimientos: ' . $e->getMessage()
             ]);
         }
     }

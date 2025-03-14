@@ -178,4 +178,9 @@ $(document).ready(function () {
         const id = $(this).data("id");
         $("#product-id").val(id);
     });
+
+    $(document).on("click", ".btn-remove-stock", function () {
+        const id = $(this).data("id");
+        $("#product-remove-id").val(id);
+    });
 });
