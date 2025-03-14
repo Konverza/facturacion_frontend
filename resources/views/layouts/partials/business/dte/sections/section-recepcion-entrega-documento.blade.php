@@ -6,6 +6,9 @@
             Recepción / entrega de documento
         </h2>
     </div>
+    <p class="text-gray-500 dark:text-gray-400">
+        Llenar si la operación superior es igual o mayor a {{$monto}}
+    </p>
     <div class="mt-4 flex flex-col gap-4 sm:flex-row">
         <div class="flex-1">
             <x-input type="text" name="documento_emitir" label="Número de documento"

@@ -281,7 +281,7 @@
                 @include('layouts.partials.business.dte.sections.section-observaciones')
                 @include('layouts.partials.business.dte.sections.section-condicion-operacion')
                 @include('layouts.partials.business.dte.sections.section-forma-pago')
-                @include('layouts.partials.business.dte.sections.section-recepcion-entrega-documento')
+                @include('layouts.partials.business.dte.sections.section-recepcion-entrega-documento', ['monto' => "$11,428.58"])
             </div>
             @include('layouts.partials.business.dte.button-actions')
         </form>
