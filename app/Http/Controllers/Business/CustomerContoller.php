@@ -74,11 +74,11 @@ class CustomerContoller extends Controller
             $numero_documento = $request->numero_documento;
             if ($request->tipo_documento === "36") {
                 if (strlen($numero_documento) !== 14) {
-                    return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
+                    return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.'])->withInput();
                 }
             } else if ($request->tipo_documento === "13") {
                 if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
-                    return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+                    return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.'])->withInput();
                 }
             }
 
@@ -109,7 +109,7 @@ class CustomerContoller extends Controller
                 ->with("success_message", "El cliente ha sido guardado correctamente");
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()
+            return redirect()->back()->withInput()
                 ->with("error", "Error")->with("error_message", "Ha ocurrido un error al guardar el cliente");
         }
     }

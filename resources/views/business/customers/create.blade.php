@@ -54,8 +54,8 @@
                     </div>
                     <div class="flex-1" id="select-municipio">
                         <x-select name="municipio" label="Municipio" id="municipality" required :options="[
-                            'Selecciona un departamento' => 'Seleccione un departamento',
-                        ]" />
+                            'Selecciona un municipio' => 'Seleccione un municipio',
+                        ]" value="{{old('municipio')}}" />
                     </div>
                 </div>
                 <div class="mt-4">
