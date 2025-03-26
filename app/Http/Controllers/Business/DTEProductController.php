@@ -93,7 +93,7 @@ class DTEProductController extends Controller
 
                     $iva = 0;
                     if ($request->tipo === "Gravada") {
-                        if ($this->dte["type"] === "03") {
+                        if ($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
                             $iva = round($product["total"] * 0.13, 2);
                         } else {
                             $iva = round(($product["total"] / 1.13) * 0.13, 2);
@@ -107,7 +107,7 @@ class DTEProductController extends Controller
 
             $iva = 0;
             if ($request->tipo === "Gravada") {
-                if ($this->dte["type"] === "03") {
+                if ($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
                     $iva = round((float) $request->total * 0.13, 2);
                 } else {
                     $iva = round(((float) $request->total / 1.13) * 0.13, 2);

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Business;
 
+use App\Exports\ConsumidorFinal;
+use App\Exports\Contribuyente;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessCustomer;
@@ -17,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DTEController extends Controller
 {
@@ -421,35 +425,35 @@ class DTEController extends Controller
         }
 
         if ($type === "07") {
-            $dte["resumen"]["totalSujetoRetencion"] = round((float)$this->dte["monto_sujeto_retencion_total"] ?? 0, 2);
-            $dte["resumen"]["totalIVAretenido"] = round((float)$this->dte["total_iva_retenido"] ?? 0, 2);
+            $dte["resumen"]["totalSujetoRetencion"] = round((float) $this->dte["monto_sujeto_retencion_total"] ?? 0, 2);
+            $dte["resumen"]["totalIVAretenido"] = round((float) $this->dte["total_iva_retenido"] ?? 0, 2);
         } elseif ($type === "11") {
-            $dte["resumen"]["totalGravada"] = round((float)$this->dte["total_ventas_gravadas"] ?? 0, 2);
-            $dte["resumen"]["descuento"] = round((float)$this->dte["descuento_venta_gravada"] ?? 0, 2);
+            $dte["resumen"]["totalGravada"] = round((float) $this->dte["total_ventas_gravadas"] ?? 0, 2);
+            $dte["resumen"]["descuento"] = round((float) $this->dte["descuento_venta_gravada"] ?? 0, 2);
             $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
             $dte["resumen"]["pagos"] = $this->pagos();
-            $dte["resumen"]["flete"] = round((float)$this->dte["flete"] ?? 0, 2);
-            $dte["resumen"]["seguro"] = round((float)$this->dte["seguro"] ?? 0, 2);
+            $dte["resumen"]["flete"] = round((float) $this->dte["flete"] ?? 0, 2);
+            $dte["resumen"]["seguro"] = round((float) $this->dte["seguro"] ?? 0, 2);
         } elseif ($type === "14") {
-            $dte["resumen"]["descu"] = round((float)$this->dte["total_descuentos"] ?? 0, 2);
-            $dte["resumen"]["totalDescu"] = round((float)$this->dte["total_descuentos"] ?? 0, 2);
-            $dte["resumen"]["ivaRete1"] = $this->dte["retener_iva"] === "active" ? round((float)$this->dte["total_iva_retenido"] ?? 0, 2) : 0;
+            $dte["resumen"]["descu"] = round((float) $this->dte["total_descuentos"] ?? 0, 2);
+            $dte["resumen"]["totalDescu"] = round((float) $this->dte["total_descuentos"] ?? 0, 2);
+            $dte["resumen"]["ivaRete1"] = $this->dte["retener_iva"] === "active" ? round((float) $this->dte["total_iva_retenido"] ?? 0, 2) : 0;
             $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
-            $dte["resumen"]["reteRenta"] = round((float)$this->dte["isr"] ?? 0, 2);
+            $dte["resumen"]["reteRenta"] = round((float) $this->dte["isr"] ?? 0, 2);
         } else {
-            $dte["resumen"]["descuNoSuj"] = round((float)$this->dte["descuento_venta_no_sujeta"] ?? 0, 2);
-            $dte["resumen"]["descuExtenta"] = round((float)$this->dte["descuento_venta_exenta"] ?? 0, 2);
-            $dte["resumen"]["descuGravada"] = round((float)$this->dte["descuento_venta_gravada"] ?? 0, 2);
+            $dte["resumen"]["descuNoSuj"] = round((float) $this->dte["descuento_venta_no_sujeta"] ?? 0, 2);
+            $dte["resumen"]["descuExtenta"] = round((float) $this->dte["descuento_venta_exenta"] ?? 0, 2);
+            $dte["resumen"]["descuGravada"] = round((float) $this->dte["descuento_venta_gravada"] ?? 0, 2);
             $dte["resumen"]["porcentajeDescuento"] = 0;
-            $dte["resumen"]["ivaRete1"] = $this->dte["retener_iva"] === "active" ? round((float)$this->dte["total_iva_retenido"] ?? 0, 2) : 0;
-            $dte["resumen"]["reteRenta"] = $this->dte["retener_renta"] === "active" ? round((float)$this->dte["isr"] ?? 0, 2) : 0;
+            $dte["resumen"]["ivaRete1"] = $this->dte["retener_iva"] === "active" ? round((float) $this->dte["total_iva_retenido"] ?? 0, 2) : 0;
+            $dte["resumen"]["reteRenta"] = $this->dte["retener_renta"] === "active" ? round((float) $this->dte["isr"] ?? 0, 2) : 0;
             $dte["resumen"]["saldoFavor"] = 0;
             $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
             $dte["resumen"]["pagos"] = $this->pagos();
         }
 
         if ($type === "03" || $type === "05" || $type === "06") {
-            $dte["resumen"]["ivaPerci1"] = $this->dte["percibir_iva"] === "active" ? round((float)$this->dte["total_iva_retenido"] ?? 0, 2) : 0;
+            $dte["resumen"]["ivaPerci1"] = $this->dte["percibir_iva"] === "active" ? round((float) $this->dte["total_iva_retenido"] ?? 0, 2) : 0;
         }
 
         if ($type !== "14") {
@@ -771,7 +775,7 @@ class DTEController extends Controller
                 "compra" => round($product["ventas_gravadas"], 2),
             ];
         } else {
-            return  [
+            return [
                 "tipoItem" => $product["product"]["tipoItem"],
                 "numeroDocumento" => isset($product["documento_relacionado"]) && $product["documento_relacionado"] !== null ? $product["documento_relacionado"] : null,
                 "cantidad" => $product["cantidad"],
@@ -779,13 +783,13 @@ class DTEController extends Controller
                 "codTributo" => null,
                 "uniMedida" => $product["unidad_medida"],
                 "descripcion" => $product["descripcion"],
-                "precioUni" => round(($type === "03" ? $product["precio_sin_tributos"] : $product["precio"]), 2),
+                "precioUni" => round(in_array($type, ["03", "05", "06"]) ? $product["precio_sin_tributos"] : $product["precio"], 2),
                 "montoDescu" => round($product["descuento"], 2),
                 "ventaNoSuj" => round($product["ventas_no_sujetas"], 2),
                 "ventaExenta" => round($product["ventas_exentas"], 2),
                 "ventaGravada" => round($product["ventas_gravadas"], 2),
                 "tributos" => count($tributos) > 0 ? $tributos : null,
-                "psv" => round((float)$product["precio"], 2),
+                "psv" => round((float) $product["precio"], 2),
                 "ivaItem" => round($product["iva"], 2),
                 "noGravado" => 0,
             ];
@@ -804,9 +808,9 @@ class DTEController extends Controller
                 "tipoDoc" => intval($documento["tipo_documento"]),
                 "numDocumento" => $documento["numero_documento"],
                 "fechaEmision" => $documento["fecha_documento"],
-                "montoSujetoGrav" => round((float)$documento["monto_sujeto_retencion"], 2),
+                "montoSujetoGrav" => round((float) $documento["monto_sujeto_retencion"], 2),
                 "codigoRetencionMH" => $documento["codigo_retencion"],
-                "ivaRetenido" => round((float)$documento["iva_retenido"], 2),
+                "ivaRetenido" => round((float) $documento["iva_retenido"], 2),
                 "descripcion" => $documento["descripcion_retencion"],
             ];
         }
@@ -942,7 +946,7 @@ class DTEController extends Controller
             foreach ($this->dte["metodos_pago"] as $pago) {
                 $metodos_pago[] = [
                     "codigo" => $pago["forma_pago"],
-                    "montoPago" => round((float)$pago["monto"], 2),
+                    "montoPago" => round((float) $pago["monto"], 2),
                     "referencia" => $pago["numero_documento"],
                     "plazo" => $pago["plazo"] ?? null,
                     "periodo" => $pago["periodo"] ?? null,
@@ -1062,36 +1066,38 @@ class DTEController extends Controller
                     $searchProduct = BusinessProduct::find($product->codigo);
                 }
 
-                if ($searchProduct->id === $dbProduct->id) {
-                    $stockAnterior = $dbProduct->stockActual;
-                    if ($tipo === "salida") {
-                        $dbProduct->stockActual -= is_array($product) ? $product["cantidad"] : $product->cantidad;
-                    } elseif ($tipo === "entrada") {
-                        $dbProduct->stockActual += is_array($product) ? $product["cantidad"] : $product->cantidad;
-                    }
+                if ($searchProduct) {
+                    if ($searchProduct->id === $dbProduct->id) {
+                        $stockAnterior = $dbProduct->stockActual;
+                        if ($tipo === "salida") {
+                            $dbProduct->stockActual -= is_array($product) ? $product["cantidad"] : $product->cantidad;
+                        } elseif ($tipo === "entrada") {
+                            $dbProduct->stockActual += is_array($product) ? $product["cantidad"] : $product->cantidad;
+                        }
 
-                    $stockActual = $dbProduct->stockActual;
-                    if ($stockActual <= $dbProduct->stockMinimo) {
-                        $dbProduct->estado_stock = "agotado";
-                    } elseif (($stockActual - $dbProduct->stockMinimo) <= 2) {
-                        $dbProduct->estado_stock = "por_agotarse";
-                    } else {
-                        $dbProduct->estado_stock = "disponible";
-                    }
+                        $stockActual = $dbProduct->stockActual;
+                        if ($stockActual <= $dbProduct->stockMinimo) {
+                            $dbProduct->estado_stock = "agotado";
+                        } elseif (($stockActual - $dbProduct->stockMinimo) <= 2) {
+                            $dbProduct->estado_stock = "por_agotarse";
+                        } else {
+                            $dbProduct->estado_stock = "disponible";
+                        }
 
-                    $diferencia = abs($stockAnterior - $stockActual);
-                    if ($diferencia >= 1) {
-                        BusinessProductMovement::create([
-                            "business_product_id" => $dbProduct->id,
-                            "numero_factura" => $codGeneracion,
-                            "tipo" => $tipo,
-                            "cantidad" => is_array($product) ? $product["cantidad"] : $product->cantidad,
-                            "precio_unitario" => $dbProduct->precioUni,
-                            "producto" => $dbProduct->descripcion,
-                            "descripcion" => $tipo === "salida" ? "Venta de producto" : "Anulación de documento",
-                        ]);
+                        $diferencia = abs($stockAnterior - $stockActual);
+                        if ($diferencia >= 1) {
+                            BusinessProductMovement::create([
+                                "business_product_id" => $dbProduct->id,
+                                "numero_factura" => $codGeneracion,
+                                "tipo" => $tipo,
+                                "cantidad" => is_array($product) ? $product["cantidad"] : $product->cantidad,
+                                "precio_unitario" => $dbProduct->precioUni,
+                                "producto" => $dbProduct->descripcion,
+                                "descripcion" => $tipo === "salida" ? "Venta de producto" : "Anulación de documento",
+                            ]);
+                        }
+                        $dbProduct->save();
                     }
-                    $dbProduct->save();
                 }
             }
         }
@@ -1187,8 +1193,132 @@ class DTEController extends Controller
             return redirect()->route('business.documents.index')
                 ->with([
                     'error' => "Error",
-                    'error_message' => "Ha ocurrido un error al anular el documento"
+                    'error_message' => "Ha ocurrido un error al anular el documento: " . $e->getMessage()
                 ]);
+        }
+    }
+
+    public function anexos(Request $request)
+    {
+        $business_id = Session::get('business') ?? null;
+        $business = Business::find($business_id);
+        $desde = "{$request->desde}T00:00:00";
+        $hasta = "{$request->hasta}T23:59:59";
+
+        $dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes/?nit=" . $business->nit . "&fechaInicio=" . $desde . "&fechaFin=" . $hasta)->json();
+        $dte_collection = null;
+
+        switch ($request->tipo) {
+            case "1":
+                foreach ($dtes as $dte) {
+                    if ($dte["estado"] == "PROCESADO" && in_array($dte["tipo_dte"], ["03", "05", "06"])) {
+                        $dte["documento"] = json_decode($dte["documento"]);
+                        $dte_collection[] = $dte;
+                    }
+                }
+                $dte_collection = collect($dte_collection);
+                $fileName = 'anexo-f07-contribuyentes.csv';
+                $filePath = "exports/{$fileName}";
+                Excel::store(new Contribuyente($dte_collection), $filePath, 'public');
+                if (!Storage::disk('public')->exists($filePath)) {
+                    return response()->json(['error' => 'Error al generar el archivo'], 500);
+                }
+                return response()->download(storage_path("app/public/{$filePath}"), $fileName, [
+                    'Content-Type' => 'text/csv',
+                    'X-Download-Started' => 'true'
+                ])->deleteFileAfterSend(true);
+            case "2":
+                $dte_collection = collect();
+                foreach ($dtes as $dte) {
+                    if ($dte["estado"] === "PROCESADO" && in_array($dte["tipo_dte"], ["01", "11"])) {
+                        $fecha_dte = \Carbon\Carbon::parse($dte["fhProcesamiento"])->toDateString(); // Solo la fecha
+                        $desde = \Carbon\Carbon::parse($request->fecha_inicio)->startOfDay();
+                        $hasta = \Carbon\Carbon::parse($request->fecha_fin)->endOfDay();
+
+                        if (\Carbon\Carbon::parse($dte["fhProcesamiento"])->between($desde, $hasta)) {
+                            $dte["documento"] = json_decode($dte["documento"]);
+                            $dte_collection->push($dte);
+                        }
+                    }
+                }
+
+                // Agrupar por fecha y ordenar dentro de cada grupo por fecha y hora
+                $grouped_dtes = $dte_collection
+                    ->sortBy('fhProcesamiento') // Ordenar globalmente antes de agrupar
+                    ->groupBy(fn($dte) => \Carbon\Carbon::parse($dte["fhProcesamiento"])->toDateString())
+                    ->map(fn($dtes) => $dtes->groupBy('tipo_dte'));
+
+                $result = [];
+
+                foreach ($grouped_dtes as $fecha => $tipos) {
+                    foreach ($tipos as $tipo => $dtes) {
+                        // Obtener el primer y último codGeneracion del grupo por fecha
+                        $primer_cod = $dtes->first()["codGeneracion"];
+                        $ultimo_cod = $dtes->last()["codGeneracion"];
+                        $tipoOperacion = "";
+
+                        // Sumar valores de los DTEs
+                        $totalExento = $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalExenta ?? 0);
+                        $totalNoSuj = $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalNoSuj ?? 0);
+                        $totalGravado = $tipo === "01" ? $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalGravada ?? 0) : 0;
+                        $totalPagar = $totalExento + $totalNoSuj + $totalGravado;
+
+                        if ($totalGravado > 0 && $totalNoSuj == 0 && $totalExento == 0) {
+                            $tipoOperacion = "01";
+                        } elseif (($totalGravado == 0) && ($totalNoSuj > 0 || $totalExento > 0)) {
+                            $tipoOperacion = "02";
+                        } else {
+                            $tipoOperacion = "04";
+                        }
+
+                        // Formatear la fecha
+                        $fecha_formateada = \Carbon\Carbon::parse($fecha)->format('d/m/Y');
+
+                        // Generar el array con la estructura solicitada
+                        $result[] = [
+                            $fecha_formateada, // fhprocesamiento en dd/mm/YYYY
+                            "4", // Clase
+                            $tipo, // Tipo de DTE
+                            "N/A",
+                            "N/A",
+                            "N/A",
+                            "N/A", // Cuatro veces "N/A"
+                            $primer_cod, // Primer codGeneracion del grupo
+                            $ultimo_cod, // Último codGeneracion del grupo
+                            null, // null
+                            $totalExento, // Suma de totalExenta
+                            0, // 0.00
+                            $totalNoSuj, // Suma de totalNoSuj
+                            $totalGravado, // totalGravada si tipo es "01", si no, 0
+                            0,
+                            0,
+                            0,
+                            0,
+                            0, // Cinco veces 0
+                            $totalPagar, // Suma totalExenta + totalNoSuj + totalGravada
+                            $tipoOperacion,
+                            "03", // "03"
+                            "2", // "2"
+                        ];
+                    }
+                }
+
+                $fileName = 'anexo-f07-consumidor-final.csv';
+                $filePath = "exports/{$fileName}";
+
+                // Guardar el archivo temporalmente
+                Excel::store(new ConsumidorFinal($result), $filePath, 'public');
+
+                // Verificar si el archivo se generó
+                if (!Storage::disk('public')->exists($filePath)) {
+                    return response()->json(['error' => 'Error al generar el archivo'], 500);
+                }
+
+                // Devolver la descarga con la cabecera personalizada
+                return response()->download(storage_path("app/public/{$filePath}"), $fileName, [
+                    'Content-Type' => 'text/csv',
+                    'X-Download-Started' => 'true'
+                ])->deleteFileAfterSend(true);
         }
     }
 }

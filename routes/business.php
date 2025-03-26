@@ -44,6 +44,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         Route::get("/cancel", [DTEController::class, "cancel"])->name('cancel');
         Route::post("/", [DTEController::class, "store"])->name('store');
         Route::post("/anular", [DTEController::class, "anular"])->name('anular');
+        Route::post("/anexos", [DTEController::class, "anexos"])->name('anexos');
         Route::post("/send-email", [MailController::class, "send"])->name('send-email');
         Route::post("/send-whatsapp", [WhatsAppController::class, "send"])->name('send-whatsapp');
 
