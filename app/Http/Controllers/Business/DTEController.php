@@ -546,7 +546,7 @@ class DTEController extends Controller
     {
         $business_id = Session::get('business') ?? null;
         if (isset($data["estado"])) {
-            if ($data["estado"] === "PROCESADO") {
+            if ($data["estado"] === "PROCESADO" || $data["estado"] === "CONTINGENCIA") {
                 if ($this->dte["type"] !== "07" && $this->dte["type"] !== "14") {
                     $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida");
                     if ($request->condicion_operacion === 2) {
