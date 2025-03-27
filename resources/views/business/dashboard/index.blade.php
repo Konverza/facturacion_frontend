@@ -49,7 +49,7 @@
                         </span>
                         <div class="flex flex-col items-center justify-center gap-1 sm:items-start">
                             <p class="text-2xl font-bold text-yellow-500">
-                                Intermitente
+                                CONTINGENCIA
                             </p>
                             <h1 class="text-sm text-gray-500 dark:text-gray-300">
                                 Estado hacienda
