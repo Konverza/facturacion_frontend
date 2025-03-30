@@ -12,9 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('business_product', function (Blueprint $table) {
-            $table->integer("stockActual")->default(0);
-            $table->enum("estado_stock", ["disponible", "agotado", "por_agotarse"])->default("disponible");
-            $table->integer("stockMinimo")->default(0);
+            $table->foreign(['business_id'])->references(['id'])->on('business')->onUpdate('no action')->onDelete('no action');
         });
     }
 
@@ -24,9 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('business_product', function (Blueprint $table) {
-            $table->dropColumn("stockActual");
-            $table->dropColumn("estado_stock");
-            $table->dropColumn("stockMinimo");
+            $table->dropForeign('business_product_business_id_foreign');
         });
     }
 };

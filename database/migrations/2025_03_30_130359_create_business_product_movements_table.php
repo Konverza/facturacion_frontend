@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('business_product_movements', function (Blueprint $table) {
-            $table->id();
-            $table->integer("business_product_id");
-            $table->string("numero_factura")->nullable();
-            $table->enum("tipo",["entrada","salida"]);
-            $table->integer("cantidad");
-            $table->decimal("precio_unitario", 10, 2)->nullable();
-            $table->text("descripcion")->nullable();
-            $table->foreign("business_product_id")->references("id")->on("business_product");
+            $table->bigIncrements('id');
+            $table->integer('business_product_id');
+            $table->string('numero_factura')->nullable();
+            $table->enum('tipo', ['entrada', 'salida']);
+            $table->integer('cantidad');
+            $table->decimal('precio_unitario', 10)->nullable();
+            $table->text('descripcion')->nullable();
+            $table->string('producto', 225);
             $table->timestamps();
         });
     }

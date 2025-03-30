@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('business_credentials', function (Blueprint $table) {
-            $table->id();
-            $table->string("NIT");
-            $table->string("password");
-            $table->timestamps();
+        Schema::create('cat_017', function (Blueprint $table) {
+            $table->string('codigo', 3);
+            $table->string('valores');
         });
     }
 
@@ -24,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('business_credentials');
+        Schema::dropIfExists('cat_017');
     }
 };

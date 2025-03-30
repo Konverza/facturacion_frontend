@@ -11,13 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('dtes', function (Blueprint $table) {
-            $table->id();
-            $table->integer("business_id");
-            $table->json('content');
-            $table->string('type');
-            $table->enum("status", ["pending", "error", "success"])->default("pending");
-            $table->text('error_message')->nullable();
+        Schema::create('business_user', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('business_id')->index('business_user_business_id_foreign');
+            $table->unsignedBigInteger('user_id')->index('business_user_user_id_foreign');
+            $table->string('role');
             $table->timestamps();
         });
     }
@@ -27,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('dtes_pending');
+        Schema::dropIfExists('business_user');
     }
 };

@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cuentas_por_cobrar', function (Blueprint $table) {
-            $table->id();
-            $table->string("numero_factura");
-            $table->string("cliente");
-            $table->decimal("monto", 8, 2);
-            $table->decimal("saldo", 8, 2);
-            $table->enum("estado",["pendiente", "parcial", "pagado", "vencido"]);
-            $table->datetime("fecha_vencimiento")->nullable();
-            $table->text("observaciones")->nullable();
+            $table->bigIncrements('id');
+            $table->string('numero_factura');
+            $table->string('cliente');
+            $table->decimal('monto');
+            $table->decimal('saldo');
+            $table->enum('estado', ['pendiente', 'parcial', 'pagado', 'vencido']);
+            $table->dateTime('fecha_vencimiento')->nullable();
+            $table->text('observaciones')->nullable();
             $table->timestamps();
         });
     }

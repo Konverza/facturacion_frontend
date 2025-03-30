@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('reset_password_token')->nullable();
-            $table->timestamp('reset_password_at')->nullable();
+        Schema::table('model_has_roles', function (Blueprint $table) {
+            $table->foreign(['role_id'])->references(['id'])->on('roles')->onUpdate('no action')->onDelete('cascade');
         });
     }
 
@@ -22,9 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('reset_password_token');
-            $table->dropColumn('reset_password_at');
+        Schema::table('model_has_roles', function (Blueprint $table) {
+            $table->dropForeign('model_has_roles_role_id_foreign');
         });
     }
 };
