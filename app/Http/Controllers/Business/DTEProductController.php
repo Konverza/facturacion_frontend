@@ -661,13 +661,13 @@ class DTEProductController extends Controller
             + $this->dte["total_ventas_exentas"]
             + $this->dte["total_ventas_no_sujetas"];
 
-        if ($this->dte["type"] !== "14" && $this->dte["type"] !== "11" && $this->dte["type"] !== "07") {
+        if ($this->dte["type"] !== "14" && $this->dte["type"] !== "11" && $this->dte["type"] !== "07" && $this->dte["type"] !== "01") {
             $this->dte["total"] = $this->dte["subtotal"] + $this->dte["total_taxes"];
         } else {
             $this->dte["total"] = $this->dte["subtotal"];
         }
 
-        $this->dte["total_pagar"] -= $this->dte["total_descuentos"];
+        $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"], 2);
 
         $this->total_retenciones();
 
@@ -826,6 +826,8 @@ class DTEProductController extends Controller
         $this->dte["bebidas_alcoholicas"] = 0;
         $this->dte["tabaco_cigarillos"] = 0;
         $this->dte["tabaco_cigarros"] = 0;
+        $this->dte["total_ventas_gravadas_descuento"] = round($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"], 2);
+        $this->dte["iva"] = round($this->dte["total_ventas_gravadas_descuento"]  * 0.13, 2);
 
         if (isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
             foreach ($this->dte["products"] as $product) {
@@ -875,7 +877,8 @@ class DTEProductController extends Controller
             $this->dte["contrans"] +
             $this->dte["bebidas_alcoholicas"] +
             $this->dte["tabaco_cigarillos"] +
-            $this->dte["tabaco_cigarros"];
+            $this->dte["tabaco_cigarros"] + 
+            $this->dte["iva"];
 
         $this->dte["total_taxes"] = round((float) $this->dte["total_taxes"], 2);
     }

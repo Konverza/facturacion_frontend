@@ -19,7 +19,10 @@ class MovementController extends Controller
         try {
             $business_id = Session::get('business') ?? null;
             $business = Business::find($business_id ?? $business_id);
-            $movements = BusinessProductMovement::orderBy('created_at', 'desc')->get();
+            $movements = $movements = BusinessProductMovement::with('businessProduct')
+                ->whereHas('businessProduct', function ($query) use ($business_id) {
+                    $query->where('business_id', $business_id);
+                })->get();
             $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
 
             $dteByCodGeneracion = [];
@@ -41,9 +44,9 @@ class MovementController extends Controller
                 "movimientos" => $movements
             ]);
         } catch (\Exception $e) {
-            return redirect()->route('business.dashboard')->with([
+            return redirect()->route('business.movements.index')->with([
                 'error' => 'Error',
-                'error_message' => 'Error al cargar los movimientos: ' . $e->getMessage()
+                'error_message' => 'Error al cargar los movimientos'
             ]);
         }
     }
@@ -76,7 +79,7 @@ class MovementController extends Controller
                 if ($hasSalida) {
                     return redirect()->route('business.movements.index')->with('error', 'Error')->with("error_message", "No se puede eliminar el movimiento porque el producto ya tiene salidas registradas.");
                 }
-                
+
                 $product->stockActual -= $movement->cantidad;
             }
 
