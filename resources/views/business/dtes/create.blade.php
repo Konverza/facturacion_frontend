@@ -23,7 +23,7 @@
                     <div class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                         <x-icon icon="clock" class="size-4" />
                         <input type="time" id="time-in-real-time"
-                            class="m-0 border-none bg-transparent p-0 text-sm focus:border-none focus:outline-none"
+                            class="m-0 bg-transparent p-0 text-sm"
                             readonly>
                     </div>
                 </div>

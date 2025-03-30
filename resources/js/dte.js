@@ -1,16 +1,42 @@
 import { showAlert } from "./alert";
 
 $(document).ready(function () {
-    function updateTime() {
-        const now = new Date();
-        const hours = String(now.getHours()).padStart(2, "0");
-        const minutes = String(now.getMinutes()).padStart(2, "0");
-        const seconds = String(now.getSeconds()).padStart(2, "0");
-        $("#time-in-real-time").val(`${hours}:${minutes}:${seconds}`);
+    let intervalId;
+
+    function startClock() {
+        intervalId = setInterval(() => {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, "0");
+            const minutes = String(now.getMinutes()).padStart(2, "0");
+            const seconds = String(now.getSeconds()).padStart(2, "0");
+            $("#time-in-real-time").val(`${hours}:${minutes}:${seconds}`);
+        }, 1000)
     }
 
-    setInterval(updateTime, 1000);
-    updateTime();
+    startClock();
+
+    $(document).on("change", "#dte-otra-fecha", function () {
+        if (this.checked) {
+            Swal.fire({
+                title: "¿Desea cambiar la fecha y hora del DTE?",
+                text: "Tome en cuenta que enviar una fecha distinta a la actual puede ser observado por el Ministerio de Hacienda, ¿Desea continuar?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Sí, Cambiar",
+                cancelButtonText: "No"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    clearInterval(intervalId); // Detener el intervalo
+                } else {
+                    $('#dte-otra-fecha').prop('checked', false);
+                }
+            });
+        } else {
+            startClock(); // Reiniciar el intervalo
+        }
+    });
 
     //Drawer new product
     const count = $("#count_product");

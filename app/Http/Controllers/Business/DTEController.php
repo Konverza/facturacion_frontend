@@ -396,6 +396,8 @@ class DTEController extends Controller
         $receptor = $this->getReceptorData($request, $type);
 
         $dte = [
+            "fecEmi" => $request->fecEmi ?? null,
+            "horEmi" => $request->horEmi ?? null,
             "nit" => $business->nit,
             "cuerpoDocumento" => [],
             "documentoRelacionado" => $this->documentosRelacionados(),
