@@ -3,12 +3,12 @@
     class="fixed left-0 top-0 z-[300] h-screen w-full -translate-x-full overflow-y-auto bg-white p-4 transition-transform dark:bg-gray-950 md:w-[650px]"
     tabindex="-1" aria-labelledby="drawer-label">
     <h5 id="drawer-label" class="mb-4 inline-flex items-center text-lg font-semibold text-gray-900 dark:text-white">
-        Nuevo producto o servicio
+        Añadir producto o servicio
     </h5>
     <button type="button" data-target="#drawer-new-product" aria-controls="drawer-new-product"
         class="hide-drawer absolute end-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-900 dark:hover:text-white">
         <x-icon icon="x" class="h-5 w-5" />
-        <span class="sr-only">Close menu</span>
+        <span class="sr-only">Cerrar</span>
     </button>
     <div>
         <form action="{{ Route('business.dte.product.store-new') }}" method="POST">
@@ -49,12 +49,7 @@
                 @endif
             </div>
             <div class="mt-4 flex flex-col gap-4 sm:flex-row">
-                @if ($number !== '14')
-                    <div class="flex-1">
-                        <x-input type="number" icon="box" id="stock_inicial" placeholder="0" label="Stock inicial"
-                            name="stock_inicial" min="1" required />
-                    </div>
-                @endif
+                
                 <div class="flex-1">
                     <x-input type="number" label="Cantidad" placeholder="#" min="1" name="cantidad"
                         id="count_product" required />

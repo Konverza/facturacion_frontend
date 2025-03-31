@@ -31,6 +31,7 @@ class ProductRequest extends FormRequest
             'stock_inicial' => 'nullable|numeric',
             'tributos' => 'required|array',
             'stock_minimo' => 'nullable|numeric',
+            'has_stock' => 'nullable|boolean',
         ];
     }
 }

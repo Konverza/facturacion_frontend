@@ -24,6 +24,11 @@ class BusinessProduct extends Model
         'stockActual',
         'stockMinimo',
         'estado_stock',
+        'has_stock'
+    ];
+
+    protected $casts = [
+        'has_stock' => 'boolean'
     ];
 
     public function business()

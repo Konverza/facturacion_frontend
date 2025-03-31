@@ -51,15 +51,24 @@
                             name="precio" step="0.01" value="{{ old('precio', $product->precioUni) }}"
                             id="price-with-iva" />
                     </div>
+                </div>
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                    <x-input type="toggle" label="Guardar inventario para este producto"
+                        name="has_stock" id="has_stock" value="1" :checked="$product->has_stock" />
+                </div>
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row {{$product->has_stock ? "" : "hidden"}} " id="stocks">
                     <div class="flex-1">
-                        <x-input type="number" required label="Stock inicial" name="stock_inicial" placeholder="0"
-                            min="0" value="{{ $product->stockInicial }}" />
+                        <x-input type="number" :required="$product->has_stock" label="Stock inicial" name="stock_inicial" id="stock_inicial" placeholder="0"
+                            value="{{ old('stock_inicial', 0) }}" :disabled="!$product->has_stock"/>
                     </div>
                     <div class="flex-1">
-                        <x-input type="number" required label="Stock mínimo" name="stock_minimo" placeholder="0"
-                            value="{{ old('stock_minimo', $product->stockMinimo) }}" min="1" />
+                        <x-input type="number" :required="$product->has_stock" label="Stock mínimo" name="stock_minimo" id="stock_minimo" placeholder="0"
+                            value="{{ old('stock_minimo', 0) }}" :disabled="!$product->has_stock"/>
                     </div>
                 </div>
+                <h2 class="mt-2 flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300">
+                    Tributos
+                </h2>
                 <div class="mt-4 flex flex-col gap-2">
                     @foreach ($tributes as $tribute)
                         <x-input type="toggle" value="{{ $tribute->codigo }}" label="{{ $tribute->descripcion }}"
@@ -77,4 +86,29 @@
             </form>
         </div>
     </section>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $("#has_stock").on("change", function(){
+                    if ($(this).is(":checked")) {
+                        $("#stock_inicial").prop("disabled", false);
+                        $("#stock_minimo").prop("disabled", false);
+                        $("#stock_inicial").val(0);
+                        $("#stock_minimo").val(0);
+                        $("#stock_inicial").prop("min", 1)
+                        $("#stock_minimo").prop("min", 1)
+                        $("#stocks").removeClass("hidden");
+                    } else {
+                        $("#stock_inicial").prop("disabled", true);
+                        $("#stock_minimo").prop("disabled", true);
+                        $("#stock_inicial").val(0);
+                        $("#stock_minimo").val(0);
+                        $("#stock_inicial").prop("min", 0)
+                        $("#stock_minimo").prop("min", 0)
+                        $("#stocks").addClass("hidden");
+                    }
+                });
+            });
+        </script>
+    @endpush
 @endsection

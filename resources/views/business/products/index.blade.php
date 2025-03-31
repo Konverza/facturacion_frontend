@@ -24,9 +24,9 @@
                         <x-th>Código</x-th>
                         <x-th>Precios</x-th>
                         <x-th>Tributos</x-th>
-                        <x-th>Inicial</x-th>
-                        <x-th>Actual</x-th>
-                        <x-th>Mínimo</x-th>
+                        <x-th>Stock Inicial</x-th>
+                        <x-th>Stock Actual</x-th>
+                        <x-th>Stock Mínimo</x-th>
                         <x-th>Estado</x-th>
                         <x-th>Descripción</x-th>
                         <x-th :last="true">Accciones</x-th>
@@ -50,35 +50,50 @@
                                     @endforeach
                                 </ul>
                             </x-td>
-                            <x-td>
-                                {{ $product->stockInicial ?? 0 }}
-                            </x-td>
-                            <x-td>
-                                {{ $product->stockActual ?? 0 }}
-                            </x-td>
-                            <x-td>
-                                {{ $product->stockMinimo ?? 0 }}
-                            </x-td>
-                            <x-td>
-                                @if ($product->estado_stock === 'disponible')
-                                    <span
-                                        class="flex items-center gap-1 text-nowrap font-semibold text-green-500 dark:text-green-300">
-                                        <x-icon icon="check" class="h-4 w-4" />
-                                        Disponible
-                                    </span>
-                                @elseif($product->estado_stock === 'por_agotarse')
-                                    <span
-                                        class="flex items-center gap-1 text-nowrap font-semibold text-yellow-500 dark:text-yellow-300">
-                                        <x-icon icon="alert-circle" class="h-4 w-4" />
-                                        Por agotarse
-                                    </span>
-                                @else
-                                    <span class="flex items-center gap-1 font-semibold text-red-500 dark:text-red-300">
-                                        <x-icon icon="x" class="h-4 w-4" />
-                                        Agotado
-                                    </span>
-                                @endif
-                            </x-td>
+                            @if($product->has_stock)
+                                <x-td>
+                                    {{ $product->stockInicial ?? 0 }}
+                                </x-td>
+                                <x-td>
+                                    {{ $product->stockActual ?? 0 }}
+                                </x-td>
+                                <x-td>
+                                    {{ $product->stockMinimo ?? 0 }}
+                                </x-td>
+                                <x-td>
+                                    @if ($product->estado_stock === 'disponible')
+                                        <span
+                                            class="flex items-center gap-1 text-nowrap font-semibold text-green-500 dark:text-green-300">
+                                            <x-icon icon="check" class="h-4 w-4" />
+                                            Disponible
+                                        </span>
+                                    @elseif($product->estado_stock === 'por_agotarse')
+                                        <span
+                                            class="flex items-center gap-1 text-nowrap font-semibold text-yellow-500 dark:text-yellow-300">
+                                            <x-icon icon="alert-circle" class="h-4 w-4" />
+                                            Por agotarse
+                                        </span>
+                                    @else
+                                        <span class="flex items-center gap-1 font-semibold text-red-500 dark:text-red-300">
+                                            <x-icon icon="x" class="h-4 w-4" />
+                                            Agotado
+                                        </span>
+                                    @endif
+                                </x-td>
+                            @else
+                                <x-td>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">N/A</span>
+                                </x-td>
+                                <x-td>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">N/A</span>
+                                </x-td>
+                                <x-td>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">N/A</span>
+                                </x-td>
+                                <x-td>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">N/A</span>
+                                </x-td>
+                            @endif
                             <x-td>
                                 {{ $product->descripcion }}
                             </x-td>
@@ -98,6 +113,7 @@
                                                     Editar
                                                 </a>
                                             </li>
+                                            @if($product->has_stock)
                                             <li>
                                                 <button data-id="{{ $product->id }}" data-target="#modal-add-stock"
                                                     class="show-modal btn-add-stock flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
@@ -112,6 +128,7 @@
                                                     Disminuir stock
                                                 </button>
                                             </li>
+                                            @endif
                                             <li>
                                                 <form action="{{ Route('business.products.destroy', $product->id) }}"
                                                     method="POST" id="form-delete-product-{{ $product->id }}">

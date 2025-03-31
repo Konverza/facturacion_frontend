@@ -9,8 +9,10 @@ use App\Models\BusinessProduct;
 use App\Models\BusinessProductMovement;
 use App\Models\Tributes;
 use App\Services\OctopusService;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -78,17 +80,26 @@ class ProductController extends Controller
             $product->precioUni = $validated['precio'];
             $product->precioSinTributos = $validated['precio_sin_iva'];
             $product->tributos = json_encode($validated["tributos"]);
-            $product->stockInicial = $validated['stock_inicial'];
-            $product->stockActual = $validated['stock_inicial'];
-            $product->stockMinimo = $validated['stock_minimo'];
+            if(Arr::exists($validated, "has_stock")){
+                $product->stockInicial = $validated['stock_inicial'];
+                $product->stockActual = $validated['stock_inicial'];
+                $product->stockMinimo = $validated['stock_minimo'];
+                $product->has_stock = true;
+            } else {
+                $product->stockInicial = 0;
+                $product->stockActual = 0;
+                $product->stockMinimo = 0;
+                $product->has_stock = false;
+            }
             $product->save();
             DB::commit();
             return redirect()->route('business.products.index')
                 ->with('success', 'Producto guardado')
                 ->with("success_message", "El producto ha sido guardado correctamente");
         } catch (\Exception $e) {
+            Log::error('Error al guardar el producto: ' . $e->getMessage());
             DB::rollBack();
-            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al guardar el producto");
+            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al guardar el producto")->withInput();
         }
     }
 
@@ -140,11 +151,20 @@ class ProductController extends Controller
             $product->precioUni = $validated['precio'];
             $product->precioSinTributos = $validated['precio_sin_iva'];
             $product->tributos = json_encode($validated["tributos"]);
-            $product->stockInicial = $validated['stock_inicial'];
-            $product->stockMinimo = $validated['stock_minimo'];
 
-            if ($product->stockActual == 0) {
-                $product->stockActual = $validated['stock_inicial'];
+
+            if(Arr::exists($validated, "has_stock")){
+                $product->stockInicial = $validated['stock_inicial'];
+                if($product->stockActual == 0){
+                    $product->stockActual = $validated['stock_inicial'];
+                }
+                $product->stockMinimo = $validated['stock_minimo'];
+                $product->has_stock = true;
+            } else {
+                $product->stockInicial = 0;
+                $product->stockActual = 0;
+                $product->stockMinimo = 0;
+                $product->has_stock = false;
             }
 
             $product->save();
@@ -153,8 +173,9 @@ class ProductController extends Controller
                 ->with('success', 'Producto actualizado')
                 ->with("success_message", "El producto ha sido actualizado correctamente");
         } catch (\Exception $e) {
+            Log::error('Error al actualizar el producto: ' . $e->getMessage());
             DB::rollBack();
-            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al actualizar el producto");
+            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al actualizar el producto")->withInput();
         }
     }
 
