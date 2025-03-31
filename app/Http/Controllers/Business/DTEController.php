@@ -15,6 +15,7 @@ use App\Models\DTE;
 use App\Models\Tributes;
 use App\Services\OctopusService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -536,6 +537,7 @@ class DTEController extends Controller
             return $data;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
+            Log::error($e->getTraceAsString());
             $this->createDtePending($e->getMessage(), "error");
             return $data = [
                 "estado" => "RECHAZADO",
@@ -746,17 +748,16 @@ class DTEController extends Controller
     public function getProductData($product, $type)
     {
         if ($type !== "14") {
-            $tributos = json_decode($product["product"]["tributos"], true);
-            $tributos = array_filter($tributos, function ($value) {
-                return $value != "20";
-            });
+            $product_tributos = is_array($product["product"]) ? $product["product"]["tributos"] : $product["tributos"];
+            $tributos = json_decode($product_tributos, true);
+            $tributos = array_filter($tributos, fn($value) => $value != "20");
             $tributos = array_values($tributos);
         }
 
         if ($type === "11") {
             return [
                 "cantidad" => $product["cantidad"],
-                "codigo" => strval($product["product"]["id"]),
+                "codigo" => strval($product["product"]["codigo"]),
                 "uniMedida" => $product["unidad_medida"],
                 "descripcion" => $product["descripcion"],
                 "precioUni" => round($product["precio_sin_tributos"], 2),
@@ -778,14 +779,14 @@ class DTEController extends Controller
             ];
         } else {
             return [
-                "tipoItem" => $product["product"]["tipoItem"],
+                "tipoItem" => is_array($product["product"]) ? $product["product"]["tipoItem"] : $product["tipo_item"],
                 "numeroDocumento" => isset($product["documento_relacionado"]) && $product["documento_relacionado"] !== null ? $product["documento_relacionado"] : null,
                 "cantidad" => $product["cantidad"],
-                "codigo" => strval($product["product"]["id"]),
+                "codigo" => is_array($product["product"]) ? strval($product["product"]["id"]) : null,
                 "codTributo" => null,
                 "uniMedida" => $product["unidad_medida"],
                 "descripcion" => $product["descripcion"],
-                "precioUni" => round(in_array($type, ["03", "05", "06"]) ? $product["precio_sin_tributos"] : $product["precio"], 2),
+                "precioUni" => round(in_array($type, ["03", "04", "05", "06"]) ? $product["precio_sin_tributos"] : $product["precio"], 2),
                 "montoDescu" => round($product["descuento"], 2),
                 "ventaNoSuj" => round($product["ventas_no_sujetas"], 2),
                 "ventaExenta" => round($product["ventas_exentas"], 2),
@@ -1059,47 +1060,47 @@ class DTEController extends Controller
 
     public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida")
     {
-        $business_products = BusinessProduct::where("business_id", $business_id)->get();
         foreach ($productsDTE as $product) {
-            foreach ($business_products as $dbProduct) {
-                if (is_array($product)) {
+            $searchProduct = null;
+            if (is_array($product)) {
+                if (is_array($product["product"])) {
                     $searchProduct = BusinessProduct::find($product["product"]["id"]);
-                } else {
-                    $searchProduct = BusinessProduct::find($product->codigo);
                 }
+            } else {
+                $searchProduct = BusinessProduct::find($product->codigo);
+            }
 
-                if ($searchProduct) {
-                    if ($searchProduct->id === $dbProduct->id) {
-                        $stockAnterior = $dbProduct->stockActual;
-                        if ($tipo === "salida") {
-                            $dbProduct->stockActual -= is_array($product) ? $product["cantidad"] : $product->cantidad;
-                        } elseif ($tipo === "entrada") {
-                            $dbProduct->stockActual += is_array($product) ? $product["cantidad"] : $product->cantidad;
-                        }
-
-                        $stockActual = $dbProduct->stockActual;
-                        if ($stockActual <= $dbProduct->stockMinimo) {
-                            $dbProduct->estado_stock = "agotado";
-                        } elseif (($stockActual - $dbProduct->stockMinimo) <= 2) {
-                            $dbProduct->estado_stock = "por_agotarse";
-                        } else {
-                            $dbProduct->estado_stock = "disponible";
-                        }
-
-                        $diferencia = abs($stockAnterior - $stockActual);
-                        if ($diferencia >= 1) {
-                            BusinessProductMovement::create([
-                                "business_product_id" => $dbProduct->id,
-                                "numero_factura" => $codGeneracion,
-                                "tipo" => $tipo,
-                                "cantidad" => is_array($product) ? $product["cantidad"] : $product->cantidad,
-                                "precio_unitario" => $dbProduct->precioUni,
-                                "producto" => $dbProduct->descripcion,
-                                "descripcion" => $tipo === "salida" ? "Venta de producto" : "Anulación de documento",
-                            ]);
-                        }
-                        $dbProduct->save();
+            if ($searchProduct) {
+                if ($searchProduct->has_stock) {
+                    $stockAnterior = $searchProduct->stockActual;
+                    if ($tipo === "salida") {
+                        $searchProduct->stockActual -= is_array($product) ? $product["cantidad"] : $product->cantidad;
+                    } elseif ($tipo === "entrada") {
+                        $searchProduct->stockActual += is_array($product) ? $product["cantidad"] : $product->cantidad;
                     }
+
+                    $stockActual = $searchProduct->stockActual;
+                    if ($stockActual <= $searchProduct->stockMinimo) {
+                        $searchProduct->estado_stock = "agotado";
+                    } elseif (($stockActual - $searchProduct->stockMinimo) <= 2) {
+                        $searchProduct->estado_stock = "por_agotarse";
+                    } else {
+                        $searchProduct->estado_stock = "disponible";
+                    }
+
+                    $diferencia = abs($stockAnterior - $stockActual);
+                    if ($diferencia >= 1) {
+                        BusinessProductMovement::create([
+                            "business_product_id" => $searchProduct->id,
+                            "numero_factura" => $codGeneracion,
+                            "tipo" => $tipo,
+                            "cantidad" => is_array($product) ? $product["cantidad"] : $product->cantidad,
+                            "precio_unitario" => $searchProduct->precioUni,
+                            "producto" => $searchProduct->descripcion,
+                            "descripcion" => $tipo === "salida" ? "Venta de producto" : "Anulación de documento",
+                        ]);
+                    }
+                    $searchProduct->save();
                 }
             }
         }

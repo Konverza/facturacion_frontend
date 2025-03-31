@@ -1,22 +1,13 @@
 @extends('layouts.auth-template')
 @section('title', 'Dashboard')
 @section('content')
-    @php
-        $plan_dtes = json_decode($business_plan->dtes);
-        $dte_options = [];
-        foreach ($plan_dtes as $dte) {
-            $dte_options[$dte] = $types[$dte];
-        }
-    @endphp
-
     <section class="my-4 px-4 pb-4">
         <div class="flex flex-wrap justify-between gap-4">
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
                 Bienvenido, {{ Auth::user()->name }}
             </h1>
             <div class="mt-4 flex w-full flex-col items-center gap-2 sm:mt-0 sm:w-auto sm:flex-row">
-                <x-button type="button" typeButton="info" text="Generar DTE" icon="file-plus" class="w-full sm:w-auto"
-                    data-modal-target="generate-new-dte" data-modal-toggle="generate-new-dte" />
+                @include("layouts.partials.business.button-new-dte")
                 <x-button type="a" href="{{ Route('business.customers.create') }}" typeButton="secondary"
                     text="Nuevo cliente" icon="user-plus" class="w-full sm:w-auto" />
                 <x-button type="a" href="{{ Route('business.products.create') }}" typeButton="warning"
@@ -220,7 +211,8 @@
         @if ($dtes_pending->count() > 0)
             <div>
                 <h2 class="text-2xl font-bold text-gray-500 dark:text-gray-300">
-                    Tienes {{ $dtes_pending->count() }} DTE{{ $dtes_pending->count() > 1 ? '(s)' : '' }} pendiente de generar
+                    Tienes {{ $dtes_pending->count() }} DTE{{ $dtes_pending->count() > 1 ? '(s)' : '' }} pendiente de
+                    generar
                 </h2>
                 @foreach ($dtes_pending as $dte)
                     @php
@@ -265,7 +257,8 @@
                                     </p>
                                 @endif
                                 <p class="flex items-start gap-1 text-sm font-semibold text-gray-500 dark:text-gray-300">
-                                    <x-icon icon="info-circle" class="size-4 max-w-4 min-w-4 text-gray-500 dark:text-gray-300 mt-1" />
+                                    <x-icon icon="info-circle"
+                                        class="size-4 max-w-4 min-w-4 text-gray-500 dark:text-gray-300 mt-1" />
                                     {{ $dte->error_message ?? '' }}
                                 </p>
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-300">
@@ -290,41 +283,6 @@
                 @endforeach
             </div>
         @endif
-
-        <div id="generate-new-dte" tabindex="-1" aria-hidden="true"
-            class="fixed left-0 right-0 top-0 z-50 hidden h-full max-h-full w-full items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-200/50 dark:bg-gray-900/50 md:inset-0">
-            <div class="relative max-h-full w-full max-w-lg p-4">
-                <!-- Modal content -->
-                <div class="motion-preset-expand relative rounded-lg bg-white shadow motion-duration-300 dark:bg-gray-950">
-                    <form action="{{ Route('business.dte.create') }}" method="GET" class="flex flex-col">
-                        <!-- Modal header -->
-                        <div
-                            class="flex items-center justify-between rounded-t border-b border-gray-300 p-4 dark:border-gray-800">
-                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-                                Generar nuevo DTE
-                            </h3>
-                            <button type="button"
-                                class="ms-auto inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-900 dark:hover:text-white"
-                                data-modal-hide="generate-new-dte">
-                                <x-icon icon="x" class="h-5 w-5" />
-                            </button>
-                        </div>
-                        <!-- Modal body -->
-                        <div class="p-4">
-                            <x-select :options="$dte_options" name="document_type" id="document_type"
-                                label="¿Qué tipo de documento desea emitir?" :search="false" />
-                        </div>
-                        <!-- Modal footer -->
-                        <div
-                            class="flex items-center justify-end gap-4 rounded-b border-t border-gray-300 p-4 dark:border-gray-800">
-                            <x-button type="button" text="Cancelar" icon="x" typeButton="secondary"
-                                data-modal-hide="generate-new-dte" />
-                            <x-button type="submit" text="Generar" icon="file-arrow-right" typeButton="primary" />
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
 
         <x-delete-modal modalId="deleteModal" title="¿Estás seguro de eliminar el DTE?"
             message="No podrás recuperar este registro" />

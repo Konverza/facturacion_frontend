@@ -75,11 +75,13 @@ class DTEProductController extends Controller
                     $cantidadActual = (float) $product["cantidad"];
                     $cantidadNueva = (float) $request->cantidad;
 
-                    if ($cantidadActual + $cantidadNueva > $stock) {
-                        return response()->json([
-                            "success" => false,
-                            "message" => "No hay suficiente stock para el producto, ya se agregó la cantidad máxima."
-                        ]);
+                    if($business_product->has_stock){
+                        if ($cantidadActual + $cantidadNueva > $stock) {
+                            return response()->json([
+                                "success" => false,
+                                "message" => "No hay suficiente stock para el producto, ya se agregó la cantidad máxima."
+                            ]);
+                        }
                     }
 
                     $product["cantidad"] += $cantidadNueva;
@@ -127,7 +129,7 @@ class DTEProductController extends Controller
 
                 $this->dte["products"][] = [
                     "id" => rand(1, 1000),
-                    "product" => $business_product,
+                    "product" => $business_product->toArray(),
                     "product_id" => $business_product->id,
                     "unidad_medida" => $business_product->uniMedida,
                     "descripcion" => $business_product->descripcion,
@@ -181,8 +183,8 @@ class DTEProductController extends Controller
     public function store_new(Request $request)
     {
         try {
-            DB::beginTransaction();
-            if ($this->dte["type"] === "05" || $this->dte["type"] === "06") {
+            // DB::beginTransaction();
+            if (in_array($this->dte["type"], ["04", "05", "06"])) {
                 if ($request->documento_relacionado === "" || $request->documento_relacionado === null) {
                     return response()->json([
                         "success" => false,
@@ -191,96 +193,102 @@ class DTEProductController extends Controller
                 }
             }
 
-            if ($this->dte["type"] !== "14") {
-                $precio_unitario = floatval($request->precio_unitario);
-                $stock_inicial = floatval($request->stock_inicial);
+            // if ($this->dte["type"] !== "14") {
+            //     $precio_unitario = floatval($request->precio_unitario);
+            //     $stock_inicial = floatval($request->stock_inicial);
 
-                $business_product = BusinessProduct::create([
-                    "business_id" => session("business"),
-                    "tipoItem" => $request->tipo_item,
-                    "codigo" => $request->codigo ?? "---",
-                    "uniMedida" => $request->unidad_medida,
-                    "descripcion" => $request->descripcion ?? "Sin descripción",
-                    "precioUni" => $precio_unitario,
-                    "precioSinTributos" => $precio_unitario / 1.13,
-                    "tributos" => json_encode($request->tributos),
-                    "stockInicial" => $stock_inicial,
-                    "stockActual" => $stock_inicial,
-                ]);
+            //     $business_product = BusinessProduct::create([
+            //         "business_id" => session("business"),
+            //         "tipoItem" => $request->tipo_item,
+            //         "codigo" => $request->codigo ?? "---",
+            //         "uniMedida" => $request->unidad_medida,
+            //         "descripcion" => $request->descripcion ?? "Sin descripción",
+            //         "precioUni" => $precio_unitario,
+            //         "precioSinTributos" => $precio_unitario / 1.13,
+            //         "tributos" => json_encode($request->tributos),
+            //         "stockInicial" => $stock_inicial,
+            //         "stockActual" => $stock_inicial,
+            //     ]);
 
-                $product_tributes = json_decode($business_product->tributos, true) ?? [];
+            //     $product_tributes = json_decode($business_product->tributos, true) ?? [];
 
-                $total = floatval($request->total);
-                if ($this->dte["type"] === "03") {
-                    $total /= 1.13;
-                }
+            //     $total = floatval($request->total);
 
-                $iva = 0;
-                if ($request->tipo === "Gravada") {
-                    $iva = ($this->dte["type"] === "03")
-                        ? round($total * 0.13, 2)
-                        : round(($total / 1.13) * 0.13, 2);
-                }
+            //     $iva = 0;
+            //     if ($request->tipo === "Gravada") {
+            //         $iva = ($this->dte["type"] === "03")
+            //             ? round($total * 0.13, 2)
+            //             : round(($total / 1.13) * 0.13, 2);
+            //     }
 
-                $cantidad = floatval($request->cantidad);
+            //     $cantidad = floatval($request->cantidad);
 
-                $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
+            //     $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
 
-                $this->dte["products"][] = [
-                    "id" => rand(1, 1000),
-                    "product" => $business_product,
-                    "product_id" => $business_product->id,
-                    "unidad_medida" => $business_product->uniMedida,
-                    "descripcion" => $business_product->descripcion,
-                    "cantidad" => $cantidad,
-                    "tipo" => $request->tipo,
-                    "precio" => $precio_unitario,
-                    "precio_sin_tributos" => $business_product->precioSinTributos,
-                    "descuento" => floatval($request->descuento ?? 0),
-                    "ventas_gravadas" => $request->tipo === "Gravada" ? $total : 0,
-                    "ventas_exentas" => $request->tipo === "Exenta" ? $total : 0,
-                    "ventas_no_sujetas" => $request->tipo === "No sujeta" ? $total : 0,
-                    "total" => $total,
-                    "turismo_por_alojamiento" => in_array("59", $product_tributes) ? "active" : "inactive",
-                    "turismo_salida_pais_via_aerea" => in_array("71", $product_tributes) ? "active" : "inactive",
-                    "fovial" => in_array("D1", $product_tributes) ? "active" : "inactive",
-                    "contrans" => in_array("C8", $product_tributes) ? "active" : "inactive",
-                    "bebidas_alcoholicas" => in_array("C5", $product_tributes) ? "active" : "inactive",
-                    "tabaco_cigarillos" => in_array("C6", $product_tributes) ? "active" : "inactive",
-                    "tabaco_cigarros" => in_array("C7", $product_tributes) ? "active" : "inactive",
-                    "iva" => $iva,
-                    "documento_relacionado" => $request->documento_relacionado ?? null
-                ];
-            } else {
-                $this->dte["products"][] = [
-                    "id" => rand(1, 1000),
-                    "product" => null,
-                    "product_id" => null,
-                    "unidad_medida" => $request->unidad_medida,
-                    "descripcion" => $request->descripcion,
-                    "cantidad" => $request->cantidad,
-                    "tipo" => $request->tipo,
-                    "precio" => $request->precio_unitario,
-                    "precio_sin_tributos" => $request->precio,
-                    "descuento" => floatval($request->descuento ?? 0),
-                    "ventas_gravadas" =>  $request->tipo === "Gravada" ? $request->total : 0,
-                    "ventas_exentas" =>  0,
-                    "ventas_no_sujetas" => 0,
-                    "total" => $request->total,
-                    "turismo_por_alojamiento" => 0,
-                    "turismo_salida_pais_via_aerea" =>  0,
-                    "fovial" =>  0,
-                    "contrans" =>  0,
-                    "bebidas_alcoholicas" => 0,
-                    "tabaco_cigarillos" =>  0,
-                    "tabaco_cigarros" =>  0,
-                    "iva" => 0,
-                    "tipo_item" => $request->tipo_item,
-                    "documento_relacionado" => null
-                ];
+            //     $this->dte["products"][] = [
+            //         "id" => rand(1, 1000),
+            //         "product" => $business_product,
+            //         "product_id" => $business_product->id,
+            //         "unidad_medida" => $business_product->uniMedida,
+            //         "descripcion" => $business_product->descripcion,
+            //         "cantidad" => $cantidad,
+            //         "tipo" => $request->tipo,
+            //         "precio" => $precio_unitario,
+            //         "precio_sin_tributos" => $business_product->precioSinTributos,
+            //         "descuento" => floatval($request->descuento ?? 0),
+            //         "ventas_gravadas" => $request->tipo === "Gravada" ? $total : 0,
+            //         "ventas_exentas" => $request->tipo === "Exenta" ? $total : 0,
+            //         "ventas_no_sujetas" => $request->tipo === "No sujeta" ? $total : 0,
+            //         "total" => $total,
+            //         "turismo_por_alojamiento" => in_array("59", $product_tributes) ? "active" : "inactive",
+            //         "turismo_salida_pais_via_aerea" => in_array("71", $product_tributes) ? "active" : "inactive",
+            //         "fovial" => in_array("D1", $product_tributes) ? "active" : "inactive",
+            //         "contrans" => in_array("C8", $product_tributes) ? "active" : "inactive",
+            //         "bebidas_alcoholicas" => in_array("C5", $product_tributes) ? "active" : "inactive",
+            //         "tabaco_cigarillos" => in_array("C6", $product_tributes) ? "active" : "inactive",
+            //         "tabaco_cigarros" => in_array("C7", $product_tributes) ? "active" : "inactive",
+            //         "iva" => $iva,
+            //         "documento_relacionado" => $request->documento_relacionado ?? null
+            //     ];
+            // } else {
+            $product_tributes = $request->tributos ?? [];
+            $total = floatval($request->total);
+            $iva = 0;
+            if ($request->tipo === "Gravada") {
+                $iva = ($this->dte["type"] === "03")
+                    ? round($total * 0.13, 2)
+                    : round(($total / 1.13) * 0.13, 2);
             }
 
-            DB::commit();
+            $this->dte["products"][] = [
+                "id" => rand(1, 1000),
+                "product" => null,
+                "product_id" => null,
+                "unidad_medida" => $request->unidad_medida,
+                "descripcion" => $request->descripcion,
+                "cantidad" => $request->cantidad,
+                "tipo" => $request->tipo,
+                "precio" => $request->precio_unitario,
+                "precio_sin_tributos" => $request->precio_unitario,
+                "descuento" => floatval($request->descuento ?? 0),
+                "ventas_gravadas" => $request->tipo === "Gravada" ? $total : 0,
+                "ventas_exentas" => $request->tipo === "Exenta" ? $total : 0,
+                "ventas_no_sujetas" => $request->tipo === "No sujeta" ? $total : 0,
+                "total" => $total,
+                "turismo_por_alojamiento" => in_array("59", $product_tributes) ? "active" : "inactive",
+                "turismo_salida_pais_via_aerea" => in_array("71", $product_tributes) ? "active" : "inactive",
+                "fovial" => in_array("D1", $product_tributes) ? "active" : "inactive",
+                "contrans" => in_array("C8", $product_tributes) ? "active" : "inactive",
+                "bebidas_alcoholicas" => in_array("C5", $product_tributes) ? "active" : "inactive",
+                "tabaco_cigarillos" => in_array("C6", $product_tributes) ? "active" : "inactive",
+                "tabaco_cigarros" => in_array("C7", $product_tributes) ? "active" : "inactive",
+                "tipo_item" => $request->tipo_item,
+                "iva" => $iva,
+                "documento_relacionado" => $request->documento_relacionado ?? null,
+                "tributos" => json_encode($product_tributes)
+            ];
+            // }
+            $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
             session(["dte" => $this->dte]);
             $this->totals();
 
@@ -907,15 +915,15 @@ class DTEProductController extends Controller
 
     public function total_retenciones()
     {
-        //Total del IVA CCF
-        $this->dte["total_ventas_gravadas_descuento"] = round($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"], 2);
-        $this->dte["iva"] = round($this->dte["total_ventas_gravadas_descuento"]  * 0.13, 2);
+        // //Total del IVA CCF
+        // $this->dte["total_ventas_gravadas_descuento"] = round($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"], 2);
+        // $this->dte["iva"] = round($this->dte["total_ventas_gravadas_descuento"]  * 0.13, 2);
 
-        if ($this->dte["type"] === "03" && $this->dte["total_ventas_gravadas"] > 0) {
-            $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"] + $this->dte["iva"], 2);
-        } else {
-            $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"], 2);
-        }
+        // if ($this->dte["type"] === "03" && $this->dte["total_ventas_gravadas"] > 0) {
+        //     $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"] + $this->dte["iva"], 2);
+        // } else {
+        $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"], 2);
+        // }
 
         if ($this->dte["type"] === "01") {
             $this->dte["total_iva_retenido"] = round(((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0)) * 0.01, 2);

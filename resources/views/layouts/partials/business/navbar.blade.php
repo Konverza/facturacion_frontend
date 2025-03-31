@@ -214,6 +214,9 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </li>
+            <li>
+                @include("layouts.partials.business.button-new-dte")
+            </li>
             {{--   <li>
                 <a href="{{ Route('admin.configuration.index') }}" data-tooltip-target="tooltip-configuration"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
@@ -232,6 +235,7 @@
 </aside>
 
 @if (Auth::check() && auth()->user()->hasRole('business'))
+    @include("layouts.partials.business.modal-new-dte")
     <div id="select-business" tabindex="-1" aria-hidden="true"
         class="fixed left-0 right-0 top-0 z-50 hidden h-full max-h-full w-full items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-200/50 dark:bg-gray-900/50 md:inset-0">
         <div class="relative max-h-full w-full max-w-lg p-4">

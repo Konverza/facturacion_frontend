@@ -54,7 +54,11 @@
                                         {{ $product->descripcion }}
                                     </x-td>
                                     <x-td>
-                                        {{ $product->stockActual }}
+                                        @if($product->has_stock)
+                                            {{ $product->stockActual }}
+                                        @else
+                                            N/A
+                                        @endif
                                     </x-td>
                                     <x-td :last="true">
                                         <form method="POST" action="{{ Route('business.dte.product.select') }}">

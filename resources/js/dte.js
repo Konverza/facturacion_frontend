@@ -211,7 +211,11 @@ $(document).ready(function () {
 
                 $("#product_id").val(data.product.id);
                 $("#product_description").val(data.product.descripcion);
-                $("#count").prop("max", data.product.stockActual);
+                if(data.product.has_stock){
+                    $("#count").prop("max", data.product.stockActual);
+                } else {
+                    $("#count").removeAttr("max");
+                }
 
                 const productPrice =
                     data.dte != "01"
