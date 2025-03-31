@@ -11,5 +11,8 @@ class BusinessPlan extends Model
 
     protected $table = 'business_plan';
 
-    
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class, 'plan_id', 'id');
+    }
 }

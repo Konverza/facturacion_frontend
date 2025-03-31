@@ -39,21 +39,28 @@ class DashboardController extends Controller
             $business_id = Session::get('business') ?? null;
             $user = User::with('businesses.business')->find(auth()->user()->id);
             $business_user = BusinessUser::where("user_id", $user->id)->first();
-            $business = Business::find($business_id ?? $business_user->business_id);
-            $business_plan = BusinessPlan::find($business_id ?? $business_user->business_id);
+            $business = Business::find($business_id);
+            $business_plan = BusinessPlan::where("nit", $business->nit)->with('plan')->first();
             $dtes_pending = DTE::where('business_id', $business->id)->get();
 
             if (!$business) {
                 return back()->with('error', 'No se encontró la empresa asociada.');
             }
 
+            $inicio_mes = date('Y-m-01');
+            $fin_mes = date('Y-m-t');
+            $params = [
+                'nit' => $business->nit,
+                'fechaInicio' => "{$inicio_mes}T00:00:00",
+                'fechaFin' => "{$fin_mes}T23:59:59"
+            ];
             //Solicitudes a la API
-            $statistics = Http::timeout(30)->get($this->octopus_url . '/dtes/statistics/?nit=' . $business->nit)
+            $statistics = Http::timeout(30)->get($this->octopus_url . '/dtes/statistics/?' . http_build_query($params))
                 ->json();
             $datos_empresa = Http::timeout(30)->get($this->octopus_url . '/datos_empresa/nit/' . $business->nit)
                 ->json();
             $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit)->json();
- 
+
             // Datos locales
             $products = BusinessProduct::where('business_id', $business->id)->count('id');
             $customers = BusinessCustomer::where('business_id', $business->id)->count('id');
@@ -67,7 +74,9 @@ class DashboardController extends Controller
                 'customers',
                 'business_plan',
                 'types',
-                'dtes_pending'
+                'dtes_pending',
+                'inicio_mes',
+                'fin_mes'
             ));
         } catch (\Exception $e) {
             return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al cargar los datos. Contacte al administrador.");

@@ -24,10 +24,13 @@
                         </span>
                         <div class="flex flex-col items-center justify-center gap-1 sm:items-start">
                             <p class="text-2xl font-bold text-blue-500">
-                                {{ $statistics['total'] }} de N/A
+                                {{ $statistics['approved'] }} de {{ $business_plan->plan->limite }}
                             </p>
                             <h1 class="text-sm text-gray-500 dark:text-gray-300">
                                 Documentos emitidos
+                            </h1>
+                            <h1 class="text-sm text-gray-500 dark:text-gray-300">
+                                ({{ \Carbon\Carbon::parse($inicio_mes)->format("d/m/Y") }} - {{ \Carbon\Carbon::parse($fin_mes)->format("d/m/Y") }})
                             </h1>
                             <x-button type="a" href="{{ Route('business.documents.index') }}" typeButton="info"
                                 text="Ver documentos" size="normal" />
