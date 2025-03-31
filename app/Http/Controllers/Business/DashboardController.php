@@ -59,7 +59,7 @@ class DashboardController extends Controller
                 ->json();
             $datos_empresa = Http::timeout(30)->get($this->octopus_url . '/datos_empresa/nit/' . $business->nit)
                 ->json();
-            $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit)->json();
+            $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit."&limit=5")->json();
 
             // Datos locales
             $products = BusinessProduct::where('business_id', $business->id)->count('id');

@@ -60,6 +60,10 @@
                     @php
                         if(in_array($number, ["03", "04", "05", "06"])){
                             $label_precio = "Precio (sin IVA)";
+                        } elseif ($number == "14"){
+                            $label_precio = "Precio (sin Retención de Renta)";
+                        } elseif ($number == "11"){
+                            $label_precio = "Precio";
                         } else {
                             $label_precio = "Precio (con IVA)";
                         }

@@ -114,7 +114,7 @@
                         </x-slot>
                         <x-slot name="tbody">
                             {{-- Grab first 5 $dte --}}
-                            @foreach (array_reverse(array_slice($dtes, -5)) as $item)
+                            @foreach ($dtes as $item)
                                 <x-tr :last="$loop->last">
                                     <x-td>
                                         {{ $loop->iteration }}
