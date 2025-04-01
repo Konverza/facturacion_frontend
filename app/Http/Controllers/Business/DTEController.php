@@ -1234,14 +1234,8 @@ class DTEController extends Controller
                 $dte_collection = collect();
                 foreach ($dtes as $dte) {
                     if ($dte["estado"] === "PROCESADO" && in_array($dte["tipo_dte"], ["01", "11"])) {
-                        $fecha_dte = \Carbon\Carbon::parse($dte["fhProcesamiento"])->toDateString(); // Solo la fecha
-                        $desde = \Carbon\Carbon::parse($request->fecha_inicio)->startOfDay();
-                        $hasta = \Carbon\Carbon::parse($request->fecha_fin)->endOfDay();
-
-                        if (\Carbon\Carbon::parse($dte["fhProcesamiento"])->between($desde, $hasta)) {
-                            $dte["documento"] = json_decode($dte["documento"]);
-                            $dte_collection->push($dte);
-                        }
+                        $dte["documento"] = json_decode($dte["documento"]);
+                        $dte_collection->push($dte);
                     }
                 }
 
