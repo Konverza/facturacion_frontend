@@ -191,6 +191,14 @@ class BusinessController extends Controller
 
     public function edit(string $id)
     {
+        $empresa = Business::find($id);
+        if (!$empresa) {
+            return redirect()->route('admin.business.index')
+                ->with('error', 'No se encontró la empresa');
+        }
+        $empresa_api = Http::get($this->octopus_url . "/datos_empresa/nit/" . $empresa->nit);
+        $empresa_api = $empresa_api->json();
+        $business_plan = BusinessPlan::where('nit', $empresa["nit"])->first();
         $tipo_establecimiento = $this->octopus_service->getCatalog("CAT-009");
         $departamentos = $this->octopus_service->getCatalog("CAT-012");
         $actividades_economicas = $this->octopus_service->getCatalog("CAT-019", null, true, true);
@@ -200,7 +208,10 @@ class BusinessController extends Controller
             'departamentos' => $departamentos,
             'tipo_establecimiento' => $tipo_establecimiento,
             'plans' => $plans,
-            'actividades_economicas' => $actividades_economicas
+            'actividades_economicas' => $actividades_economicas,
+            'empresa' => $empresa_api,
+            'business_plan' => $business_plan,
+            'business' => $empresa
         ]);
     }
 }

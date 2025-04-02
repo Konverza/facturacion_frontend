@@ -29,62 +29,62 @@
                             </span>
                             <div class="mt-2 flex flex-col gap-4">
                                 <x-input type="text" label="NIT" placeholder="Ingresa el NIT del negocio"
-                                    name="nit" id="nit" value="{{ old('nit') }}" />
+                                    name="nit" id="nit" value="{{ old('nit', $empresa['nit']) }}" />
                                 <x-input type="text" label="NRC" placeholder="Ingresa el NRC del negocio"
-                                    name="nrc" id="nrc" value="{{ old('nrc') }}" />
+                                    name="nrc" id="nrc" value="{{ old('nrc', $empresa['nrc']) }}" />
                                 <x-input type="text" label="Razón social" name="razon_social" id="razon-social"
-                                    value="{{ old('razon_social') }}" />
+                                    value="{{ old('razon_social', $empresa['nombre']) }}" />
                                 <x-input type="text" label="Nombre comercial" name="nombre_comercial"
-                                    value="{{ old('nombre_comercial') }}" />
+                                    value="{{ old('nombre_comercial', $empresa['nombreComercial']) }}" />
                                 <x-select id="actividad_economica" :options="$actividades_economicas" label="Actividad económica"
-                                    name="actividad_economica" value="{{ old('actividad_economica') }}" />
+                                    name="actividad_economica" value="{{ old('actividad_economica', $empresa['codActividad']) }}" />
                                 <x-select name="tipo_establecimiento" id="tipo_establecimiento"
-                                    value="{{ old('tipo_establecimiento') }}" label="Tipo de establecimiento"
+                                    value="{{ old('tipo_establecimiento', $empresa['tipoEstablecimiento']) }}" label="Tipo de establecimiento"
                                     :options="$tipo_establecimiento" />
                                 <div class="flex flex-col gap-4">
                                     <div class="flex-1">
                                         <x-input type="text" label="Código establecimiento" placeholder="0001"
-                                            name="codigo_establecimiento" value="{{ old('codigo_establecimiento') }}" />
+                                            name="codigo_establecimiento" value="{{ old('codigo_establecimiento', $empresa['codEstable']) }}" />
                                     </div>
                                     <div class="flex-1">
                                         <x-input type="text" label="Código establecimiento (Ministerio de Hacienda)"
                                             name="codigo_establecimiento_mh"
-                                            value="{{ old('codigo_establecimiento_mh') }}" />
+                                            value="{{ old('codigo_establecimiento_mh', $empresa['codEstableMH']) }}" />
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-4">
                                     <div class="flex-1">
                                         <x-input type="text" label="Código punto de venta" name="codigo_punto_venta"
-                                            placeholder="01" value="01" value="{{ old('codigo_punto_venta') }}" />
+                                            placeholder="01" value="01" value="{{ old('codigo_punto_venta', $empresa['codPuntoVenta']) }}" />
                                     </div>
                                     <div class="flex-1">
                                         <x-input type="text" label="Código punto de venta (Ministerio de Hacienda)"
-                                            name="codigo_punto_venta_mh" value="{{ old('codigo_punto_venta_mh') }}" />
+                                            name="codigo_punto_venta_mh" value="{{ old('codigo_punto_venta_mh', $empresa['codPuntoVentaMH']) }}" />
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-4 sm:flex-row">
                                     <div class="flex-1">
                                         <x-select name="department" label="Departamento" id="departamento"
                                             name="departamento" required :options="$departamentos"
-                                            value="{{ old('departamento') }}" selected="{{ old('departamento') }}"
+                                            value="{{ old('departamento') }}" selected="{{ old('departamento', $empresa['departamento']) }}"
                                             data-action="{{ Route('admin.get-municipios') }}" />
                                     </div>
                                     <div class="flex-1" id="select-municipio">
                                         <x-select name="municipio" label="Municipio" id="municipality" required
                                             :options="[
                                                 'Selecciona un departamento' => 'Seleccione un departamento',
-                                            ]" />
+                                            ]" selected="{{old('municipio', $empresa['municipio'])}}" />
                                     </div>
                                 </div>
-                                <x-input type="text" label="Dirección" name="complemento" />
+                                <x-input type="text" label="Dirección" name="complemento" value="{{old('complemento', $empresa['complemento'])}}"/>
                                 <div class="flex flex-col gap-4 sm:flex-row">
                                     <div class="flex-[2]">
                                         <x-input type="email" label="Correo electrónico" icon="email" name="correo"
-                                            placeholder="example@exam.com" value="{{ old('correo') }}" />
+                                            placeholder="example@exam.com" value="{{ old('correo', $empresa['correo']) }}" />
                                     </div>
                                     <div class="flex-1">
                                         <x-input type="text" placeholder="XXXX - XXXX" label="Teléfono"
-                                            icon="phone" name="telefono" value="{{ old('telefono') }}" />
+                                            icon="phone" name="telefono" value="{{ old('telefono', $empresa['telefono']) }}" />
                                     </div>
                                 </div>
                                 <!-- Input logo empresa -->
@@ -102,27 +102,30 @@
                             </span>
                             <div class="mt-2 flex flex-col gap-4">
                                 <x-select label="Plan contratado" name="plan_id" id="plan" :options="$plans->pluck('nombre', 'id')->toArray()"
-                                    value="{{ old('plan_id') }}" selected="{{ old('plan_id') }}" />
+                                    value="{{ old('plan_id') }}" selected="{{ old('plan_id', $business->plan_id) }}" />
                                 <div>
                                     <span
                                         class="mb-1 block text-sm font-medium text-gray-500 after:ml-0.5 dark:text-gray-300">
                                         DTEs habilitados:
                                     </span>
+                                    @php
+                                        $dtes_habilitados = json_decode($business_plan->dtes, true);
+                                    @endphp
                                     <div class="mt-4 flex flex-col gap-2">
                                         <x-input type="toggle" name="dtes[]" label="Facturación electrónica"
-                                            value="01" id="01" />
+                                            value="01" id="01" :checked="in_array('01', $dtes_habilitados)" />
                                         <x-input type="toggle" name="dtes[]" label="Comprobante de crédito fiscal"
-                                            value="03" id="03" />
+                                            value="03" id="03" :checked="in_array('03', $dtes_habilitados)"/>
                                         <x-input type="toggle" id="05" name="dtes[]" label="Nota de crédito"
-                                            value="05" />
+                                            value="05" :checked="in_array('05', $dtes_habilitados)"/>
                                         <x-input type="toggle" id="06" name="dtes[]" label="Nota de débito"
-                                            value="06" />
+                                            value="06" :checked="in_array('06', $dtes_habilitados)"/>
                                         <x-input type="toggle" id="07" name="dtes[]"
-                                            label="Comprobante de retención" value="07" />
+                                            label="Comprobante de retención" value="07" :checked="in_array('07', $dtes_habilitados)"/>
                                         <x-input type="toggle" id="11" name="dtes[]"
-                                            label="Factura de exportación" value="11" />
+                                            label="Factura de exportación" value="11" :checked="in_array('11', $dtes_habilitados)"/>
                                         <x-input type="toggle" id="14" name="dtes[]"
-                                            label="Factura de sujeto excluido" value="14" />
+                                            label="Factura de sujeto excluido" value="14" :checked="in_array('14', $dtes_habilitados)"/>
                                     </div>
                                 </div>
                             </div>
@@ -137,18 +140,18 @@
                                 <div class="flex flex-col gap-4 sm:flex-row">
                                     <div class="flex-1">
                                         <x-input type="text" placeholder="DUI" label="Documento de identidad"
-                                            name="dui" id="dui" value="{{ old('dui') }}" required />
+                                            name="dui" id="dui" value="{{ old('dui', $business->dui) }}" required />
                                     </div>
                                     <div class="flex-1">
                                         <x-input type="text" label="Teléfono" icon="phone"
-                                            value="{{ old('telefono_responsable') }}" name="telefono_responsable"
+                                            value="{{ old('telefono_responsable', $business->telefono) }}" name="telefono_responsable"
                                             id="telefono_responsable" required placeholder="XXXX - XXXX" />
                                     </div>
                                 </div>
                                 <x-input type="text" label="Nombre según documento"
-                                    value="{{ old('nombre_responsable') }}" name="nombre_responsable" required />
+                                    value="{{ old('nombre_responsable', $business['nombre_responsable']) }}" name="nombre_responsable" required />
                                 <x-input type="text" label="Correo electrónico" icon="email"
-                                    value="{{ old('correo_responsable') }}" name="correo_responsable"
+                                    value="{{ old('correo_responsable', $business['correo_responsable']) }}" name="correo_responsable"
                                     id="correo_responsable" placeholder="example@exam.com" required />
                             </div>
                         </div>
