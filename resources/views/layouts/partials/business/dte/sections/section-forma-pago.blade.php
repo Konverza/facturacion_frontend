@@ -18,7 +18,7 @@
                 placeholder="Ingresa el número del documento" value="0" />
         </div>
         <div class="hidden flex-1" id="input-plazo">
-            <x-select label="Plazo" id="plazo" name="plazo" :options="['Días' => 'Días', 'Meses' => 'Meses', 'Años' => 'Años']" :search="false" />
+            <x-select label="Plazo" id="plazo" name="plazo" :options="['01' => 'Días', '02' => 'Meses', '03' => 'Años']" :search="false" />
         </div>
         <div class="hidden flex-1" id="input-periodo">
             <x-input type="number" label="Período" name="periodo" id="periodo" placeholder="0" />
