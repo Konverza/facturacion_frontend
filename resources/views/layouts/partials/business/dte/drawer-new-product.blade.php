@@ -69,17 +69,17 @@
                         }
                     @endphp
                     <x-input type="number" icon="currency-dollar" id="price" placeholder="0.00" :label="$label_precio"
-                        name="precio_unitario" step="0.01" min="0.01" required />
+                        name="precio_unitario" step="0.00000001" min="0.00000001" required />
                 </div>
             </div>
             <div class="mt-4 flex gap-4">
                 <div class="flex-1">
                     <x-input type="number" name="descuento" id="descuento_product" label="Descuento"
-                        icon="currency-dollar" placeholder=0.00 step=0.01 min=0.01 />
+                        icon="currency-dollar" placeholder=0.00 step=0.00000001 min=0.00000001 />
                 </div>
                 <div class="flex-1">
                     <x-input type="number" name="total" id="total_product" placeholder="0.00" label="Total"
-                        icon="currency-dollar" step="0.01" min="0.01" required />
+                        icon="currency-dollar" step="0.00000001" min="0.00000001" required />
                 </div>
             </div>
             @if ($number !== '11' || $number !== '14')

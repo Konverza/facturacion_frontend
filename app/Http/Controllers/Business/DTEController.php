@@ -760,9 +760,9 @@ class DTEController extends Controller
                 "codigo" => strval($product["product"]["codigo"]),
                 "uniMedida" => $product["unidad_medida"],
                 "descripcion" => $product["descripcion"],
-                "precioUni" => round($product["precio_sin_tributos"], 2),
-                "montoDescu" => round($product["descuento"], 2),
-                "ventaGravada" => round($product["ventas_gravadas"], 2),
+                "precioUni" => round($product["precio_sin_tributos"], 8),
+                "montoDescu" => round($product["descuento"], 8),
+                "ventaGravada" => round($product["ventas_gravadas"], 8),
                 "tributos" => count($tributos) > 0 ? $tributos : null,
                 "noGravado" => 0,
             ];
@@ -773,9 +773,9 @@ class DTEController extends Controller
                 "codigo" => null,
                 "uniMedida" => $product["unidad_medida"],
                 "descripcion" => $product["descripcion"],
-                "precioUni" => round($product["precio"], 2),
-                "montoDescu" => round($product["descuento"], 2),
-                "compra" => round($product["ventas_gravadas"], 2),
+                "precioUni" => round($product["precio"], 8),
+                "montoDescu" => round($product["descuento"], 8),
+                "compra" => round($product["ventas_gravadas"], 8),
             ];
         } else {
             return [
@@ -786,14 +786,14 @@ class DTEController extends Controller
                 "codTributo" => null,
                 "uniMedida" => $product["unidad_medida"],
                 "descripcion" => $product["descripcion"],
-                "precioUni" => round(in_array($type, ["03", "04", "05", "06"]) ? $product["precio_sin_tributos"] : $product["precio"], 2),
-                "montoDescu" => round($product["descuento"], 2),
-                "ventaNoSuj" => round($product["ventas_no_sujetas"], 2),
-                "ventaExenta" => round($product["ventas_exentas"], 2),
-                "ventaGravada" => round($product["ventas_gravadas"], 2),
+                "precioUni" => round(in_array($type, ["03", "04", "05", "06"]) ? $product["precio_sin_tributos"] : $product["precio"], 8),
+                "montoDescu" => round($product["descuento"], 8),
+                "ventaNoSuj" => round($product["ventas_no_sujetas"], 8),
+                "ventaExenta" => round($product["ventas_exentas"], 8),
+                "ventaGravada" => round($product["ventas_gravadas"], 8),
                 "tributos" => count($tributos) > 0 ? $tributos : null,
-                "psv" => round((float) $product["precio"], 2),
-                "ivaItem" => round($product["iva"], 2),
+                "psv" => round((float) $product["precio"], 8),
+                "ivaItem" => round($product["iva"], 8),
                 "noGravado" => 0,
             ];
         }

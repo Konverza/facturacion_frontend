@@ -29,15 +29,15 @@
                         <x-td>{{ $product['cantidad'] }}</x-td>
                         <x-td>
                             @if ($dte['type'] !== '01')
-                                ${{ number_format($product['precio_sin_tributos'], 2) }}
+                                ${{ number_format($product['precio_sin_tributos'], 8) }}
                             @else
-                                ${{ number_format($product['precio'], 2) }}
+                                ${{ number_format($product['precio'], 8) }}
                             @endif
                         </x-td>
-                        <x-td>${{ number_format($product['descuento'], 2) }}</x-td>
-                        <x-td>${{ number_format($product['ventas_gravadas'], 2) }}</x-td>
-                        <x-td>${{ number_format($product['ventas_exentas'], 2) }}</x-td>
-                        <x-td>${{ number_format($product['ventas_no_sujetas'], 2) }}</x-td>
+                        <x-td>${{ number_format($product['descuento'], 8) }}</x-td>
+                        <x-td>${{ number_format($product['ventas_gravadas'], 8) }}</x-td>
+                        <x-td>${{ number_format($product['ventas_exentas'], 8) }}</x-td>
+                        <x-td>${{ number_format($product['ventas_no_sujetas'], 8) }}</x-td>
                         <x-td :last="true">
                             <x-button type="button" icon="trash" size="small"
                                 data-action="{{ Route('business.dte.product.delete', $product['id']) }}"
