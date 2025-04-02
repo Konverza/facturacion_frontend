@@ -87,7 +87,7 @@
                                             <div class="mt-2 flex items-center gap-2 text-xs text-gray-500">
                                                 <x-icon icon="alert-circle" class="h-3 w-3 min-w-3 max-w-3" />
                                                 <span class="line-clamp-1 text-ellipsis text-gray-500">
-                                                    {{$municipio_anterior ?? $municipio_anterior->valores}}
+                                                    {{$municipio_anterior ? $municipio_anterior->valores : ""}}
                                                 </span>
                                             </div>
                                         {{-- <x-select name="municipio" label="Municipio" id="municipio"
