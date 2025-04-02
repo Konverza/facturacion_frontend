@@ -20,7 +20,7 @@
                             <h1 class="text-gray-500 dark:text-gray-300">
                                 Clientes activos
                             </h1>
-                            <x-button type="submit" typeButton="success" text="Ver clientes" size="normal" />
+                            <x-button type="a" href="{{ Route('admin.business.index') }}" typeButton="success" text="Ver clientes" size="normal" />
                         </div>
                     </div>
                     <div
