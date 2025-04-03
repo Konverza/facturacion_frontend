@@ -369,7 +369,6 @@ class DTEController extends Controller
                 return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
             }
         }
-
         $data = $this->processDTE($request, "11", "/factura_exportacion/");
         $this->handleResponse($data, $request);
     }
@@ -466,6 +465,7 @@ class DTEController extends Controller
         if ($type === "07") {
             $dte["cuerpoDocumento"] = $this->getCuerpoDocumentoComprobanteRetencion();
         } else {
+            dd($this->dte);
             if (isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
                 foreach ($this->dte["products"] as $product) {
                     $dte["cuerpoDocumento"][] = $this->getProductData($product, $type);
@@ -757,7 +757,7 @@ class DTEController extends Controller
         if ($type === "11") {
             return [
                 "cantidad" => $product["cantidad"],
-                "codigo" => strval($product["product"]["codigo"]),
+                "codigo" => is_array($product["product"]) ? strval($product["product"]["codigo"]) : null,
                 "uniMedida" => $product["unidad_medida"],
                 "descripcion" => $product["descripcion"],
                 "precioUni" => round($product["precio_sin_tributos"], 8),

@@ -37,10 +37,12 @@
                                 <x-input type="text" label="Nombre comercial" name="nombre_comercial"
                                     value="{{ old('nombre_comercial', $empresa['nombreComercial']) }}" />
                                 <x-select id="actividad_economica" :options="$actividades_economicas" label="Actividad económica"
-                                    name="actividad_economica" value="{{ old('actividad_economica', $empresa['codActividad']) }}" />
+                                    name="actividad_economica" value="{{ old('actividad_economica', $empresa['codActividad']) }}" 
+                                    :selected="old('actividad_economica', $empresa['codActividad'])"/>
                                 <x-select name="tipo_establecimiento" id="tipo_establecimiento"
                                     value="{{ old('tipo_establecimiento', $empresa['tipoEstablecimiento']) }}" label="Tipo de establecimiento"
-                                    :options="$tipo_establecimiento" />
+                                    :options="$tipo_establecimiento" 
+                                    :selected="old('tipo_establecimiento', $empresa['tipoEstablecimiento'])"/>
                                 <div class="flex flex-col gap-4">
                                     <div class="flex-1">
                                         <x-input type="text" label="Código establecimiento" placeholder="0001"
@@ -65,15 +67,20 @@
                                 <div class="flex flex-col gap-4 sm:flex-row">
                                     <div class="flex-1">
                                         <x-select name="department" label="Departamento" id="departamento"
+                                                name="departamento" required :options="$departamentos"
+                                                value="{{ old('departamento', $empresa['departamento']) }}"
+                                                selected="{{ old('departamento', $empresa['departamento'])) }}"
+                                                data-action="{{ Route('business.get-municipios') }}" />
+                                        {{-- <x-select name="department" label="Departamento" id="departamento"
                                             name="departamento" required :options="$departamentos"
-                                            value="{{ old('departamento') }}" selected="{{ old('departamento', $empresa['departamento']) }}"
-                                            data-action="{{ Route('admin.get-municipios') }}" />
+                                            value="{{ old('departamento') }}" :selected="old('departamento', $empresa['departamento'])"
+                                            data-action="{{ Route('admin.get-municipios') }}" /> --}}
                                     </div>
                                     <div class="flex-1" id="select-municipio">
                                         <x-select name="municipio" label="Municipio" id="municipality" required
                                             :options="[
                                                 'Selecciona un departamento' => 'Seleccione un departamento',
-                                            ]" selected="{{old('municipio', $empresa['municipio'])}}" />
+                                            ]" selected="{{old('municipio', $empresa['municipio'])}}" value="{{old('municipio', $empresa['municipio'])}}" />
                                     </div>
                                 </div>
                                 <x-input type="text" label="Dirección" name="complemento" value="{{old('complemento', $empresa['complemento'])}}"/>
