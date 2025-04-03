@@ -39,8 +39,8 @@
                                     name="actividad_economica"
                                     value="{{ old('actividad_economica', $empresa['codActividad']) }}" :selected="old('actividad_economica', $empresa['codActividad'])" />
                                 <x-select name="tipo_establecimiento" id="tipo_establecimiento"
-                                    value="{{ old('tipo_establecimiento', $empresa['tipoEstablecimiento']) }}" label="Tipo de establecimiento"
-                                    :options="$tipo_establecimiento" />
+                                    value="{{ old('tipo_establecimiento', $empresa['tipoEstablecimiento']) }}"
+                                    label="Tipo de establecimiento" :options="$tipo_establecimiento" :selected="old('tipo_establecimiento', $empresa['tipoEstablecimiento'])" />
                                 <div class="flex flex-col gap-4">
                                     <div class="flex-1">
                                         <x-input type="text" label="Código establecimiento" placeholder="0001"
@@ -69,14 +69,31 @@
                                     <div class="flex-1">
                                         <x-select name="department" label="Departamento" id="departamento"
                                             name="departamento" required :options="$departamentos"
-                                            value="{{ old('departamento') }}" selected="{{ old('departamento', $empresa['departamento']) }}"
-                                            data-action="{{ Route('admin.get-municipios') }}" />
+                                            value="{{ old('departamento', $empresa['departamento']) }}"
+                                            selected="{{ old('departamento', $empresa['departamento']) }}"
+                                            data-action="{{ Route('business.get-municipios') }}" />
+                                        {{-- <x-select name="department" label="Departamento" id="departamento"
+                                            name="departamento" required :options="$departamentos"
+                                            value="{{ old('departamento') }}" :selected="old('departamento', $empresa['departamento'])"
+                                            data-action="{{ Route('admin.get-municipios') }}" /> --}}
                                     </div>
                                     <div class="flex-1" id="select-municipio">
                                         <x-select name="municipio" label="Municipio" id="municipality" required
-                                            :options="[
-                                                'Selecciona un departamento' => 'Seleccione un departamento',
-                                            ]" selected="{{old('municipio', $empresa['municipio'])}}" />
+                                            :options="$municipios ?? [
+                                                'Seleccione un Municipio' => 'Seleccione un Municpio',
+                                            ]"
+                                            selected="{{ old('municipio', $empresa['municipio']) }}"
+                                            value="{{ old('municipio', $empresa['municipio'])}}" />
+                                            <div class="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                                                <x-icon icon="alert-circle" class="h-3 w-3 min-w-3 max-w-3" />
+                                                <span class="line-clamp-1 text-ellipsis text-gray-500">
+                                                    {{$municipio_anterior ? $municipio_anterior->valores : ""}}
+                                                </span>
+                                            </div>
+                                        {{-- <x-select name="municipio" label="Municipio" id="municipio"
+                                                name="municipio" required :options="$municipios"
+                                                value="{{ old('municipio', $empresa['municipio']) }}"
+                                                selected="{{ old('municipio', $empresa['municipio']) }}"/> --}}
                                     </div>
                                 </div>
                                 <x-input type="text" label="Dirección" name="complemento"
