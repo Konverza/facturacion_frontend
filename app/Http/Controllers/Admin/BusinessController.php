@@ -201,11 +201,20 @@ class BusinessController extends Controller
         $business_plan = BusinessPlan::where('nit', $empresa["nit"])->first();
         $tipo_establecimiento = $this->octopus_service->getCatalog("CAT-009");
         $departamentos = $this->octopus_service->getCatalog("CAT-012");
+        $municipios = $this->octopus_service->getCatalog("CAT-012", $empresa_api["departamento"]);
         $actividades_economicas = $this->octopus_service->getCatalog("CAT-019", null, true, true);
+
+        $municipio_anterior = DB::table('cat_013')
+            ->where('codigo', $empresa_api["municipio"])
+            ->where('departamento', $empresa_api["departamento"])
+            ->first();
+
         $plans = Plan::all();
 
         return view('admin.business.edit', [
             'departamentos' => $departamentos,
+            'municipios' => $municipios,
+            'municipio_anterior' => $municipio_anterior,
             'tipo_establecimiento' => $tipo_establecimiento,
             'plans' => $plans,
             'actividades_economicas' => $actividades_economicas,
