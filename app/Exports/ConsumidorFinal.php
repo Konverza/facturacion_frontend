@@ -5,8 +5,9 @@ namespace App\Exports;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class ConsumidorFinal implements FromCollection, WithColumnFormatting
+class ConsumidorFinal implements FromCollection, WithColumnFormatting, WithStrictNullComparison
 {
     protected $dtes;
 

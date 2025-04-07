@@ -5,8 +5,9 @@ namespace App\Exports;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class Contribuyente implements FromCollection, WithColumnFormatting
+class Contribuyente implements FromCollection, WithColumnFormatting, WithStrictNullComparison
 {
     
     protected $dtes;
@@ -55,9 +56,9 @@ class Contribuyente implements FromCollection, WithColumnFormatting
                 \Carbon\Carbon::parse($dte["fhProcesamiento"])->format('d/m/Y'),
                 "4",
                 $dte["tipo_dte"],
-                str_replace('-', '', $dte["documento"]->identificacion->numeroControl),
-                $dte["selloRecibido"],
                 str_replace('-', '', $dte["codGeneracion"]),
+                $dte["selloRecibido"],
+                str_replace('-', '', $dte["documento"]->identificacion->numeroControl),
                 null,
                 $dte["documento"]->receptor->nit,
                 $dte["documento"]->receptor->nombre,
