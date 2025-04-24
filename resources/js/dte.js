@@ -640,6 +640,7 @@ $(document).ready(function () {
     //Submit forms
     $(document).on("click", ".submit-form", function () {
         const form = $(this).closest("form");
+        console.log(form);
 
         let isValid = true;
 
@@ -653,6 +654,7 @@ $(document).ready(function () {
             } else {
                 input.removeClass("is-invalid");
                 error.css("display", "none");
+                isValid = true;
             }
 
             if (input.is("[select]") && !input.val().trim()) {

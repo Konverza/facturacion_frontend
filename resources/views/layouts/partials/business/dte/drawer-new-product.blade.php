@@ -84,7 +84,7 @@
             </div>
             @if ($number !== '11' || $number !== '14')
                 <div class="select-documento-relacionado mt-4">
-                    <x-select label="Documento relacionado" name="documento_relacionado" id="document"
+                    <x-select label="Documento relacionado" name="documento_relacionado" id="documento_relacionado"
                         :required="isset($dte['documentos_relacionados']) && count($dte['documentos_relacionados']) > 0" :options="isset($dte['documentos_relacionados'])
                             ? collect($dte['documentos_relacionados'])->mapWithKeys(function ($item) {
                                 return [
