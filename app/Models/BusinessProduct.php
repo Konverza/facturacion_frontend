@@ -24,7 +24,9 @@ class BusinessProduct extends Model
         'stockActual',
         'stockMinimo',
         'estado_stock',
-        'has_stock'
+        'has_stock',
+        'image_url',
+        'category_id',
     ];
 
     protected $casts = [
@@ -39,5 +41,10 @@ class BusinessProduct extends Model
     public function movements()
     {
         return $this->hasMany(BusinessProductMovement::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(ProductCategory::class);
     }
 }
