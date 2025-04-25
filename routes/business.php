@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Business\AssociatedDocumentsController;
+use App\Http\Controllers\Business\CategoryController;
 use App\Http\Controllers\Business\CuentasCobrarController;
 use App\Http\Controllers\Business\CustomerContoller;
 use App\Http\Controllers\Business\DashboardController;
@@ -27,6 +28,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::get("/dashboard", [DashboardController::class, "index"])->name('dashboard');
     Route::resource("/documents", DocumentController::class);
     Route::resource("/products", ProductController::class);
+    Route::resource("/categories", CategoryController::class);
     Route::post("/products/add-stock", [ProductController::class, "add_stock"])->name('products.add-stock');
     Route::post("/products/remove-stock", [ProductController::class, "remove_stock"])->name('products.remove-stock');
     Route::resource("/customers", CustomerContoller::class);

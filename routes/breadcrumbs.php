@@ -109,6 +109,26 @@ Breadcrumbs::for("business.products.edit", function (BreadcrumbTrail $trail, str
     $trail->push($icon . "Editar", route("business.products.edit", $id));
 });
 
+//Categories
+Breadcrumbs::for("business.categories.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='tag' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Categorias", route("business.categories.index"));
+});
+//Categories > Create
+Breadcrumbs::for("business.categories.create", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='plus' class='w-4 h-4'/>");
+    $trail->parent("business.categories.index");
+    $trail->push($icon . "Nueva", route("business.categories.create"));
+});
+//Categories > Edit
+Breadcrumbs::for("business.categories.edit", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='pencil' class='w-4 h-4'/>");
+    $trail->parent("business.categories.index");
+    $trail->push($icon . "Editar", route("business.categories.edit", $id));
+});
+
+
 //Customers
 Breadcrumbs::for("business.customers.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='users' class='w-4 h-4'/>");

@@ -139,6 +139,21 @@
                 </div>
             </li>
             <li>
+                <a href="{{ Route('business.categories.index') }}" data-tooltip-target="tooltip-categories"
+                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                    <x-icon icon="address-book"
+                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap">
+                        Categorías
+                    </span>
+                </a>
+                <div id="tooltip-categories" role="tooltip"
+                    class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Categorías
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
+            </li>
+            <li>
                 <a href="{{ Route('business.products.index') }}" data-tooltip-target="tooltip-products"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
                     <x-icon icon="box"
