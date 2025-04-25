@@ -26,7 +26,6 @@
                         <x-th>Plan contratado</x-th>
                         <x-th>Uso de DTEs</x-th>
                         <x-th>Contacto</x-th>
-                        <x-th>Pago</x-th>
                         <x-th :last="true">Accciones</x-th>
                     </x-tr>
                 </x-slot>
@@ -38,19 +37,23 @@
                             <x-td>
                                 <span
                                     class="flex w-max items-center gap-1 rounded-full px-2 py-1 text-sm font-bold text-primary-500 dark:text-primary-300">
-                                    <x-icon icon="star" class="size-5 text-current" />
                                     {{ $busines->plan->nombre }}
                                 </span>
                             </x-td>
                             <x-td>
                                 <div class="mb-1 flex justify-between">
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-400">
-                                        0 emitidas de 200
+                                        {{$busines->statistics["approved"]}}DTE(s) emitidos de {{$busines->plan->limite}}
                                     </span>
-                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-400">0% usado</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-400">
+                                        {{ number_format(($busines->statistics["approved"] / $busines->plan->limite) * 100, 2) }}% usado
+                                    </span>
+                                </div>
+                                <div class="mb-1 flex justify-between">
+                                    {{ $inicio_mes }} - {{ $fin_mes }}
                                 </div>
                                 <div class="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-900">
-                                    <div class="h-2.5 rounded-full bg-blue-600" style="width: 0%"></div>
+                                    <div class="h-2.5 rounded-full bg-blue-600" style="width: {{ number_format(($busines->statistics["approved"] / $busines->plan->limite) * 100, 2) }}%"></div>
                                 </div>
                             </x-td>
                             <x-td>
@@ -66,21 +69,6 @@
                                     <span class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
                                         <x-icon icon="email" class="h-4 w-4" />
                                         {{ $busines->correo_responsable }}
-                                    </span>
-                                </div>
-                            </x-td>
-                            <x-td>
-                                <div class="flex flex-col justify-start">
-                                    <span
-                                        class="flex w-max items-center gap-1 rounded-full bg-green-100 px-1 py-0.5 text-xs text-green-500 dark:bg-green-950/30">
-                                        <x-icon icon="circle-check" class="h-4 w-4" />
-                                        Pagado
-                                    </span>
-                                    <span class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                                        21/09/2021
-                                    </span>
-                                    <span class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
-                                        $10.00
                                     </span>
                                 </div>
                             </x-td>

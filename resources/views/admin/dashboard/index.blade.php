@@ -23,7 +23,7 @@
                             <x-button type="a" href="{{ Route('admin.business.index') }}" typeButton="success" text="Ver clientes" size="normal" />
                         </div>
                     </div>
-                    <div
+                    {{-- <div
                         class="flex flex-[2] items-center justify-center gap-4 rounded-lg border border-gray-300 p-6 dark:border-gray-800">
                         <span class="rounded-full bg-yellow-100 p-4 dark:bg-yellow-950/30">
                             <x-icon icon="moneybag" class="size-12 text-yellow-400 sm:size-14 md:size-16" />
@@ -37,7 +37,7 @@
                             </h1>
                             <x-button type="submit" typeButton="warning" text="Ver ventas" size="normal" />
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
                 <div class="mt-4 flex flex-wrap gap-4">
                     <div
@@ -55,7 +55,7 @@
                             <x-button type="submit" typeButton="info" text="Ver todos" size="normal" />
                         </div>
                     </div>
-                    <div
+                    {{-- <div
                         class="flex w-max flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-6 dark:border-gray-800">
                         <span class="rounded-full bg-red-100 p-4 dark:bg-red-950/30">
                             <x-icon icon="chartline" class="size-12 text-red-500 sm:size-14 md:size-16" />
@@ -69,7 +69,7 @@
                             </h1>
                             <x-button type="submit" typeButton="danger" text="Ver planes" size="normal" />
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
             <div class="flex-1">
@@ -126,9 +126,9 @@
                             </div>
                             <div class="flex-1">
                                 <span
-                                    class="flex w-max items-center gap-2 rounded-full px-2 py-1 text-sm font-semibold uppercase text-red-500">
-                                    <x-icon icon="alert-circle" class="size-5 text-red-500" />
-                                    Error
+                                    class="flex w-max items-center gap-2 rounded-full px-2 py-1 text-sm font-semibold text-green-500">
+                                    <x-icon icon="circle-check" class="size-5 text-green-500" />
+                                    OK
                                 </span>
                             </div>
                         </div>
@@ -138,7 +138,7 @@
         </div>
         <div class="mt-4">
             <h2 class="text-xl font-bold text-gray-600 dark:text-white sm:text-2xl">
-                Clientes activos
+                Últimos clientes registrados
             </h2>
             <div class="mt-2">
                 <x-table id="table-business">
@@ -146,8 +146,7 @@
                         <x-tr>
                             <x-th class="w-10">#</x-th>
                             <x-th>Negocio</x-th>
-                            <x-th>Plan contratado</x-th>
-                            <x-th :last="true">Estado</x-th>
+                            <x-th :last="true">Plan contratado</x-th>
                         </x-tr>
                     </x-slot>
                     <x-slot name="tbody">
@@ -160,13 +159,6 @@
                                         class="flex w-max items-center gap-1 rounded-full px-2 py-1 text-sm font-bold text-primary-500 dark:text-primary-300">
                                         <x-icon icon="star" class="size-5 text-current" />
                                         {{ $busines->plan->nombre }}
-                                    </span>
-                                </x-td>
-                                <x-td>
-                                    <span
-                                        class="flex w-max items-center gap-1 rounded-full bg-green-100 px-1 py-0.5 text-xs text-green-500 dark:bg-green-950/30">
-                                        <x-icon icon="circle-check" class="h-4 w-4" />
-                                        Pagado
                                     </span>
                                 </x-td>
                             </x-tr>

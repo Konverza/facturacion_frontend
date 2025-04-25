@@ -32,7 +32,22 @@ class BusinessController extends Controller
     public function index()
     {
         $business = Business::with('plan')->get();
-        return view('admin.business.index', compact('business'));
+        $inicio_mes = date('Y-m-01');
+        $fin_mes = date('Y-m-t');
+        
+        foreach ($business as $value) {
+            $params = [
+                'nit' => $value->nit,
+                'fechaInicio' => "{$inicio_mes}T00:00:00",
+                'fechaFin' => "{$fin_mes}T23:59:59"
+            ];
+            $statistics = Http::timeout(30)->get($this->octopus_url . '/dtes/statistics/?' . http_build_query($params))
+                ->json();
+            $value->statistics = $statistics;
+        }
+        $business = $business->sortByDesc('id');
+
+        return view('admin.business.index', compact('business', 'inicio_mes', 'fin_mes'));
     }
 
     public function create()
