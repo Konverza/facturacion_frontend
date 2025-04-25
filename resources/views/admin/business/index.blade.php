@@ -43,14 +43,14 @@
                             <x-td>
                                 <div class="mb-1 flex justify-between">
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-400">
-                                        {{$busines->statistics["approved"]}}DTE(s) emitidos de {{$busines->plan->limite}}
+                                        {{$busines->statistics["approved"]}} DTE(s) emitidos de {{$busines->plan->limite}}
                                     </span>
                                     <span class="text-xs font-medium text-gray-700 dark:text-gray-400">
                                         {{ number_format(($busines->statistics["approved"] / $busines->plan->limite) * 100, 2) }}% usado
                                     </span>
                                 </div>
                                 <div class="mb-1 flex justify-between">
-                                    {{ $inicio_mes }} - {{ $fin_mes }}
+                                    {{ \Carbon\Carbon::parse($inicio_mes)->format("d/m/Y") }} - {{ \Carbon\Carbon::parse($fin_mes)->format("d/m/Y") }}
                                 </div>
                                 <div class="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-900">
                                     <div class="h-2.5 rounded-full bg-blue-600" style="width: {{ number_format(($busines->statistics["approved"] / $busines->plan->limite) * 100, 2) }}%"></div>
