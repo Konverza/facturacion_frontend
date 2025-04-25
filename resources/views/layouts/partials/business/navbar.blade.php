@@ -138,6 +138,11 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </li>
+            @php
+                $business_id = Session::get('business') ?? null;
+                $business = \App\Models\Business::find($business_id);
+            @endphp
+            @if($business->posmode)
             <li>
                 <a href="{{ Route('business.categories.index') }}" data-tooltip-target="tooltip-categories"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
@@ -153,6 +158,7 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </li>
+            @endif
             <li>
                 <a href="{{ Route('business.products.index') }}" data-tooltip-target="tooltip-products"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
