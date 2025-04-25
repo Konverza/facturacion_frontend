@@ -47,6 +47,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         Route::post("/anexos", [DTEController::class, "anexos"])->name('anexos');
         Route::post("/send-email", [MailController::class, "send"])->name('send-email');
         Route::post("/send-whatsapp", [WhatsAppController::class, "send"])->name('send-whatsapp');
+        Route::post("/download", [DocumentController::class, "zipAndDownload"])->name('download-dtes');
 
         Route::prefix("product")->name("product.")->group(function () {
             //Products

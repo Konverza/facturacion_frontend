@@ -13,7 +13,12 @@
                     <x-input type="text" placeholder="Buscar" class="w-full" icon="search" id="input-search-special" />
                 </div>
                 <div class="flex-1">
-                    <x-button type="button" typeButton="primary" text="Imprimir" icon="printer" class="w-full" />
+                    <button type="button"
+                        class="show-modal bg-green-500 text-white hover:bg-green-600 dark:bg-green-500 dark:text-white dark:hover:bg-green-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
+                        data-target="#download-dtes">
+                        <x-icon icon="file" class="h-4 w-4" />
+                        <span class="text-sm">Descargar DTEs</span>
+                    </button>
                 </div>
                 <div class="flex-1">
                     <button type="button"
@@ -360,7 +365,45 @@
                                 class="flex items-center justify-end gap-4 rounded-b border-t border-gray-300 p-4 dark:border-gray-800">
                                 <x-button type="button" class="hide-modal" text="Cancelar" icon="x"
                                     typeButton="secondary" data-target="#download-anexos" />
-                                <x-button type="button" text="Descargar" icon="download" typeButton="primary" id="downloadDTE" />
+                                <x-button type="button" text="Descargar" icon="download" typeButton="primary" id="downloadAnexos" />
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="download-dtes" tabindex="-1" aria-hidden="true"
+            class="fixed left-0 right-0 top-0 z-50 hidden h-full max-h-full w-full items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-200/50 dark:bg-gray-900/50 md:inset-0">
+            <div class="relative max-h-full w-full max-w-md p-4">
+                <!-- Modal content -->
+                <div class="motion-preset-expand relative rounded-lg bg-white shadow motion-duration-300 dark:bg-gray-950">
+                    <div class="flex flex-col">
+                        <!-- Modal header -->
+                        <form action="{{ Route('business.dte.download-dtes') }}" method="POST">
+                            @csrf
+                            <div
+                                class="flex items-center justify-between rounded-t border-b border-gray-300 p-4 dark:border-gray-800">
+                                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                                    Descargar DTEs
+                                </h3>
+                                <button type="button"
+                                    class="hide-modal ms-auto inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-900 dark:hover:text-white"
+                                    data-target="#download-dtes">
+                                    <x-icon icon="x" class="h-5 w-5" />
+                                </button>
+                            </div>
+                            <!-- Modal body -->
+                            <div class="flex flex-col gap-4 p-4">
+                                <x-input type="date" icon="calendar" name="desde" label="Desde" required />
+                                <x-input type="date" icon="calendar" name="hasta" label="Hasta" required />
+                            </div>
+                            <!-- Modal footer -->
+                            <div
+                                class="flex items-center justify-end gap-4 rounded-b border-t border-gray-300 p-4 dark:border-gray-800">
+                                <x-button type="button" class="hide-modal" text="Cancelar" icon="x"
+                                    typeButton="secondary" data-target="#download-dtes" />
+                                <x-button type="button" text="Descargar" icon="download" typeButton="primary" id="downloadFiles" />
                             </div>
                         </form>
                     </div>
@@ -372,7 +415,7 @@
 
     @push('scripts')
         <script>
-            document.getElementById("downloadDTE").addEventListener("click", async function(event) {
+            document.getElementById("downloadAnexos").addEventListener("click", async function(event) {
                 event.preventDefault();
                 console.log("Descarga iniciada");
                 document.getElementById("loader").classList.remove("hidden");
@@ -396,6 +439,38 @@
                     const a = document.createElement("a");
                     a.href = url;
                     a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error("Error en la descarga:", error);
+                    document.getElementById("loader").classList.add("hidden");
+                }
+            });
+
+            document.getElementById("downloadFiles").addEventListener("click", async function(event) {
+                event.preventDefault();
+                console.log("Descarga iniciada");
+                document.getElementById("loader").classList.remove("hidden");
+
+                const form = document.querySelector("#download-dtes form");
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    if (response.headers.get("X-Download-Started")) {
+                        document.getElementById("loader").classList.add("hidden");
+                    }
+
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = response.headers.get("X-File-Name");
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
