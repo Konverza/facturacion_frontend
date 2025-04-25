@@ -12,7 +12,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::all();
+        $users = User::with('businesses.business')->get();
         $roles = [
             "admin" => [
                 "name" => "Administrador",

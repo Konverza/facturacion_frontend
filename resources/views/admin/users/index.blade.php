@@ -22,6 +22,7 @@
                     <x-tr>
                         <x-th class="w-10">#</x-th>
                         <x-th>Usuario</x-th>
+                        <x-th>Negocio(s)</x-th>
                         <x-th>Estado</x-th>
                         <x-th>Rol</x-th>
                         <x-th>Ultima conexión</x-th>
@@ -43,6 +44,21 @@
                                         {{ $user->email }}
                                     </span>
                                 </div>
+                            </x-td>
+                            <x-td>
+                                @if ($user->businesses->count() > 0)
+                                    <div class="flex flex-col gap-1">
+                                        @foreach ($user->businesses as $business)
+                                            <span class="text-sm text-gray-500 dark:text-gray-300">
+                                                    {{$user->businesses->count() > 1 ? "-" : ""}} {{$business->business->nombre}}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-sm text-gray-500 dark:text-gray-300">
+                                        Sin negocios
+                                    </span>
+                                @endif
                             </x-td>
                             <x-td>
                                 @if ($user->status)
