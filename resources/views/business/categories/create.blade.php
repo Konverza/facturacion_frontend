@@ -26,9 +26,16 @@
             <form action="{{ Route('business.categories.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="flex flex-col gap-4 sm:flex-row">
-                    <div class="flex-[2]">
+                    <div class="flex-1">
                         <x-input type="text" icon="address-book" required label="Nombre" name="name"
                             value="{{ old('name') }}" />
+                    </div>
+                </div>
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                    <div class="flex-1">
+                        <x-select id="parent_id" name="parent_id" :options="$categories"
+                            value="{{ old('parent_id') }}" selected="{{ old('parent_id') }}"
+                            label="Categoría Padre (opcional)" />
                     </div>
                 </div>
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">

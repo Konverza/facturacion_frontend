@@ -32,6 +32,13 @@
                             value="{{ old('name', $category->name) }}" />
                     </div>
                 </div>
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                    <div class="flex-1">
+                        <x-select id="parent_id" name="parent_id" :options="$categories"
+                            value="{{ $category->parent_id }}" selected="{{ old('parent_id', $category->parent_id) }}"
+                            label="Categoría Padre (opcional)" />
+                    </div>
+                </div>
                 <div class="w-100 mt-2 flex justify-center">
                     <div
                         class="group relative mx-auto h-32 w-32 overflow-hidden rounded-full border border-gray-300 dark:border-gray-800 md:mx-0 md:mr-4">
@@ -47,7 +54,7 @@
                     </div>
                 </div>
                 <h2 class="mt-4 text-center text-sm font-bold uppercase text-gray-800 dark:text-gray-100">
-                    Logo
+                    Imagen de Categoría
                 </h2>
                 <div class="mt-4 flex items-center justify-center">
                     <x-button type="submit" typeButton="primary" class="w-full sm:w-auto" text="Guardar Categoría"

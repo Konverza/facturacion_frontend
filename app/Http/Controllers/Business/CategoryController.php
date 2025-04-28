@@ -29,7 +29,25 @@ class CategoryController extends Controller
 
     public function create()
     {
-        return view("business.categories.create");
+        try {
+            $business_id = Session::get('business') ?? null;
+            $categories = ProductCategory::where('business_id', $business_id)->get(["id", "name"]);
+
+            // Return categories as ['id' => 'name', 'id' => 'name']
+            $categories = $categories->mapWithKeys(function ($category_val) {
+                return [$category_val->id => $category_val->name];
+            })->toArray();
+            $categories = array_merge(["0" => "Sin padre"], $categories);
+
+            return view("business.categories.create", [
+                "categories" => $categories
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->route('business.categories.index')->with([
+                'error' => 'Error',
+                'error_message' => 'Error al cargar las categorias'
+            ]);
+        }
     }
 
     public function store(Request $request)
@@ -43,6 +61,15 @@ class CategoryController extends Controller
                 $path = $request->file('image')->store('categories', 'public');
                 $category->image_url = "/storage/$path";
             }
+
+            // Check if the category has a parent category
+            if ($request->has('parent_id')) {
+                $parentCategory = ProductCategory::find($request->parent_id);
+                if ($parentCategory) {
+                    $category->parent_id = $parentCategory->id;
+                }
+            }
+
             $category->save();
             return redirect()->route('business.categories.index')->with([
                 'success' => 'Exito',
@@ -60,8 +87,20 @@ class CategoryController extends Controller
     {
         try {
             $category = ProductCategory::findOrFail($id);
+            $business_id = Session::get('business') ?? null;
+            $categories = ProductCategory::where('business_id', $business_id)
+                            ->where('id', '!=', $category->id)
+                            ->get(["id", "name"]);
+            
+            // Return categories as ['id' => 'name', 'id' => 'name']
+            $categories = $categories->mapWithKeys(function ($category_val) {
+                return [$category_val->id => $category_val->name];
+            })->toArray();
+            $categories = array_merge(["0" => "Sin padre"], $categories);
+
             return view("business.categories.edit", [
-                "category" => $category
+                "category" => $category,
+                "categories" => $categories
             ]);
         } catch (\Exception $e) {
             return redirect()->route('business.categories.index')->with([
@@ -76,6 +115,15 @@ class CategoryController extends Controller
         try {
             $category = ProductCategory::findOrFail($id);
             $category->name = $request->name;
+            // Check if the category has a parent category
+            if ($request->has('parent_id')) {
+                $parentCategory = ProductCategory::find($request->parent_id);
+                if ($parentCategory) {
+                    $category->parent_id = $parentCategory->id;
+                } else {
+                    $category->parent_id = null; // Set to null if no parent category is found
+                }
+            }
             if ($request->hasFile('image')) {
                 // Unlink the old image if it exists
                 if ($category->image_url) {
@@ -105,6 +153,13 @@ class CategoryController extends Controller
     {
         try {
             $category = ProductCategory::findOrFail($id);
+
+            // Set null all child categories
+            $childCategories = ProductCategory::where('parent_id', $category->id)->get();
+            foreach ($childCategories as $childCategory) {
+                $childCategory->parent_id = null; // Set the foreign key to null
+                $childCategory->save(); // Save the child category
+            }
             // Unlink the image if it exists
             if ($category->image_url) {
                 $oldImagePath = public_path($category->image_url);

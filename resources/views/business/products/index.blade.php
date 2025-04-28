@@ -95,7 +95,12 @@
                                 </x-td>
                             @endif
                             <x-td>
-                                {{ $product->descripcion }}
+                                {{ $product->descripcion }}<br>
+                                @if ($product->category)
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ $product->category->name }}
+                                    </span>
+                                @endif
                             </x-td>
 
                             <x-td :last="true">
