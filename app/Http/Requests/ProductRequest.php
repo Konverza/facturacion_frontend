@@ -32,6 +32,8 @@ class ProductRequest extends FormRequest
             'tributos' => 'required|array',
             'stock_minimo' => 'nullable|numeric',
             'has_stock' => 'nullable|boolean',
+            'category_id' => 'nullable|int',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ];
     }
 }

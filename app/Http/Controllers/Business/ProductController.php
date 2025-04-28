@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Business;
 
+use App\Models\ProductCategory;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
@@ -54,9 +55,15 @@ class ProductController extends Controller
     {
         try {
             $tributes = Tributes::all();
+            $categories = ProductCategory::all()->map(function ($category) {
+                $category->full_path = $category->getFullPath();
+                return $category;
+            })->pluck('full_path', 'id')->toArray();
+            $categories = ["0" => "Sin categoria"] + $categories;
             return view('business.products.create', [
                 'unidades_medidas' => $this->unidades_medidas,
-                'tributes' => $tributes
+                'tributes' => $tributes,
+                'categories' => $categories
             ]);
         } catch (\Exception $e) {
             return back()->with([
@@ -91,6 +98,16 @@ class ProductController extends Controller
                 $product->stockMinimo = 0;
                 $product->has_stock = false;
             }
+
+            if($validated['category_id'] != 0){
+                $product->category_id = $validated['category_id'];
+            }
+
+            if ($request->hasFile('image')) {
+                $path = $request->file('image')->store('products', 'public');
+                $product->image_url = "/storage/$path";
+            }
+
             $product->save();
             DB::commit();
             return redirect()->route('business.products.index')
@@ -108,6 +125,15 @@ class ProductController extends Controller
         try {
             DB::beginTransaction();
             $product = BusinessProduct::find($id);
+
+            // Unlink the old image if it exists
+            if ($product->image_url) {
+                $oldImagePath = public_path($product->image_url);
+                if (file_exists($oldImagePath)) {
+                    unlink($oldImagePath);
+                }
+            }
+
             $product->delete();
             DB::commit();
             return redirect()->route('business.products.index')
@@ -122,7 +148,11 @@ class ProductController extends Controller
     public function edit(string $id)
     {
         $product = BusinessProduct::find($id);
-
+        $categories = ProductCategory::all()->map(function ($category) {
+            $category->full_path = $category->getFullPath();
+            return $category;
+        })->pluck('full_path', 'id')->toArray();
+        $categories = ["0" => "Sin categoria"] + $categories;
         if (!$product) {
             return back()->with([
                 'error' => 'Error',
@@ -134,7 +164,8 @@ class ProductController extends Controller
         return view('business.products.edit', [
             'product' => $product,
             'unidades_medidas' => $this->unidades_medidas,
-            'tributes' => $tributes
+            'tributes' => $tributes,
+            'categories' => $categories
         ]);
     }
 
@@ -165,6 +196,25 @@ class ProductController extends Controller
                 $product->stockActual = 0;
                 $product->stockMinimo = 0;
                 $product->has_stock = false;
+            }
+
+            if ($validated['category_id'] != 0) {
+                $product->category_id = $validated['category_id'];
+            } else {
+                $product->category_id = null;
+            }
+
+            if ($request->hasFile('image')) {
+                // Unlink the old image if it exists
+                if ($product->image_url) {
+                    $oldImagePath = public_path($product->image_url);
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                }
+                // Store the new image
+                $path = $request->file('image')->store('products', 'public');
+                $product->image_url = "/storage/$path";
             }
 
             $product->save();

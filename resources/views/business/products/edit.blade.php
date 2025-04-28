@@ -13,7 +13,15 @@
             </a>
         </div>
         <div class="mt-4 rounded-lg pb-4">
-            <form action="{{ Route('business.products.update', $product->id) }}" method="POST">
+            @if ($errors->any())
+                <div class="border-l-4 border-red-500 bg-red-100 p-4 text-red-700" role="alert">
+                    <p class="font-bold">Error</p>
+                    @foreach ($errors->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
+            <form action="{{ Route('business.products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
@@ -53,19 +61,50 @@
                     </div>
                 </div>
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
-                    <x-input type="toggle" label="Guardar inventario para este producto"
-                        name="has_stock" id="has_stock" value="1" :checked="$product->has_stock" />
+                    <x-input type="toggle" label="Guardar inventario para este producto" name="has_stock" id="has_stock"
+                        value="1" :checked="$product->has_stock" />
                 </div>
-                <div class="mt-4 flex flex-col gap-4 sm:flex-row {{$product->has_stock ? "" : "hidden"}} " id="stocks">
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row {{ $product->has_stock ? '' : 'hidden' }} "
+                    id="stocks">
                     <div class="flex-1">
-                        <x-input type="number" :required="$product->has_stock" label="Stock inicial" name="stock_inicial" id="stock_inicial" placeholder="0"
-                            value="{{ old('stock_inicial', 0) }}" :disabled="!$product->has_stock"/>
+                        <x-input type="number" :required="$product->has_stock" label="Stock inicial" name="stock_inicial"
+                            id="stock_inicial" placeholder="0" value="{{ old('stock_inicial', 0) }}" :disabled="!$product->has_stock" />
                     </div>
                     <div class="flex-1">
-                        <x-input type="number" :required="$product->has_stock" label="Stock mínimo" name="stock_minimo" id="stock_minimo" placeholder="0"
-                            value="{{ old('stock_minimo', 0) }}" :disabled="!$product->has_stock"/>
+                        <x-input type="number" :required="$product->has_stock" label="Stock mínimo" name="stock_minimo" id="stock_minimo"
+                            placeholder="0" value="{{ old('stock_minimo', 0) }}" :disabled="!$product->has_stock" />
                     </div>
                 </div>
+                @php
+                    $business_id = Session::get('business') ?? null;
+                    $business = \App\Models\Business::find($business_id);
+                @endphp
+                @if ($business->posmode)
+                    <div class="mt-4">
+                        <div class="flex-1">
+                            <x-select id="category_id" name="category_id" :options="$categories"
+                                value="{{ old('category_id', $product->category_id) }}" selected="{{ old('category_id', $product->category_id) }}"
+                                label="Categoría (opcional)" />
+                        </div>
+                    </div>
+                    <div class="w-100 mt-2 flex justify-center">
+                        <div
+                            class="group relative mx-auto h-32 w-32 overflow-hidden rounded-full border border-gray-300 dark:border-gray-800 md:mx-0 md:mr-4">
+                            <img src="{{ $product->image_url ?: asset('images/only-icon.png') }}" alt="Profile"
+                                class="h-full w-full bg-white object-contain p-4" id="logo-preview">
+                            <label for="logo"
+                                class="absolute bottom-0 right-0 hidden h-full w-full cursor-pointer items-center justify-center rounded-full bg-gray-200/50 p-1 group-hover:flex dark:bg-gray-900/50">
+                                <input type="file" id="logo" name="image" class="hidden">
+                                <span class="text-xs text-gray-800 dark:text-gray-100">
+                                    <x-icon icon="pencil" class="size-5" />
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <h2 class="mt-4 text-center text-sm font-bold uppercase text-gray-800 dark:text-gray-100">
+                        Imagen de Producto
+                    </h2>
+                @endif
                 <h2 class="mt-2 flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300">
                     Tributos
                 </h2>
@@ -89,7 +128,7 @@
     @push('scripts')
         <script>
             $(document).ready(function() {
-                $("#has_stock").on("change", function(){
+                $("#has_stock").on("change", function() {
                     if ($(this).is(":checked")) {
                         $("#stock_inicial").prop("disabled", false);
                         $("#stock_minimo").prop("disabled", false);

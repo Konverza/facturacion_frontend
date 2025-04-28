@@ -23,7 +23,7 @@
                 </div>
             @endif
 
-            <form action="{{ Route('business.products.store') }}" method="POST">
+            <form action="{{ Route('business.products.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="flex flex-col gap-4 sm:flex-row">
                     <div class="flex-1">
@@ -73,6 +73,25 @@
                             value="{{ old('stock_minimo', 0) }}" min="1" />
                     </div>
                 </div>
+                @php
+                    $business_id = Session::get('business') ?? null;
+                    $business = \App\Models\Business::find($business_id);
+                @endphp
+                @if($business->posmode)
+                <div class="mt-4">
+                    <div class="flex-1">
+                        <x-select id="category_id" name="category_id" :options="$categories"
+                            value="{{ old('category_id') }}" selected="{{ old('category_id') }}"
+                            label="Categoría (opcional)" />
+                    </div>
+                </div>
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                    <div class="flex-1">
+                        <x-input type="file" label="Imagen de Producto" name="image" id="image"
+                                    accept=".png, .jpg, .jpeg, .webp" maxSize="3072" />
+                    </div>
+                </div>
+                @endif
                 <h2 class="mt-2 flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300">
                     Tributos
                 </h2>

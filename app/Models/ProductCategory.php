@@ -42,4 +42,15 @@ class ProductCategory extends Model
     {
         return $this->parent()->with('ascendants');
     }
+
+    public function getFullPath()
+    {
+        $path = $this->name;
+
+        if ($this->parent) {
+            $path = $this->parent->getFullPath() . ' -> ' . $path;
+        }
+
+        return $path;
+    }
 }
