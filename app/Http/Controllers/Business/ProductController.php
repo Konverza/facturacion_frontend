@@ -198,7 +198,7 @@ class ProductController extends Controller
                 $product->has_stock = false;
             }
 
-            if ($validated['category_id'] != 0) {
+            if (Arr::exists($validated, "category_id") && $validated['category_id'] != 0) {
                 $product->category_id = $validated['category_id'];
             } else {
                 $product->category_id = null;
