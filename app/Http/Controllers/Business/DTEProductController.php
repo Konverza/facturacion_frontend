@@ -183,7 +183,6 @@ class DTEProductController extends Controller
     public function store_new(Request $request)
     {
         try {
-            // DB::beginTransaction();
             if (in_array($this->dte["type"], ["04", "05", "06"])) {
                 if ($request->documento_relacionado === "" || $request->documento_relacionado === null) {
                     return response()->json([
@@ -192,65 +191,6 @@ class DTEProductController extends Controller
                     ]);
                 }
             }
-
-            // if ($this->dte["type"] !== "14") {
-            //     $precio_unitario = floatval($request->precio_unitario);
-            //     $stock_inicial = floatval($request->stock_inicial);
-
-            //     $business_product = BusinessProduct::create([
-            //         "business_id" => session("business"),
-            //         "tipoItem" => $request->tipo_item,
-            //         "codigo" => $request->codigo ?? "---",
-            //         "uniMedida" => $request->unidad_medida,
-            //         "descripcion" => $request->descripcion ?? "Sin descripción",
-            //         "precioUni" => $precio_unitario,
-            //         "precioSinTributos" => $precio_unitario / 1.13,
-            //         "tributos" => json_encode($request->tributos),
-            //         "stockInicial" => $stock_inicial,
-            //         "stockActual" => $stock_inicial,
-            //     ]);
-
-            //     $product_tributes = json_decode($business_product->tributos, true) ?? [];
-
-            //     $total = floatval($request->total);
-
-            //     $iva = 0;
-            //     if ($request->tipo === "Gravada") {
-            //         $iva = ($this->dte["type"] === "03")
-            //             ? round($total * 0.13, 2)
-            //             : round(($total / 1.13) * 0.13, 2);
-            //     }
-
-            //     $cantidad = floatval($request->cantidad);
-
-            //     $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
-
-            //     $this->dte["products"][] = [
-            //         "id" => rand(1, 1000),
-            //         "product" => $business_product,
-            //         "product_id" => $business_product->id,
-            //         "unidad_medida" => $business_product->uniMedida,
-            //         "descripcion" => $business_product->descripcion,
-            //         "cantidad" => $cantidad,
-            //         "tipo" => $request->tipo,
-            //         "precio" => $precio_unitario,
-            //         "precio_sin_tributos" => $business_product->precioSinTributos,
-            //         "descuento" => floatval($request->descuento ?? 0),
-            //         "ventas_gravadas" => $request->tipo === "Gravada" ? $total : 0,
-            //         "ventas_exentas" => $request->tipo === "Exenta" ? $total : 0,
-            //         "ventas_no_sujetas" => $request->tipo === "No sujeta" ? $total : 0,
-            //         "total" => $total,
-            //         "turismo_por_alojamiento" => in_array("59", $product_tributes) ? "active" : "inactive",
-            //         "turismo_salida_pais_via_aerea" => in_array("71", $product_tributes) ? "active" : "inactive",
-            //         "fovial" => in_array("D1", $product_tributes) ? "active" : "inactive",
-            //         "contrans" => in_array("C8", $product_tributes) ? "active" : "inactive",
-            //         "bebidas_alcoholicas" => in_array("C5", $product_tributes) ? "active" : "inactive",
-            //         "tabaco_cigarillos" => in_array("C6", $product_tributes) ? "active" : "inactive",
-            //         "tabaco_cigarros" => in_array("C7", $product_tributes) ? "active" : "inactive",
-            //         "iva" => $iva,
-            //         "documento_relacionado" => $request->documento_relacionado ?? null
-            //     ];
-            // } else {
             $product_tributes = $request->tributos ?? [];
             $total = floatval($request->total);
             $iva = 0;
@@ -287,7 +227,6 @@ class DTEProductController extends Controller
                 "documento_relacionado" => $request->documento_relacionado ?? null,
                 "tributos" => json_encode($product_tributes)
             ];
-            // }
             $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
             session(["dte" => $this->dte]);
             $this->totals();
@@ -316,7 +255,123 @@ class DTEProductController extends Controller
                 ])->render(),
             ]);
         } catch (\Exception $e) {
-            DB::rollBack();
+            return response()->json([
+                "success" => false,
+                "message" => "Ha ocurrido un error al guardar el producto: " . $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function store_from_pos(Request $request)
+    {
+        try {
+            $this->dte = session("dte", ["products" => []]);
+            $total = 0;
+
+            if (!isset($this->dte["products"]) || !is_array($this->dte["products"])) {
+                $this->dte["products"] = [];
+            }
+
+            $business_product = BusinessProduct::find($request->product_id);
+            if (!$business_product) {
+                return response()->json([
+                    "success" => false,
+                    "message" => "Producto no encontrado"
+                ]);
+            }
+
+            $stock = (float) $business_product->stockActual;
+            $found = false;
+            foreach ($this->dte["products"] as &$product) {
+                if ($product["product_id"] == $business_product->id) {
+                    $found = true;
+
+                    $cantidadActual = (float) $product["cantidad"];
+                    $cantidadNueva = (float) $request->cantidad;
+
+                    if($business_product->has_stock){
+                        if ($cantidadActual + $cantidadNueva > $stock) {
+                            return response()->json([
+                                "success" => false,
+                                "message" => "No hay suficiente stock para el producto, ya se agregó la cantidad máxima."
+                            ]);
+                        }
+                    }
+
+                    $product["cantidad"] += $cantidadNueva;
+                    $product["descuento"] += 0;
+                    $product["total"] = $business_product->precioUni * $product["cantidad"];
+                    $product["documento_relacionado"] = null;
+                    $product["ventas_gravadas"] = $product["total"] ;
+                    $product["ventas_exentas"] = 0;
+                    $product["ventas_no_sujetas"] = 0;
+                    $product["iva"] = round(($product["total"] / 1.13) * 0.13, 2);
+                    break;
+                }
+            }
+
+            $product_tributes = json_decode($business_product->tributos, true);
+            if (!$found) {
+                $precio = (float) $business_product->precioUni;
+                $precio_sin_tributos = (float) $business_product->precioSinTributos;
+                $cantidad = (float) $request->cantidad;
+                $total = $business_product->precioUni * $cantidad;
+                $iva = round(((float) $total / 1.13) * 0.13, 2);
+                $descuento = 0;
+
+
+                $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
+
+                $this->dte["products"][] = [
+                    "id" => rand(1, 1000),
+                    "product" => $business_product->toArray(),
+                    "product_id" => $business_product->id,
+                    "unidad_medida" => $business_product->uniMedida,
+                    "descripcion" => $business_product->descripcion,
+                    "cantidad" => $cantidad,
+                    "tipo" => "Gravada",
+                    "precio" => $precio,
+                    "precio_sin_tributos" => $precio_sin_tributos,
+                    "descuento" => $descuento,
+                    "ventas_gravadas" => $total,
+                    "ventas_exentas" => 0,
+                    "ventas_no_sujetas" => 0,
+                    "total" => $total,
+                    "turismo_por_alojamiento" => in_array("59", $product_tributes) ? "active" : "inactive",
+                    "turismo_salida_pais_via_aerea" => in_array("71", $product_tributes) ? "active" : "inactive",
+                    "fovial" => in_array("D1", $product_tributes) ? "active" : "inactive",
+                    "contrans" => in_array("C8", $product_tributes) ? "active" : "inactive",
+                    "bebidas_alcoholicas" => in_array("C5", $product_tributes) ? "active" : "inactive",
+                    "tabaco_cigarillos" => in_array("C6", $product_tributes) ? "active" : "inactive",
+                    "tabaco_cigarros" => in_array("C7", $product_tributes) ? "active" : "inactive",
+                    "iva" => $iva,
+                    "documento_relacionado" => null
+                ];
+            }
+
+            $this->totals();
+            
+            $this->dte["metodos_pago"][0] = [
+                "id" => rand(1, 1000),
+                "forma_pago" => "01",
+                "monto" => array_sum(array_column($this->dte["products"], "total")),
+                "numero_documento" => null,
+                "plazo" =>  null,
+                "periodo" => null,
+            ];
+            
+            $this->dte["monto_abonado"] = array_sum(array_column($this->dte["products"], "total"));
+            $this->dte["monto_pendiente"] = $this->dte["total_pagar"] - $this->dte["monto_abonado"];
+            $this->totals();
+            
+
+            // Guardar en sesión
+            session(["dte" => $this->dte]);
+            // Retornar respuesta
+            return redirect()->back()->with([
+                "success" => true
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 "success" => false,
                 "message" => "Ha ocurrido un error al guardar el producto: " . $e->getMessage(),

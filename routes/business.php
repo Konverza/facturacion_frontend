@@ -14,6 +14,7 @@ use App\Http\Controllers\Business\DTEProductController;
 use App\Http\Controllers\Business\MailController;
 use App\Http\Controllers\Business\MovementController;
 use App\Http\Controllers\Business\PaymentMethodController;
+use App\Http\Controllers\Business\PosController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\ProfileController;
 use App\Http\Controllers\Business\RelatedDocumentsController;
@@ -41,6 +42,9 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     //Profile
     Route::get("/profile", [ProfileController::class, "index"])->name('profile.index');
 
+    // POS
+    Route::get("/pos", [PosController::class, "index"])->name('pos.index');
+
     Route::prefix("dte")->name("dte.")->group(function () {
         Route::get("/generate", [DTEController::class, "create"])->name('create');
         Route::get("/cancel", [DTEController::class, "cancel"])->name('cancel');
@@ -56,6 +60,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
             Route::post("/select", [DTEProductController::class, "select"])->name('select');
             Route::post("/store", [DTEProductController::class, "store"])->name('store');
             Route::post("/store-new", [DTEProductController::class, "store_new"])->name('store-new');
+            Route::post("/store-pos", [DTEProductController::class, "store_from_pos"])->name('store-pos');
             Route::post("/unaffected-amounts", [DTEProductController::class, "unaffected_amounts"])->name('unaffected-amounts');
             Route::post("/taxes-iva", [DTEProductController::class, "taxes_iva"])->name('taxes-iva');
             Route::get("/delete/{id}", [DTEProductController::class, "delete"])->name('delete');

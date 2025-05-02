@@ -177,3 +177,10 @@ Breadcrumbs::for("business.movements.index", function (BreadcrumbTrail $trail) {
     $trail->parent("business");
     $trail->push($icon . "Movimientos", route("business.movements.index"));
 });
+
+// POS
+Breadcrumbs::for("business.pos.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='cash-register' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "POS", route("business.pos.index"));
+});

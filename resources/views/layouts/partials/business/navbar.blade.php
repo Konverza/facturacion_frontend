@@ -98,7 +98,7 @@
 <aside id="sidebar"
     class="@if ($test_enviroment) mt-12 sm:mt-8 @endif fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r border-gray-300 bg-white pt-4 transition-transform dark:border-gray-800 dark:bg-gray-950 lg:z-[35] lg:translate-x-0 lg:dark:bg-transparent"
     aria-label="Sidebar">
-    <div class="h-full overflow-y-auto px-2 pb-4">
+    <div class="overflow-y-auto px-2 pb-4">
         <div id="icon-complete">
             <a href="#" class="ms-2 flex">
                 <img src="{{ asset('images/logo.png') }}" class="me-3 h-8" alt="FlowBite Logo" />
@@ -235,6 +235,23 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </li>
+            @if($business->posmode)
+            <li>
+                <a href="{{ Route('business.pos.index') }}" data-tooltip-target="tooltip-pos"
+                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                    <x-icon icon="cash-register"
+                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap">
+                        Punto de venta
+                    </span>
+                </a>
+                <div id="tooltip-pos" role="tooltip"
+                    class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Punto de venta
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
+            </li>
+            @endif
             <li>
                 @include("layouts.partials.business.button-new-dte")
             </li>

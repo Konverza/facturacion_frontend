@@ -506,10 +506,10 @@ class DTEController extends Controller
             }
 
             if (isset($this->dte["monto_abonado"]) && isset($this->dte["total_pagar"])) {
-                if ($this->dte["monto_abonado"] != $this->dte["total_pagar"]) {
+                if (round($this->dte["monto_abonado"], 2) != round($this->dte["total_pagar"], 2)) {
                     return redirect()->back()->with([
                         'error' => "Error",
-                        'error_message' => "El monto total pagado no coincide con el total a pagar."
+                        'error_message' => "El monto total pagado no coincide con el total a pagar. Monto abonado: $" . round($this->dte["monto_abonado"], 2) . ", Total a pagar: $" . round($this->dte["total_pagar"], 2)
                     ])->send();
                 }
             }

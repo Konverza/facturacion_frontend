@@ -8,6 +8,7 @@
     'onlyIcon' => false,
     'size' => 'normal',
     'loading' => false, // Añadido para el estado de carga
+    'rounded' => true,
 ])
 
 @php
@@ -35,8 +36,12 @@
 
     // Clases base
     $baseClasses =
-        'font-medium rounded-lg flex items-center justify-center gap-1 transition-colors transition duration-300 text-nowrap  ' .
+        'font-medium flex items-center justify-center gap-1 transition-colors transition duration-300 text-nowrap  ' .
         $padding;
+
+    if($rounded) {
+        $baseClasses .= ' rounded-lg';
+    }
 
     // Tipos de botones
     $buttonTypes = [
