@@ -830,6 +830,7 @@ class DTEController extends Controller
                 "saldo" => $this->dte["total_pagar"],
                 "estado" => "pendiente",
                 "fecha_vencimiento" => now()->addDays(30),
+                "business_id" => session("business"),
             ]);
             DB::commit();
         } catch (\Exception $e) {

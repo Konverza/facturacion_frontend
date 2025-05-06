@@ -17,9 +17,9 @@ class CuentasCobrarController extends Controller
     public function index()
     {
         try {
-            $cuentas = CuentasCobrar::all();
-
+            
             $business_id = Session::get('business') ?? null;
+            $cuentas = CuentasCobrar::where('business_id', $business_id)->get();
             $business = Business::find($business_id ?? $business_id);
             $business_customers = BusinessCustomer::where('business_id', $business_id)->get();
             $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
@@ -73,6 +73,7 @@ class CuentasCobrarController extends Controller
                 'fecha_vencimiento' => 'required|string',
                 'observaciones' => 'nullable|string'
             ]);
+            $business_id = Session::get('business') ?? null;
             DB::beginTransaction();
             $cuenta = new CuentasCobrar();
             $cuenta->numero_factura = $request->numero_factura;
@@ -82,6 +83,7 @@ class CuentasCobrarController extends Controller
             $cuenta->estado = "pendiente";
             $cuenta->fecha_vencimiento = $request->fecha_vencimiento;
             $cuenta->observaciones = $request->observaciones;
+            $cuenta->business_id = $business_id;
             $cuenta->save();
             DB::commit();
             return redirect()->back()
