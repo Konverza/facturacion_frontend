@@ -123,15 +123,15 @@ class DTEDocumentsController extends Controller
 
     public function storeElectric(Request $request)
     {
-        try {
+        // try {
 
-            $codGeneracion = $request->codGeneracion;
+            $codGeneracion = $request->cod_generacion;
             $dtes = $this->dtes;
 
             $dte = null;
-            foreach ($dtes as $dte) {
-                if ($dte["codGeneracion"] === $codGeneracion) {
-                    $dte = $dte;
+            foreach ($dtes as $dte_) {
+                if ($dte_["codGeneracion"] === $codGeneracion) {
+                    $dte = $dte_;
                     break;
                 }
             }
@@ -181,12 +181,12 @@ class DTEDocumentsController extends Controller
                 "modal" => "add-documento-electronico",
                 "table" => "documents-retention"
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                "success" => false,
-                "message" => $e->getMessage()
-            ]);
-        }
+        // } catch (\Exception $e) {
+        //     return response()->json([
+        //         "success" => false,
+        //         "message" => $e->getMessage()
+        //     ]);
+        // }
     }
 
     public function delete(string $id)

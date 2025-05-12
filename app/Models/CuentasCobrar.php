@@ -14,11 +14,17 @@ class CuentasCobrar extends Model
         'saldo',
         'estado',
         'fecha_vencimiento',
-        'observaciones'
+        'observaciones',
+        'business_id',
     ];
 
     public function movements()
     {
         return $this->hasMany(Movements::class, 'cuenta_id');
+    }
+
+    public function business()
+    {
+        return $this->belongsTo(Business::class, 'business_id');
     }
 }
