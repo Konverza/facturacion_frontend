@@ -464,19 +464,27 @@ $(document).ready(function () {
         if (value === "1") {
             $("#input-plazo").addClass("hidden");
             $("#input-periodo").addClass("hidden");
-            $("#input-forma-pago").removeClass("hidden");
         }
 
         if (value === "2") {
             $("#input-plazo").removeClass("hidden");
             $("#input-periodo").removeClass("hidden");
-            $("#input-forma-pago").addClass("hidden");
         }
 
         if (value === "3") {
             $("#input-plazo").removeClass("hidden");
             $("#input-periodo").removeClass("hidden");
-            $("#input-forma-pago").removeClass("hidden");
+        }
+    });
+
+    $("#tipo_item_exportar").on("Changed", function () {
+        const value = $(this).val();
+        const container = $("#container-data-exportacion");
+        if( value === "1" || value === "3"){
+            container.removeClass("hidden");
+        } else {
+            container.addClass("hidden");
+            container.find("input").val("");
         }
     });
 

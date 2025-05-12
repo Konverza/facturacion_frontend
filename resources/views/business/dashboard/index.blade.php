@@ -40,7 +40,7 @@
                         class="flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
                         <!-- TODO: Actualizar estado según API -->
                         <span class="rounded-full bg-green-100 p-4 dark:bg-green-950/30">
-                            <x-icon icon="warning" class="size-10 text-green-500 sm:size-12" />
+                            <x-icon icon="circle-check" class="size-10 text-green-500 sm:size-12" />
                         </span>
                         <div class="flex flex-col items-center justify-center gap-1 sm:items-start">
                             <p class="text-2xl font-bold text-green-500">

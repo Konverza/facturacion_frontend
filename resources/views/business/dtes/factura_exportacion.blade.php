@@ -145,6 +145,8 @@
                             :options="['1' => 'Bienes', '2' => 'Servicios', '3' => 'Bienes y servicios']" :search="false"
                             value="{{ old('tipo_item_exportar', isset($dte['emisor']) ? $dte['emisor']['tipoItemExpor'] : '') }}"
                             selected="{{ old('tipo_item_exportar', isset($dte['emisor']) ? $dte['emisor']['tipoItemExpor'] : '') }}" />
+                    </div>
+                    <div class="mt-4 flex flex-col gap-4" id="container-data-exportacion">
                         <x-select name="recinto_fiscal" id="recinto_fiscal" label="Recinto fiscal" :options="$recintoFiscal"
                             value="{{ old('recinto_fiscal', isset($dte['emisor']) ? $dte['emisor']['recintoFiscal'] : '') }}"
                             selected="{{ old('recinto_fiscal', isset($dte['emisor']) ? $dte['emisor']['recintoFiscal'] : '') }}" />
@@ -152,6 +154,10 @@
                             :options="$regimenExportacion"
                             value="{{ old('regimen_exportacion', isset($dte['emisor']) ? $dte['emisor']['regimen'] : '') }}"
                             selected="{{ old('regimen_exportacion', isset($dte['emisor']) ? $dte['emisor']['regimen'] : '') }}" />
+                        <x-select name="incoterms" id="incoterms" label="INCOTERMS"
+                            :options="$incoterms"
+                            value="{{ old('incoterms', '') }}"
+                            selected="{{ old('incoterms', '') }}" />
                     </div>
                 </div>
             </div>

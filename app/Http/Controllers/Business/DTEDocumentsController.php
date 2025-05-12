@@ -79,9 +79,9 @@ class DTEDocumentsController extends Controller
             $codGeneracion = $request->codGeneracion;
             $dtes = $this->dtes;
             $dte = null;
-            foreach ($dtes as $dte) {
-                if ($dte["codGeneracion"] === $codGeneracion) {
-                    $dte = $dte;
+            foreach ($dtes as $dte_) {
+                if ($dte_["codGeneracion"] === $codGeneracion) {
+                    $dte = $dte_;
                     break;
                 }
             }

@@ -37,6 +37,7 @@ class DTEController extends Controller
     public $formas_pago;
     public $tipo_servicio;
     public $modo_transporte;
+    public $incoterms; 
     public $dte;
 
     public function __construct()
@@ -53,6 +54,7 @@ class DTEController extends Controller
         $this->formas_pago = $this->octopus_service->getCatalog("CAT-017");
         $this->tipo_servicio = $this->octopus_service->getCatalog("CAT-010");
         $this->modo_transporte = $this->octopus_service->getCatalog("CAT-030");
+        $this->incoterms = $this->octopus_service->getCatalog("CAT-031", null, true, true);
         $this->dte = session("dte", []);
     }
 
@@ -138,6 +140,7 @@ class DTEController extends Controller
                 "metodos_pago" => $this->formas_pago,
                 "tipo_servicio" => $this->tipo_servicio,
                 "modo_transporte" => $this->modo_transporte,
+                "incoterms" => $this->incoterms,
                 "dtes" => $dtes
             ];
 
@@ -352,8 +355,8 @@ class DTEController extends Controller
     {
 
         $request->validate([
-            "regimen_exportacion" => "required|string",
-            "recinto_fiscal" => "required|string",
+            "regimen_exportacion" => "nullable|string",
+            "recinto_fiscal" => "nullable|string",
             "tipo_item_exportar" => "required|string",
             "codigo_pais" => "required|string",
             "tipo_persona" => "required|string",
@@ -436,6 +439,8 @@ class DTEController extends Controller
             $dte["resumen"]["pagos"] = $this->pagos();
             $dte["resumen"]["flete"] = round((float) $this->dte["flete"] ?? 0, 2);
             $dte["resumen"]["seguro"] = round((float) $this->dte["seguro"] ?? 0, 2);
+            $dte["resumen"]["codIncoterms"] = $request->incoterms ?? null;
+            $dte["resumen"]["descIncoterms"] = $this->incoterms[$request->incoterms] ?? null;
         } elseif ($type === "14") {
             $dte["resumen"]["descu"] = round((float) $this->dte["total_descuentos"] ?? 0, 2);
             $dte["resumen"]["totalDescu"] = round((float) $this->dte["total_descuentos"] ?? 0, 2);
@@ -647,8 +652,6 @@ class DTEController extends Controller
                         "tipoDocumento" => $request->tipo_documento,
                         "numDocumento" => $request->numero_documento
                     ];
-                break;
-
             case "03":
                 return [
                     "nombre" => $request->nombre_customer,
@@ -665,7 +668,6 @@ class DTEController extends Controller
                     "nit" => $request->numero_documento,
                     "nrc" => $request->nrc_customer,
                 ];
-                break;
 
             case "05":
             case "06":
@@ -684,7 +686,6 @@ class DTEController extends Controller
                     "nit" => $request->numero_documento,
                     "nombreComercial" => $request->nombre_comercial,
                 ];
-                break;
 
             case "07":
                 $actividad = $this->actividades_economicas[$request->actividad_economica] ?? null;
@@ -706,7 +707,6 @@ class DTEController extends Controller
                     "telefono" => $request->telefono,
                     "correo" => $request->correo,
                 ];
-                break;
             case "11":
                 $pais = $this->countries[$request->codigo_pais] ?? null;
                 return [
@@ -722,7 +722,6 @@ class DTEController extends Controller
                     "telefono" => $request->telefono,
                     "correo" => $request->correo,
                 ];
-                break;
             case "14":
                 $numero_documento = str_replace("-", "", $request->numero_documento);
                 return [
