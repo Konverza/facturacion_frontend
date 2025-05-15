@@ -983,10 +983,26 @@ class DTEProductController extends Controller
         if ($this->dte["type"] === "01") {
             $this->dte["total_iva_retenido"] = round(((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0)) * 0.01, 2);
             $this->dte["isr"] = round(((($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"]) / 1.13 ?? 0) + (($this->dte["total_ventas_exentas"] - $this->dte["descuento_venta_exenta"] ?? 0) / 1.13 ?? 0)) * 0.10, 2);
+        }else if ($this->dte["type"] === "14") {
+            $total_servicios = array_sum(
+                array_map(
+                    fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 2) ? ($product["total"] ?? 0) : 0,
+                    $this->dte["products"] ?? []
+                )
+            );
+            $total_bienes = array_sum(
+                array_map(
+                    fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 1) ? ($product["total"] ?? 0) : 0,
+                    $this->dte["products"] ?? []
+                )
+            );
+            $this->dte["total_iva_retenido"] = round(($total_bienes ?? 0) * 0.01, 2);
+            $this->dte["isr"] = round(($total_servicios ?? 0) * 0.10, 2);
         } else {
             $this->dte["total_iva_retenido"] = round((($this->dte["total_ventas_gravadas"] ?? 0) - ($this->dte["descuento_venta_gravada"] ?? 0)) * 0.01, 2);
             $this->dte["isr"] = round(((($this->dte["total_ventas_gravadas"] ?? 0) - ($this->dte["descuento_venta_gravada"] ?? 0)) + (($this->dte["total_ventas_exentas"] ?? 0) - $this->dte["descuento_venta_exenta"] ?? 0)) * 0.10, 2);
         }
+
 
         $this->dte["total_pagar"] = ($this->dte["retener_iva"] ?? "inactive") === "active"
             ? round($this->dte["total_pagar"] - $this->dte["total_iva_retenido"], 2)
