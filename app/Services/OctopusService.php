@@ -33,7 +33,6 @@ class OctopusService
                         return $this->getMunicipiosFromDepartamentos($values, $value);
                     }
                     return $this->formatCatalog($values, 'codigo', 'nombre', $diff, $doble_value);
-                    break;
 
                 case "CAT-019":
                 case "CAT-028":
@@ -43,22 +42,19 @@ class OctopusService
                 case "CAT-030":
                 case "CAT-031":
                     return $this->formatCatalog($values, 'code', 'value', $diff, $doble_value);
-                    break;
-
+                case "CAT-002":
                 case "CAT-009":
                 case "CAT-014":
                 case "CAT-022":
                 case "CAT-020":
                     return $this->formatCatalog($values, 'code', 'value', $diff, $doble_value);
-                    break;
-
                 default:
                     throw new \InvalidArgumentException("Invalid catalog code: $catalogCode");
             }
         } catch (\Exception $e) {
             return redirect()->back()->with([
                 "error" => "Error",
-                "error_message" => "Error al obtener los datos"
+                "error_message" => "Error al obtener los datos" . $e->getMessage()
             ]);
         }
     }
@@ -71,7 +67,7 @@ class OctopusService
         } catch (\Exception $e) {
             return redirect()->back()->with([
                 "error" => "Error",
-                "error_message" => "Error al obtener los datos"
+                "error_message" => "Error al obtener los datos". $e->getMessage()
             ]);
         }
     }
