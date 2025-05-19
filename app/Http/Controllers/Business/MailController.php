@@ -23,7 +23,7 @@ class MailController extends Controller
         $dte = Http::get(env("OCTOPUS_API_URL") . '/dtes/' . $codGeneracion)->json();
 
         if ($dte) {
-            Mail::to($email)->send(new DteMail($codGeneracion, $dte["enlace_pdf"], $dte["enlace_json"]));
+            Mail::to($email)->send(new DteMail($dte, $dte["enlace_pdf"], $dte["enlace_json"]));
             return redirect()->route("business.documents.index")
                 ->with([
                     "success" => "Correo enviado",
