@@ -189,6 +189,7 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </li>
+            @if(!auth()->user()->only_fcf)
             <li>
                 <a href="{{ Route('business.cuentas-por-cobrar.index') }}"
                     data-tooltip-target="tooltip-cuentas-por-cobrar"
@@ -205,6 +206,7 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </li>
+            @endif
             {{--      <li>
                 <a href="{{ Route('business.customers.index') }}" data-tooltip-target="tooltip-cuentas-por-pagar"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">

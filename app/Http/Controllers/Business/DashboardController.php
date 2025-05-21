@@ -41,7 +41,11 @@ class DashboardController extends Controller
             $business_user = BusinessUser::where("user_id", $user->id)->first();
             $business = Business::find($business_id);
             $business_plan = BusinessPlan::where("nit", $business->nit)->with('plan')->first();
-            $dtes_pending = DTE::where('business_id', $business->id)->get();
+            $dtes_pending = DTE::where('business_id', $business->id);
+            if ($user->only_fcf) {
+                $dtes_pending = $dtes_pending->where('type', '01');
+            }
+            $dtes_pending = $dtes_pending->get();
 
             if (!$business) {
                 return back()->with('error', 'No se encontró la empresa asociada.');
@@ -60,6 +64,10 @@ class DashboardController extends Controller
             $datos_empresa = Http::timeout(30)->get($this->octopus_url . '/datos_empresa/nit/' . $business->nit)
                 ->json();
             $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit."&limit=5")->json();
+
+            if($user->only_fcf){
+                $dtes = array_filter($dtes, fn($dte) => in_array($dte['tipo_dte'], ['01']));
+            }
 
             // Datos locales
             $products = BusinessProduct::where('business_id', $business->id)->count('id');

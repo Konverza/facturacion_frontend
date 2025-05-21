@@ -45,6 +45,12 @@ class DocumentController extends Controller
                 return $dte;
             }, $dtes);
 
+            if(auth()->user()->only_fcf) {
+                $dtes = array_filter($dtes, function ($dte) {
+                    return $dte["tipo_dte"] == "01";
+                });
+            }
+
             usort($dtes, function ($a, $b) {
                 return $b["id"] <=> $a["id"];
             });

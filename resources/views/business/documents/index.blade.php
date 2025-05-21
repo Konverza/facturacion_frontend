@@ -12,7 +12,8 @@
                 <div class="flex-[6]">
                     <x-input type="text" placeholder="Buscar" class="w-full" icon="search" id="input-search-special" />
                 </div>
-                <div class="flex-1">
+                @if(!auth()->user()->only_fcf)
+                    <div class="flex-1">
                     <button type="button"
                         class="show-modal bg-green-500 text-white hover:bg-green-600 dark:bg-green-500 dark:text-white dark:hover:bg-green-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
                         data-target="#download-dtes">
@@ -28,6 +29,7 @@
                         <span class="text-sm">Descargar Anexos</span>
                     </button>
                 </div>
+                @endif
             </div>
             <x-table id="table-special">
                 <x-slot name="thead">

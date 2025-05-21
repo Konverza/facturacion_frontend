@@ -15,6 +15,12 @@
     foreach ($plan_dtes as $dte) {
         $dte_options[$dte] = $types[$dte];
     }
+
+    if(auth()->user()->only_fcf) {
+        $dte_options = array_filter($dte_options, function ($key) {
+            return $key == '01';
+        }, ARRAY_FILTER_USE_KEY);
+    }
 @endphp
 <div id="generate-new-dte" tabindex="-1" aria-hidden="true"
     class="fixed left-0 right-0 top-0 z-50 hidden h-full max-h-full w-full items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-200/50 dark:bg-gray-900/50 md:inset-0">
