@@ -970,19 +970,18 @@ class DTEProductController extends Controller
 
     public function total_retenciones()
     {
-        // //Total del IVA CCF
-        // $this->dte["total_ventas_gravadas_descuento"] = round($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"], 2);
-        // $this->dte["iva"] = round($this->dte["total_ventas_gravadas_descuento"]  * 0.13, 2);
 
-        // if ($this->dte["type"] === "03" && $this->dte["total_ventas_gravadas"] > 0) {
-        //     $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"] + $this->dte["iva"], 2);
-        // } else {
         $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"], 2);
-        // }
 
         if ($this->dte["type"] === "01") {
             $this->dte["total_iva_retenido"] = round(((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0)) * 0.01, 2);
-            $this->dte["isr"] = round(((($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"]) / 1.13 ?? 0) + (($this->dte["total_ventas_exentas"] - $this->dte["descuento_venta_exenta"] ?? 0) / 1.13 ?? 0)) * 0.10, 2);
+            $total_servicios = array_sum(
+                array_map(
+                    fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 2) ? (($product["ventas_gravadas"] / 1.13) ?? 0) : 0,
+                    $this->dte["products"] ?? []
+                )
+            );
+            $this->dte["isr"] = round($total_servicios * 0.10, 2);
         }else if ($this->dte["type"] === "14") {
             $total_servicios = array_sum(
                 array_map(
@@ -1000,7 +999,14 @@ class DTEProductController extends Controller
             $this->dte["isr"] = round(($total_servicios ?? 0) * 0.10, 2);
         } else {
             $this->dte["total_iva_retenido"] = round((($this->dte["total_ventas_gravadas"] ?? 0) - ($this->dte["descuento_venta_gravada"] ?? 0)) * 0.01, 2);
-            $this->dte["isr"] = round(((($this->dte["total_ventas_gravadas"] ?? 0) - ($this->dte["descuento_venta_gravada"] ?? 0)) + (($this->dte["total_ventas_exentas"] ?? 0) - $this->dte["descuento_venta_exenta"] ?? 0)) * 0.10, 2);
+
+            $total_servicios = array_sum(
+                array_map(
+                    fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 2) ? ($product["ventas_gravadas"] ?? 0) : 0,
+                    $this->dte["products"] ?? []
+                )
+            );
+            $this->dte["isr"] = round($total_servicios * 0.10, 2);
         }
 
 
