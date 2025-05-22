@@ -38,6 +38,7 @@ class DTEController extends Controller
     public $tipo_servicio;
     public $modo_transporte;
     public $incoterms; 
+    public $bienTitulo;
     public $dte;
 
     public function __construct()
@@ -55,6 +56,7 @@ class DTEController extends Controller
         $this->tipo_servicio = $this->octopus_service->getCatalog("CAT-010");
         $this->modo_transporte = $this->octopus_service->getCatalog("CAT-030");
         $this->incoterms = $this->octopus_service->getCatalog("CAT-031", null, true, true);
+        $this->bienTitulo = $this->octopus_service->getCatalog("CAT-025");
         $this->dte = session("dte", []);
     }
 
@@ -76,8 +78,11 @@ class DTEController extends Controller
                 ->filter(function ($dte) {
                     return $dte["estado"] === "PROCESADO";
                 });
-
-            if ($number === "05" || $number === "06") {
+            if ($number === "04") {
+                $dtes = $dtes->filter(function ($dte) {
+                    return in_array($dte["tipo_dte"], ["01", "03"]);
+                })->toArray();
+            }elseif ($number === "05" || $number === "06") {
                 $dtes = $dtes->filter(function ($dte) {
                     return in_array($dte["tipo_dte"], ["03", "07"]);
                 })->toArray();
@@ -105,6 +110,7 @@ class DTEController extends Controller
             $types = [
                 '01' => 'Factura Electrónica',
                 '03' => 'Comprobante de crédito fiscal',
+                '04' => 'Nota de Remisión',
                 '05' => 'Nota de crédito',
                 '06' => 'Nota de débito',
                 '07' => 'Comprobante de retención',
@@ -141,6 +147,7 @@ class DTEController extends Controller
                 "tipo_servicio" => $this->tipo_servicio,
                 "modo_transporte" => $this->modo_transporte,
                 "incoterms" => $this->incoterms,
+                "bienTitulo" => $this->bienTitulo,
                 "dtes" => $dtes
             ];
 
@@ -152,6 +159,10 @@ class DTEController extends Controller
 
                 case "03":
                     $view = "business.dtes.comprobante_credito_fiscal";
+                    break;
+                
+                case "04":
+                    $view = "business.dtes.nota_remision";
                     break;
 
                 case "05":
@@ -229,6 +240,48 @@ class DTEController extends Controller
             ]);
         }
         $data = $this->processDTE($request, "03", "/credito_fiscal/");
+        $response = $this->handleResponse($data, $request);
+        if ($response === "PROCESADO") {
+            return redirect()->route('business.documents.index')
+                ->with([
+                    'success' => "Exito",
+                    'success_message' => "Documento generado correctamente",
+                ]);
+        } elseif ($response === "BORRADOR") {
+            return redirect()->route('business.index')
+                ->with('success', "Exito")
+                ->with(
+                    "success_message",
+                    "Documento guardado como borrador"
+                );
+        } else {
+            return redirect()->route('business.documents.index')
+                ->with('error', "Error")
+                ->with(
+                    "error_message",
+                    "Ha ocurrido un error al generar el documento."
+                );
+        }
+    }
+
+    public function nota_remision(Request $request)
+    {
+        $request->validate([
+            "bienTitulo" => "required|string",
+        ]);
+
+        $numero_documento = $request->numero_documento;
+        if ($request->tipo_documento === "36") {
+            if (strlen($numero_documento) !== 14) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
+            }
+        } else if ($request->tipo_documento === "13") {
+            if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+            }
+        }
+
+        $data = $this->processDTE($request, "04", "/nota_remision/");
         $response = $this->handleResponse($data, $request);
         if ($response === "PROCESADO") {
             return redirect()->route('business.documents.index')
@@ -428,8 +481,12 @@ class DTEController extends Controller
             $this->dte["emisor"]["tipoItemExpor"] = $request->tipo_item_exportar;
             session(["dte" => $this->dte]);
         }
-
-        if ($type === "07") {
+        if ($type === "04"){
+            $dte["resumen"]["descuNoSuj"] = round((float) $this->dte["descuento_venta_no_sujeta"] ?? 0, 2);
+            $dte["resumen"]["descuExenta"] = round((float) $this->dte["descuento_venta_exenta"] ?? 0, 2);
+            $dte["resumen"]["descuGravada"] = round((float) $this->dte["descuento_venta_gravada"] ?? 0, 2);
+            $dte["resumen"]["porcentajeDescuento"] = 0;
+        } elseif ($type === "07") {
             $dte["resumen"]["totalSujetoRetencion"] = round((float) $this->dte["monto_sujeto_retencion_total"] ?? 0, 2);
             $dte["resumen"]["totalIVAretenido"] = round((float) $this->dte["total_iva_retenido"] ?? 0, 2);
         } elseif ($type === "11") {
@@ -510,12 +567,14 @@ class DTEController extends Controller
                 }
             }
 
-            if (isset($this->dte["monto_abonado"]) && isset($this->dte["total_pagar"])) {
-                if (round($this->dte["monto_abonado"], 2) != round($this->dte["total_pagar"], 2)) {
-                    return redirect()->back()->with([
-                        'error' => "Error",
-                        'error_message' => "El monto total pagado no coincide con el total a pagar. Monto abonado: $" . round($this->dte["monto_abonado"], 2) . ", Total a pagar: $" . round($this->dte["total_pagar"], 2)
-                    ])->send();
+            if($this->dte["type"] !== "04"){
+                if (isset($this->dte["monto_abonado"]) && isset($this->dte["total_pagar"])) {
+                    if (round($this->dte["monto_abonado"], 2) != round($this->dte["total_pagar"], 2)) {
+                        return redirect()->back()->with([
+                            'error' => "Error",
+                            'error_message' => "El monto total pagado no coincide con el total a pagar. Monto abonado: $" . round($this->dte["monto_abonado"], 2) . ", Total a pagar: $" . round($this->dte["total_pagar"], 2)
+                        ])->send();
+                    }
                 }
             }
 
@@ -555,7 +614,7 @@ class DTEController extends Controller
         $business_id = Session::get('business') ?? null;
         if (isset($data["estado"])) {
             if ($data["estado"] === "PROCESADO" || $data["estado"] === "CONTINGENCIA") {
-                if ($this->dte["type"] !== "07" && $this->dte["type"] !== "14") {
+                if ($this->dte["type"] !== "07" && $this->dte["type"] !== "14" && $this->dte["type"] !== "04") {
                     $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida");
                     if ($request->condicion_operacion === 2) {
                         $this->createCXC($data, $request);
@@ -668,7 +727,23 @@ class DTEController extends Controller
                     "nit" => $request->numero_documento,
                     "nrc" => $request->nrc_customer,
                 ];
-
+            case "04":
+                return [
+                        "nombre" => $request->nombre_receptor,
+                        "nombreComercial" => $request->nombre_comercial,
+                        "codActividad" => $request->actividad_economica,
+                        "descActividad" => $descActividad,
+                        "telefono" => $request->telefono,
+                        "correo" => $request->correo,
+                        "direccion" => [
+                            "departamento" => $request->departamento,
+                            "municipio" => $request->municipio,
+                            "complemento" => $request->complemento
+                        ],
+                        "tipoDocumento" => $request->tipo_documento,
+                        "numDocumento" => $request->numero_documento,
+                        "bienTitulo" => $request->bienTitulo,
+                    ];
             case "05":
             case "06":
                 return [

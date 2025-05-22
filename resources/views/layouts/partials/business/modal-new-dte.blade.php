@@ -2,6 +2,7 @@
     $types = [
         '01' => 'Factura Electrónica',
         '03' => 'Comprobante de crédito fiscal',
+        '04' => 'Nota de Remisión',
         '05' => 'Nota de crédito',
         '06' => 'Nota de débito',
         '07' => 'Comprobante de retención',

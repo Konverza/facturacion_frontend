@@ -101,6 +101,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         //Routes store DTEs
         Route::post("/factura", [DTEController::class, "factura"])->name('factura');
         Route::post("/credito-fiscal", [DTEController::class, "credito_fiscal"])->name('credito-fiscal');
+        Route::post("/nota-remision", [DTEController::class, "nota_remision"])->name('nota-remision');
         Route::post("/nota-credito", [DTEController::class, "nota_credito"])->name('nota-credito');
         Route::post("/nota-debito", [DTEController::class, "nota_debito"])->name('nota-debito');
         Route::post("/comprobante-retencion", [DTEController::class, "comprobante_retencion"])->name('comprobante-retencion');

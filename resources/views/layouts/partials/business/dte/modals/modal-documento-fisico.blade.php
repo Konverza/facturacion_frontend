@@ -16,6 +16,12 @@
                 '09' => 'Documento contable de liquidación',
             ];
             break;
+        case '04':
+            $tipos_documentos = [
+                '01' => 'Factura Electrónica',
+                '03' => 'Comprobante de crédito fiscal',
+            ];
+            break;
         case '05':
         case '06':
             $tipos_documentos = [

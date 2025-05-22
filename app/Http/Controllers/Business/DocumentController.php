@@ -22,11 +22,12 @@ class DocumentController extends Controller
             $business = Business::find($business_id ?? $business_user->business_id);
             $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
             $receptores_nit = ['03', '05', '06'];
-            $receptores_num = ['01', '07', '11', '14'];
+            $receptores_num = ['01', '04', '07', '11', '14'];
 
             $types = [
                 '01' => 'Factura Electrónica',
                 '03' => 'Comprobante de crédito fiscal',
+                '04' => 'Nota de Remisión',
                 '05' => 'Nota de crédito',
                 '06' => 'Nota de débito',
                 '07' => 'Comprobante de retención',

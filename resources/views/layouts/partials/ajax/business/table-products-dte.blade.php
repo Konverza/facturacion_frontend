@@ -181,6 +181,7 @@
                 </x-td>
             </x-tr>
 
+            @if ($dte['type'] !== '04')
             <x-tr>
                 <x-td colspan="9" :last="true">
                     <div class="flex items-center justify-end">
@@ -202,6 +203,7 @@
                     </div>
                 </x-td>
             </x-tr>
+            @endif
 
             @if ($dte['type'] === '03' || $dte['type'] === '05')
                 <x-tr>
@@ -227,6 +229,7 @@
                 </x-tr>
             @endif
 
+            @if ($dte['type'] !== '04')
             <x-tr>
                 <x-td colspan="9" :last="true">
                     <div class="flex items-center justify-end">
@@ -248,6 +251,7 @@
                     </div>
                 </x-td>
             </x-tr>
+            @endif
 
             <x-tr>
                 <x-td colspan="9" :last="true">

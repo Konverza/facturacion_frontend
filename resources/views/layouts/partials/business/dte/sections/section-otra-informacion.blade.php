@@ -71,16 +71,14 @@
                                         Documento físico
                                     </button>
                                 </li>
-                                @if ($number !== '01' && $number !== '03')
-                                    <li>
-                                        <button type="button"
-                                            class="show-modal flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900"
-                                            data-target="#add-documento-electronico">
-                                            <x-icon icon="device-laptop" class="size-4" />
-                                            Documento electrónico
-                                        </button>
-                                    </li>
-                                @endif
+                                <li>
+                                    <button type="button"
+                                        class="show-modal flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900"
+                                        data-target="#add-documento-electronico">
+                                        <x-icon icon="device-laptop" class="size-4" />
+                                        Documento electrónico
+                                    </button>
+                                </li>
                             </ul>
                         </div>
                     </div>

@@ -1,4 +1,37 @@
 <!-- Modal add documento electronico -->
+
+@php
+    $tipos_documentos = [];
+    switch ($number) {
+        case '01':
+            $tipos_documentos = [
+                '04' => 'Nota de remisión',
+                '09' => 'Documento contable de liquidación',
+            ];
+            break;
+        case '03':
+            $tipos_documentos = [
+                '04' => 'Nota de remisión',
+                '08' => 'Comprobante de liquidación',
+                '09' => 'Documento contable de liquidación',
+            ];
+            break;
+        case '04':
+            $tipos_documentos = [
+                '01' => 'Factura Electrónica',
+                '03' => 'Comprobante de crédito fiscal',
+            ];
+            break;
+        case '05':
+        case '06':
+            $tipos_documentos = [
+                '03' => 'Comprobante de crédito fiscal',
+                '07' => 'Comprobante de retención',
+            ];
+            break;
+    }
+@endphp
+
 <div id="add-documento-electronico" tabindex="-1" aria-hidden="true"
     class="fixed left-0 right-0 top-0 z-[100] hidden h-full max-h-full w-full items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-200/50 dark:bg-gray-900/50 md:inset-0">
     <div class="relative m-4 mb-8 max-h-full w-full max-w-[950px]">
@@ -30,10 +63,7 @@
                                 value="{{ old('numero_documento', isset($dte['customer']) ? $dte['customer']['numDocumento'] : '') }}" />
                         </div>
                         <div class="flex-1">
-                            <x-select :options="[
-                                'Comprobante de crédito fiscal' => 'Comprobante de crédito fiscal',
-                                'Comprobante de retención' => 'Comprobante de retención',
-                            ]" name="tipo_documento" id="tipo_documento"
+                            <x-select :options="$tipos_documentos" name="tipo_documento" id="tipo_documento"
                                 label="Tipo de documento" :search="false" />
                         </div>
                     </div>
@@ -68,11 +98,7 @@
                                 @foreach ($dtes as $dte)
                                     <x-tr>
                                         <x-td class="text-xs">
-                                            @if ($dte['tipo_dte'] == '03')
-                                                Comprobante de crédito fiscal
-                                            @elseif($dte['tipo_dte'] == '07')
-                                                Comprobante de retención
-                                            @endif
+                                            {{ $dte['tipo_dte'] }} - {{$tipos_documentos[$dte['tipo_dte']] ?? 'No definido'}}
                                         </x-td>
                                         <x-td class="text-xs">
                                             @php

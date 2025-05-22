@@ -66,7 +66,7 @@
                                     <span class="font-semibold">Código generación:</span>
                                     <span>{{ $invoice['codGeneracion'] }}</span>
                                     <span class="font-semibold">Número de control:</span>
-                                    <span>{{ $invoice['documento']->identificacion->numeroControl }}</span>
+        <span>{{ $invoice['documento']->identificacion->numeroControl }}</span>
                                     <span class="font-semibold">Sello de recibido:</span>
                                     <span>{{ $invoice['selloRecibido'] }}</span>
                                 </div>
@@ -84,11 +84,7 @@
 
                                     $nombre = $receptor->nombre;
 
-                                    if (in_array($invoice['tipo_dte'], $receptores_nit)) {
-                                        $documento = $receptor->nit;
-                                    } else {
-                                        $documento = $receptor->numDocumento;
-                                    }
+                                    $documento = (in_array($invoice['tipo_dte'], $receptores_nit)) ? $receptor->nit : $receptor->numDocumento;
                                 @endphp
                                 @if ($nombre)
                                     <div class="flex flex-col gap-1 text-xs">
