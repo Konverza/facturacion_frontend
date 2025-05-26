@@ -134,7 +134,7 @@ class RelatedDocumentsController extends Controller
             $this->dte["documentos_relacionados"][] = [
                 "id" => rand(1, 1000),
                 "tipo_documento" => $document["tipo_dte"],
-                "tipo_generacion" => 1,
+                "tipo_generacion" => 2,
                 "numero_documento" => $request->codGeneracion,
                 "fecha_documento" => Carbon::parse($document["fhProcesamiento"])->format("Y-m-d"),
             ];

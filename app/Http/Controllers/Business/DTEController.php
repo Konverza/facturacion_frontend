@@ -968,14 +968,12 @@ class DTEController extends Controller
     public function documentosRelacionados()
     {
         if (!empty($this->dte["documentos_relacionados"])) {
-            return array_map(function ($documento) {
-                return [
-                    "tipoDocumento" => $documento["tipo_documento"],
-                    "tipoGeneracion" => intval($documento["tipo_generacion"]),
-                    "numeroDocumento" => $documento["numero_documento"],
-                    "fechaEmision" => $documento["fecha_documento"]
-                ];
-            }, $this->dte["documentos_relacionados"]);
+            return array_values(array_map(fn($documento) => [
+                "tipoDocumento" => $documento["tipo_documento"],
+                "tipoGeneracion" => intval($documento["tipo_generacion"]),
+                "numeroDocumento" => $documento["numero_documento"],
+                "fechaEmision" => $documento["fecha_documento"]
+            ], $this->dte["documentos_relacionados"]));
         }
         return null;
     }
