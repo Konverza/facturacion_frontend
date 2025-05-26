@@ -236,12 +236,14 @@
                                 label="Documento asociado" :search="false" required />
                         </div>
                         <div class="mt-4 flex flex-col gap-4">
-                            <x-input type="text" label="Identifación del documento" required
-                                placeholder="Identificación del nombre del documento asociado"
-                                name="identificacion_documento" id="identificacion_documento" />
-                            <x-input type="textarea" label="Descripción del documento"
-                                placeholder="Descripción de datos importantes del documento asociado"
-                                name="descripcion_documento" id="descripcion_documento" required />
+                            <div id="container-data-documento-asociado">
+                                <x-input type="text" label="Identifación del documento" required
+                                    placeholder="Identificación del nombre del documento asociado"
+                                    name="identificacion_documento" id="identificacion_documento" />
+                                <x-input type="textarea" label="Descripción del documento"
+                                    placeholder="Descripción de datos importantes del documento asociado"
+                                    name="descripcion_documento" id="descripcion_documento" required />
+                            </div>
                         </div>
                         <div class="mt-4 hidden" id="container-data-transporte">
                             <div class="flex flex-col gap-4">
