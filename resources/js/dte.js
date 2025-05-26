@@ -442,19 +442,34 @@ $(document).ready(function () {
         const container = $("#container-data-documento-asociado");
         const container_transporte = $("#container-data-transporte");
         const container_medico = $("#container-data-medico");
-        if (value === "3") {
-            container.addClass("hidden");
-            container.find("input").removeAttr("required");
-            container_medico.removeClass("hidden");
-            container_medico.find("input").attr("required", true);
-        } else if (value === "4") {
-            container_transporte.removeClass("hidden");
-        } else {
-            container.removeClass("hidden");
-            container.find("input").attr("required", true);
-            container_medico.addClass("hidden");
-            container_medico.find("input").removeAttr("required");
+        switch (value) {
+            case "1":
+            case "2":
+                container.removeClass("hidden");
+                container.find("input").attr("required", true);
+                container_transporte.addClass("hidden");
+                container_transporte.find("input").removeAttr("required");
+                container_medico.addClass("hidden");
+                container_medico.find("input").removeAttr("required");
+                break;
+            case "3": // Médico
+                container.addClass("hidden");
+                container.find("input").removeAttr("required");
+                container_medico.removeClass("hidden");
+                container_medico.find("input").attr("required", true);
+                container_transporte.addClass("hidden");
+                container_transporte.find("input").removeAttr("required");
+                break;
+            case "4": // Transporte
+                container.addClass("hidden");
+                container.find("input").removeAttr("required");
+                container_transporte.removeClass("hidden");
+                container_transporte.find("input").attr("required", true);
+                container_medico.addClass("hidden");
+                container_medico.find("input").removeAttr("required");
+                break;
         }
+
     });
 
     //Sección condición operación
