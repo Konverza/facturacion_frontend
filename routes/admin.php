@@ -14,8 +14,5 @@ Route::middleware(['auth', 'role:admin'])->prefix("admin")->name("admin.")->grou
     Route::resource("/business", BusinessController::class);
     Route::resource("/plans", PlansController::class);
     Route::resource("/users", UserController::class);
-    Route::prefix("configuration")->name("configuration.")->group(function () {
-        Route::get("/", [ConfigurationController::class, "index"])->name("index");
-    });
     Route::get("/get-municipios", [BusinessController::class, "getMunicipios"])->name("get-municipios");
 });

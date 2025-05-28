@@ -55,13 +55,6 @@ Breadcrumbs::for("admin.users.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Usuarios", route("admin.users.index"));
 });
 
-//Configuration
-Breadcrumbs::for("admin.configuration.index", function (BreadcrumbTrail $trail) {
-    $icon = Blade::render("<x-icon icon='settings' class='w-4 h-4'/>");
-    $trail->parent("admin");
-    $trail->push($icon . "Configuración", route("admin.configuration.index"));
-});
-
 
 //BUSINESS
 
