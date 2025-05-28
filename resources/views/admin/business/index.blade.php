@@ -81,20 +81,6 @@
                                         id="options-business-{{ $busines->id }}">
                                         <ul class="flex flex-col text-xs">
                                             <li>
-                                                <button type="button"
-                                                    class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
-                                                    <x-icon icon="currency-dollar" class="h-4 w-4" />
-                                                    Registrar pago
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button type="button"
-                                                    class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
-                                                    <x-icon icon="user-edit" class="h-4 w-4" />
-                                                    Ver usuario
-                                                </button>
-                                            </li>
-                                            <li>
                                                 <a href="{{ Route('admin.business.edit', $busines->id) }}"
                                                     class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
                                                     <x-icon icon="pencil" class="h-4 w-4" />
@@ -102,24 +88,17 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <button type="button"
+                                                <a href="{{ Route('admin.business.edit', $busines->id) }}"
                                                     class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
-                                                    <x-icon icon="cloud-upload" class="h-4 w-4" />
-                                                    Mejorar plan
-                                                </button>
+                                                    <x-icon icon="building-store" class="h-4 w-4" />
+                                                    Sucursales/Puntos de Venta
+                                                </a>
                                             </li>
                                             <li>
                                                 <button type="button"
                                                     class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
                                                     <x-icon icon="user-off" class="h-4 w-4" />
                                                     Desactivar
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button type="button"
-                                                    class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
-                                                    <x-icon icon="address-book" class="h-4 w-4" />
-                                                    Contactar
                                                 </button>
                                             </li>
                                         </ul>
