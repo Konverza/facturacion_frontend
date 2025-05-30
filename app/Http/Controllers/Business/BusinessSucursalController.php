@@ -19,6 +19,14 @@ class BusinessSucursalController extends Controller
 
     public function index(int $business_id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $sucursales = Sucursal::where('business_id', $business_id)
             ->with(['puntosVentas'])
             ->get();
@@ -34,12 +42,28 @@ class BusinessSucursalController extends Controller
 
     public function edit(int $business_id, int $id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $sucursal = Sucursal::findOrFail($id);
         return response()->json($sucursal);
     }
 
     public function store_sucursal(int $business_id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $validator = validator(request()->all(), [
             'nombre' => 'required|string|max:255',
             'departamento' => 'required|string|max:255',
@@ -68,6 +92,14 @@ class BusinessSucursalController extends Controller
 
     public function update_sucursal(int $business_id, int $id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $validator = validator(request()->all(), [
             'nombre' => 'required|string|max:255',
             'departamento' => 'required|string|max:255',
@@ -95,6 +127,14 @@ class BusinessSucursalController extends Controller
 
     public function delete_sucursal(int $business_id, int $id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $sucursal = Sucursal::findOrFail($id);
         // Check if the Sucursal has associated Puntos de Venta
         if ($sucursal->puntosVentas()->count() > 0) {
@@ -111,6 +151,14 @@ class BusinessSucursalController extends Controller
 
     public function index_puntos_venta(int $business_id, int $sucursal_id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $puntos_venta = PuntoVenta::where('sucursal_id', $sucursal_id)->get();
         $sucursal = Sucursal::findOrFail($sucursal_id);
 
@@ -123,6 +171,14 @@ class BusinessSucursalController extends Controller
 
     public function store_punto_venta(int $business_id, int $sucursal_id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $validator = validator(request()->all(), [
             'nombre' => 'required|string|max:255',
             'codPuntoVenta' => 'required|string|max:4',
@@ -146,12 +202,28 @@ class BusinessSucursalController extends Controller
 
     public function edit_punto_venta(int $business_id, int $sucursal_id, int $id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $punto_venta = PuntoVenta::findOrFail($id);
         return response()->json($punto_venta);
     }
 
     public function update_punto_venta(int $business_id, int $sucursal_id, int $id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $validator = validator(request()->all(), [
             'nombre' => 'required|string|max:255',
             'codPuntoVenta' => 'required|string|max:4',
@@ -174,6 +246,14 @@ class BusinessSucursalController extends Controller
 
     public function delete_punto_venta(int $business_id, int $sucursal_id, int $id)
     {
+        // Verify if user has access to the business
+        $business = Business::findOrFail($business_id);
+        if (!auth()->user()->businesses->contains($business)) {
+            return redirect()->route('business.index')
+                ->with('error', 'Acceso Denegado')
+                ->with("error_message", "No tienes acceso a este negocio.");
+        }
+
         $punto_venta = PuntoVenta::findOrFail($id);
         $punto_venta->delete();
 
