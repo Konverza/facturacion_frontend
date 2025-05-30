@@ -142,22 +142,22 @@
                 $business_id = Session::get('business') ?? null;
                 $business = \App\Models\Business::find($business_id);
             @endphp
-            @if($business->posmode)
-            <li>
-                <a href="{{ Route('business.categories.index') }}" data-tooltip-target="tooltip-categories"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="address-book"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
+            @if ($business->posmode)
+                <li>
+                    <a href="{{ Route('business.categories.index') }}" data-tooltip-target="tooltip-categories"
+                        class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                        <x-icon icon="address-book"
+                            class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                        <span class="ms-3 flex-1 whitespace-nowrap">
+                            Categorías
+                        </span>
+                    </a>
+                    <div id="tooltip-categories" role="tooltip"
+                        class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
                         Categorías
-                    </span>
-                </a>
-                <div id="tooltip-categories" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Categorías
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
-            </li>
+                        <div class="tooltip-arrow" data-popper-arrow></div>
+                    </div>
+                </li>
             @endif
             <li>
                 <a href="{{ Route('business.products.index') }}" data-tooltip-target="tooltip-products"
@@ -189,24 +189,6 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </li>
-            @if(!auth()->user()->only_fcf)
-            <li>
-                <a href="{{ Route('business.cuentas-por-cobrar.index') }}"
-                    data-tooltip-target="tooltip-cuentas-por-cobrar"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="coin"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
-                        Cuentas por cobrar
-                    </span>
-                </a>
-                <div id="tooltip-cuentas-por-cobrar" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Cuentas por cobrar
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
-            </li>
-            @endif
             {{--      <li>
                 <a href="{{ Route('business.customers.index') }}" data-tooltip-target="tooltip-cuentas-por-pagar"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
@@ -237,25 +219,43 @@
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
             </li>
-            @if($business->posmode)
-            <li>
-                <a href="{{ Route('business.pos.index') }}" data-tooltip-target="tooltip-pos"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="cash-register"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
+            @if (!auth()->user()->only_fcf)
+                <li>
+                    <a href="{{ Route('business.cuentas-por-cobrar.index') }}"
+                        data-tooltip-target="tooltip-cuentas-por-cobrar"
+                        class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                        <x-icon icon="coin"
+                            class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                        <span class="ms-3 flex-1 whitespace-nowrap">
+                            Cuentas por cobrar
+                        </span>
+                    </a>
+                    <div id="tooltip-cuentas-por-cobrar" role="tooltip"
+                        class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                        Cuentas por cobrar
+                        <div class="tooltip-arrow" data-popper-arrow></div>
+                    </div>
+                </li>
+            @endif
+            @if ($business->posmode)
+                <li>
+                    <a href="{{ Route('business.pos.index') }}" data-tooltip-target="tooltip-pos"
+                        class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                        <x-icon icon="cash-register"
+                            class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                        <span class="ms-3 flex-1 whitespace-nowrap">
+                            Punto de venta
+                        </span>
+                    </a>
+                    <div id="tooltip-pos" role="tooltip"
+                        class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
                         Punto de venta
-                    </span>
-                </a>
-                <div id="tooltip-pos" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Punto de venta
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
-            </li>
+                        <div class="tooltip-arrow" data-popper-arrow></div>
+                    </div>
+                </li>
             @endif
             <li>
-                @include("layouts.partials.business.button-new-dte")
+                @include('layouts.partials.business.button-new-dte')
             </li>
             {{--   <li>
                 <a href="{{ Route('admin.configuration.index') }}" data-tooltip-target="tooltip-configuration"
@@ -275,7 +275,7 @@
 </aside>
 
 @if (Auth::check() && auth()->user()->hasRole('business'))
-    @include("layouts.partials.business.modal-new-dte")
+    @include('layouts.partials.business.modal-new-dte')
     <div id="select-business" tabindex="-1" aria-hidden="true"
         class="fixed left-0 right-0 top-0 z-50 hidden h-full max-h-full w-full items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-200/50 dark:bg-gray-900/50 md:inset-0">
         <div class="relative max-h-full w-full max-w-lg p-4">

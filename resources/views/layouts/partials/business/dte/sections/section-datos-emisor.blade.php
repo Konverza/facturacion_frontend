@@ -10,7 +10,7 @@
         <x-select name="tipo_establecimiento" id="tipo_establecimiento"
             value="{{ old('tipo_establecimiento', $datos_empresa['tipoEstablecimiento']) }}"
             selected="{{ old('tipo_establecimiento', $datos_empresa['tipoEstablecimiento']) }}" readonly
-            label="Tipo de establecimiento_emisor" :options="$tipos_establecimientos" />
+            label="Tipo de establecimiento Emisor" :options="$tipos_establecimientos" />
     </div>
 </div>
 <div class="mt-4">
