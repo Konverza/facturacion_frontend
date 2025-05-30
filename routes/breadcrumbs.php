@@ -189,3 +189,15 @@ Breadcrumbs::for("business.pos.index", function (BreadcrumbTrail $trail) {
     $trail->parent("business");
     $trail->push($icon . "POS", route("business.pos.index"));
 });
+
+Breadcrumbs::for("business.sucursales.index", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Sucursales", route("business.sucursales.index", $id));
+});
+
+Breadcrumbs::for("business.puntos-venta.index", function (BreadcrumbTrail $trail, string $business_id, string $sucursal_id) {
+    $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
+    $trail->parent("business.sucursales.index", $business_id);
+    $trail->push($icon . "Puntos de Venta", route("business.puntos-venta.index", [$business_id, $sucursal_id]));
+});
