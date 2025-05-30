@@ -60,11 +60,11 @@
                             <div class="mt-4 flex flex-col items-center gap-4 sm:flex-row">
                                 <div class="w-full sm:flex-1">
                                     <x-input type="text" name="nit" label="NIT"
-                                        value="{{ $datos_empresa['nit'] }}" id="nit" />
+                                        value="{{ $datos_empresa['nit'] }}" id="nit" readonly/>
                                 </div>
                                 <div class="w-full sm:flex-1">
                                     <x-input type="text" name="nrc" label="NRC"
-                                        value="{{ $datos_empresa['nrc'] }}" id="nrc" />
+                                        value="{{ $datos_empresa['nrc'] }}" id="nrc" readonly/>
                                 </div>
                             </div>
                             <div class="mt-4">
