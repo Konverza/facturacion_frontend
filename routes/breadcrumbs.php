@@ -41,6 +41,18 @@ Breadcrumbs::for("admin.business.edit", function (BreadcrumbTrail $trail, string
     $trail->push($icon . "Editar", route("admin.business.edit", $id));
 });
 
+Breadcrumbs::for("admin.sucursales.index", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
+    $trail->parent("admin.business.index");
+    $trail->push($icon . "Sucursales", route("admin.sucursales.index", $id));
+});
+
+Breadcrumbs::for("admin.puntos-venta.index", function (BreadcrumbTrail $trail, string $business_id, string $sucursal_id) {
+    $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
+    $trail->parent("admin.sucursales.index", $business_id);
+    $trail->push($icon . "Puntos de Venta", route("admin.puntos-venta.index", [$business_id, $sucursal_id]));
+});
+
 //Plans
 Breadcrumbs::for("admin.plans.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='credit-card' class='w-4 h-4'/>");
