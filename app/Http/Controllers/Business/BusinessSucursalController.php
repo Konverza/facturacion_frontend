@@ -8,6 +8,7 @@ use App\Models\BusinessUser;
 use App\Models\PuntoVenta;
 use App\Models\Sucursal;
 use App\Services\OctopusService;
+use Illuminate\Http\Request;
 
 class BusinessSucursalController extends Controller
 {
@@ -38,7 +39,7 @@ class BusinessSucursalController extends Controller
     {
         $this->checkBusinessAccess($business_id);
 
-        $sucursal = Sucursal::findOrFail($id);
+        $sucursal = Sucursal::with("puntosVentas")->findOrFail($id);
         return response()->json($sucursal);
     }
 
@@ -200,6 +201,20 @@ class BusinessSucursalController extends Controller
         return redirect()->route('business.puntos-venta.index', ['business_id' => $business_id, 'sucursal_id' => $sucursal_id])
             ->with('success', 'Punto de Venta Eliminado')
             ->with("success_message", "Punto de venta eliminado exitosamente.");
+    }
+
+    public function getPuntosVenta(Request $request)
+    {
+        $this->checkBusinessAccess($request->business_id);
+
+        $sucursal = Sucursal::findOrFail($request->sucursal_id);
+        $puntos_venta = PuntoVenta::where('sucursal_id', $request->sucursal_id)->get()->pluck('nombre', 'id')->toArray();
+        return response()->json([
+            "sucursal" => $sucursal,
+            "puntos_venta" => $puntos_venta,
+            "html" => view('layouts.partials.ajax.business.select-punto-venta', ['puntos_venta' => $puntos_venta]
+            )->render(),
+        ]);
     }
 
     private function checkBusinessAccess(int $business_id)

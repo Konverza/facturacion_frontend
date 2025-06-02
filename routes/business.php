@@ -124,8 +124,10 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::delete("/{business_id}/sucursales/{id}", [BusinessSucursalController::class, "delete_sucursal"])->name("sucursales.delete_sucursal");
     // Punto de Venta
     Route::get("/{business_id}/sucursales/{sucursal_id}/puntos-venta", [BusinessSucursalController::class, "index_puntos_venta"])->name("puntos-venta.index");
+    Route::get("/puntos-venta-html", [BusinessSucursalController::class, "getPuntosVenta"])->name("puntos-venta-html.index");
     Route::post("/{business_id}/sucursales/{sucursal_id}/puntos-venta", [BusinessSucursalController::class, "store_punto_venta"])->name("puntos-venta.store_punto_venta");
     Route::get("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "edit_punto_venta"])->name("puntos-venta.edit");
     Route::put("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "update_punto_venta"])->name("puntos-venta.update_punto_venta");
     Route::delete("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "delete_punto_venta"])->name("puntos-venta.delete_punto_venta");
+    
 });

@@ -1021,4 +1021,30 @@ $(document).ready(function () {
         $("#loader").removeClass("hidden");
         $("body").addClass("overflow-hidden");
     });
+
+
+    // Handle cambio de sucursal
+    const $sucursal = $("#sucursal_select");
+
+    $sucursal.on("Changed", function () {
+        const action = $(this).data("action");
+        const sucursalId = $(this).val();
+        const business_id = $(this).data("business-id");
+        $("#datos-sucursal").addClass("hidden");
+        $.ajax({
+            url: action,
+            type: "GET",
+            data : { sucursal_id: sucursalId, business_id: business_id },
+            success: function(response) {
+                $("#punto_venta_select").html(response.html)
+                $("#datos-sucursal #complemento_emisor").val(response.sucursal.complemento);
+                $("#datos-sucursal #correo_emisor").val(response.sucursal.correo);
+                $("#datos-sucursal #telefono_emisor").val(response.sucursal.telefono);
+                $("#datos-sucursal").removeClass("hidden");
+            },
+            error: function() {
+                console.error("Error al cambiar la sucursal");
+            },
+        });
+    });
 });

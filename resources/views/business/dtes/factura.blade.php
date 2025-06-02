@@ -15,6 +15,12 @@
                         <x-icon icon="users" class="size-5" />
                         Datos del emisor y receptor
                     </h2>
+                    @if (!$default_pos)
+                        <div
+                            class="my-4 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-yellow-500 dark:bg-yellow-950/30">
+                            <b>Nota: </b> No tiene un punto de venta predeterminado, por favor seleccione uno en la pestaña "Emisor" antes de enviar el DTE
+                        </div>
+                    @endif
                     <div>
                         <div class="mb-4 border-b border-gray-200 dark:border-gray-700">
                             <ul class="-mb-px flex flex-wrap text-center text-sm font-medium" id="default-styled-tab"
@@ -123,7 +129,9 @@
                 @include('layouts.partials.business.dte.sections.section-observaciones')
                 @include('layouts.partials.business.dte.sections.section-condicion-operacion')
                 @include('layouts.partials.business.dte.sections.section-forma-pago')
-                @include('layouts.partials.business.dte.sections.section-recepcion-entrega-documento', ['monto' => "$25,000.00"])
+                @include('layouts.partials.business.dte.sections.section-recepcion-entrega-documento', [
+                    'monto' => "$25,000.00",
+                ])
             </div>
             @include('layouts.partials.business.dte.button-actions')
         </form>
