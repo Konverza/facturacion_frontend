@@ -143,7 +143,7 @@
                 $business = \App\Models\Business::find($business_id);
             @endphp
             <li>
-                <a href="{{ Route('business.sucursales.index', $business_id) }}" data-tooltip-target="tooltip-documents"
+                <a href="{{ Route('business.sucursales.index', $business_id) }}" data-tooltip-target="tooltip-sucursales"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
                     <x-icon icon="building-store"
                         class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
@@ -151,7 +151,7 @@
                         Sucursales
                     </span>
                 </a>
-                <div id="tooltip-documents" role="tooltip"
+                <div id="tooltip-sucursales" role="tooltip"
                     class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
                     Sucursales
                     <div class="tooltip-arrow" data-popper-arrow></div>
