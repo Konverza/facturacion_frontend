@@ -95,9 +95,9 @@ class DTEProductController extends Controller
                     $iva = 0;
                     if ($request->tipo === "Gravada") {
                         if ($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
-                            $iva = round($product["total"] * 0.13, 2);
+                            $iva = $this->precise_round($product["total"] * 0.13, 8);
                         } else {
-                            $iva = round(($product["total"] / 1.13) * 0.13, 2);
+                            $iva = $this->precise_round(($product["total"] / 1.13) * 0.13, 8);
                         }
                         $product["iva"] = $iva; // Asignar el nuevo IVA calculado
                     }
@@ -109,9 +109,9 @@ class DTEProductController extends Controller
             $iva = 0;
             if ($request->tipo === "Gravada") {
                 if ($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
-                    $iva = round((float) $request->total * 0.13, 2);
+                    $iva = $this->precise_round((float) $request->total * 0.13, 8);
                 } else {
-                    $iva = round(((float) $request->total / 1.13) * 0.13, 2);
+                    $iva = $this->precise_round(((float) $request->total / 1.13) * 0.13, 8);
                 }
             }
 
@@ -196,8 +196,8 @@ class DTEProductController extends Controller
             $iva = 0;
             if ($request->tipo === "Gravada") {
                 $iva = ($this->dte["type"] === "03")
-                    ? round($total * 0.13, 2)
-                    : round(($total / 1.13) * 0.13, 2);
+                    ? $this->precise_round($total * 0.13, 8)
+                    : $this->precise_round(($total / 1.13) * 0.13, 8);
             }
 
             $this->dte["products"][] = [
@@ -305,7 +305,7 @@ class DTEProductController extends Controller
                     $product["ventas_gravadas"] = $product["total"] ;
                     $product["ventas_exentas"] = 0;
                     $product["ventas_no_sujetas"] = 0;
-                    $product["iva"] = round(($product["total"] / 1.13) * 0.13, 2);
+                    $product["iva"] = $this->precise_round(($product["total"] / 1.13) * 0.13, 8);
                     break;
                 }
             }
@@ -316,7 +316,7 @@ class DTEProductController extends Controller
                 $precio_sin_tributos = (float) $business_product->precioSinTributos;
                 $cantidad = (float) $request->cantidad;
                 $total = $business_product->precioUni * $cantidad;
-                $iva = round(((float) $total / 1.13) * 0.13, 2);
+                $iva = $this->precise_round(((float) $total / 1.13) * 0.13, 8);
                 $descuento = 0;
 
 
@@ -729,7 +729,7 @@ class DTEProductController extends Controller
             $this->dte["total"] = $this->dte["subtotal"];
         }
 
-        $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"], 2);
+        $this->dte["total_pagar"] = $this->precise_round($this->dte["total"] - $this->dte["total_descuentos"], 8);
 
         $this->total_retenciones();
 
@@ -738,7 +738,7 @@ class DTEProductController extends Controller
         }
 
         if ($this->dte["type"] === "11") {
-            $this->dte["total_pagar"] = round((float)$this->dte["total_ventas_gravadas"] + $this->dte["flete"] + $this->dte["seguro"], 2);
+            $this->dte["total_pagar"] = $this->precise_round((float)$this->dte["total_ventas_gravadas"] + $this->dte["flete"] + $this->dte["seguro"], 8);
         }
 
         $this->dte["monto_pendiente"] = $this->dte["total_pagar"] - $this->dte["monto_abonado"] ?? 0;
@@ -872,11 +872,11 @@ class DTEProductController extends Controller
 
     public function total_ventas()
     {
-        $this->dte["total_ventas_gravadas"] = round((float)array_sum(array_map(fn($product) => $product["ventas_gravadas"] ?? 0, $this->dte["products"] ?? [])), 2);
+        $this->dte["total_ventas_gravadas"] = $this->precise_round((float)array_sum(array_map(fn($product) => $product["ventas_gravadas"] ?? 0, $this->dte["products"] ?? [])), 8);
 
-        $this->dte["total_ventas_exentas"] = round((float)array_sum(array_map(fn($product) => $product["ventas_exentas"] ?? 0, $this->dte["products"] ?? [])), 2);
+        $this->dte["total_ventas_exentas"] = $this->precise_round((float)array_sum(array_map(fn($product) => $product["ventas_exentas"] ?? 0, $this->dte["products"] ?? [])), 8);
 
-        $this->dte["total_ventas_no_sujetas"] = round((float)array_sum(array_map(fn($product) => $product["ventas_no_sujetas"] ?? 0, $this->dte["products"] ?? [])), 2);
+        $this->dte["total_ventas_no_sujetas"] = $this->precise_round((float)array_sum(array_map(fn($product) => $product["ventas_no_sujetas"] ?? 0, $this->dte["products"] ?? [])), 8);
     }
 
     public function total_taxes()
@@ -888,40 +888,40 @@ class DTEProductController extends Controller
         $this->dte["bebidas_alcoholicas"] = 0;
         $this->dte["tabaco_cigarillos"] = 0;
         $this->dte["tabaco_cigarros"] = 0;
-        $this->dte["total_ventas_gravadas_descuento"] = round($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"], 2);
-        $this->dte["iva"] = round($this->dte["total_ventas_gravadas_descuento"]  * 0.13, 2);
+        $this->dte["total_ventas_gravadas_descuento"] = $this->precise_round($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"], 8);
+        $this->dte["iva"] = $this->precise_round($this->dte["total_ventas_gravadas_descuento"]  * 0.13, 8);
 
         if (isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
             foreach ($this->dte["products"] as $product) {
-                $total = round(($product["total"] ?? 0), 2);
-                $cantidad = round(($product["cantidad"] ?? 0), 2);
+                $total = $this->precise_round(($product["total"] ?? 0), 8);
+                $cantidad = $this->precise_round(($product["cantidad"] ?? 0), 8);
 
                 if (!empty($product["turismo_por_alojamiento"]) && $product["turismo_por_alojamiento"] === "active") {
-                    $this->dte["turismo_por_alojamiento"] += round(($total / $cantidad) * 0.05, 2) * $cantidad;
+                    $this->dte["turismo_por_alojamiento"] += $this->precise_round(($total / $cantidad) * 0.05, 8) * $cantidad;
                 }
 
                 if (!empty($product["turismo_salida_pais_via_aerea"]) && $product["turismo_salida_pais_via_aerea"] === "active") {
-                    $this->dte["turismo_salida_pais_via_aerea"] += round($cantidad * 7, 2);
+                    $this->dte["turismo_salida_pais_via_aerea"] += $this->precise_round($cantidad * 7, 8);
                 }
 
                 if (!empty($product["fovial"]) && $product["fovial"] === "active") {
-                    $this->dte["fovial"] += round($cantidad * 0.20, 2);
+                    $this->dte["fovial"] += $this->precise_round($cantidad * 0.20, 8);
                 }
 
                 if (!empty($product["contrans"]) && $product["contrans"] === "active") {
-                    $this->dte["contrans"] += round($cantidad * 0.10, 2);
+                    $this->dte["contrans"] += $this->precise_round($cantidad * 0.10, 8);
                 }
 
                 if (!empty($product["bebidas_alcoholicas"]) && $product["bebidas_alcoholicas"] === "active") {
-                    $this->dte["bebidas_alcoholicas"] += round(($total / $cantidad) * 0.08, 2) * $cantidad;
+                    $this->dte["bebidas_alcoholicas"] += $this->precise_round(($total / $cantidad) * 0.08, 8) * $cantidad;
                 }
 
                 if (!empty($product["tabaco_cigarillos"]) && $product["tabaco_cigarillos"] === "active") {
-                    $this->dte["tabaco_cigarillos"] += round(($total / $cantidad) * 0.39, 2) * $cantidad;
+                    $this->dte["tabaco_cigarillos"] += $this->precise_round(($total / $cantidad) * 0.39, 8) * $cantidad;
                 }
 
                 if (!empty($product["tabaco_cigarros"]) && $product["tabaco_cigarros"] === "active") {
-                    $this->dte["tabaco_cigarros"] += round(($total / $cantidad) * 1, 2) * $cantidad;
+                    $this->dte["tabaco_cigarros"] += $this->precise_round(($total / $cantidad) * 1, 8) * $cantidad;
                 }
             }
         }
@@ -942,7 +942,7 @@ class DTEProductController extends Controller
             $this->dte["tabaco_cigarros"] + 
             $this->dte["iva"];
 
-        $this->dte["total_taxes"] = round((float) $this->dte["total_taxes"], 2);
+        $this->dte["total_taxes"] = $this->precise_round((float) $this->dte["total_taxes"], 8);
     }
 
     public function total_descuentos()
@@ -953,17 +953,17 @@ class DTEProductController extends Controller
             $this->dte["descuento_venta_no_sujeta"] = 0;
             $this->dte["total_descuentos"] = 0;
         } else {
-            $this->dte["descuento_venta_gravada"] = round($this->dte["total_ventas_gravadas"] * ($this->dte["percentaje_descuento_venta_gravada"] / 100), 2);
+            $this->dte["descuento_venta_gravada"] = $this->precise_round($this->dte["total_ventas_gravadas"] * ($this->dte["percentaje_descuento_venta_gravada"] / 100), 8);
 
-            $this->dte["descuento_venta_exenta"] = round($this->dte["total_ventas_exentas"] * ($this->dte["percentaje_descuento_venta_exenta"]  / 100), 2);
+            $this->dte["descuento_venta_exenta"] = $this->precise_round($this->dte["total_ventas_exentas"] * ($this->dte["percentaje_descuento_venta_exenta"]  / 100), 8);
 
-            $this->dte["descuento_venta_no_sujeta"] = round($this->dte["total_ventas_no_sujetas"] * ($this->dte["percentaje_descuento_venta_no_sujeta"]  / 100), 2);
+            $this->dte["descuento_venta_no_sujeta"] = $this->precise_round($this->dte["total_ventas_no_sujetas"] * ($this->dte["percentaje_descuento_venta_no_sujeta"]  / 100), 8);
 
-            $this->dte["total_descuentos"] = round(
+            $this->dte["total_descuentos"] = $this->precise_round(
                 ($this->dte["descuento_venta_gravada"]) +
                     ($this->dte["descuento_venta_exenta"]) +
                     ($this->dte["descuento_venta_no_sujeta"]),
-                2
+                8
             );
         }
     }
@@ -971,17 +971,17 @@ class DTEProductController extends Controller
     public function total_retenciones()
     {
 
-        $this->dte["total_pagar"] = round($this->dte["total"] - $this->dte["total_descuentos"], 2);
+        $this->dte["total_pagar"] = $this->precise_round($this->dte["total"] - $this->dte["total_descuentos"], 8);
 
         if ($this->dte["type"] === "01") {
-            $this->dte["total_iva_retenido"] = round(((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0)) * 0.01, 2);
+            $this->dte["total_iva_retenido"] = $this->precise_round(((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0)) * 0.01, 8);
             $total_servicios = array_sum(
                 array_map(
                     fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 2) ? (($product["ventas_gravadas"] / 1.13) ?? 0) : 0,
                     $this->dte["products"] ?? []
                 )
             );
-            $this->dte["isr"] = round($total_servicios * 0.10, 2);
+            $this->dte["isr"] = $this->precise_round($total_servicios * 0.10, 8);
         }else if ($this->dte["type"] === "14") {
             $total_servicios = array_sum(
                 array_map(
@@ -995,10 +995,10 @@ class DTEProductController extends Controller
                     $this->dte["products"] ?? []
                 )
             );
-            $this->dte["total_iva_retenido"] = round(($total_bienes ?? 0) * 0.01, 2);
-            $this->dte["isr"] = round(($total_servicios ?? 0) * 0.10, 2);
+            $this->dte["total_iva_retenido"] = $this->precise_round(($total_bienes ?? 0) * 0.01, 8);
+            $this->dte["isr"] = $this->precise_round(($total_servicios ?? 0) * 0.10, 8);
         } else {
-            $this->dte["total_iva_retenido"] = round((($this->dte["total_ventas_gravadas"] ?? 0) - ($this->dte["descuento_venta_gravada"] ?? 0)) * 0.01, 2);
+            $this->dte["total_iva_retenido"] = $this->precise_round((($this->dte["total_ventas_gravadas"] ?? 0) - ($this->dte["descuento_venta_gravada"] ?? 0)) * 0.01, 8);
 
             $total_servicios = array_sum(
                 array_map(
@@ -1006,20 +1006,25 @@ class DTEProductController extends Controller
                     $this->dte["products"] ?? []
                 )
             );
-            $this->dte["isr"] = round($total_servicios * 0.10, 2);
+            $this->dte["isr"] = $this->precise_round($total_servicios * 0.10, 8);
         }
 
 
         $this->dte["total_pagar"] = ($this->dte["retener_iva"] ?? "inactive") === "active"
-            ? round($this->dte["total_pagar"] - $this->dte["total_iva_retenido"], 2)
-            : round($this->dte["total_pagar"], 2);
+            ? $this->precise_round($this->dte["total_pagar"] - $this->dte["total_iva_retenido"], 8)
+            : $this->precise_round($this->dte["total_pagar"], 8);
 
         $this->dte["total_pagar"] = ($this->dte["retener_renta"] ?? "inactive") === "active"
-            ? round($this->dte["total_pagar"] - $this->dte["isr"], 2)
-            : round($this->dte["total_pagar"], 2);
+            ? $this->precise_round($this->dte["total_pagar"] - $this->dte["isr"], 8)
+            : $this->precise_round($this->dte["total_pagar"], 8);
 
         $this->dte["total_pagar"] = ($this->dte["percibir_iva"] ?? "inactive") === "active"
-            ? round($this->dte["total_pagar"] + $this->dte["total_iva_retenido"], 2)
-            : round($this->dte["total_pagar"], 2);
+            ? $this->precise_round($this->dte["total_pagar"] + $this->dte["total_iva_retenido"], 8)
+            : $this->precise_round($this->dte["total_pagar"], 8);
+    }
+
+    private function precise_round($value, $precision = 2) {
+        $factor = pow(10, $precision);
+        return round(($value + PHP_FLOAT_EPSILON) * $factor) / $factor;
     }
 }

@@ -69,7 +69,7 @@
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto al valor agregado (13%)
                             <span>
-                                ${{ number_format($dte['iva'] ?? 0, 2) }}
+                                ${{ number_format(round($dte['iva'] ?? 0, 2), 2) }}
                             </span>
                         </div>
                     </x-td>

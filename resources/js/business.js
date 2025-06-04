@@ -165,7 +165,7 @@ $(document).ready(function () {
             (
                 parseFloat($(this).val()) +
                 parseFloat($(this).val()) * 0.13
-            ).toFixed(2)
+            ).toFixed(8)
         );
     });
 
@@ -173,7 +173,7 @@ $(document).ready(function () {
         $("#price-not-iva").val(
             (
                 parseFloat($(this).val())/(1.13)
-            ).toFixed(2)
+            ).toFixed(8)
         );
     });
 
@@ -182,7 +182,7 @@ $(document).ready(function () {
               (
                   parseFloat($("#price-not-iva").val()) +
                   parseFloat($("#price-not-iva").val()) * 0.13
-              ).toFixed(2)
+              ).toFixed(8)
           );
     }
 

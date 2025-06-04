@@ -1235,20 +1235,9 @@ class DTEController extends Controller
 
             $dte = Http::get(env("OCTOPUS_API_URL") . "/dtes/" . $codGeneracion)->json();
             $documento = json_decode($dte["documento"]);
-            $products_dte = $documento->cuerpoDocumento;
             $business = Business::find($business_id);
-            $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada");
 
-            $nit = $business->nit;
-            $tipoDoc = null;
-            $nombre = null;
-            $numDocumento = null;
-
-            if ($dte['tipo_dte'] === '14') {
-                $receptor = $documento->sujetoExcluido;
-            } else {
-                $receptor = $documento->receptor ?? "";
-            }
+            $receptor = ($dte['tipo_dte'] === '14') ? $documento->sujetoExcluido : $documento->receptor ?? "";
 
             $nombre = $receptor->nombre ?? "";
             if (in_array($dte['tipo_dte'], ['03', '05', '06'])) {
@@ -1260,7 +1249,7 @@ class DTEController extends Controller
             }
 
             $response = Http::post(env("OCTOPUS_API_URL") . '/anulacion/', [
-                "nit" => $nit,
+                "nit" => $business->nit,
                 "documento" => [
                     "codigoGeneracion" => $codGeneracion,
                     "fechaEmision" => $documento->identificacion->fecEmi,
@@ -1272,14 +1261,18 @@ class DTEController extends Controller
                     "motivoAnulacion" => $motivo,
                     "nombreResponsable" => auth()->user()->name,
                     "tipoDocResponsable" => "36",
-                    "numDocResponsable" => $nit,
+                    "numDocResponsable" => $business->nit,
                     "nombreSolicita" => $nombre ?? auth()->user()->name,
                     "tipoDocSolicita" => $tipoDoc ?? "36",
-                    "numDocSolicita" => $numDocumento ?? $nit,
+                    "numDocSolicita" => $numDocumento ?? $business->nit,
                 ]
             ]);
             $data = $response->json();
             if ($response->status() == 201) {
+                if(!in_array($dte["tipo_dte"], ["04", "07", "14"])) {
+                    $products_dte = $documento->cuerpoDocumento;
+                    $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada");
+                }
                 return redirect()->route('business.documents.index')
                     ->with('success', "Documento anulado correctamente")
                     ->with("success_message", $data["descripcionMsg"]);
