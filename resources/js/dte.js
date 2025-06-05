@@ -735,6 +735,9 @@ $(document).ready(function () {
                     if (data.select_data) {
                         $("." + data.select).html(data.select_data);
                     }
+                    if (data.select_data_new) {
+                        $("." + data.select_new).html(data.select_data_new);
+                    }
 
                     if (data.total_iva_retenido_texto !== undefined) {
                         $("#iva-retenido-letters").text(

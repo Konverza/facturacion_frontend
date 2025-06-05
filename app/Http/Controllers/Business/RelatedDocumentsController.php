@@ -73,7 +73,11 @@ class RelatedDocumentsController extends Controller
                 "select_data" => view("layouts.partials.ajax.business.select-related-documents", [
                     "dte" => $this->dte
                 ])->render(),
-                "select" => "select-documento-relacionado"
+                "select" => "select-documento-relacionado",
+                "select_data_new" => view("layouts.partials.ajax.business.select-related-documents-new", [
+                    "dte" => $this->dte
+                ])->render(),
+                "select_new" => "select-documento-relacionado-new"
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -151,7 +155,11 @@ class RelatedDocumentsController extends Controller
                 "select_data" => view("layouts.partials.ajax.business.select-related-documents", [
                     "dte" => $this->dte
                 ])->render(),
-                "select" => "select-documento-relacionado"
+                "select" => "select-documento-relacionado",
+                "select_data_new" => view("layouts.partials.ajax.business.select-related-documents-new", [
+                    "dte" => $this->dte
+                ])->render(),
+                "select_new" => "select-documento-relacionado-new"
             ]);
         } catch (\Exception $e) {
             Log::error($e);
@@ -196,6 +204,10 @@ class RelatedDocumentsController extends Controller
                     "dte" => $this->dte
                 ])->render(),
                 "select" => "select-documento-relacionado",
+                "select_data_new" => view("layouts.partials.ajax.business.select-related-documents-new", [
+                    "dte" => $this->dte
+                ])->render(),
+                "select_new" => "select-documento-relacionado-new",
                 "table_data_2" => view("layouts.partials.ajax.business.table-products-dte", [
                     "dte" => $this->dte
                 ])->render(),
