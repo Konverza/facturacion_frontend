@@ -10,7 +10,8 @@
         '14' => 'Factura de sujeto excluido'
     ];
     $business_id = Session::get('business') ?? null;
-    $business_plan = \App\Models\BusinessPlan::find($business_id);
+    $business = \App\Models\Business::find($business_id);
+    $business_plan = \App\Models\BusinessPlan::where("nit", $business->nit)->first();
     $plan_dtes = json_decode($business_plan->dtes);
     $dte_options = [];
     foreach ($plan_dtes as $dte) {
