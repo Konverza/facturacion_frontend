@@ -1,0 +1,1 @@
+<x-select name="pos_id" label="Punto de Venta" id="pos_id" required :options="$puntos_venta" />

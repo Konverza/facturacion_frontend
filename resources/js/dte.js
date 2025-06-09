@@ -61,7 +61,7 @@ $(document).ready(function () {
         if (total < 0) {
             $("#descuento_product").val(0);
             $("#total_product").val(
-                parseFloat(countValue * priceValue).toFixed(2)
+                redondear(parseFloat(countValue * priceValue), 8)
             );
             showAlert(
                 "error",
@@ -71,8 +71,8 @@ $(document).ready(function () {
             return;
         }
 
-        $("#total_product").val(total.toFixed(2));
-        $("#descuento_product").prop("max", total.toFixed(2));
+        $("#total_product").val(redondear(total, 8));
+        $("#descuento_product").prop("max", redondear(total, 8));
         updatePrices(priceValue, countValue);
     });
 
@@ -97,7 +97,7 @@ $(document).ready(function () {
         }
 
         const total_descuento = total - descuento;
-        $("#total_product").val(total_descuento.toFixed(2));
+        $("#total_product").val(redondear(total_descuento, 8));
     });
 
     function updatePrices(price, count) {
@@ -106,16 +106,16 @@ $(document).ready(function () {
         const add_valorem_bebidas_alcoholicas = count * (price / 1.13) * 0.08;
         const add_valorem_tabaco_cigarrillos = count * (price / 1.13) * 0.39;
         const add_valorem_tabaco_cigarros = count * (price / 1.13) * 1;
-        $("#iva").text("$" + iva.toFixed(2));
-        $("#turismo").text("$" + turismo.toFixed(2));
+        $("#iva").text("$" + redondear(iva, 2));
+        $("#turismo").text("$" + redondear(turismo, 2));
         $("#add-valorem-bebidas-alcoholicas").text(
-            "$" + add_valorem_bebidas_alcoholicas.toFixed(2)
+            "$" + redondear(add_valorem_bebidas_alcoholicas, 2)
         );
         $("#add-valorem-tabaco-cigarrillos").text(
-            "$" + add_valorem_tabaco_cigarrillos.toFixed(2)
+            "$" + redondear(add_valorem_tabaco_cigarrillos, 2)
         );
         $("#add-valorem-tabaco-cigarros").text(
-            "$" + add_valorem_tabaco_cigarros.toFixed(2)
+            "$" + redondear(add_valorem_tabaco_cigarros, 2)
         );
     }
 
@@ -211,7 +211,7 @@ $(document).ready(function () {
 
                 $("#product_id").val(data.product.id);
                 $("#product_description").val(data.product.descripcion);
-                if(data.product.has_stock){
+                if (data.product.has_stock) {
                     $("#count").prop("max", data.product.stockActual);
                 } else {
                     $("#count").removeAttr("max");
@@ -240,10 +240,10 @@ $(document).ready(function () {
         const price = $("#product_price").val();
         const max = parseFloat($(this).prop("max"));
         const descuento = parseFloat($("#descuento_total").val()) || 0;
-        const total = (
+        const total = redondear(
             parseFloat(count) * parseFloat(price) -
             descuento
-        ).toFixed(2);
+        , 8);
         if (count > max) {
             showAlert(
                 "error",
@@ -258,7 +258,7 @@ $(document).ready(function () {
         if (total < 0) {
             $("#descuento_total").val(0);
             $("#total_item").val(
-                parseFloat(count) * parseFloat(price).toFixed(2)
+                parseFloat(count) * redondear(parseFloat(price), 8)
             );
             showAlert(
                 "error",
@@ -293,7 +293,7 @@ $(document).ready(function () {
                 "El descuento no puede ser mayor al total"
             );
             $(this).val("");
-            $("#total_item").val(total.toFixed(2));
+            $("#total_item").val(redondear(total, 8));
             return;
         }
 
@@ -309,7 +309,7 @@ $(document).ready(function () {
             return;
         }
 
-        $("#total_item").val(total_descuento.toFixed(2));
+        $("#total_item").val(redondear(total_descuento, 8));
     });
 
     //Add product
@@ -385,7 +385,7 @@ $(document).ready(function () {
                     );
 
                     if (data.monto_pendiente !== undefined) {
-                        $("#monto_total").val(data.monto_pendiente.toFixed(2));
+                        $("#monto_total").val(redondear(data.monto_pendiente, 2));
                     }
                 } else {
                     showAlert("error", "Error", data.message);
@@ -420,7 +420,7 @@ $(document).ready(function () {
                 $("#table-products-dte").html(response.data.table_products);
                 if (response.data.monto_pendiente !== undefined) {
                     $("#monto_total").val(
-                        response.data.monto_pendiente.toFixed(2)
+                        redondear(response.data.monto_pendiente, 2)
                     );
                 }
             })
@@ -495,7 +495,7 @@ $(document).ready(function () {
     $("#tipo_item_exportar").on("Changed", function () {
         const value = $(this).val();
         const container = $("#container-data-exportacion");
-        if( value === "1" || value === "3"){
+        if (value === "1" || value === "3") {
             container.removeClass("hidden");
         } else {
             container.addClass("hidden");
@@ -611,7 +611,7 @@ $(document).ready(function () {
         const value = $(this).val();
         const codigo_tributo = $("#codigo_tributo").val();
         if (codigo_tributo === "22") {
-            $("#iva_retenido").val((value * 0.01).toFixed(2));
+            $("#iva_retenido").val(redondear((value * 0.01), 2));
         }
     });
 
@@ -619,7 +619,7 @@ $(document).ready(function () {
         const value = $(this).val();
         if (value === "Retención IVA") {
             var monto = $("#monto_sujeto_retencion").val();
-            $("#iva_retenido").val((monto * 0.01).toFixed(2));
+            $("#iva_retenido").val(redondear((monto * 0.01), 2));
         }
     });
 
@@ -713,7 +713,7 @@ $(document).ready(function () {
                     }
 
                     if (data.monto_pendiente !== undefined) {
-                        $("#monto_total").val(data.monto_pendiente.toFixed(2));
+                        $("#monto_total").val(redondear(data.monto_pendiente, 2));
                     }
 
                     if (data.table_selected_product !== undefined) {
@@ -777,7 +777,7 @@ $(document).ready(function () {
                     $("#table-" + data.table).html(data.table_data);
 
                     if (data.monto_pendiente !== undefined) {
-                        $("#monto_total").val(data.monto_pendiente.toFixed(2));
+                        $("#monto_total").val(redondear(data.monto_pendiente, 2));
                     }
 
                     if (data.total_discounts !== undefined) {
@@ -847,7 +847,7 @@ $(document).ready(function () {
                     }
 
                     if (data.monto_pendiente !== undefined) {
-                        $("#monto_total").val(data.monto_pendiente.toFixed(2));
+                        $("#monto_total").val(redondear(data.monto_pendiente, 2));
                     }
                 } else {
                     showAlert("error", "Error", data.message);
@@ -923,7 +923,7 @@ $(document).ready(function () {
                 if (data.success) {
                     showAlert("success", "Éxito", data.message);
                     if (data.monto_pendiente !== undefined) {
-                        $("#monto_total").val(data.monto_pendiente.toFixed(2));
+                        $("#monto_total").val(redondear(data.monto_pendiente, 2));
                     }
                     $("#table-exportacion").html(data.table_exportacion);
                 } else {
@@ -1003,7 +1003,7 @@ $(document).ready(function () {
                     $("#cod-generacion").val(codGeneracion);
                     if ($("#codigo-tributo-2").val() === "22") {
                         $("#iva-retenido-documento").val(
-                            (data.monto * 0.01).toFixed(2)
+                            redondear((data.monto * 0.01), 2)
                         );
                     }
                 } else {
@@ -1021,4 +1021,35 @@ $(document).ready(function () {
         $("#loader").removeClass("hidden");
         $("body").addClass("overflow-hidden");
     });
+
+
+    // Handle cambio de sucursal
+    const $sucursal = $("#sucursal_select");
+
+    $sucursal.on("Changed", function () {
+        const action = $(this).data("action");
+        const sucursalId = $(this).val();
+        const business_id = $(this).data("business-id");
+        $("#datos-sucursal").addClass("hidden");
+        $.ajax({
+            url: action,
+            type: "GET",
+            data: { sucursal_id: sucursalId, business_id: business_id },
+            success: function (response) {
+                $("#punto_venta_select").html(response.html)
+                $("#datos-sucursal #complemento_emisor").val(response.sucursal.complemento);
+                $("#datos-sucursal #correo_emisor").val(response.sucursal.correo);
+                $("#datos-sucursal #telefono_emisor").val(response.sucursal.telefono);
+                $("#datos-sucursal").removeClass("hidden");
+            },
+            error: function () {
+                console.error("Error al cambiar la sucursal");
+            },
+        });
+    });
+
+    function redondear(num, decimales = 2) {
+        const factor = Math.pow(10, decimales);
+        return Math.round((num + Number.EPSILON) * factor) / factor;
+    }
 });

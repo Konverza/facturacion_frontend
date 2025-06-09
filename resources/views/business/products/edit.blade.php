@@ -51,12 +51,12 @@
                 <div class="mt-4 flex gap-4">
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Precio sin IVA"
-                            name="precio_sin_iva" step="0.01" id="price-not-iva"
+                            name="precio_sin_iva" step="0.00000001" id="price-not-iva"
                             value="{{ old('precio_sin_iva', $product->precioSinTributos) }}" />
                     </div>
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Precio con IVA"
-                            name="precio" step="0.01" value="{{ old('precio', $product->precioUni) }}"
+                            name="precio" step="0.00000001" value="{{ old('precio', $product->precioUni) }}"
                             id="price-with-iva" />
                     </div>
                 </div>

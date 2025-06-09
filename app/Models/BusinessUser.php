@@ -15,6 +15,7 @@ class BusinessUser extends Model
         'business_id',
         'user_id',
         'role',
+        'default_pos_id',
     ];
 
     public function business()
@@ -25,5 +26,10 @@ class BusinessUser extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function defaultPos()
+    {
+        return $this->belongsTo(PuntoVenta::class, 'default_pos_id');
     }
 }

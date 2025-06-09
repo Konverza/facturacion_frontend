@@ -12,10 +12,11 @@ use App\Models\BusinessProductMovement;
 use App\Models\BusinessUser;
 use App\Models\CuentasCobrar;
 use App\Models\DTE;
+use App\Models\PuntoVenta;
+use App\Models\Sucursal;
 use App\Models\Tributes;
 use App\Services\OctopusService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -126,7 +127,15 @@ class DTEController extends Controller
                 $dteProductController->totals();
             }
 
+            $sucursals = Sucursal::where("business_id", session("business"))->get()->pluck("nombre", "id")->toArray();
+
+            $default_pos = $business_user->default_pos_id ? PuntoVenta::with("sucursal")->find($business_user->default_pos_id) : null;
+
             $data = [
+                "business" => $business,
+                "sucursals" => $sucursals,
+                "business_user" => $business_user,
+                "default_pos" => $default_pos,
                 "document_type" => $document_type,
                 "currentDate" => $currentDate,
                 "departamentos" => $this->departamentos,
@@ -451,6 +460,12 @@ class DTEController extends Controller
         $business = Business::find($business_id);
         $receptor = $this->getReceptorData($request, $type);
 
+        $punto_venta = PuntoVenta::find($request->pos_id);
+
+        if(!$punto_venta) {
+            return redirect()->back()->withErrors(['pos_id' => 'El punto de venta seleccionado no es válido.']);
+        }
+
         $dte = [
             "fecEmi" => $request->fecEmi ?? null,
             "horEmi" => $request->horEmi ?? null,
@@ -463,6 +478,15 @@ class DTEController extends Controller
             "extension" => $this->extension($request),
             "apendice" => null,
             "numPagoElectronico" => null,
+            "sucursal" => [
+                "codSucursal" => $punto_venta->sucursal->codSucursal,
+                "codPuntoVenta" => $punto_venta->codPuntoVenta,
+                "departamento" => $punto_venta->sucursal->departamento,
+                "municipio" => $punto_venta->sucursal->municipio,
+                "complemento" => $punto_venta->sucursal->complemento,
+                "telefono" => $punto_venta->sucursal->telefono,
+                "correo" => $punto_venta->sucursal->correo,
+            ]
         ];
 
         if ($type === "14") {
@@ -1211,20 +1235,9 @@ class DTEController extends Controller
 
             $dte = Http::get(env("OCTOPUS_API_URL") . "/dtes/" . $codGeneracion)->json();
             $documento = json_decode($dte["documento"]);
-            $products_dte = $documento->cuerpoDocumento;
             $business = Business::find($business_id);
-            $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada");
 
-            $nit = $business->nit;
-            $tipoDoc = null;
-            $nombre = null;
-            $numDocumento = null;
-
-            if ($dte['tipo_dte'] === '14') {
-                $receptor = $documento->sujetoExcluido;
-            } else {
-                $receptor = $documento->receptor ?? "";
-            }
+            $receptor = ($dte['tipo_dte'] === '14') ? $documento->sujetoExcluido : $documento->receptor ?? "";
 
             $nombre = $receptor->nombre ?? "";
             if (in_array($dte['tipo_dte'], ['03', '05', '06'])) {
@@ -1236,7 +1249,7 @@ class DTEController extends Controller
             }
 
             $response = Http::post(env("OCTOPUS_API_URL") . '/anulacion/', [
-                "nit" => $nit,
+                "nit" => $business->nit,
                 "documento" => [
                     "codigoGeneracion" => $codGeneracion,
                     "fechaEmision" => $documento->identificacion->fecEmi,
@@ -1248,14 +1261,18 @@ class DTEController extends Controller
                     "motivoAnulacion" => $motivo,
                     "nombreResponsable" => auth()->user()->name,
                     "tipoDocResponsable" => "36",
-                    "numDocResponsable" => $nit,
+                    "numDocResponsable" => $business->nit,
                     "nombreSolicita" => $nombre ?? auth()->user()->name,
                     "tipoDocSolicita" => $tipoDoc ?? "36",
-                    "numDocSolicita" => $numDocumento ?? $nit,
+                    "numDocSolicita" => $numDocumento ?? $business->nit,
                 ]
             ]);
             $data = $response->json();
             if ($response->status() == 201) {
+                if(!in_array($dte["tipo_dte"], ["04", "07", "14"])) {
+                    $products_dte = $documento->cuerpoDocumento;
+                    $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada");
+                }
                 return redirect()->route('business.documents.index')
                     ->with('success', "Documento anulado correctamente")
                     ->with("success_message", $data["descripcionMsg"]);

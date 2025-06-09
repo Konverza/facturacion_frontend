@@ -65,6 +65,7 @@ class ProfileController extends Controller
         $codigo_actividad_economica  = $request->actividad_economica;
         $actividades_economicas = $this->octopus_service->getCatalog("CAT-019", null, true, true);
         $descripcion_actividad_economica = $actividades_economicas[$codigo_actividad_economica];
+        $logo_success = true;
 
         $data_business_response = Http::put($this->octopus_url . "/datos_empresa/" . $request->id, [
             "nombre" => $request->nombre,
@@ -91,10 +92,11 @@ class ProfileController extends Controller
                 ["name" => "nit", "contents" => $request->nit],
                 ["name" => "file", "contents" => fopen($logo_file, "r"), "filename" => $logo_file->getClientOriginalName()]
             ];
+            $logo_response = Http::attach($logo)->post("{$this->octopus_url}/credenciales/logo");
+            $logo_success = $logo_response->successful();
         }
 
-        $logo_response = Http::attach($logo)->post($this->octopus_url . "/credenciales/logo");
-        if ($data_business_response->status() === 200 && $logo_response->status() === 201) {
+        if ($data_business_response->successful() && $logo_success) {
             return redirect()->route('business.profile.index')->with('success', 'Datos actualizados')->with("success_message", "Datos de la empresa actualizados correctamente");
         } else {
             return redirect()->route('business.profile.index')->with('error', 'Error')->with("error_message", "Error al actualizar los datos de la empresa");

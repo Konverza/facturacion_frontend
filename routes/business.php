@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BusinessController;
-use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Business\BusinessSucursalController;
 use App\Http\Controllers\Business\AssociatedDocumentsController;
 use App\Http\Controllers\Business\CategoryController;
 use App\Http\Controllers\Business\CuentasCobrarController;
@@ -115,4 +115,19 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
 
     Route::get("/get-municipios", [BusinessController::class, "getMunicipios"])->name("get-municipios");
     Route::put("/datos-empresa", [ProfileController::class, "datos_empresa"])->name("datos-empresa.update");
+
+    // Sucursales
+    Route::get("/{business_id}/sucursales", [BusinessSucursalController::class, "index"])->name(name: "sucursales.index");
+    Route::post("/{business_id}/sucursales", [BusinessSucursalController::class, "store_sucursal"])->name("sucursales.store_sucursal");
+    Route::get("/{business_id}/sucursales/{id}", [BusinessSucursalController::class, "edit"])->name("sucursales.edit");
+    Route::put("/{business_id}/sucursales/{id}", [BusinessSucursalController::class, "update_sucursal"])->name("sucursales.update_sucursal");
+    Route::delete("/{business_id}/sucursales/{id}", [BusinessSucursalController::class, "delete_sucursal"])->name("sucursales.delete_sucursal");
+    // Punto de Venta
+    Route::get("/{business_id}/sucursales/{sucursal_id}/puntos-venta", [BusinessSucursalController::class, "index_puntos_venta"])->name("puntos-venta.index");
+    Route::get("/puntos-venta-html", [BusinessSucursalController::class, "getPuntosVenta"])->name("puntos-venta-html.index");
+    Route::post("/{business_id}/sucursales/{sucursal_id}/puntos-venta", [BusinessSucursalController::class, "store_punto_venta"])->name("puntos-venta.store_punto_venta");
+    Route::get("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "edit_punto_venta"])->name("puntos-venta.edit");
+    Route::put("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "update_punto_venta"])->name("puntos-venta.update_punto_venta");
+    Route::delete("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "delete_punto_venta"])->name("puntos-venta.delete_punto_venta");
+    
 });

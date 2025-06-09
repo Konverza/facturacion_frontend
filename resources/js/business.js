@@ -23,6 +23,7 @@ $(document).ready(function () {
             },
             success: function (response) {
                 $("#select-municipio").html(response.html);
+                $("#edit-municipio").html(response.html);
             },
             error: function () {
                 console.log("Error");
@@ -56,6 +57,27 @@ $(document).ready(function () {
                     $("#form-edit-user #name").val(response.name);
                     $("#form-edit-user #email").val(response.email);
                     $("#" + response.role).prop("checked", true);
+                } else if (type === "sucursales") {
+                    $("#edit-sucursal").removeClass("hidden").addClass("flex");
+                    $("body").addClass("overflow-hidden");
+                    $("#form-edit-sucursal").attr("action", action);
+                    $("#form-edit-sucursal #nombre").val(response.nombre);
+                    $("#form-edit-sucursal #departamento").val(
+                        response.departamento
+                    );
+                    $("#form-edit-sucursal #municipio").val(response.municipio);
+                    $("#form-edit-sucursal #complemento").val(response.complemento);
+                    $("#form-edit-sucursal #telefono").val(response.telefono);
+                    $("#form-edit-sucursal #correo").val(response.correo);
+                    $("#form-edit-sucursal #codSucursal").val(response.codSucursal);
+                } else if (type === "puntos_venta") {
+                    $("#edit-punto-venta").removeClass("hidden").addClass("flex");
+                    $("body").addClass("overflow-hidden");
+                    $("#form-edit-punto-venta").attr("action", action);
+                    $("#form-edit-punto-venta #nombre").val(response.nombre);
+                    $("#form-edit-punto-venta #codPuntoVenta").val(
+                        response.codPuntoVenta
+                    );
                 }
             },
         });
@@ -143,7 +165,7 @@ $(document).ready(function () {
             (
                 parseFloat($(this).val()) +
                 parseFloat($(this).val()) * 0.13
-            ).toFixed(2)
+            ).toFixed(8)
         );
     });
 
@@ -151,7 +173,7 @@ $(document).ready(function () {
         $("#price-not-iva").val(
             (
                 parseFloat($(this).val())/(1.13)
-            ).toFixed(2)
+            ).toFixed(8)
         );
     });
 
@@ -160,7 +182,7 @@ $(document).ready(function () {
               (
                   parseFloat($("#price-not-iva").val()) +
                   parseFloat($("#price-not-iva").val()) * 0.13
-              ).toFixed(2)
+              ).toFixed(8)
           );
     }
 
