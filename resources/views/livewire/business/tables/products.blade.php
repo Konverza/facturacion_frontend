@@ -38,7 +38,7 @@
     <!-- Filtros de búsqueda avanzada -->
     <div class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Filtros de búsqueda</h3>
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white"><x-icon icon="filter" class="inline mr-1" />Filtros de búsqueda</h3>
             <button wire:click="clearFilters" class="text-sm text-blue-500 hover:text-blue-700 dark:text-blue-400">
                 Limpiar filtros
             </button>
@@ -73,8 +73,9 @@
     <!-- Resumen de filtros aplicados -->
     @if ($search || $searchName || $searchCode || $stockState)
         <div class="mb-4 flex flex-wrap items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-            <span class="font-medium">Filtros aplicados:</span>
-
+            <span class="font-medium">
+                Filtros aplicados:
+            </span>
             @if ($search)
                 <span
                     class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">

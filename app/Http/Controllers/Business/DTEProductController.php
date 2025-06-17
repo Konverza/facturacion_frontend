@@ -115,7 +115,7 @@ class DTEProductController extends Controller
                 }
             }
 
-            $product_tributes = json_decode($business_product->tributos, true);
+            $product_tributes = $business_product->tributos;
 
             if (!$found) {
                 $precio = (float) $business_product->precioUni;

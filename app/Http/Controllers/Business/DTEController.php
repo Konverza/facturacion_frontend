@@ -846,7 +846,7 @@ class DTEController extends Controller
     {
         if ($type !== "14") {
             $product_tributos = is_array($product["product"]) ? $product["product"]["tributos"] : $product["tributos"];
-            $tributos = json_decode($product_tributos, true);
+            $tributos = $product_tributos;
             $tributos = array_filter($tributos, fn($value) => $value != "20");
             $tributos = array_values($tributos);
         }
