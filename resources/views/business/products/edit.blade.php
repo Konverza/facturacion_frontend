@@ -111,7 +111,7 @@
                 <div class="mt-4 flex flex-col gap-2">
                     @foreach ($tributes as $tribute)
                         <x-input type="toggle" value="{{ $tribute->codigo }}" label="{{ $tribute->descripcion }}"
-                            name="tributos[]" :disabled="$tribute->codigo === '20'" :checked="$tribute->codigo === '20' || (isset($product->tributos) && in_array($tribute->codigo, json_decode($product->tributos, true) ?? []))" />
+                            name="tributos[]" :disabled="$tribute->codigo === '20'" :checked="$tribute->codigo === '20' || (isset($product->tributos) && in_array($tribute->codigo, json_decode($product->tributos), true))" />
 
                         @if ($tribute->codigo === '20')
                             <input type="hidden" name="tributos[]" value="{{ $tribute->codigo }}">

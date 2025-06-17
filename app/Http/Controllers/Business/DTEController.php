@@ -1285,7 +1285,7 @@ class DTEController extends Controller
             return redirect()->route('business.documents.index')
                 ->with([
                     'error' => "Error",
-                    'error_message' => "Ha ocurrido un error al anular el documento: " . $e->getMessage()
+                    'error_message' => "Ha ocurrido un error al anular el documento: " . $e->getMessage() . " " . $e->getLine()
                 ]);
         }
     }

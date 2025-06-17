@@ -12,8 +12,9 @@ use App\Models\Tributes;
 use App\Services\OctopusService;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Imports\BusinessProductImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
@@ -29,20 +30,7 @@ class ProductController extends Controller
     public function index()
     {
         try {
-            $business_products = BusinessProduct::where("business_id", session("business"))->orderBy("id", "desc")->get();
-            $tributes = Tributes::all();
-            $business_products->each(function ($product) use ($tributes) {
-                $tributos_producto = json_decode($product->tributos);
-                $product->texto_tributos = collect($tributos_producto)->map(function ($tributo) use ($tributes) {
-                    $tributo_encontrado = $tributes->where('codigo', $tributo)->first();
-                    return $tributo_encontrado ? $tributo_encontrado->descripcion : null;
-                })->filter()->values();
-            });
-
-            return view(
-                'business.products.index',
-                ['business_products' => $business_products]
-            );
+            return view('business.products.index');
         } catch (\Exception $e) {
             return back()->with([
                 'error' => 'Error',
@@ -308,6 +296,26 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al actualizar el stock");
+        }
+    }
+
+    public function import(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:xlsx,xls,csv'
+            ]);
+
+            $business_id = session("business");
+            $unidades_medidas = $this->unidades_medidas;
+            Excel::import(new BusinessProductImport($business_id, $unidades_medidas), $request->file('file'));
+
+            return redirect()->route('business.products.index')
+                ->with('success', 'Productos importados')
+                ->with("success_message", "Los productos han sido importados correctamente");
+        } catch (\Exception $e) {
+            Log::error('Error al importar productos: ' . $e->getMessage());
+            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al importar los productos");
         }
     }
 }

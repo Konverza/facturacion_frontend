@@ -30,6 +30,7 @@
             }
         })();
     </script>
+    @livewireStyles
 </head>
 
 <body class="h-screen">
@@ -59,6 +60,7 @@
         @include('layouts.partials.alert')
         @yield('content')
     </main>
+    @livewireScripts
 </body>
 <script>
     // Oculta el loader al cargar la página o al restaurarla desde el bfcache
