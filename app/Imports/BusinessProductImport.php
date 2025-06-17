@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Models\BusinessProduct;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
 HeadingRowFormatter::default('none');
@@ -14,7 +15,7 @@ HeadingRowFormatter::default('none');
  * This class is responsible for importing business products from an Excel file.
  * It implements the ToModel and WithHeadingRow interfaces from the Maatwebsite Excel package.
  */
-class BusinessProductImport implements ToModel, WithHeadingRow
+class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts
 {
 
     private $business_id;
@@ -40,6 +41,11 @@ class BusinessProductImport implements ToModel, WithHeadingRow
      */
     public function model(array $row)
     {
+        // Check if the row has the required fields and if the prices are valid
+        if (!isset($row["codigo"]) || !isset($row["descripcion"]) || !isset($row["tipoItem"]) || !isset($row["uniMedida"]) || !isset($row["precioUni"]) || !isset($row["precioSinIVA"])) {
+            return null; // Skip rows that do not have the required fields
+        }
+
         if (($row["precioUni"] == 0 && $row["precioSinIVA"] == 0) || empty($row["tipoItem"]) || empty($row["uniMedida"]) || empty($row["descripcion"])) {
             return null; // Skip rows with zero prices and empty names
         }
@@ -96,5 +102,13 @@ class BusinessProductImport implements ToModel, WithHeadingRow
     public function headingRow(): int
     {
         return 1; // The first row is the heading row
+    }
+
+    /**
+     * @return string|array
+     */
+    public function uniqueBy()
+    {
+        return ['codigo', 'descripcion', 'business_id'];
     }
 }

@@ -19,7 +19,9 @@
                 </div>
                 <!-- Modal body -->
                 <div class="p-4">
-                    <div class="mb-4">
+                    <livewire:business.tables.dte-product :dte="$dte" :number="$number" />
+                    {{-- Uncomment the following section if you want to use the static product selection table --}}
+                    {{-- <div class="mb-4">
                         <x-input type="text" label="Buscar producto" id="input-search-products" icon="search"
                             placeholder="Buscar producto" />
                     </div>
@@ -72,7 +74,7 @@
                                 </x-tr>
                             @endforeach
                         </x-slot>
-                    </x-table>
+                    </x-table> --}}
                     <div class="mt-4 hidden" id="container-data-product">
                         <form action="{{ Route('business.dte.product.store') }}" method="POST" id="form-add-product">
                             @csrf

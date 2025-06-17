@@ -59,8 +59,7 @@
                 <div class="motion-preset-expand relative rounded-lg bg-white shadow motion-duration-300 dark:bg-gray-950">
                     <div class="flex flex-col">
                         <!-- Modal header -->
-                        <form action="{{ Route('business.products.remove-stock') }}" method="POST"
-                            id="form-remove-stock">
+                        <form action="{{ Route('business.products.remove-stock') }}" method="POST" id="form-remove-stock">
                             @csrf
                             <div
                                 class="flex items-center justify-between rounded-t border-b border-gray-300 p-4 dark:border-gray-800">
@@ -117,6 +116,17 @@
                             </div>
                             <!-- Modal body -->
                             <div class="flex flex-col gap-4 p-4">
+                                <div
+                                    class="my-2 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30">
+                                    <b>Nota: </b> Debe utilizar un archivo en formato <b>.xlsx</b> disponible en
+                                    <a href="{{ url('templates/importacion_productos.xlsx') }}" target="_blank"
+                                        class="text-blue-600 underline dark:text-blue-400">este enlace</a> para
+                                    importar productos.
+                                </div>
+                                <div
+                                    class="mb-2 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-yellow-500 dark:bg-yellow-950/30">
+                                    <b>Advertencia: </b> Tome en cuenta que al importar productos, si coincide el código y la descripcion de un producto ya existente, se actualizará el producto con los nuevos datos. Si no existe, se creará un nuevo producto.
+                                </div>
                                 <x-input type="file" label="Archivo de Productos" name="file" id="file"
                                     accept=".xlsx" maxSize="3072" />
                             </div>

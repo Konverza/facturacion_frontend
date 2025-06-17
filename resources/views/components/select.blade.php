@@ -15,7 +15,7 @@
     'search' => true,
 ])
 
-<div class="w-full">
+<div class="w-full flex flex-col gap-1">
     @if (!empty($label))
         <label for="{{ $id }}"
             class="{{ $required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : '' }} mb-1 block text-sm font-medium text-gray-500 dark:text-gray-300">
