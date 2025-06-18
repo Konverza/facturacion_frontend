@@ -115,7 +115,7 @@ class DTEProductController extends Controller
                 }
             }
 
-            $product_tributes = $business_product->tributos;
+            $product_tributes = json_decode($business_product->tributos, true) ?? [];
 
             if (!$found) {
                 $precio = (float) $business_product->precioUni;
@@ -123,7 +123,6 @@ class DTEProductController extends Controller
                 $cantidad = (float) $request->cantidad;
                 $total = (float) $request->total;
                 $descuento = (float) ($request->descuento ?? 0);
-
 
                 $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
 
