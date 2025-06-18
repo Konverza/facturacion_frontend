@@ -74,6 +74,9 @@
                     </div>
                 </div>
                 <div class="mt-4">
+                    <x-input type="checkbox" label="Aplicar precio especial a este cliente" name="special_price" id="special_price" :checked="$customer->special_price" />
+                </div>
+                <div class="mt-4">
                     @php
                         $checked = $customer->codPais || $customer->tipoPersona ? true : false;
                     @endphp

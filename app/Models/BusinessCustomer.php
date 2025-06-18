@@ -24,5 +24,10 @@ class BusinessCustomer extends Model
         'correo',
         'codPais',
         'tipoPersona',
+        'special_price',
+    ];
+
+    protected $casts = [
+        'special_price' => 'boolean',
     ];
 }

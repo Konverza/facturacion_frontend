@@ -34,6 +34,11 @@ class ProductRequest extends FormRequest
             'has_stock' => 'nullable|boolean',
             'category_id' => 'nullable|int',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'special_price' => 'nullable|numeric',
+            'cost' => 'nullable|numeric',
+            'margin' => 'nullable|numeric',
+            'special_price_with_iva' => 'nullable|numeric',
+            'discount' => 'nullable|numeric',
         ];
     }
 }

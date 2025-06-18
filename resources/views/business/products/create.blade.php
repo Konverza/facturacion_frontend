@@ -49,48 +49,79 @@
                     <x-input type="textarea" required name="descripcion" value="{{ old('descripcion') }}"
                         label="Descripción" />
                 </div>
+                <!-- Precio Especial y Costo -->
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                     <div class="flex-1">
-                        <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Precio sin IVA"
-                            name="precio_sin_iva" id="price-not-iva" value="{{ old('precio_sin_iva') }}"  step="0.00000001" />
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Costo"
+                            name="cost" step="0.00000001" value="{{ old('cost') }}" id="cost" />
                     </div>
                     <div class="flex-1">
-                        <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Precio con IVA"
-                            name="precio" step="0.00000001" value="{{ old('precio') }}" id="price-with-iva" />
+                        <x-input type="number" required icon="percentage" placeholder="0.00" label="Margen de ganancia"
+                            name="margin" step="0.00000001" value="{{ old('margin') }}" id="margin" />
+                    </div>
+                    <div class="flex-1">
+                        <x-input type="number" required icon="percentage" placeholder="0.00"
+                            label="Porcentaje de descuento (Sobre precio sin IVA)" name="discount" id="discount"
+                            value="{{ old('discount') }}" step="0.01" />
                     </div>
                 </div>
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
-                    <x-input type="toggle" label="Guardar inventario para este producto"
-                        name="has_stock" id="has_stock" value="1" checked />
+                    <div class="flex-1">
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                            label="Precio especial (sin IVA)" name="special_price" id="special_price"
+                            value="{{ old('special_price') }}" step="0.00000001" />
+                    </div>
+                    <div class="flex-1">
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                            label="Precio especial (con IVA)" name="special_price_with_iva" id="special_price_with_iva"
+                            value="{{ old('special_price_with_iva') }}" step="0.00000001" />
+                    </div>
+                </div>
+                <!-- End Precio Especial y Costo -->
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                    <div class="flex-1">
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                            label="Precio normal (sin IVA)" name="precio_sin_iva" id="price-not-iva"
+                            value="{{ old('precio_sin_iva') }}" step="0.00000001" />
+                    </div>
+                    <div class="flex-1">
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                            label="Precio normal (con IVA)" name="precio" step="0.00000001" value="{{ old('precio') }}"
+                            id="price-with-iva" />
+                    </div>
+                </div>
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                    <x-input type="toggle" label="Guardar inventario para este producto" name="has_stock"
+                        id="has_stock" value="1" checked />
                 </div>
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row" id="stocks">
                     <div class="flex-1">
-                        <x-input type="number" required label="Stock inicial" name="stock_inicial" id="stock_inicial" placeholder="0"
-                            value="{{ old('stock_inicial', 0) }}" min="1" />
+                        <x-input type="number" required label="Stock inicial" name="stock_inicial" id="stock_inicial"
+                            placeholder="0" value="{{ old('stock_inicial', 0) }}" min="1" />
                     </div>
                     <div class="flex-1">
-                        <x-input type="number" required label="Stock mínimo" name="stock_minimo" id="stock_minimo" placeholder="0"
-                            value="{{ old('stock_minimo', 0) }}" min="1" />
+                        <x-input type="number" required label="Stock mínimo" name="stock_minimo" id="stock_minimo"
+                            placeholder="0" value="{{ old('stock_minimo', 0) }}" min="1" />
                     </div>
                 </div>
                 @php
                     $business_id = Session::get('business') ?? null;
                     $business = \App\Models\Business::find($business_id);
                 @endphp
-                @if($business->posmode)
-                <div class="mt-4">
-                    <div class="flex-1">
-                        <x-select id="category_id" name="category_id" :options="$categories"
-                            value="{{ old('category_id') }}" selected="{{ old('category_id') }}"
-                            label="Categoría (opcional)" />
+                @if ($business->posmode)
+                    <div class="mt-4">
+                        <div class="flex-1">
+                            <x-select id="category_id" name="category_id" :options="$categories"
+                                value="{{ old('category_id') }}" selected="{{ old('category_id') }}"
+                                label="Categoría (opcional)" />
+                        </div>
                     </div>
-                </div>
-                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
-                    <div class="flex-1">
-                        <x-input type="file" label="Imagen de Producto" name="image" id="image"
-                                    accept=".png, .jpg, .jpeg, .webp" maxSize="3072" />
+                    <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                        <div class="flex-1">
+                            <x-input type="file" label="Imagen de Producto" name="image" id="image"
+                                accept=".png, .jpg, .jpeg, .webp" maxSize="3072" />
+                        </div>
                     </div>
-                </div>
                 @endif
                 <h2 class="mt-2 flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300">
                     Tributos
@@ -112,25 +143,12 @@
         </div>
     </section>
 
-    @push('scripts')
+    {{-- @push('scripts')
         <script>
             $(document).ready(function() {
-                $("#has_stock").on("change", function(){
-                    if ($(this).is(":checked")) {
-                        $("#stock_inicial").prop("disabled", false);
-                        $("#stock_minimo").prop("disabled", false);
-                        $("#stock_inicial").val(0);
-                        $("#stock_minimo").val(0);
-                        $("#stocks").removeClass("hidden");
-                    } else {
-                        $("#stock_inicial").prop("disabled", true);
-                        $("#stock_minimo").prop("disabled", true);
-                        $("#stock_inicial").val(0);
-                        $("#stock_minimo").val(0);
-                        $("#stocks").addClass("hidden");
-                    }
-                });
+                
+
             });
         </script>
-    @endpush
+    @endpush --}}
 @endsection

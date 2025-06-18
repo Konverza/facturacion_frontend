@@ -38,7 +38,15 @@
                                 {{ $customer->nrc }}
                             </x-td>
                             <x-td>
-                                {{ $customer->nombre }}
+                                {{ $customer->nombre }} <br>
+                                {{ $customer->nombreComercial ? ' (' . $customer->nombreComercial . ')' : '' }}
+                                @if($customer->special_price)
+                                <span
+                                    class=" mt-1 flex w-max items-center gap-1 text-nowrap rounded-lg bg-green-200 px-2 py-1 text-xs font-bold text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                                    <x-icon icon="circle-check" class="size-4" />
+                                    Precio especial
+                                </span>
+                                @endif
                             </x-td>
                             <x-td th :last="true">
                                 <div class="relative">
