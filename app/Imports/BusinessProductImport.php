@@ -6,6 +6,8 @@ use App\Models\BusinessProduct;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithUpserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
 HeadingRowFormatter::default('none');
@@ -15,7 +17,7 @@ HeadingRowFormatter::default('none');
  * This class is responsible for importing business products from an Excel file.
  * It implements the ToModel and WithHeadingRow interfaces from the Maatwebsite Excel package.
  */
-class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts
+class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts, WithChunkReading, WithBatchInserts
 {
 
     private $business_id;
@@ -110,5 +112,21 @@ class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts
     public function uniqueBy()
     {
         return ['codigo', 'descripcion', 'business_id'];
+    }
+
+    /**
+     * @return int
+     */
+    public function chunkSize(): int
+    {
+        return 500; // The size of each chunk for reading the file
+    }
+
+    /**
+     * @return int
+     */
+    public function batchSize(): int
+    {
+        return 500; // The size of each batch for inserting the records
     }
 }
