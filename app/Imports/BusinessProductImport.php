@@ -44,7 +44,7 @@ class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts, Wit
     public function model(array $row)
     {
         // Check if the row has the required fields and if the prices are valid
-        if (!isset($row["codigo"]) || !isset($row["descripcion"]) || !isset($row["tipoItem"]) || !isset($row["uniMedida"]) || !isset($row["precioUni"]) || !isset($row["precioSinIVA"])) {
+        if (!isset($row["codigo"]) || !isset($row["descripcion"]) || !isset($row["tipoItem"]) || !isset($row["uniMedida"]) || (!isset($row["precioUni"]) && !isset($row["precioSinIVA"]))) {
             return null; // Skip rows that do not have the required fields
         }
 
@@ -87,6 +87,17 @@ class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts, Wit
                 : (isset($row["precioUni"]) && $row["precioUni"] != 0
                     ? $row["precioUni"] / 1.13
                     : 0),
+            'special_price' => isset($row["special_price"]) && $row["special_price"] != 0
+                ? $row["special_price"]
+                : (isset($row["special_price_with_iva"]) && $row["special_price_with_iva"] != 0
+                    ? $row["special_price_with_iva"] / 1.13
+                    : 0),
+            'special_price_with_iva' => isset($row["special_price_with_iva"]) && $row["special_price_with_iva"] != 0
+                ? $row["special_price_with_iva"]
+                : (isset($row["special_price"]) && $row["special_price"] != 0
+                    ? $row["special_price"] * 1.13
+                    : 0),
+            'cost' => $row["cost"] ?? 0,
             'tributos' => '["20"]',
             'stockInicial' => $row["stockInicial"] ?? 0,
             'stockActual' => $row["stockInicial"] ?? 0,
