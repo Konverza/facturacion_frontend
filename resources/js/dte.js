@@ -217,10 +217,18 @@ $(document).ready(function () {
                     $("#count").removeAttr("max");
                 }
 
+                let precioSinTributos = data.product.precioSinTributos;
+                let precioUni = data.product.precioUni;
+
+                if (data.customer && data.customer.special_price) {
+                    precioSinTributos = data.product.special_price;
+                    precioUni = data.product.special_price_with_iva;
+                }
+
                 const productPrice =
                     data.dte != "01"
-                        ? data.product.precioSinTributos
-                        : data.product.precioUni;
+                        ? precioSinTributos
+                        : precioUni;
                 $("#product_price").val(productPrice);
 
                 $("#container-data-product").removeClass("hidden");
