@@ -845,7 +845,7 @@ class DTEController extends Controller
     public function getProductData($product, $type)
     {
         if ($type !== "14") {
-            $tributos = json_decode($product["product"]["tributos"], true);
+            $tributos =  is_array($product["product"]) ? json_decode($product["product"]["tributos"], true) : json_decode($product["tributos"], true);
             $tributos = array_filter($tributos, function ($value) {
                 return $value != "20";
             });
