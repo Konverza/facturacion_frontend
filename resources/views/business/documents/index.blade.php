@@ -12,25 +12,36 @@
                 <div class="flex-[6]">
                     <x-input type="text" placeholder="Buscar" class="w-full" icon="search" id="input-search-special" />
                 </div>
-                @if(!auth()->user()->only_fcf)
+                @if (!auth()->user()->only_fcf)
                     <div class="flex-1">
-                    <button type="button"
-                        class="show-modal bg-green-500 text-white hover:bg-green-600 dark:bg-green-500 dark:text-white dark:hover:bg-green-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
-                        data-target="#download-dtes">
-                        <x-icon icon="file" class="h-4 w-4" />
-                        <span class="text-sm">Descargar DTEs</span>
-                    </button>
-                </div>
-                <div class="flex-1">
-                    <button type="button"
-                        class="show-modal bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
-                        data-target="#download-anexos">
-                        <x-icon icon="download" class="h-4 w-4" />
-                        <span class="text-sm">Descargar Anexos</span>
-                    </button>
-                </div>
+                        <button type="button"
+                            class="show-modal bg-green-500 text-white hover:bg-green-600 dark:bg-green-500 dark:text-white dark:hover:bg-green-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
+                            data-target="#download-dtes">
+                            <x-icon icon="file" class="h-4 w-4" />
+                            <span class="text-sm">Descargar DTEs</span>
+                        </button>
+                    </div>
+                    <div class="flex-1">
+                        <button type="button"
+                            class="show-modal bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
+                            data-target="#download-anexos">
+                            <x-icon icon="download" class="h-4 w-4" />
+                            <span class="text-sm">Descargar Anexos</span>
+                        </button>
+                    </div>
                 @endif
             </div>
+            <form action="{{ route('business.documents.index') }}" method="get">
+                <div class="mb-4 flex w-full flex-col gap-4 sm:flex-row">
+                    <div class="flex-[6]">
+                        <x-select id="receptor" :options="$receptores_unicos" name="receptor" text="Seleccione un cliente"
+                            placeholder="Seleccione un cliente" />
+                    </div>
+                    <div class="flex-1">
+                        <x-button type="submit" typeButton="primary" icon="search" text="Filtrar DTEs por cliente" />
+                    </div>
+                </div>
+            </form>
             <x-table id="table-special">
                 <x-slot name="thead">
                     <x-tr>
@@ -66,7 +77,7 @@
                                     <span class="font-semibold">Código generación:</span>
                                     <span>{{ $invoice['codGeneracion'] }}</span>
                                     <span class="font-semibold">Número de control:</span>
-        <span>{{ $invoice['documento']->identificacion->numeroControl }}</span>
+                                    <span>{{ $invoice['documento']->identificacion->numeroControl }}</span>
                                     <span class="font-semibold">Sello de recibido:</span>
                                     <span>{{ $invoice['selloRecibido'] }}</span>
                                 </div>
@@ -84,7 +95,9 @@
 
                                     $nombre = $receptor->nombre;
 
-                                    $documento = (in_array($invoice['tipo_dte'], $receptores_nit)) ? $receptor->nit : $receptor->numDocumento;
+                                    $documento = in_array($invoice['tipo_dte'], $receptores_nit)
+                                        ? $receptor->nit
+                                        : $receptor->numDocumento;
                                 @endphp
                                 @if ($nombre)
                                     <div class="flex flex-col gap-1 text-xs">
@@ -363,7 +376,8 @@
                                 class="flex items-center justify-end gap-4 rounded-b border-t border-gray-300 p-4 dark:border-gray-800">
                                 <x-button type="button" class="hide-modal" text="Cancelar" icon="x"
                                     typeButton="secondary" data-target="#download-anexos" />
-                                <x-button type="button" text="Descargar" icon="download" typeButton="primary" id="downloadAnexos" />
+                                <x-button type="button" text="Descargar" icon="download" typeButton="primary"
+                                    id="downloadAnexos" />
                             </div>
                         </form>
                     </div>
@@ -401,7 +415,8 @@
                                 class="flex items-center justify-end gap-4 rounded-b border-t border-gray-300 p-4 dark:border-gray-800">
                                 <x-button type="button" class="hide-modal" text="Cancelar" icon="x"
                                     typeButton="secondary" data-target="#download-dtes" />
-                                <x-button type="button" text="Descargar" icon="download" typeButton="primary" id="downloadFiles" />
+                                <x-button type="button" text="Descargar" icon="download" typeButton="primary"
+                                    id="downloadFiles" />
                             </div>
                         </form>
                     </div>
@@ -420,7 +435,8 @@
 
                 const form = document.querySelector("#download-anexos form");
                 const formData = new FormData(form);
-                const filename = (formData.get("tipo") == "1" ? "f07-contribuyente" : "f07-consumidor-final") + "_" + formData.get("desde") + "_" + formData.get("hasta") + ".csv";
+                const filename = (formData.get("tipo") == "1" ? "f07-contribuyente" : "f07-consumidor-final") +
+                    "_" + formData.get("desde") + "_" + formData.get("hasta") + ".csv";
 
                 try {
                     const response = await fetch(form.action, {
