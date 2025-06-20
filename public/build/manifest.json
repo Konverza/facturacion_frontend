@@ -4,7 +4,7 @@
     "name": "alert"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CKmFcoWK.css",
+    "file": "assets/app-kTtdmskg.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -15,7 +15,7 @@
     "isEntry": true
   },
   "resources/js/dte.js": {
-    "file": "assets/dte-BTyZVoSq.js",
+    "file": "assets/dte-KJscg-sQ.js",
     "name": "dte",
     "src": "resources/js/dte.js",
     "isEntry": true,
