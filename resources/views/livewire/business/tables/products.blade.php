@@ -194,6 +194,10 @@
                         <div class="flex flex-col gap-1">
                             <span>Sin IVA: ${{ $product->precioSinTributos }}</span>
                             <span>Con IVA: ${{ $product->precioUni }}</span>
+                            @if ($product->special_price > 0)
+                                <span class="text-green-500">Descuento (Sin IVA): ${{ $product->special_price }}</span>
+                                <span class="text-green-500">Descuento (Con IVA): ${{ $product->special_price_with_iva }}</span>
+                            @endif
                         </div>
                     </x-td>
                     @if ($product->has_stock)

@@ -21,7 +21,8 @@
                     @endforeach
                 </div>
             @endif
-            <form action="{{ Route('business.products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ Route('business.products.update', $product->id) }}" method="POST"
+                enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
@@ -48,31 +49,61 @@
                     <x-input type="textarea" required name="descripcion"
                         value="{{ old('descripcion', $product->descripcion) }}" label="Descripción" />
                 </div>
-                <div class="mt-4 flex gap-4">
+                <!-- Precio Especial y Costo -->
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                     <div class="flex-1">
-                        <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Precio sin IVA"
-                            name="precio_sin_iva" step="0.00000001" id="price-not-iva"
-                            value="{{ old('precio_sin_iva', $product->precioSinTributos) }}" />
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Costo"
+                            name="cost" step="0.00000001" value="{{ old('cost', $product->cost) }}" id="cost" />
                     </div>
                     <div class="flex-1">
-                        <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Precio con IVA"
-                            name="precio" step="0.00000001" value="{{ old('precio', $product->precioUni) }}"
+                        <x-input type="number" required icon="percentage" placeholder="0.00" label="Margen de ganancia"
+                            name="margin" step="0.00000001" value="{{ old('margin', $product->margin) }}" id="margin" />
+                    </div>
+                    <div class="flex-1">
+                        <x-input type="number" required icon="percentage" placeholder="0.00"
+                            label="Porcentaje de descuento (Sobre precio sin IVA)" name="discount" id="discount"
+                            value="{{ old('discount', $product->discount) }}" step="0.01" />
+                    </div>
+                </div>
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                    <div class="flex-1">
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                            label="Precio especial (sin IVA)" name="special_price" id="special_price"
+                            value="{{ old('special_price', $product->special_price) }}" step="0.00000001" />
+                    </div>
+                    <div class="flex-1">
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                            label="Precio especial (con IVA)" name="special_price_with_iva" id="special_price_with_iva"
+                            value="{{ old('special_price_with_iva', $product->special_price_with_iva) }}" step="0.00000001" />
+                    </div>
+                </div>
+                <!-- End Precio Especial y Costo -->
+                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                    <div class="flex-1">
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                            label="Precio normal (sin IVA)" name="precio_sin_iva" id="price-not-iva"
+                            value="{{ old('precio_sin_iva', $product->precioSinTributos) }}" step="0.00000001" />
+                    </div>
+                    <div class="flex-1">
+                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                            label="Precio normal (con IVA)" name="precio" step="0.00000001" value="{{ old('precio', $product->precioUni) }}"
                             id="price-with-iva" />
                     </div>
                 </div>
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
-                    <x-input type="toggle" label="Guardar inventario para este producto" name="has_stock" id="has_stock"
-                        value="1" :checked="$product->has_stock" />
+                    <x-input type="toggle" label="Guardar inventario para este producto" name="has_stock"
+                        id="has_stock" value="1" :checked="$product->has_stock" />
                 </div>
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row {{ $product->has_stock ? '' : 'hidden' }} "
                     id="stocks">
                     <div class="flex-1">
                         <x-input type="number" :required="$product->has_stock" label="Stock inicial" name="stock_inicial"
-                            id="stock_inicial" placeholder="0" value="{{ old('stock_inicial', 0) }}" :disabled="!$product->has_stock" />
+                            id="stock_inicial" placeholder="0" value="{{ old('stock_inicial', 0) }}"
+                            :disabled="!$product->has_stock" />
                     </div>
                     <div class="flex-1">
-                        <x-input type="number" :required="$product->has_stock" label="Stock mínimo" name="stock_minimo" id="stock_minimo"
-                            placeholder="0" value="{{ old('stock_minimo', 0) }}" :disabled="!$product->has_stock" />
+                        <x-input type="number" :required="$product->has_stock" label="Stock mínimo" name="stock_minimo"
+                            id="stock_minimo" placeholder="0" value="{{ old('stock_minimo', 0) }}" :disabled="!$product->has_stock" />
                     </div>
                 </div>
                 @php
@@ -83,7 +114,8 @@
                     <div class="mt-4">
                         <div class="flex-1">
                             <x-select id="category_id" name="category_id" :options="$categories"
-                                value="{{ old('category_id', $product->category_id) }}" selected="{{ old('category_id', $product->category_id) }}"
+                                value="{{ old('category_id', $product->category_id) }}"
+                                selected="{{ old('category_id', $product->category_id) }}"
                                 label="Categoría (opcional)" />
                         </div>
                     </div>

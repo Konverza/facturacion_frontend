@@ -160,31 +160,113 @@ $(document).ready(function () {
         });
     });
 
+    // Products
+    $("#has_stock").on("change", function () {
+        if ($(this).is(":checked")) {
+            $("#stock_inicial").prop("disabled", false);
+            $("#stock_minimo").prop("disabled", false);
+            $("#stock_inicial").val(0);
+            $("#stock_minimo").val(0);
+            $("#stocks").removeClass("hidden");
+        } else {
+            $("#stock_inicial").prop("disabled", true);
+            $("#stock_minimo").prop("disabled", true);
+            $("#stock_inicial").val(0);
+            $("#stock_minimo").val(0);
+            $("#stocks").addClass("hidden");
+        }
+    });
+
+    // Función para calcular todos los valores basados en costo, margen y descuento
+    function calculateFromCostMarginDiscount() {
+        let cost = parseFloat($("#cost").val()) || 0;
+        let margin = parseFloat($("#margin").val()) || 0;
+        let discount = parseFloat($("#discount").val()) || 0;
+
+        let price = cost + (cost * margin / 100);
+        let specialPrice = price - (price * discount / 100);
+
+        $("#price-not-iva").val(price.toFixed(8));
+        $("#price-with-iva").val((price * 1.13).toFixed(8));
+        $("#special_price").val(specialPrice.toFixed(8));
+        $("#special_price_with_iva").val((specialPrice * 1.13).toFixed(8));
+    }
+
+    // Función para calcular el descuento basado en el precio especial
+    function calculateDiscountFromSpecialPrice() {
+        let priceNotIva = parseFloat($("#price-not-iva").val()) || 0;
+        let specialPrice = parseFloat($("#special_price").val()) || 0;
+
+        if (priceNotIva > 0) {
+            let discount = ((priceNotIva - specialPrice) / priceNotIva) * 100;
+            $("#discount").val(discount.toFixed(8));
+        }
+    }
+
+    // Función para calcular el margen basado en el precio normal sin IVA
+    function calculateMarginFromNormalPrice() {
+        let cost = parseFloat($("#cost").val()) || 0;
+        let priceNotIva = parseFloat($("#price-not-iva").val()) || 0;
+
+        if (cost > 0) {
+            let margin = ((priceNotIva - cost) / cost) * 100;
+            $("#margin").val(margin.toFixed(8));
+        }
+    }
+
+    // Conversión entre precio sin IVA y con IVA (normal)
     $("#price-not-iva").on("input", function () {
-        $("#price-with-iva").val(
-            (
-                parseFloat($(this).val()) +
-                parseFloat($(this).val()) * 0.13
-            ).toFixed(8)
-        );
+        let priceNotIva = parseFloat($(this).val()) || 0;
+        $("#price-with-iva").val((priceNotIva * 1.13).toFixed(8));
+        calculateMarginFromNormalPrice(); // Nueva línea para calcular margen
+        calculateDiscountFromSpecialPrice();
     });
 
     $("#price-with-iva").on("input", function () {
-        $("#price-not-iva").val(
-            (
-                parseFloat($(this).val())/(1.13)
-            ).toFixed(8)
-        );
+        let priceWithIva = parseFloat($(this).val()) || 0;
+        let priceNotIva = priceWithIva / 1.13;
+        $("#price-not-iva").val(priceNotIva.toFixed(8));
+        calculateMarginFromNormalPrice(); // Nueva línea para calcular margen
+        calculateDiscountFromSpecialPrice();
     });
 
-    if($("#price-not-iva").length > 0){
-          $("#price-with-iva").val(
-              (
-                  parseFloat($("#price-not-iva").val()) +
-                  parseFloat($("#price-not-iva").val()) * 0.13
-              ).toFixed(8)
-          );
+    // Conversión entre precio especial sin IVA y con IVA
+    $("#special_price").on("input", function () {
+        let specialPrice = parseFloat($(this).val()) || 0;
+        $("#special_price_with_iva").val((specialPrice * 1.13).toFixed(8));
+        calculateDiscountFromSpecialPrice();
+    });
+
+    $("#special_price_with_iva").on("input", function () {
+        let specialPriceWithIva = parseFloat($(this).val()) || 0;
+        let specialPrice = specialPriceWithIva / 1.13;
+        $("#special_price").val(specialPrice.toFixed(8));
+        calculateDiscountFromSpecialPrice();
+    });
+
+    // Cálculos cuando cambian costo, margen o descuento
+    $("#cost, #margin, #discount").on("input", function () {
+        calculateFromCostMarginDiscount();
+    });
+
+    // Cálculos iniciales
+    if ($("#price-not-iva").length > 0 && $("#price-not-iva").val()) {
+        let priceNotIva = parseFloat($("#price-not-iva").val());
+        $("#price-with-iva").val((priceNotIva * 1.13).toFixed(8));
+        calculateMarginFromNormalPrice(); // Nueva línea para cálculo inicial
     }
+
+    if ($("#special_price").length > 0 && $("#special_price").val()) {
+        $("#special_price_with_iva").val((parseFloat($("#special_price").val()) * 1.13).toFixed(8));
+    }
+
+    // Si se modifica el precio normal (sin IVA o con IVA), actualizar margen y descuento si hay precio especial
+    $("#price-not-iva, #price-with-iva").on("input", function () {
+        calculateMarginFromNormalPrice();
+        if ($("#special_price").val() || $("#special_price_with_iva").val()) {
+            calculateDiscountFromSpecialPrice();
+        }
+    });
 
     //Profile
     $("#logo").on("change", function () {

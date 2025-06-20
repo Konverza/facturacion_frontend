@@ -73,6 +73,11 @@ class ProductController extends Controller
             $product->uniMedida = $validated['unidad_medida'];
             $product->descripcion = $validated['descripcion'];
             $product->precioUni = $validated['precio'];
+            $product->special_price = $validated['special_price'] ?? 0; // Default to 0 if not provided
+            $product->cost = $validated['cost'] ?? 0; // Default to 0 if not provided
+            $product->special_price_with_iva = $validated['special_price_with_iva'] ?? 0; // Default to 0 if not provided
+            $product->margin = $validated['margin'] ?? 0; // Default to 0 if not provided
+            $product->discount = $validated['discount'] ?? 0; // Default to 0 if not provided
             $product->precioSinTributos = $validated['precio_sin_iva'];
             $product->tributos = json_encode($validated["tributos"]);
             if(Arr::exists($validated, "has_stock")){
@@ -168,8 +173,13 @@ class ProductController extends Controller
             $product->uniMedida = $validated['unidad_medida'];
             $product->descripcion = $validated['descripcion'];
             $product->precioUni = $validated['precio'];
+            $product->special_price = $validated['special_price'] ?? 0; // Default to 0 if not provided
+            $product->special_price_with_iva = $validated['special_price_with_iva'] ?? 0; // Default to 0 if not provided
+            $product->margin = $validated['margin'] ?? 0; // Default to
+            $product->cost = $validated['cost'] ?? 0; // Default to 0 if not provided
             $product->precioSinTributos = $validated['precio_sin_iva'];
             $product->tributos = json_encode($validated["tributos"]);
+            $product->discount = $validated['discount'] ?? 0; // Default to 0 if not provided
 
 
             if(Arr::exists($validated, "has_stock")){

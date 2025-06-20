@@ -73,6 +73,9 @@
                     </div>
                 </div>
                 <div class="mt-4">
+                    <x-input type="checkbox" label="Aplicar precio especial a este cliente" name="special_price" id="special_price" />
+                </div>
+                <div class="mt-4">
                     <x-input type="checkbox" label="Rellenar datos de exportación" name="export_data" id="export-data" />
                 </div>
                 <div class="hidden" id="export-data-container">

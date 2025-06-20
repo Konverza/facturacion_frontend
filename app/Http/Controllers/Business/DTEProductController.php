@@ -21,6 +21,7 @@ class DTEProductController extends Controller
     {
         $product = BusinessProduct::find($request->product_id);
         $dte = session("dte")["type"];
+        $customer = session("dte")["customer"] ?? null;
 
         if (!$product) {
             return response()->json([
@@ -32,7 +33,8 @@ class DTEProductController extends Controller
         return response()->json([
             "success" => true,
             "product" => $product,
-            "dte" => $dte
+            "dte" => $dte,
+            "customer" => $customer
         ]);
     }
 
@@ -40,6 +42,7 @@ class DTEProductController extends Controller
     {
         try {
             $this->dte = session("dte", ["products" => []]);
+            $customer = session("dte")["customer"] ?? null;
 
             if (!isset($this->dte["products"]) || !is_array($this->dte["products"])) {
                 $this->dte["products"] = [];
@@ -118,8 +121,13 @@ class DTEProductController extends Controller
             $product_tributes = json_decode($business_product->tributos, true) ?? [];
 
             if (!$found) {
-                $precio = (float) $business_product->precioUni;
-                $precio_sin_tributos = (float) $business_product->precioSinTributos;
+                if($customer && $customer->special_price){
+                    $precio = (float) $business_product->special_price_with_iva;
+                    $precio_sin_tributos = (float) $business_product->special_price;
+                } else {
+                    $precio = (float) $business_product->precioUni;
+                    $precio_sin_tributos = (float) $business_product->precioSinTributos;
+                }
                 $cantidad = (float) $request->cantidad;
                 $total = (float) $request->total;
                 $descuento = (float) ($request->descuento ?? 0);

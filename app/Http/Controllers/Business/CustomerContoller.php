@@ -98,7 +98,8 @@ class CustomerContoller extends Controller
                 "telefono" => $request->telefono,
                 "correo" => $request->correo,
                 "codPais" => $request->codigo_pais,
-                "tipoPersona" => $request->tipo_persona
+                "tipoPersona" => $request->tipo_persona,
+                "special_price" => $request->has('special_price') ? true : false
             ]);
 
             $business_customer->save();
@@ -187,6 +188,7 @@ class CustomerContoller extends Controller
                 "correo" => $request->correo,
                 "codPais" => $request->codigo_pais,
                 "tipoPersona" => $request->tipo_persona,
+                "special_price" => $request->has('special_price') ? true : false
             ]);
             DB::commit();
 
