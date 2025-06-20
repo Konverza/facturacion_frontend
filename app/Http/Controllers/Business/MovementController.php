@@ -24,6 +24,7 @@ class MovementController extends Controller
                     $query->where('business_id', $business_id);
                 })->get();
             $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
+            $dtes = $dtes["items"] ?? [];
 
             $dteByCodGeneracion = [];
             foreach ($dtes as $dte) {

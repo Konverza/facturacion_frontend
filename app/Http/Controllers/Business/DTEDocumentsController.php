@@ -77,7 +77,7 @@ class DTEDocumentsController extends Controller
     {
         try {
             $codGeneracion = $request->codGeneracion;
-            $dtes = $this->dtes;
+            $dtes = $this->dtes["items"] ?? [];
             $dte = null;
             foreach ($dtes as $dte_) {
                 if ($dte_["codGeneracion"] === $codGeneracion) {
@@ -126,7 +126,7 @@ class DTEDocumentsController extends Controller
         // try {
 
             $codGeneracion = $request->cod_generacion;
-            $dtes = $this->dtes;
+            $dtes = $this->dtes["items"] ?? [];
 
             $dte = null;
             foreach ($dtes as $dte_) {

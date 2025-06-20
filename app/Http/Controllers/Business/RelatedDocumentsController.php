@@ -94,7 +94,7 @@ class RelatedDocumentsController extends Controller
             $business_id = session("business");
             $business = Business::find($business_id);
             $dtes = Http::timeout(30)->get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
-
+            $dtes = $dtes["items"] ?? [];
             if (count($dtes) === 0) {
                 return response()->json([
                     "success" => false,

@@ -23,7 +23,7 @@ class CuentasCobrarController extends Controller
             $business = Business::find($business_id ?? $business_id);
             $business_customers = BusinessCustomer::where('business_id', $business_id)->get();
             $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
-
+            $dtes = $dtes["items"] ?? [];
             $dteByCodGeneracion = [];
             foreach ($dtes as $dte) {
                 if (isset($dte["codGeneracion"])) {
@@ -174,7 +174,7 @@ class CuentasCobrarController extends Controller
             $business_id = Session::get('business') ?? null;
             $business = Business::find($business_id ?? $business_id);
             $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
-
+            $dtes = $dtes["items"] ?? [];
             $dteByCodGeneracion = [];
             foreach ($dtes as $dte) {
                 if (isset($dte["codGeneracion"])) {

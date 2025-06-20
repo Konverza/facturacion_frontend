@@ -74,7 +74,7 @@ class DTEController extends Controller
             $business = Business::find($business_user->business_id);
             $datos_empresa = $this->octopus_service->get("/datos_empresa/nit/" . $business->nit);
             $dtes = Http::timeout(30)->get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
-
+            $dtes = $dtes["items"] ?? [];
             $dtes = collect($dtes)
                 ->filter(function ($dte) {
                     return $dte["estado"] === "PROCESADO";
@@ -1299,6 +1299,7 @@ class DTEController extends Controller
         $hasta = "{$request->hasta}T23:59:59";
 
         $dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes/?nit=" . $business->nit . "&fechaInicio=" . $desde . "&fechaFin=" . $hasta)->json();
+        $dtes = $dtes["items"] ?? [];
         $dte_collection = null;
 
         switch ($request->tipo) {

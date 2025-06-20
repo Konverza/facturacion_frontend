@@ -114,7 +114,7 @@
                         </x-slot>
                         <x-slot name="tbody">
                             {{-- Grab first 5 $dte --}}
-                            @foreach ($dtes as $item)
+                            @foreach ($dtes["items"] as $item)
                                 <x-tr :last="$loop->last">
                                     <x-td>
                                         {{ $loop->iteration }}
