@@ -854,6 +854,10 @@ $(document).ready(function () {
                         $("." + data.select).html(data.select_data);
                     }
 
+                    if (data.select_data_new) {
+                        $("." + data.select_new).html(data.select_data_new);
+                    }
+
                     if (data.monto_pendiente !== undefined) {
                         $("#monto_total").val(redondear(data.monto_pendiente, 2));
                     }
@@ -956,12 +960,13 @@ $(document).ready(function () {
             .then((response) => {
                 const data = response.data;
                 if (data.success) {
-                    console.log(data);
+                    console.log("Documento seleccionado:", data);
                     $("#table-" + data.table).html(data.table_data);
                     $("#" + data.modal)
                         .addClass("hidden")
                         .removeClass("flex");
                     $("." + data.select).html(data.select_data);
+                    $("." + data.select_new).html(data.select_data_new);
                     $("#overlay").addClass("hidden");
                     $("body").removeClass("overflow-hidden");
                     showAlert("success", "Exito", data.message);
