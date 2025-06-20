@@ -73,6 +73,12 @@ class DTEProductController extends Controller
                     $product["product_id"] == $business_product->id &&
                     $product["tipo"] == $request->tipo
                 ) {
+                    if ($request->documento_relacionado !== "" || $request->documento_relacionado !== null) {
+                        // allow same product with different related document
+                        if ($product["documento_relacionado"] !== $request->documento_relacionado) {
+                            continue;
+                        }
+                    }
                     $found = true;
 
                     $cantidadActual = (float) $product["cantidad"];

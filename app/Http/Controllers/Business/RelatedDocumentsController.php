@@ -50,6 +50,12 @@ class RelatedDocumentsController extends Controller
                             "message" => "No se pueden agregar dos tipos de documentos relacionados diferentes"
                         ]);
                     }
+                    if ($document["numero_documento"] === $request->numero_documento) {
+                        return response()->json([
+                            "success" => false,
+                            "message" => "El documento ya está relacionado"
+                        ]);
+                    }
                 }
             }
 
@@ -130,6 +136,12 @@ class RelatedDocumentsController extends Controller
                         return response()->json([
                             "success" => false,
                             "message" => "No se pueden agregar dos tipos de documentos relacionados diferentes"
+                        ]);
+                    }
+                    if($asociado["numero_documento"] === $request->codGeneracion) {
+                        return response()->json([
+                            "success" => false,
+                            "message" => "El documento electrónico ya está relacionado"
                         ]);
                     }
                 }
