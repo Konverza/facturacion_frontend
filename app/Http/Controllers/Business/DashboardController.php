@@ -67,7 +67,7 @@ class DashboardController extends Controller
             $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit."&limit=5")->json();
 
             if($user->only_fcf){
-                $dtes = array_filter($dtes["items"], fn($dte) => in_array($dte['tipo_dte'], ['01']));
+                $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit . "&limit=5&tipo_dte=01")->json();
             }
 
             // Datos locales
@@ -88,7 +88,7 @@ class DashboardController extends Controller
                 'fin_mes'
             ));
         } catch (\Exception $e) {
-            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al cargar los datos. Contacte al administrador.");
+            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al cargar los datos. Contacte al administrador." . $e->getMessage());
         }
     }
 
