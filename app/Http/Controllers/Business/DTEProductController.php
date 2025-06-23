@@ -143,7 +143,7 @@ class DTEProductController extends Controller
                 $this->dte["products"][] = [
                     "id" => rand(1, 1000),
                     "product" => $business_product->toArray(),
-                    "product_id" => $business_product->id,
+                    "product_id" => $business_product->codigo,
                     "unidad_medida" => $business_product->uniMedida,
                     "descripcion" => $business_product->descripcion,
                     "cantidad" => $cantidad,

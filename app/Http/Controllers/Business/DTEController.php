@@ -880,7 +880,7 @@ class DTEController extends Controller
                 "tipoItem" => is_array($product["product"]) ? $product["product"]["tipoItem"] : $product["tipo_item"],
                 "numeroDocumento" => isset($product["documento_relacionado"]) && $product["documento_relacionado"] !== null ? $product["documento_relacionado"] : null,
                 "cantidad" => $product["cantidad"],
-                "codigo" => is_array($product["product"]) ? strval($product["product"]["id"]) : null,
+                "codigo" => is_array($product["product"]) ? strval($product["product"]["codigo"]) : null,
                 "codTributo" => null,
                 "uniMedida" => $product["unidad_medida"],
                 "descripcion" => $product["descripcion"],
