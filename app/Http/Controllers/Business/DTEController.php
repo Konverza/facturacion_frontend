@@ -466,6 +466,8 @@ class DTEController extends Controller
             return redirect()->back()->withErrors(['pos_id' => 'El punto de venta seleccionado no es válido.']);
         }
 
+        $extension = $this->extension($request);
+
         $dte = [
             "fecEmi" => $request->fecEmi ?? null,
             "horEmi" => $request->horEmi ?? null,
@@ -475,7 +477,7 @@ class DTEController extends Controller
             "otrosDocumentos" => $this->otrosDocumentos(),
             "ventaTercero" => $this->ventaTerceros($request),
             "resumen" => [],
-            "extension" => $this->extension($request),
+            "extension" => $extension,
             "apendice" => null,
             "numPagoElectronico" => null,
             "sucursal" => [
@@ -528,6 +530,7 @@ class DTEController extends Controller
             $dte["resumen"]["ivaRete1"] = $this->dte["retener_iva"] === "active" ? round((float) $this->dte["total_iva_retenido"] ?? 0, 2) : 0;
             $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
             $dte["resumen"]["reteRenta"] = round((float) $this->dte["isr"] ?? 0, 2);
+            $dte["resumen"]["observaciones"] = $extension["observaciones"];
         } else {
             $dte["resumen"]["descuNoSuj"] = round((float) $this->dte["descuento_venta_no_sujeta"] ?? 0, 2);
             $dte["resumen"]["descuExtenta"] = round((float) $this->dte["descuento_venta_exenta"] ?? 0, 2);
