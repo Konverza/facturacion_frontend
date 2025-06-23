@@ -530,7 +530,7 @@ class DTEController extends Controller
             $dte["resumen"]["ivaRete1"] = $this->dte["retener_iva"] === "active" ? round((float) $this->dte["total_iva_retenido"] ?? 0, 2) : 0;
             $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
             $dte["resumen"]["reteRenta"] = round((float) $this->dte["isr"] ?? 0, 2);
-            $dte["resumen"]["observaciones"] = $extension["observaciones"];
+            $dte["resumen"]["observaciones"] = $this->dte["extension"]["observaciones"] ?? null;
         } else {
             $dte["resumen"]["descuNoSuj"] = round((float) $this->dte["descuento_venta_no_sujeta"] ?? 0, 2);
             $dte["resumen"]["descuExtenta"] = round((float) $this->dte["descuento_venta_exenta"] ?? 0, 2);

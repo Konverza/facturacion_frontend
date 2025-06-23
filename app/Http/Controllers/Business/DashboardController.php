@@ -67,7 +67,7 @@ class DashboardController extends Controller
             $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit."&limit=5")->json();
 
             if($user->only_fcf){
-                $dtes = array_filter($dtes, fn($dte) => in_array($dte['tipo_dte'], ['01']));
+                $dtes = array_filter($dtes["items"], fn($dte) => in_array($dte['tipo_dte'], ['01']));
             }
 
             // Datos locales
