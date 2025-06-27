@@ -524,6 +524,7 @@ class DTEController extends Controller
             $dte["resumen"]["seguro"] = round((float) $this->dte["seguro"] ?? 0, 2);
             $dte["resumen"]["codIncoterms"] = $request->incoterms ?? null;
             $dte["resumen"]["descIncoterms"] = $this->incoterms[$request->incoterms] ?? null;
+            $dte["resumen"]["observaciones"] = $this->dte["extension"]["observaciones"] ?? null;
         } elseif ($type === "14") {
             $dte["resumen"]["descu"] = round((float) $this->dte["total_descuentos"] ?? 0, 2);
             $dte["resumen"]["totalDescu"] = round((float) $this->dte["total_descuentos"] ?? 0, 2);
@@ -556,7 +557,7 @@ class DTEController extends Controller
         } else {
             if (isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
                 foreach ($this->dte["products"] as $product) {
-                    $dte["cuerpoDocumento"][] = $this->getProductData($product, $type);
+                    $dte["cuerpoDocumento"][] = $this->getProductData($product, $type, $this->dte["documentos_relacionados"]);
                 }
             }
         }
@@ -621,7 +622,7 @@ class DTEController extends Controller
                 ];
             }
 
-            //dd($dte);
+            // dd($dte);
             $response = Http::timeout(30)->post(env("OCTOPUS_API_URL") . $endpoint, $dte);
             $data = json_decode($response->body(), true);
             return $data;
@@ -845,7 +846,7 @@ class DTEController extends Controller
         }
     }
 
-    public function getProductData($product, $type)
+    public function getProductData($product, $type, $documentos_relacionados = null)
     {
         if ($type !== "14") {
             $tributos =  is_array($product["product"]) ? json_decode($product["product"]["tributos"], true) : json_decode($product["tributos"], true);
@@ -879,9 +880,19 @@ class DTEController extends Controller
                 "compra" => round($product["ventas_gravadas"], 8),
             ];
         } else {
+
+            $documentoRelacionado = isset($product["documento_relacionado"]) && $product["documento_relacionado"] !== null ? $product["documento_relacionado"] : null;
+            if($documentoRelacionado && $documentos_relacionados) {
+                // Find in documentos_relacionados where numero_documento matches documentoRelacionado
+                $relatedDoc = collect($documentos_relacionados)->firstWhere('numero_documento', $documentoRelacionado);
+                if ($relatedDoc && $relatedDoc["tipo_documento"] == "07") {
+                    $tributos = null;
+                }
+            }
+
             return [
                 "tipoItem" => is_array($product["product"]) ? $product["product"]["tipoItem"] : $product["tipo_item"],
-                "numeroDocumento" => isset($product["documento_relacionado"]) && $product["documento_relacionado"] !== null ? $product["documento_relacionado"] : null,
+                "numeroDocumento" => $documentoRelacionado,
                 "cantidad" => $product["cantidad"],
                 "codigo" => is_array($product["product"]) ? strval($product["product"]["codigo"]) : null,
                 "codTributo" => null,
@@ -892,7 +903,7 @@ class DTEController extends Controller
                 "ventaNoSuj" => round($product["ventas_no_sujetas"], 8),
                 "ventaExenta" => round($product["ventas_exentas"], 8),
                 "ventaGravada" => round($product["ventas_gravadas"], 8),
-                "tributos" => count($tributos) > 0 ? $tributos : null,
+                "tributos" => $tributos && count($tributos) > 0 ? $tributos : null,
                 "psv" => round((float) $product["precio"], 8),
                 "ivaItem" => round($product["iva"], 8),
                 "noGravado" => 0,
@@ -1155,7 +1166,7 @@ class DTEController extends Controller
             ];
         }
 
-        return $tributos_dte;
+        return $tributos_dte  != [] ? $tributos_dte : null;
     }
 
     public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida")

@@ -7,29 +7,30 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
-use Maatwebsite\Excel\Concerns\WithColumnFormatting;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-class CustomerExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithColumnFormatting, WithEvents
+class CustomerExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithEvents
 {
     protected $search;
     protected $searchNombre;
     protected $searchNumDocumento;
 
     protected $exactSearch;
+    protected $departamentos;
+    protected $octopusService;
 
-    public function __construct($search, $searchNombre, $searchNumDocumento, $exactSearch)
+    public function __construct($search, $searchNombre, $searchNumDocumento, $exactSearch, $departamentos, $octopusService)
     {
         $this->search = $search;
         $this->searchNombre = $searchNombre;
         $this->searchNumDocumento = $searchNumDocumento;
         $this->exactSearch = $exactSearch;
+        $this->departamentos = $departamentos;
+        $this->octopusService = $octopusService;
     }
     public function query()
     {
@@ -50,5 +51,75 @@ class CustomerExport implements FromQuery, WithHeadings, WithMapping, ShouldAuto
                 $query->where('numDocumento', $this->exactSearch ? $this->searchNumDocumento : 'like', "%{$this->searchNumDocumento}%");
             })
             ->orderBy('created_at', 'desc');
+    }
+
+    public function headings(): array
+    {
+        return [
+            'Nombre',
+            'Nombre Comercial',
+            'NRC',
+            'Num. Documento',
+            'Teléfono',
+            'Email',
+            'Dirección',
+            'Departamento',
+            'Municipio',
+            'Fecha de Creación',
+        ];
+    }
+
+    public function map($customer): array
+    {
+        return [
+            $customer->nombre,
+            $customer->nombreComercial,
+            $customer->nrc,
+            $customer->numDocumento,
+            $customer->telefono,
+            $customer->email,
+            $customer->direccion,
+            $customer->departamento ? $this->obtenerNombreDepartamento($customer->departamento) : '',
+            $customer->municipio ? $this->obtenerNombreMunicipio($customer->departamento, $customer->municipio) : '',
+            $customer->created_at ? $customer->created_at->format('Y-m-d H:i:s') : '',
+        ];
+    }
+
+    protected function obtenerNombreDepartamento(string $codigoDepto): ?string {
+        return $this->departamentos[$codigoDepto]['nombre'] ?? null;
+    }
+
+    protected function obtenerNombreMunicipio(string $codigoDepto, string $codigoMunicipio): ?string {
+        return $this->departamentos[$codigoDepto]['municipios'][$codigoMunicipio]['nombre'] ?? null;
+    }
+
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $sheet->setAutoFilter('A1:J1');
+                $sheet->getStyle('A1:J1')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 12,
+                        'color' => ['rgb' => 'FFFFFF'],
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                        ],
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => '4F81BD'],
+                    ],
+                ]);
+            },
+        ];
     }
 }

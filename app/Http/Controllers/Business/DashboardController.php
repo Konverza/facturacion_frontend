@@ -45,6 +45,8 @@ class DashboardController extends Controller
             $dtes_pending = DTE::where('business_id', $business->id);
             if ($user->only_fcf) {
                 $dtes_pending = $dtes_pending->where('type', '01');
+            } else {
+                
             }
             $dtes_pending = $dtes_pending->get();
 
@@ -64,11 +66,8 @@ class DashboardController extends Controller
                 ->json();
             $datos_empresa = Http::timeout(30)->get($this->octopus_url . '/datos_empresa/nit/' . $business->nit)
                 ->json();
-            $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit."&limit=5")->json();
 
-            if($user->only_fcf){
-                $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/?nit=' . $business->nit . "&limit=5&tipo_dte=01")->json();
-            }
+            $dtes = $user->only_fcf ? Http::timeout(30)->get("{$this->octopus_url}/dtes/?nit={$business->nit}&limit=5&tipo_dte=01")->json() : Http::timeout(30)->get("{$this->octopus_url}/dtes/?nit={$business->nit}&limit=5")->json();
 
             // Datos locales
             $products = BusinessProduct::where('business_id', $business->id)->count('id');

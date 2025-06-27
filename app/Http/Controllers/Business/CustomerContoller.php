@@ -218,7 +218,7 @@ class CustomerContoller extends Controller
                 "customer" => $business_customer
             ]));
 
-            if($this->dte["type"] === "03" || $this->dte["type"] === "05") {
+            if($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
                 $business_customer->numDocumento = str_replace("-", "", $business_customer->numDocumento);
             }
 
@@ -264,6 +264,26 @@ class CustomerContoller extends Controller
         } catch (\Exception $e) {
             Log::error("Error obteniendo municipios: " . $e->getMessage());
             return [];
+        }
+    }
+
+    public function import(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|mimes:xlsx,xls,csv'
+            ]);
+
+            // $business_id = session("business");
+            // $unidades_medidas = $this->unidades_medidas;
+            // Excel::import(new BusinessProductImport($business_id, $unidades_medidas), $request->file('file'));
+
+            return redirect()->route('business.customers.index')
+                ->with('success', 'Clientes importados')
+                ->with("success_message", "Los clientes han sido importados correctamente");
+        } catch (\Exception $e) {
+            Log::error('Error al importar clientes: ' . $e->getMessage());
+            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al importar los clientes");
         }
     }
 }
