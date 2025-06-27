@@ -557,7 +557,7 @@ class DTEController extends Controller
         } else {
             if (isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
                 foreach ($this->dte["products"] as $product) {
-                    $dte["cuerpoDocumento"][] = $this->getProductData($product, $type, $this->dte["documentos_relacionados"]);
+                    $dte["cuerpoDocumento"][] = $this->getProductData($product, $type, $this->dte["documentos_relacionados"] ?? []);
                 }
             }
         }
