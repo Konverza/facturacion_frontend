@@ -68,7 +68,7 @@ class OctopusService
         } catch (\Exception $e) {
             return redirect()->back()->with([
                 "error" => "Error",
-                "error_message" => "Error al obtener los datos". $e->getMessage()
+                "error_message" => "Error al obtener los datos" . $e->getMessage()
             ]);
         }
     }
@@ -101,5 +101,42 @@ class OctopusService
             }
         }
         return $catalog;
+    }
+
+    public function simpleDepartamentos()
+    {
+        $values = Cache::remember("octopus_catalog_departamentos", now()->addHours(6), function () {
+            $response = Http::timeout(30)->get("{$this->octopus_cats_url}CAT-012");
+            $departamentos = $response->json();
+            $resultado = [];
+
+            foreach ($departamentos as $departamento) {
+                $codigoDepto = $departamento['codigo'];
+                $resultado[$codigoDepto] = [
+                    'nombre' => $departamento['nombre'],
+                    'municipios' => []
+                ];
+
+                foreach ($departamento['municipios'] as $municipio) {
+                    $codigoMunicipio = $municipio['codigo'];
+                    $resultado[$codigoDepto]['municipios'][$codigoMunicipio] = [
+                        'nombre' => $municipio['nombre'],
+                        'distritos' => []
+                    ];
+
+                    foreach ($municipio['distritos'] as $distrito) {
+                        // Se puede usar el mismo código del municipio para el distrito si no hay código de distrito.
+                        $codigoDistrito = $codigoMunicipio;
+                        $resultado[$codigoDepto]['municipios'][$codigoMunicipio]['distritos'][$codigoDistrito] = [
+                            'nombre' => $distrito['nombre']
+                        ];
+                    }
+                }
+            }
+
+            return $resultado ?: [];
+        });
+
+        return $values;
     }
 }
