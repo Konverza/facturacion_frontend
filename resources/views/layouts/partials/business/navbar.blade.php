@@ -104,7 +104,7 @@
 </nav>
 
 <aside id="sidebar"
-    class="@if ($test_enviroment) mt-12 sm:mt-8 @endif fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r border-gray-300 bg-white pt-4 transition-transform dark:border-gray-800 dark:bg-gray-950 lg:z-[35] lg:translate-x-0 lg:dark:bg-transparent"
+    class="@if ($test_enviroment || $maintenance_notice) mt-12 sm:mt-8 @endif fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r border-gray-300 bg-white pt-4 transition-transform dark:border-gray-800 dark:bg-gray-950 lg:z-[35] lg:translate-x-0 lg:dark:bg-transparent"
     aria-label="Sidebar">
     <div class="overflow-y-auto px-2 pb-4">
         <div id="icon-complete">
