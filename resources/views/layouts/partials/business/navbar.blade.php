@@ -15,7 +15,7 @@
     </div>
 @endif
 
-<nav class="@if ($test_enviroment) mt-12 sm:mt-8 @endif z-20 ms-auto h-14 w-full border-b border-gray-300 bg-transparent dark:border-gray-800 lg:w-calc-full-minus-64"
+<nav class="@if ($test_enviroment || $maintenance_notice) mt-12 sm:mt-8 @endif z-20 ms-auto h-14 w-full border-b border-gray-300 bg-transparent dark:border-gray-800 lg:w-calc-full-minus-64"
     id="navbar">
     <div class="flex h-full items-center px-3 lg:px-5 lg:pl-3">
         <div class="flex w-full items-center justify-between">
