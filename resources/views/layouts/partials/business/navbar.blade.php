@@ -6,6 +6,14 @@
         </span>
     </div>
 @endif
+@if ($maintenance_notice)
+    <div class="fixed top-0 z-[90] flex h-12 w-full items-center justify-center bg-red-500 px-2 text-white sm:h-8">
+        <span class="flex items-center gap-2 text-xs font-semibold sm:text-sm">
+            <x-icon icon="info-circle" class="h-4 w-4 min-w-4 max-w-4" />
+            Aviso: Haremos un mantenimiento breve a las 12:30 PM, con una duración aproximada de <b class="uppercase">15 minutos.</b> Por favor, no realice ninguna operación durante este tiempo. Agradecemos su comprensión.
+        </span>
+    </div>
+@endif
 
 <nav class="@if ($test_enviroment) mt-12 sm:mt-8 @endif z-20 ms-auto h-14 w-full border-b border-gray-300 bg-transparent dark:border-gray-800 lg:w-calc-full-minus-64"
     id="navbar">

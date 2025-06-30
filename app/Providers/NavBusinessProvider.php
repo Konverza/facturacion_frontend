@@ -30,9 +30,11 @@ class NavBusinessProvider extends ServiceProvider
                 $user->businesses->pluck('business_id')->toArray()
             )->get();
             $test_enviroment = session('ambiente') == '2' ? true : false;
+            $maintenance_notice = env("MAITENANCE_NOTICE") == '1' ?? false;
             $view->with([
                 "businesses" => $businesses,
                 "test_enviroment" => $test_enviroment,
+                "maintenance_notice" => $maintenance_notice,
             ]);
         });
     }
