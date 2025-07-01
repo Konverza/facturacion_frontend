@@ -71,7 +71,7 @@ class BusinessController extends Controller
         $actividades_economicas = $this->octopus_service->getCatalog("CAT-019", null, true, true);
         $descripcion_actividad_economica = $actividades_economicas[$codigo_actividad_economica];
 
-        $data_business_repsonse = Http::post($this->octopus_url . "/datos_empresa", [
+        $data_business_repsonse = Http::post($this->octopus_url . "/datos_empresa/", [
             "nombre" => $request->razon_social,
             "nit" => $request->nit,
             "nrc" => $request->nrc,
@@ -104,7 +104,7 @@ class BusinessController extends Controller
                 fopen($certificado_file, "r"), "filename" => $certificado_file->getClientOriginalName()]
             ];
 
-            $credentials_response = Http::attach($credentials)->post($this->octopus_url . "/credenciales");
+            $credentials_response = Http::attach($credentials)->post($this->octopus_url . "/credenciales/");
 
             if ($credentials_response->status() == 201) {
                 $logo_file = $request->file("logo");
