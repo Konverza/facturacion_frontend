@@ -64,7 +64,9 @@ class DTEController extends Controller
     public function create(Request $request)
     {
         try {
-            $business_user = BusinessUser::where("business_id", session("business"))->first();
+            $business_user = BusinessUser::where("business_id", session("business"))
+                                ->where("user_id", auth()->user()->id)
+                                ->first();
             $number = $request->input("document_type");
             $id = $request->input("id") ?? "";
             $business_products = BusinessProduct::where("business_id", session("business"))

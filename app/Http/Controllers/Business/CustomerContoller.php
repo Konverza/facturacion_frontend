@@ -81,7 +81,9 @@ class CustomerContoller extends Controller
                 }
             }
 
-            $business_user = BusinessUser::where("business_id", session("business"))->first();
+            $business_user = BusinessUser::where("business_id", session("business"))
+                                ->where("user_id", auth()->user()->id)
+                                ->first();
             DB::beginTransaction();
 
             $business_customer = new BusinessCustomer([
