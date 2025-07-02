@@ -72,8 +72,12 @@ class SyncBusinessData extends Command
                 $businessUsers = BusinessUser::where('business_id', $business->id)->get();
 
                 foreach ($businessUsers as $user) {
-                    $user->default_pos_id = $puntoVenta->id;
-                    $user->save();
+                    if(!$user->default_pos_id) {
+                        $user->default_pos_id = $puntoVenta->id;
+                        $user->save();
+                    } else {
+                        $this->info("El usuario {$user->user->name} ya tiene un PdV por defecto asignado.");
+                    }
                 }
 
                 $this->info("✔ Se asignó el PdV principal como default a los usuarios del negocio.");
