@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use App\Models\Business;
 use App\Models\BusinessPlan;
+use App\Models\BusinessUser;
 use App\Models\Sucursal;
+use App\Models\PuntoVenta;
 
 
 class DtesTable extends Component
@@ -73,7 +75,16 @@ class DtesTable extends Component
         // Obtener el NIT del negocio desde la sesión
         $business_id = Session::get('business') ?? null;
         $business = Business::find($business_id);
+        $business_user = $business_user = BusinessUser::where("user_id", auth()->user()->id)->first();
         $this->nit = $business->nit ?? null;
+        if ($business_user->only_default_pos) {
+            $puntoVenta = PuntoVenta::find($business_user->default_pos_id);
+            $this->codSucursal = $puntoVenta->sucursal->codSucursal ?? null;
+            $this->codPuntoVenta = $puntoVenta->codPuntoVenta ?? null;
+        }
+        if (auth()->user()->only_fcf) {
+            $this->tipo_dte = '01'; // Default to Factura Electrónica if the user only wants FCF
+        }
 
         // Parametros
         $parameters = [
@@ -146,6 +157,8 @@ class DtesTable extends Component
             'dte_options' => $dte_options,
             'sucursal_options' => $sucursal_options,
             'punto_venta_options' => $punto_venta_options,
+            'only_default_pos' => $business_user->only_default_pos,
+            'only_fcf' => auth()->user()->only_fcf,
         ]);
     }
 }

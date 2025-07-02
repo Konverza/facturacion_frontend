@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Business;
 
+use App\Models\PuntoVenta;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
@@ -67,7 +68,21 @@ class DashboardController extends Controller
             $datos_empresa = Http::timeout(30)->get($this->octopus_url . '/datos_empresa/nit/' . $business->nit)
                 ->json();
 
-            $dtes = $user->only_fcf ? Http::timeout(30)->get("{$this->octopus_url}/dtes/?nit={$business->nit}&limit=5&tipo_dte=01")->json() : Http::timeout(30)->get("{$this->octopus_url}/dtes/?nit={$business->nit}&limit=5")->json();
+            // $dtes = $user->only_fcf ? Http::timeout(30)->get("{$this->octopus_url}/dtes/?nit={$business->nit}&limit=5&tipo_dte=01")->json() : Http::timeout(30)->get("{$this->octopus_url}/dtes/?nit={$business->nit}&limit=5")->json();
+            $params = [
+                "nit" => $business->nit,
+                "limit" => 5,
+            ];
+            if ($user->only_fcf) { $params["tipo_dte"] = "01"; }
+            if ($business_user->only_default_pos) {
+                $puntoVenta = PuntoVenta::find($business_user->default_pos_id);
+                $params["codSucursal"] = $puntoVenta->sucursal->codSucursal;
+                $params["codPuntoVenta"] = $puntoVenta->codPuntoVenta;
+            }
+
+            
+            $dtes = Http::timeout(30)->get($this->octopus_url . '/dtes/', $params)->json();
+            // dd($dtes);
 
             // Datos locales
             $products = BusinessProduct::where('business_id', $business->id)->count('id');

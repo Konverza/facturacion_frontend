@@ -16,6 +16,7 @@ class BusinessUser extends Model
         'user_id',
         'role',
         'default_pos_id',
+        'only_default_pos',
     ];
 
     public function business()

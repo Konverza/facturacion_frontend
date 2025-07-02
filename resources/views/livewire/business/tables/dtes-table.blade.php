@@ -14,7 +14,7 @@
                     receptor.
                 </span>
             </div>
-            @if (!auth()->user()->only_fcf)
+            @if (!$only_fcf)
                 <div class="flex-1">
                     <button type="button"
                         class="show-modal bg-green-500 text-white hover:bg-green-600 dark:bg-green-500 dark:text-white dark:hover:bg-green-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
@@ -63,11 +63,13 @@
                     </div>
 
                     <div class="flex sm:flex-row flex-col gap-4">
+                        @if(!$only_fcf)
                         <div class="flex-1">
                             <x-select id="tipo_dte" :options="$dte_options" name="tipo_dte"
                                 placeholder="Seleccione un tipo de DTE" wire:model.live.debounce.500ms="tipo_dte"
                                 :value="$tipo_dte" :selected="$tipo_dte" :search="false" label="Buscar por tipo de DTE" />
                         </div>
+                        @endif
                         <div class="flex-1">
                             <x-select id="documento_receptor" :options="$receptores_unicos" name="documento_receptor"
                                 placeholder="Seleccione un receptor" label="Buscar por receptor" :search="false"
@@ -87,6 +89,7 @@
                         </div>
                     </div>
 
+                    @if(!$only_default_pos)
                     <div class="flex sm:flex-row flex-col gap-4">
                         <div class="flex-1">
                             <x-select id="codSucursal" :options="$sucursal_options" name="codSucursal"
@@ -99,7 +102,7 @@
                                 wire:model.live.debounce.500ms="codPuntoVenta" :value="$codPuntoVenta" :selected="$codPuntoVenta" />
                         </div>
                     </div>
-
+                    @endif
                     <!-- Botón Limpiar Filtros (centrado) -->
                     <div class="flex justify-center">
                         <x-button type="button" wire:click="clearFilters" typeButton="info" text="Limpiar filtros" />
