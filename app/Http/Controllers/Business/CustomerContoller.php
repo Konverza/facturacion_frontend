@@ -90,7 +90,7 @@ class CustomerContoller extends Controller
                 "business_id" => $business_user->business_id,
                 "tipoDocumento" => $request->tipo_documento,
                 "numDocumento" => $request->numero_documento,
-                "nrc" => $request->nrc,
+                "nrc" => str_replace('-', '', $request->nrc), // Elimina guiones del NRC
                 "nombre" => $request->nombre,
                 "codActividad" => $request->actividad_economica,
                 "nombreComercial" => $request->nombre_comercial,
@@ -179,7 +179,7 @@ class CustomerContoller extends Controller
             $business_customer->update([
                 "tipoDocumento" => $request->tipo_documento,
                 "numDocumento" => $request->numero_documento,
-                "nrc" => $request->nrc,
+                "nrc" => str_replace('-', '', $request->nrc),
                 "nombre" => $request->nombre,
                 "codActividad" => $request->actividad_economica,
                 "nombreComercial" => $request->nombre_comercial,
