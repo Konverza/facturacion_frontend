@@ -139,6 +139,8 @@
                                             value="01" id="01" :checked="in_array('01', $dtes_habilitados)" />
                                         <x-input type="toggle" name="dtes[]" label="Comprobante de crédito fiscal"
                                             value="03" id="03" :checked="in_array('03', $dtes_habilitados)" />
+                                        <x-input type="toggle" id="04" name="dtes[]" label="Nota de remisión"
+                                            value="04" :checked="in_array('04', $dtes_habilitados)" />
                                         <x-input type="toggle" id="05" name="dtes[]" label="Nota de crédito"
                                             value="05" :checked="in_array('05', $dtes_habilitados)" />
                                         <x-input type="toggle" id="06" name="dtes[]" label="Nota de débito"

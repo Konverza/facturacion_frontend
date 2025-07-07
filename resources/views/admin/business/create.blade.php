@@ -113,6 +113,8 @@
                                             value="01" id="01" />
                                         <x-input type="toggle" name="dtes[]" label="Comprobante de crédito fiscal"
                                             value="03" id="03" />
+                                        <x-input type="toggle" id="04" name="dtes[]" label="Nota de remisión"
+                                            value="04" />
                                         <x-input type="toggle" id="05" name="dtes[]" label="Nota de crédito"
                                             value="05" />
                                         <x-input type="toggle" id="06" name="dtes[]" label="Nota de débito"

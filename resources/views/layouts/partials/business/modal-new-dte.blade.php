@@ -6,8 +6,11 @@
         '05' => 'Nota de crédito',
         '06' => 'Nota de débito',
         '07' => 'Comprobante de retención',
+        '08' => 'Comprobante de liquidación',
+        '09' => 'Documento Contable de Liquidación',
         '11' => 'Factura de exportación',
-        '14' => 'Factura de sujeto excluido'
+        '14' => 'Factura de sujeto excluido',
+        '15' => 'Comprobante de Donación'
     ];
     $business_id = Session::get('business') ?? null;
     $business = \App\Models\Business::find($business_id);
