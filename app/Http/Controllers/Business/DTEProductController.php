@@ -112,8 +112,6 @@ class DTEProductController extends Controller
                     $product["iva"] = $iva;
 
                     break;
-                } else {
-                    dd($found, $product, $request->all());
                 }
             }
 
