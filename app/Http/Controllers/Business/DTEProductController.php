@@ -67,24 +67,23 @@ class DTEProductController extends Controller
 
             $stock = (float) $business_product->stockActual;
             $found = false;
+            $incoming_doc = $request->documento_relacionado ?? '';
 
             foreach ($this->dte["products"] as &$product) {
+                $current_doc = $product["documento_relacionado"] ?? '';
+
                 if (
                     $product["product_id"] == $business_product->id &&
-                    $product["tipo"] == $request->tipo
+                    $product["tipo"] === $request->tipo &&
+                    $current_doc === $incoming_doc
                 ) {
-                    if ($request->documento_relacionado !== "" || $request->documento_relacionado !== null) {
-                        // allow same product with different related document
-                        if ($product["documento_relacionado"] !== $request->documento_relacionado) {
-                            continue;
-                        }
-                    }
                     $found = true;
 
                     $cantidadActual = (float) $product["cantidad"];
                     $cantidadNueva = (float) $request->cantidad;
 
-                    if($business_product->has_stock){
+                    if ($business_product->has_stock) {
+                        $stock = (float) $business_product->stockActual;
                         if ($cantidadActual + $cantidadNueva > $stock) {
                             return response()->json([
                                 "success" => false,
@@ -96,22 +95,25 @@ class DTEProductController extends Controller
                     $product["cantidad"] += $cantidadNueva;
                     $product["descuento"] += (float) ($request->descuento ?? 0);
                     $product["total"] += (float) $request->total;
-                    $product["documento_relacionado"] = $request->documento_relacionado ?? null;
-                    $product["ventas_gravadas"] += $request->tipo === "Gravada" ? $request->total : 0;
-                    $product["ventas_exentas"] += $request->tipo === "Exenta" ? $request->total : 0;
-                    $product["ventas_no_sujetas"] = $request->tipo === "No sujeta" ? $request->total : 0;
+                    $product["documento_relacionado"] = $incoming_doc;
+                    $product["ventas_gravadas"] += $request->tipo === "Gravada" ? (float) $request->total : 0;
+                    $product["ventas_exentas"] += $request->tipo === "Exenta" ? (float) $request->total : 0;
+                    $product["ventas_no_sujetas"] += $request->tipo === "No sujeta" ? (float) $request->total : 0;
 
                     $iva = 0;
                     if ($request->tipo === "Gravada") {
-                        if ($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
+                        if (in_array($this->dte["type"], ["03", "05", "06"])) {
                             $iva = $this->precise_round($product["total"] * 0.13, 8);
                         } else {
                             $iva = $this->precise_round(($product["total"] / 1.13) * 0.13, 8);
                         }
-                        $product["iva"] = $iva; // Asignar el nuevo IVA calculado
                     }
 
+                    $product["iva"] = $iva;
+
                     break;
+                } else {
+                    dd($found, $product, $request->all());
                 }
             }
 
@@ -127,7 +129,7 @@ class DTEProductController extends Controller
             $product_tributes = json_decode($business_product->tributos, true) ?? [];
 
             if (!$found) {
-                if($customer && $customer["special_price"]){
+                if ($customer && $customer["special_price"]) {
                     $precio = (float) $business_product->special_price_with_iva;
                     $precio_sin_tributos = (float) $business_product->special_price;
                 } else {
@@ -143,7 +145,8 @@ class DTEProductController extends Controller
                 $this->dte["products"][] = [
                     "id" => rand(1, 1000),
                     "product" => $business_product->toArray(),
-                    "product_id" => $business_product->codigo,
+                    "product_id" => $business_product->id,
+                    "codigo" => $business_product->codigo,
                     "unidad_medida" => $business_product->uniMedida,
                     "descripcion" => $business_product->descripcion,
                     "cantidad" => $cantidad,
@@ -176,14 +179,16 @@ class DTEProductController extends Controller
             return response()->json([
                 "success" => true,
                 "product" => $this->dte,
-                "table_products" => view("layouts.partials.ajax.business.table-products-dte", [
+                // "table_products" => "",
+                "table_products" => $this->dte["type"] != "11" && $this->dte["type"] != "14" ? view("layouts.partials.ajax.business.table-products-dte", [
                     "dte" => $this->dte
-                ])->render(),
+                ])->render() : null,
                 "total_pagar" => $this->dte["total_pagar"],
                 "monto_pendiente" => $this->dte["monto_pendiente"],
-                "table_exportacion" => view("layouts.partials.ajax.business.table-exportacion", [
+                // "table_exportacion" => "",
+                "table_exportacion" => $this->dte["type"] == "11" ? view("layouts.partials.ajax.business.table-exportacion", [
                     "dte" => $this->dte
-                ])->render(),
+                ])->render() : null,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -217,6 +222,7 @@ class DTEProductController extends Controller
                 "id" => rand(1, 1000),
                 "product" => null,
                 "product_id" => null,
+                "codigo" => null,
                 "unidad_medida" => $request->unidad_medida,
                 "descripcion" => $request->descripcion,
                 "cantidad" => $request->cantidad,
@@ -244,28 +250,22 @@ class DTEProductController extends Controller
             session(["dte" => $this->dte]);
             $this->totals();
 
-            $business_products = BusinessProduct::where("business_id", session("business"))->get();
-
             return response()->json([
                 "success" => true,
                 "message" => "Producto guardado correctamente",
-                "table_data" => view("layouts.partials.ajax.business.table-products-dte", [
+                "table_data" => $this->dte["type"] != "11" && $this->dte["type"] != "14" ? view("layouts.partials.ajax.business.table-products-dte", [
                     "dte" => $this->dte
-                ])->render(),
+                ])->render() : null,
                 "table" => "products-dte",
                 "drawer" => "drawer-new-product",
-                "table_selected_product" => view("layouts.partials.ajax.business.table-selected-product", [
-                    "business_products" => $business_products,
-                    "number" => $this->dte["type"]
-                ])->render(),
                 "total_pagar" => $this->dte["total_pagar"],
                 "monto_pendiente" => $this->dte["monto_pendiente"],
-                "table_exportacion" => view("layouts.partials.ajax.business.table-exportacion", [
+                "table_exportacion" => $this->dte["type"] == "11" ? view("layouts.partials.ajax.business.table-exportacion", [
                     "dte" => $this->dte
-                ])->render(),
-                "table_sujeto_excluido" => view("layouts.partials.ajax.business.table-sujeto-excluido", [
+                ])->render() : null,
+                "table_sujeto_excluido" => $this->dte["type"] == "14" ? view("layouts.partials.ajax.business.table-sujeto-excluido", [
                     "dte" => $this->dte
-                ])->render(),
+                ])->render() : null,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -302,7 +302,7 @@ class DTEProductController extends Controller
                     $cantidadActual = (float) $product["cantidad"];
                     $cantidadNueva = (float) $request->cantidad;
 
-                    if($business_product->has_stock){
+                    if ($business_product->has_stock) {
                         if ($cantidadActual + $cantidadNueva > $stock) {
                             return response()->json([
                                 "success" => false,
@@ -315,7 +315,7 @@ class DTEProductController extends Controller
                     $product["descuento"] += 0;
                     $product["total"] = $business_product->precioUni * $product["cantidad"];
                     $product["documento_relacionado"] = null;
-                    $product["ventas_gravadas"] = $product["total"] ;
+                    $product["ventas_gravadas"] = $product["total"];
                     $product["ventas_exentas"] = 0;
                     $product["ventas_no_sujetas"] = 0;
                     $product["iva"] = $this->precise_round(($product["total"] / 1.13) * 0.13, 8);
@@ -339,6 +339,7 @@ class DTEProductController extends Controller
                     "id" => rand(1, 1000),
                     "product" => $business_product->toArray(),
                     "product_id" => $business_product->id,
+                    "codigo" => $business_product->codigo,
                     "unidad_medida" => $business_product->uniMedida,
                     "descripcion" => $business_product->descripcion,
                     "cantidad" => $cantidad,
@@ -363,20 +364,20 @@ class DTEProductController extends Controller
             }
 
             $this->totals();
-            
+
             $this->dte["metodos_pago"][0] = [
                 "id" => rand(1, 1000),
                 "forma_pago" => "01",
                 "monto" => array_sum(array_column($this->dte["products"], "total")),
                 "numero_documento" => null,
-                "plazo" =>  null,
+                "plazo" => null,
                 "periodo" => null,
             ];
-            
+
             $this->dte["monto_abonado"] = array_sum(array_column($this->dte["products"], "total"));
             $this->dte["monto_pendiente"] = $this->dte["total_pagar"] - $this->dte["monto_abonado"];
             $this->totals();
-            
+
 
             // Guardar en sesión
             session(["dte" => $this->dte]);
@@ -397,7 +398,8 @@ class DTEProductController extends Controller
         try {
             $this->dte["products"][] = [
                 "id" => rand(1, 1000),
-                "product_id" => "",
+                "product_id" => null,
+                "codigo" => null,
                 "unidad_medida" => "Otra",
                 "descripcion" => $request->descripcion,
                 "cantidad" => 1,
@@ -443,7 +445,8 @@ class DTEProductController extends Controller
         try {
             $this->dte["products"][] = [
                 "id" => rand(1, 1000),
-                "product_id" => "",
+                "product_id" => null,
+                "codigo" => null,
                 "unidad_medida" => "Otra",
                 "descripcion" => $request->descripcion,
                 "cantidad" => 1,
@@ -751,7 +754,7 @@ class DTEProductController extends Controller
         }
 
         if ($this->dte["type"] === "11") {
-            $this->dte["total_pagar"] = $this->precise_round((float)$this->dte["total_ventas_gravadas"] + $this->dte["flete"] + $this->dte["seguro"], 8);
+            $this->dte["total_pagar"] = $this->precise_round((float) $this->dte["total_ventas_gravadas"] + $this->dte["flete"] + $this->dte["seguro"], 8);
         }
 
         $this->dte["monto_pendiente"] = $this->dte["total_pagar"] - $this->dte["monto_abonado"] ?? 0;
@@ -885,11 +888,11 @@ class DTEProductController extends Controller
 
     public function total_ventas()
     {
-        $this->dte["total_ventas_gravadas"] = $this->precise_round((float)array_sum(array_map(fn($product) => $product["ventas_gravadas"] ?? 0, $this->dte["products"] ?? [])), 8);
+        $this->dte["total_ventas_gravadas"] = $this->precise_round((float) array_sum(array_map(fn($product) => $product["ventas_gravadas"] ?? 0, $this->dte["products"] ?? [])), 8);
 
-        $this->dte["total_ventas_exentas"] = $this->precise_round((float)array_sum(array_map(fn($product) => $product["ventas_exentas"] ?? 0, $this->dte["products"] ?? [])), 8);
+        $this->dte["total_ventas_exentas"] = $this->precise_round((float) array_sum(array_map(fn($product) => $product["ventas_exentas"] ?? 0, $this->dte["products"] ?? [])), 8);
 
-        $this->dte["total_ventas_no_sujetas"] = $this->precise_round((float)array_sum(array_map(fn($product) => $product["ventas_no_sujetas"] ?? 0, $this->dte["products"] ?? [])), 8);
+        $this->dte["total_ventas_no_sujetas"] = $this->precise_round((float) array_sum(array_map(fn($product) => $product["ventas_no_sujetas"] ?? 0, $this->dte["products"] ?? [])), 8);
     }
 
     public function total_taxes()
@@ -902,7 +905,7 @@ class DTEProductController extends Controller
         $this->dte["tabaco_cigarillos"] = 0;
         $this->dte["tabaco_cigarros"] = 0;
         $this->dte["total_ventas_gravadas_descuento"] = $this->precise_round($this->dte["total_ventas_gravadas"] - $this->dte["descuento_venta_gravada"], 8);
-        $this->dte["iva"] = $this->precise_round($this->dte["total_ventas_gravadas_descuento"]  * 0.13, 8);
+        $this->dte["iva"] = $this->precise_round($this->dte["total_ventas_gravadas_descuento"] * 0.13, 8);
 
         if (isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
             foreach ($this->dte["products"] as $product) {
@@ -952,7 +955,7 @@ class DTEProductController extends Controller
             $this->dte["contrans"] +
             $this->dte["bebidas_alcoholicas"] +
             $this->dte["tabaco_cigarillos"] +
-            $this->dte["tabaco_cigarros"] + 
+            $this->dte["tabaco_cigarros"] +
             $this->dte["iva"];
 
         $this->dte["total_taxes"] = $this->precise_round((float) $this->dte["total_taxes"], 8);
@@ -968,14 +971,14 @@ class DTEProductController extends Controller
         } else {
             $this->dte["descuento_venta_gravada"] = $this->precise_round($this->dte["total_ventas_gravadas"] * ($this->dte["percentaje_descuento_venta_gravada"] / 100), 8);
 
-            $this->dte["descuento_venta_exenta"] = $this->precise_round($this->dte["total_ventas_exentas"] * ($this->dte["percentaje_descuento_venta_exenta"]  / 100), 8);
+            $this->dte["descuento_venta_exenta"] = $this->precise_round($this->dte["total_ventas_exentas"] * ($this->dte["percentaje_descuento_venta_exenta"] / 100), 8);
 
-            $this->dte["descuento_venta_no_sujeta"] = $this->precise_round($this->dte["total_ventas_no_sujetas"] * ($this->dte["percentaje_descuento_venta_no_sujeta"]  / 100), 8);
+            $this->dte["descuento_venta_no_sujeta"] = $this->precise_round($this->dte["total_ventas_no_sujetas"] * ($this->dte["percentaje_descuento_venta_no_sujeta"] / 100), 8);
 
             $this->dte["total_descuentos"] = $this->precise_round(
                 ($this->dte["descuento_venta_gravada"]) +
-                    ($this->dte["descuento_venta_exenta"]) +
-                    ($this->dte["descuento_venta_no_sujeta"]),
+                ($this->dte["descuento_venta_exenta"]) +
+                ($this->dte["descuento_venta_no_sujeta"]),
                 8
             );
         }
@@ -995,7 +998,7 @@ class DTEProductController extends Controller
                 )
             );
             $this->dte["isr"] = $this->precise_round($total_servicios * 0.10, 8);
-        }else if ($this->dte["type"] === "14") {
+        } else if ($this->dte["type"] === "14") {
             $total_servicios = array_sum(
                 array_map(
                     fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 2) ? ($product["total"] ?? 0) : 0,
@@ -1036,7 +1039,8 @@ class DTEProductController extends Controller
             : $this->precise_round($this->dte["total_pagar"], 8);
     }
 
-    private function precise_round($value, $precision = 2) {
+    private function precise_round($value, $precision = 2)
+    {
         $factor = pow(10, $precision);
         return round(($value + PHP_FLOAT_EPSILON) * $factor) / $factor;
     }

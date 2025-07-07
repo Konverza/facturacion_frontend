@@ -894,7 +894,7 @@ class DTEController extends Controller
 
             return [
                 "tipoItem" => is_array($product["product"]) ? $product["product"]["tipoItem"] : $product["tipo_item"],
-                "numeroDocumento" => $documentoRelacionado,
+                "numeroDocumento" => $documentoRelacionado !== "" ? $documentoRelacionado : null,
                 "cantidad" => $product["cantidad"],
                 "codigo" => is_array($product["product"]) ? strval($product["product"]["codigo"]) : null,
                 "codTributo" => null,
