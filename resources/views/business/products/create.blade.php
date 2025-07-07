@@ -1,3 +1,7 @@
+@php
+    $business_id = Session::get('business') ?? null;
+    $business = \App\Models\Business::find($business_id);
+@endphp
 @extends('layouts.auth-template')
 @section('title', 'Nuevo producto')
 @section('content')
@@ -50,43 +54,45 @@
                         label="Descripción" />
                 </div>
                 <!-- Precio Especial y Costo -->
-                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
-                    <div class="flex-1">
-                        <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Costo"
-                            name="cost" step="0.00000001" value="{{ old('cost') }}" id="cost" />
+                @if($business->show_special_prices)
+                    <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                        <div class="flex-1">
+                            <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Costo"
+                                name="cost" step="0.00000001" value="{{ old('cost') }}" id="cost" />
+                        </div>
+                        <div class="flex-1">
+                            <x-input type="number" required icon="percentage" placeholder="0.00" label="Margen de ganancia"
+                                name="margin" step="0.00000001" value="{{ old('margin') }}" id="margin" />
+                        </div>
+                        <div class="flex-1">
+                            <x-input type="number" required icon="percentage" placeholder="0.00"
+                                label="Porcentaje de descuento (Sobre precio sin IVA)" name="discount" id="discount"
+                                value="{{ old('discount') }}" step="0.01" />
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <x-input type="number" required icon="percentage" placeholder="0.00" label="Margen de ganancia"
-                            name="margin" step="0.00000001" value="{{ old('margin') }}" id="margin" />
+                    <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                        <div class="flex-1">
+                            <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                                label="Precio especial (sin IVA)" name="special_price" id="special_price"
+                                value="{{ old('special_price') }}" step="0.00000001" />
+                        </div>
+                        <div class="flex-1">
+                            <x-input type="number" required icon="currency-dollar" placeholder="0.00"
+                                label="Precio especial (con IVA)" name="special_price_with_iva" id="special_price_with_iva"
+                                value="{{ old('special_price_with_iva') }}" step="0.00000001" />
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <x-input type="number" required icon="percentage" placeholder="0.00"
-                            label="Porcentaje de descuento (Sobre precio sin IVA)" name="discount" id="discount"
-                            value="{{ old('discount') }}" step="0.01" />
-                    </div>
-                </div>
-                <div class="mt-4 flex flex-col gap-4 sm:flex-row">
-                    <div class="flex-1">
-                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
-                            label="Precio especial (sin IVA)" name="special_price" id="special_price"
-                            value="{{ old('special_price') }}" step="0.00000001" />
-                    </div>
-                    <div class="flex-1">
-                        <x-input type="number" required icon="currency-dollar" placeholder="0.00"
-                            label="Precio especial (con IVA)" name="special_price_with_iva" id="special_price_with_iva"
-                            value="{{ old('special_price_with_iva') }}" step="0.00000001" />
-                    </div>
-                </div>
+                @endif
                 <!-- End Precio Especial y Costo -->
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00"
-                            label="Precio normal (sin IVA)" name="precio_sin_iva" id="price-not-iva"
+                            :label="$business->show_special_prices ? 'Precio normal (sin IVA)' : 'Precio (sin IVA)'" name="precio_sin_iva" id="price-not-iva"
                             value="{{ old('precio_sin_iva') }}" step="0.00000001" />
                     </div>
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00"
-                            label="Precio normal (con IVA)" name="precio" step="0.00000001" value="{{ old('precio') }}"
+                            :label="$business->show_special_prices ? 'Precio normal (con IVA)' : 'Precio (con IVA)'" name="precio" step="0.00000001" value="{{ old('precio') }}"
                             id="price-with-iva" />
                     </div>
                 </div>
@@ -104,10 +110,6 @@
                             placeholder="0" value="{{ old('stock_minimo', 0) }}" min="1" />
                     </div>
                 </div>
-                @php
-                    $business_id = Session::get('business') ?? null;
-                    $business = \App\Models\Business::find($business_id);
-                @endphp
                 @if ($business->posmode)
                     <div class="mt-4">
                         <div class="flex-1">

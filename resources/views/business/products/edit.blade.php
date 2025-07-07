@@ -1,3 +1,7 @@
+@php
+    $business_id = Session::get('business') ?? null;
+    $business = \App\Models\Business::find($business_id);
+@endphp
 @extends('layouts.auth-template')
 @section('title', 'Nuevo producto')
 @section('content')
@@ -50,6 +54,7 @@
                         value="{{ old('descripcion', $product->descripcion) }}" label="Descripción" />
                 </div>
                 <!-- Precio Especial y Costo -->
+                @if($business->show_special_prices)
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Costo"
@@ -77,16 +82,17 @@
                             value="{{ old('special_price_with_iva', $product->special_price_with_iva) }}" step="0.00000001" />
                     </div>
                 </div>
+                @endif
                 <!-- End Precio Especial y Costo -->
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00"
-                            label="Precio normal (sin IVA)" name="precio_sin_iva" id="price-not-iva"
+                            :label="$business->show_special_prices ? 'Precio normal (sin IVA)' : 'Precio (sin IVA)'" name="precio_sin_iva" id="price-not-iva"
                             value="{{ old('precio_sin_iva', $product->precioSinTributos) }}" step="0.00000001" />
                     </div>
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00"
-                            label="Precio normal (con IVA)" name="precio" step="0.00000001" value="{{ old('precio', $product->precioUni) }}"
+                            :label="$business->show_special_prices ? 'Precio normal (con IVA)' : 'Precio (con IVA)'" name="precio" step="0.00000001" value="{{ old('precio', $product->precioUni) }}"
                             id="price-with-iva" />
                     </div>
                 </div>
@@ -106,10 +112,6 @@
                             id="stock_minimo" placeholder="0" value="{{ old('stock_minimo', 0) }}" :disabled="!$product->has_stock" />
                     </div>
                 </div>
-                @php
-                    $business_id = Session::get('business') ?? null;
-                    $business = \App\Models\Business::find($business_id);
-                @endphp
                 @if ($business->posmode)
                     <div class="mt-4">
                         <div class="flex-1">
