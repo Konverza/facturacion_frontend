@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    $("#toggle-sidebar").on("click", function () {
+    $(document).on("click", "#toggle-sidebar", function () {
         $("#sidebar").toggleClass("collapsed");
         $("#only-icon").toggleClass("hidden");
         $("#icon-complete").toggleClass("hidden");
@@ -108,7 +108,7 @@ $(document).ready(function () {
         $btnRemoveFile.addClass("hidden");
     });
 
-    $(".show-options").on("click", function (event) {
+    $(document).on("click", ".show-options" ,function (event) {
         event.stopPropagation();
         var target = $(this).data("target");
         var options = $(target);
@@ -191,7 +191,7 @@ $(document).ready(function () {
         $("#export-data-container").addClass("hidden");
     }
 
-    $("#export-data").on("click", function () {
+    $(document).on("click", "#export-data", function () {
         if ($(this).is(":checked")) {
             $("#export-data-container").removeClass("hidden");
         } else {
