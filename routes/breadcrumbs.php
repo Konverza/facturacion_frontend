@@ -67,6 +67,12 @@ Breadcrumbs::for("admin.users.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Usuarios", route("admin.users.index"));
 });
 
+Breadcrumbs::for("admin.users.businesses", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
+    $trail->parent("admin.users.index");
+    $trail->push($icon . "Negocios Asociados", route("admin.users.index"));
+});
+
 
 //BUSINESS
 

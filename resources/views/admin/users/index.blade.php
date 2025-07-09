@@ -1,5 +1,5 @@
 @extends('layouts.auth-template')
-@section('title', 'Negocios')
+@section('title', 'Usuarios')
 @section('content')
     <section class="my-4 px-4">
         <div class="flex w-full justify-between">
@@ -50,7 +50,8 @@
                                     <div class="flex flex-col gap-1">
                                         @foreach ($user->businesses as $business)
                                             <span class="text-sm text-gray-500 dark:text-gray-300">
-                                                    {{$user->businesses->count() > 1 ? "-" : ""}} {{$business->business->nombre}}
+                                                {{ $user->businesses->count() > 1 ? '-' : '' }}
+                                                {{ $business->business->nombre }}
                                             </span>
                                         @endforeach
                                     </div>
@@ -78,8 +79,7 @@
                             <x-td>
                                 <span
                                     class="flex w-max items-center gap-1 rounded-full text-sm font-semibold uppercase text-purple-500">
-                                    <x-icon icon="{{ $roles[$user->role]['icon'] }}"
-                                        class="size-4 text-purple-500" />
+                                    <x-icon icon="{{ $roles[$user->role]['icon'] }}" class="size-4 text-purple-500" />
                                     {{ $roles[$user->role]['name'] }}
                                 </span>
                             </x-td>
@@ -95,13 +95,21 @@
                                         id="options-users-{{ $user->id }}">
                                         <ul class="flex flex-col text-xs">
                                             <li>
-                                                <button type="button" data-url="{{ Route('admin.users.edit', $user->id) }}"
+                                                <button type="button"
+                                                    data-url="{{ Route('admin.users.edit', $user->id) }}"
                                                     data-action="{{ Route('admin.users.update', $user->id) }}"
                                                     data-type="users"
                                                     class="btn-edit flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
                                                     <x-icon icon="pencil" class="h-4 w-4" />
                                                     Editar
                                                 </button>
+                                            </li>
+                                            <li>
+                                                <a href="{{ Route('admin.users.businesses', $user->id) }}"
+                                                    class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                                                    <x-icon icon="building-store" class="h-4 w-4" />
+                                                    Negocios Asociados
+                                                </a>
                                             </li>
                                             <li>
                                                 <form action="{{ Route('admin.users.destroy', $user->id) }}" method="POST"
@@ -264,3 +272,4 @@
             message="No podrás recuperar este registro" />
     </section>
 @endsection
+    

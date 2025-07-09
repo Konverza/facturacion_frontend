@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\Business;
+use App\Models\BusinessUser;
+use App\Models\PuntoVenta;
+use Bus;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -46,6 +50,7 @@ class UserController extends Controller
             'name' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:4',
+            'role' => 'required',
             'confirm_password' => 'required|same:password',
         ]);
 
@@ -118,6 +123,135 @@ class UserController extends Controller
             DB::rollback();
             return redirect()->route('admin.users.index')
                 ->with('error', 'Error')->with("error_message", "Ha ocurrido un error al actualizar el usuario");
+        }
+    }
+
+    public function userBusinesses(string $id)
+    {
+        $user = User::with('businesses.business')->find($id);
+        if (!$user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
+
+        $business_ids = [];
+
+        $user->businesses = $user->businesses->map(function ($business) use (&$business_ids) {
+            $business->default_pos = PuntoVenta::find($business->default_pos_id);
+            return $business;
+        });
+
+        $user->businesses->map(function ($business) use (&$business_ids) {
+            $business_ids[] = $business->business_id;
+        });
+
+        $businesses = Business::whereNotIn('id', $business_ids)->get();
+
+        return view('admin.users.businesses', [
+            'user' => $user,
+            'businesses' => $businesses,
+        ]);
+    }
+
+    public function storeBusinessUser(Request $request){
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'business_id' => 'required|exists:business,id',
+            'default_pos_id' => 'nullable|exists:punto_ventas,id',
+            'only_default_pos' => 'nullable|boolean',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $user = User::find($request->user_id);
+            if (!$user) {
+                return redirect()->back()->with('error', 'Usuario no encontrado');
+            }
+
+            BusinessUser::create([
+                'business_id' => $request->business_id,
+                'user_id' => $user->id,
+                'role' => 'negocio', // Default role for business user
+                'default_pos_id' => $request->default_pos_id,
+                'only_default_pos' => $request->only_default_pos ?? false,
+            ]);
+
+            DB::commit();
+            return redirect()->route('admin.users.businesses', ['id' => $user->id])
+                ->with('success', 'Exito')->with("success_message", "Negocio asociado correctamente");
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error al asociar negocio: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Error')->with("error_message", "Ha ocurrido un error al asociar el negocio");
+        }
+    }
+    public function editBusinessUser(string $id)
+    {
+        $businessUser = BusinessUser::with('business', 'defaultPos')->find($id);
+        if (!$businessUser) {
+            return redirect()->back()->with('error', 'Asociación de negocio no encontrada');
+        }
+
+        $businesses = Business::all();
+        $puntosVenta = PuntoVenta::where('business_id', $businessUser->business_id)->get();
+
+        return view('admin.users.edit_business', [
+            'businessUser' => $businessUser,
+            'businesses' => $businesses,
+            'puntosVenta' => $puntosVenta,
+        ]);
+    }
+
+
+    public function updateBusinessUser(Request $request, string $id)
+    {
+        $request->validate([
+            'business_id' => 'required|exists:business,id',
+            'default_pos_id' => 'nullable|exists:punto_ventas,id',
+            'only_default_pos' => 'nullable|boolean',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $businessUser = BusinessUser::find($id);
+            if (!$businessUser) {
+                return redirect()->back()->with('error', 'Asociación de negocio no encontrada');
+            }
+
+            $businessUser->business_id = $request->business_id;
+            $businessUser->default_pos_id = $request->default_pos_id;
+            $businessUser->only_default_pos = $request->only_default_pos ?? false;
+            $businessUser->save();
+
+            DB::commit();
+            return redirect()->route('admin.users.businesses', ['id' => $businessUser->user_id])
+                ->with('success', 'Exito')->with("success_message", "Asociación de negocio actualizada correctamente");
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error al actualizar asociación de negocio: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Error')->with("error_message", "Ha ocurrido un error al actualizar la asociación de negocio");
+        }
+    }
+
+    public function destroyBusinessUser(string $user_id, string $business_id)
+    {
+        DB::beginTransaction();
+        try {
+            $businessUser = BusinessUser::find($business_id);
+            if (!$businessUser) {
+                return redirect()->back()->with('error', 'Asociación de negocio no encontrada');
+            }
+
+            $businessUser->delete();
+            DB::commit();
+            return redirect()->route('admin.users.businesses', ['id' => $businessUser->user_id])
+                ->with('success', 'Exito')->with("success_message", "Asociación de negocio eliminada correctamente");
+        } catch (\Exception $e) {
+            DB::rollback();
+            \Log::error('Error al eliminar asociación de negocio: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Error')->with("error_message", "Ha ocurrido un error al eliminar la asociación de negocio");
         }
     }
 }

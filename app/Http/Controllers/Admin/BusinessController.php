@@ -238,4 +238,5 @@ class BusinessController extends Controller
             'business' => $empresa
         ]);
     }
+    
 }

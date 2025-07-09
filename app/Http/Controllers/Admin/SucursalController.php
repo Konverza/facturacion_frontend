@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\PuntoVenta;
@@ -52,8 +53,8 @@ class SucursalController extends Controller
 
         if ($validator->fails()) {
             return redirect()->back()
-            ->withErrors($validator)
-            ->withInput();
+                ->withErrors($validator)
+                ->withInput();
         }
 
         $data = $validator->validated();
@@ -80,8 +81,8 @@ class SucursalController extends Controller
 
         if ($validator->fails()) {
             return redirect()->back()
-            ->withErrors($validator)
-            ->withInput();
+                ->withErrors($validator)
+                ->withInput();
         }
 
         $data = $validator->validated();
@@ -180,6 +181,34 @@ class SucursalController extends Controller
         return redirect()->route('admin.puntos-venta.index', ['business_id' => $business_id, 'sucursal_id' => $sucursal_id])
             ->with('success', 'Punto de Venta Eliminado')
             ->with("success_message", "Punto de venta eliminado exitosamente.");
+    }
+
+    public function getSucursales(Request $request)
+    {
+        $business_id = $request->input('id');
+        $sucursales = Sucursal::where('business_id', $business_id)->get()->pluck('nombre', 'id');
+        return response()->json([
+            "sucursales" => $sucursales,
+            "default" => $request->input('default', null),
+            "html" => view('layouts.partials.ajax.admin.select-sucursales', [
+                'sucursales' => $sucursales,
+                'sucursal' => $request->input('default', null),
+            ])->render(),
+        ]);
+    }
+
+    public function getPuntosVenta(Request $request)
+    {
+        $sucursal_id = $request->input('id');
+        $puntos_venta = PuntoVenta::where('sucursal_id', $sucursal_id)->get()->pluck('nombre', 'id');
+        return response()->json([
+            "puntos_venta" => $puntos_venta,
+            "default" => $request->input('default', null),
+            "html" => view('layouts.partials.ajax.admin.select-puntos-venta', [
+                'puntos_venta' => $puntos_venta,
+                'punto_venta' => $request->input('default', null),
+            ])->render(),
+        ]);
     }
 
 }
