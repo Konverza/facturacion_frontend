@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Mail\UsuarioMail;
 use App\Models\Business;
 use App\Models\BusinessPlan;
 use App\Models\BusinessUser;
+use App\Models\Plan;
+use App\Models\PuntoVenta;
+use App\Models\Sucursal;
+use App\Models\User;
+use App\Services\OctopusService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
-use App\Models\User;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\UsuarioMail;
-use App\Models\Plan;
-use App\Services\OctopusService;
+use Illuminate\Support\Str;
 
 class BusinessController extends Controller
 {
@@ -34,7 +36,7 @@ class BusinessController extends Controller
         $business = Business::with('plan')->get();
         $inicio_mes = date('Y-m-01');
         $fin_mes = date('Y-m-t');
-        
+
         foreach ($business as $value) {
             $params = [
                 'nit' => $value->nit,
@@ -67,7 +69,7 @@ class BusinessController extends Controller
 
     public function store(Request $request)
     {
-        $codigo_actividad_economica  = $request->actividad_economica;
+        $codigo_actividad_economica = $request->actividad_economica;
         $actividades_economicas = $this->octopus_service->getCatalog("CAT-019", null, true, true);
         $descripcion_actividad_economica = $actividades_economicas[$codigo_actividad_economica];
 
@@ -100,8 +102,12 @@ class BusinessController extends Controller
                 ["name" => "nrc", "contents" => "$request->nrc"],
                 ["name" => "api_password", "contents" => $api_password],
                 ["name" => "certificate_password", "contents" => $certificate_password],
-                ["name" => "file", "contents" =>
-                fopen($certificado_file, "r"), "filename" => $certificado_file->getClientOriginalName()]
+                [
+                    "name" => "file",
+                    "contents" =>
+                        fopen($certificado_file, "r"),
+                    "filename" => $certificado_file->getClientOriginalName()
+                ]
             ];
 
             $credentials_response = Http::attach($credentials)->post($this->octopus_url . "/credenciales/");
@@ -151,10 +157,30 @@ class BusinessController extends Controller
                             $user->assignRole('business');
                         }
 
+                        $sucursal = new Sucursal([
+                            'nombre' => "Casa Matriz",
+                            'departamento' => $request->departamento,
+                            'municipio' => $request->municipio,
+                            'complemento' => $request->complemento,
+                            'telefono' => $request->telefono,
+                            'correo' => $request->correo,
+                            'codSucursal' => "S001",
+                            'business_id' => $business->id
+                        ]);
+                        $sucursal->save();
+
+                        $punto_venta = new PuntoVenta([
+                            'nombre' => "Punto de Venta Principal",
+                            'sucursal_id' => $sucursal->id,
+                            'codPuntoVenta' => "P001",
+                        ]);
+                        $punto_venta->save();
+
                         $business_user = new BusinessUser();
                         $business_user->user_id = $user->id;
                         $business_user->business_id = $business->id;
                         $business_user->role = "negocio";
+                        $business_user->default_pos_id = $punto_venta->id;
                         $business_user->save();
 
                         Mail::to($request->correo_responsable)
@@ -169,17 +195,25 @@ class BusinessController extends Controller
                             ->with('success', 'Empresa registrada correctamente');
                     } else {
                         DB::rollBack();
-                        return back()->with('error', 'Ha ocurrio un error al subir el logo');
+                        return back()->with('error', 'Ha ocurrido un error al subir el logo')
+                            ->with("error_message", "Error: " . $logo_response->json()['detail'] ?? 'Error desconocido')
+                            ->withInput();
                     }
                 } catch (\Exception $e) {
                     DB::rollBack();
-                    return back()->with('error', 'Ha ocurrido un error al guardar la empresa');
+                    return back()->with('error', 'Ha ocurrido un error al guardar la empresa')
+                        ->with("error_message", "Error: " . $e->getMessage())
+                        ->withInput();
                 }
             } else {
-                return back()->with('error', 'Ha ocurrido un error al registrar las credenciales');
+                return back()->with('error', 'Ha ocurrido un error al registrar las credenciales')
+                    ->with("error_message", "Error: " . $credentials_response->json()['detail'] ?? 'Error desconocido')
+                    ->withInput();
             }
         } else {
-            return back()->with('error', 'Ha ocurrido un error al registrar la empresa');
+            return back()->with('error', 'Ha ocurrido un error al registrar la empresa')
+                ->with("error_message", "Error: " . $data_business_repsonse->json()['detail'] ?? 'Error desconocido')
+                ->withInput();
         }
     }
 
@@ -238,5 +272,5 @@ class BusinessController extends Controller
             'business' => $empresa
         ]);
     }
-    
+
 }
