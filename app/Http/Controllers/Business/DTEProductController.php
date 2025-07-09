@@ -987,11 +987,17 @@ class DTEProductController extends Controller
 
         $this->dte["total_pagar"] = $this->precise_round($this->dte["total"] - $this->dte["total_descuentos"], 8);
 
-        if ($this->dte["type"] === "01") {
-            $this->dte["total_iva_retenido"] = $this->precise_round(((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0)) * 0.01, 8);
+        if ($this->dte["type"] !== "14") {
+            $this->dte["total_iva_retenido"] = $this->precise_round((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0) * 0.01, 8);
             $total_servicios = array_sum(
                 array_map(
-                    fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 2) ? (($product["ventas_gravadas"] / 1.13) ?? 0) : 0,
+                    function ($product) {
+                        $tipo_item = ($product["product"] && is_array($product["product"])) ? $product["product"]["tipoItem"] ?? null : $product["tipo_item"] ?? null;
+                        if ($tipo_item == 2) {
+                            return $product["ventas_gravadas"] ?? 0;
+                        }
+                        return 0;
+                    },
                     $this->dte["products"] ?? []
                 )
             );
@@ -999,13 +1005,25 @@ class DTEProductController extends Controller
         } else if ($this->dte["type"] === "14") {
             $total_servicios = array_sum(
                 array_map(
-                    fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 2) ? ($product["total"] ?? 0) : 0,
+                    function ($product) {
+                        $tipo_item = ($product["product"] && is_array($product["product"])) ? $product["product"]["tipoItem"] ?? null : $product["tipo_item"] ?? null;
+                        if ($tipo_item == 2) {
+                            return $product["total"] ?? 0;
+                        }
+                        return 0;
+                    },
                     $this->dte["products"] ?? []
                 )
             );
             $total_bienes = array_sum(
                 array_map(
-                    fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 1) ? ($product["total"] ?? 0) : 0,
+                    function ($product) {
+                        $tipo_item = ($product["product"] && is_array($product["product"])) ? $product["product"]["tipoItem"] ?? null : $product["tipo_item"] ?? null;
+                        if ($tipo_item == 1) {
+                            return $product["total"] ?? 0;
+                        }
+                        return 0;
+                    },
                     $this->dte["products"] ?? []
                 )
             );
@@ -1016,7 +1034,13 @@ class DTEProductController extends Controller
 
             $total_servicios = array_sum(
                 array_map(
-                    fn($product) => (isset($product["tipo_item"]) && $product["tipo_item"] == 2) ? ($product["ventas_gravadas"] ?? 0) : 0,
+                    function ($product) {
+                        $tipo_item = ($product["product"] && is_array($product["product"])) ? $product["product"]["tipoItem"] ?? null : $product["tipo_item"] ?? null;
+                        if ($tipo_item == 2) {
+                            return $product["ventas_gravadas"] ?? 0;
+                        }
+                        return 0;
+                    },
                     $this->dte["products"] ?? []
                 )
             );
