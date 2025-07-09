@@ -1,3 +1,7 @@
+@php
+    $business_id = Session::get('business') ?? null;
+    $business = \App\Models\Business::find($business_id);
+@endphp
 @extends('layouts.auth-template')
 @section('title', 'Nuevo cliente')
 @section('content')
@@ -72,9 +76,11 @@
                             placeholder="XXXX XXXX" value="{{ old('phone') }}" />
                     </div>
                 </div>
+                @if($business->show_special_prices)
                 <div class="mt-4">
                     <x-input type="checkbox" label="Aplicar precio especial a este cliente" name="special_price" id="special_price" />
                 </div>
+                @endif
                 <div class="mt-4">
                     <x-input type="checkbox" label="Rellenar datos de exportación" name="export_data" id="export-data" />
                 </div>

@@ -163,6 +163,20 @@ class DashboardController extends Controller
             ]);
         }
 
+        $business = Business::find($request->business);
+        if (!$business) {
+            return redirect()->route('business.select')->with([
+                'error' => 'Oops!',
+                'error_message' => 'Empresa no encontrada'
+            ]);
+        }
+        if (!$business->active) {
+            return redirect()->route('business.select')->with([
+                'error' => 'Error',
+                'error_message' => 'El negocio se ha desactivado por falta de pago. Por favor, realice su pago y contacte a soporte para reactivarlo.'
+            ]);
+        }
+
         Session::put('business', $request->business);
         return redirect()->route('business.index');
     }

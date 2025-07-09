@@ -26,15 +26,14 @@ class AuthController extends Controller
             DB::beginTransaction();
             $user = User::where('email', $request->email)->first();
             if (!$user) {
-                return back()->withErrors([
-                    'email' => 'Las credenciales proporcionadas no coinciden con nuestros registros.',
-                ]);
+                return back()->with('error', 'Error', )
+                    ->with('error_message', 'Las credenciales proporcionadas no coinciden con nuestros registros.');
             }
 
             if (!Hash::check($request->password, $user->password)) {
-                return back()->withErrors([
-                    'password' => 'La contraseña es incorrecta.',
-                ])->withInput();
+                return back()->with('error', 'Error')
+                    ->with('error_message', 'Credenciales Inválidas.')
+                    ->withInput();
             }
 
             Auth::login($user, $request->filled('remember'));
@@ -51,16 +50,19 @@ class AuthController extends Controller
                     $redirect = route('admin.dashboard');
                     break;
                 case 'business':
+                case 'atm':
                     if ($user->businesses->count() > 1) {
                         $redirect = route('business.select');
                     } else {
                         $business = $user->businesses->first();
+                        if (!$business->active) {
+                            return redirect()->route('login')
+                                ->with('error', 'Error')
+                                ->with('error_message', 'El negocio se ha desactivado por falta de pago. Por favor, realice su pago y contacte a soporte para reactivarlo.');
+                        }
                         session(['business' => $business->business_id]);
                         $redirect = route('business.dashboard');
                     }
-                    break;
-                case 'atm':
-                    $redirect = route('atm.dashboard');
                     break;
             }
 

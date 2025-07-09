@@ -21,11 +21,13 @@ class Business extends Model
         'nombre_responsable',
         'posmode',
         'show_special_prices',
+        'active',
     ];
 
     protected $casts = [
         'posmode' => 'boolean',
         'show_special_prices' => 'boolean',
+        'active' => 'boolean',
     ];
 
     public function plan()
