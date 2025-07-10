@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\Business;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Mail\ResetPasswordEmail;
@@ -54,14 +55,21 @@ class AuthController extends Controller
                     if ($user->businesses->count() > 1) {
                         $redirect = route('business.select');
                     } else {
-                        $business = $user->businesses->first();
+                        $userBusiness = $user->businesses->first();
+                        $business = Business::find($userBusiness->business_id);
+                        if (!$business) {
+                            return redirect()->route('login')
+                                ->with('error', 'Error')
+                                ->with('error_message', 'El negocio no existe o no tienes acceso a él.');
+                        }
                         if (!$business->active) {
                             return redirect()->route('login')
                                 ->with('error', 'Error')
                                 ->with('error_message', 'El negocio se ha desactivado por falta de pago. Por favor, realice su pago y contacte a soporte para reactivarlo.');
+                        } else {
+                            session(['business' => $business->id]);
+                            $redirect = route('business.dashboard');
                         }
-                        session(['business' => $business->business_id]);
-                        $redirect = route('business.dashboard');
                     }
                     break;
             }
@@ -71,9 +79,8 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             logger($e);
             DB::rollBack();
-            return redirect()->route("login")->withErrors([
-                'email' => 'Ocurrió un error al intentar iniciar sesión. Inténtalo nuevamente.',
-            ])->withInput();
+            return redirect()->route("login")->with('error', 'Error')
+                ->with('error_message', 'Ocurrió un error.');
         }
     }
 
