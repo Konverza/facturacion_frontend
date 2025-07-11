@@ -199,7 +199,7 @@ class DTEProductController extends Controller
     public function store_new(Request $request)
     {
         try {
-            if (in_array($this->dte["type"], ["04", "05", "06"])) {
+            if (in_array($this->dte["type"], ["05", "06"])) {
                 if ($request->documento_relacionado === "" || $request->documento_relacionado === null) {
                     return response()->json([
                         "success" => false,
