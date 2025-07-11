@@ -164,7 +164,7 @@ class BusinessController extends Controller
                             'complemento' => $request->complemento,
                             'telefono' => $request->telefono,
                             'correo' => $request->correo,
-                            'codSucursal' => "S001",
+                            'codSucursal' => "M001",
                             'business_id' => $business->id
                         ]);
                         $sucursal->save();
