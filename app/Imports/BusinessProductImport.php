@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\BusinessProduct;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithUpserts;
@@ -43,66 +44,82 @@ class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts, Wit
      */
     public function model(array $row)
     {
-        // Check if the row has the required fields and if the prices are valid
-        if (!isset($row["codigo"]) || !isset($row["descripcion"]) || !isset($row["tipoItem"]) || !isset($row["uniMedida"]) || (!isset($row["precioUni"]) && !isset($row["precioSinIVA"]))) {
+        // Check for missing required fields
+        $requiredKeys = ["Código", "Descripción", "Tipo de Item", "Unidad de Medida"];
+        $missingKeys = [];
+        foreach ($requiredKeys as $key) {
+            if (!isset($row[$key]) || empty($row[$key])) {
+            $missingKeys[] = $key;
+            }
+        }
+        if (!isset($row["Precio Unitario (IVA Incluido)"]) && !isset($row["Precio Unitario (Sin IVA)"])) {
+            $missingKeys[] = "Precio Unitario (IVA Incluido) o Precio Unitario (Sin IVA)";
+        }
+
+        if (!empty($missingKeys)) {
+            Log::warning('Row skipped due to missing required fields', ['missing_keys' => $missingKeys, 'row' => $row]);
             return null; // Skip rows that do not have the required fields
         }
 
-        if (($row["precioUni"] == 0 && $row["precioSinIVA"] == 0) || empty($row["tipoItem"]) || empty($row["uniMedida"]) || empty($row["descripcion"])) {
-            return null; // Skip rows with zero prices and empty names
+        if (
+            (isset($row["Precio Unitario (IVA Incluido)"]) && $row["Precio Unitario (IVA Incluido)"] == 0) &&
+            (isset($row["Precio Unitario (Sin IVA)"]) && $row["Precio Unitario (Sin IVA)"] == 0)
+        ) {
+            Log::warning('Row skipped due to zero prices', ['row' => $row]);
+            return null; // Skip rows with zero prices
         }
 
-        $tipoItem = mb_strtolower($row["tipoItem"]);
+        $tipoItem = mb_strtolower($row["Tipo de Item"]);
         switch ($tipoItem) {
-            case 'bien':
+            case 'bienes':
                 $tipoItem = 1;
                 break;
-            case 'servicio':
+            case 'servicios':
                 $tipoItem = 2;
                 break;
-            case 'bien y servicio':
+            case 'ambos (bienes y servicios)':
                 $tipoItem = 3;
                 break;
             default:
                 $tipoItem = 1;
         }
 
-        $uniMedida = mb_strtolower($row["uniMedida"]);
-        $uniMedida = array_search($uniMedida, $this->unidades_medidas, true);
+        $uniMedida = mb_strtolower($row["Unidad de Medida"]);
+        $uniMedida = array_search($uniMedida, array_map('mb_strtolower', $this->unidades_medidas), true); 
         $uniMedida = ($uniMedida === false) ? '59' : $uniMedida;
 
         return new BusinessProduct([
             'business_id' => $this->business_id,
             'tipoItem' => $tipoItem,
-            'codigo' => $row["codigo"],
+            'codigo' => $row["Código"],
             'uniMedida' => $uniMedida,
-            'descripcion' => $row["descripcion"],
-            'precioUni' => isset($row["precioUni"]) && $row["precioUni"] != 0
-                ? $row["precioUni"]
-                : (isset($row["precioSinIVA"]) && $row["precioSinIVA"] != 0
-                    ? $row["precioSinIVA"] * 1.13
+            'descripcion' => $row["Descripción"],
+            'precioUni' => isset($row["Precio Unitario (IVA Incluido)"]) && $row["Precio Unitario (IVA Incluido)"] != 0
+                ? $row["Precio Unitario (IVA Incluido)"]
+                : (isset($row["Precio Unitario (Sin IVA)"]) && $row["Precio Unitario (Sin IVA)"] != 0
+                    ? $row["Precio Unitario (Sin IVA)"] * 1.13
                     : 0),
-            'precioSinTributos' => isset($row["precioSinIVA"]) && $row["precioSinIVA"] != 0
-                ? $row["precioSinIVA"]
-                : (isset($row["precioUni"]) && $row["precioUni"] != 0
-                    ? $row["precioUni"] / 1.13
+            'precioSinTributos' => isset($row["Precio Unitario (Sin IVA)"]) && $row["Precio Unitario (Sin IVA)"] != 0
+                ? $row["Precio Unitario (Sin IVA)"]
+                : (isset($row["Precio Unitario (IVA Incluido)"]) && $row["Precio Unitario (IVA Incluido)"] != 0
+                    ? $row["Precio Unitario (IVA Incluido)"] / 1.13
                     : 0),
-            'special_price' => isset($row["special_price"]) && $row["special_price"] != 0
-                ? $row["special_price"]
-                : (isset($row["special_price_with_iva"]) && $row["special_price_with_iva"] != 0
-                    ? $row["special_price_with_iva"] / 1.13
+            'special_price' => isset($row["Precio con descuento (Sin IVA)"]) && $row["Precio con descuento (Sin IVA)"] != 0
+                ? $row["Precio con descuento (Sin IVA)"]
+                : (isset($row["Precio con descuento (IVA incluido)"]) && $row["Precio con descuento (IVA incluido)"] != 0
+                    ? $row["Precio con descuento (IVA incluido)"] / 1.13
                     : 0),
-            'special_price_with_iva' => isset($row["special_price_with_iva"]) && $row["special_price_with_iva"] != 0
-                ? $row["special_price_with_iva"]
-                : (isset($row["special_price"]) && $row["special_price"] != 0
-                    ? $row["special_price"] * 1.13
+            'special_price_with_iva' => isset($row["Precio con descuento (IVA incluido)"]) && $row["Precio con descuento (IVA incluido)"] != 0
+                ? $row["Precio con descuento (IVA incluido)"]
+                : (isset($row["Precio con descuento (Sin IVA)"]) && $row["Precio con descuento (Sin IVA)"] != 0
+                    ? $row["Precio con descuento (Sin IVA)"] * 1.13
                     : 0),
-            'cost' => $row["cost"] ?? 0,
+            'cost' => $row["Costo de Compra"] ?? 0,
             'tributos' => '["20"]',
-            'stockInicial' => $row["stockInicial"] ?? 0,
-            'stockActual' => $row["stockInicial"] ?? 0,
+            'stockInicial' => $row["Stock"] ?? 0,
+            'stockActual' => $row["Stock"] ?? 0,
             'stockMinimo' => 1,
-            'has_stock' => $tipoItem == 1 || $tipoItem == 3 ? 1 : 0,
+            'has_stock' => $row["¿Guardar Inventario?"] == "Sí" && $tipoItem != 2 ? 1 : 0,
             'image_url' => null,
             'category_id' => null
         ]);

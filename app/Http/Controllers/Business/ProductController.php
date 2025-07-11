@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers\Business;
 
-use App\Models\ProductCategory;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ProductRequest;
+use App\Imports\BusinessProductImport;
+use App\Models\Business;
 use App\Models\BusinessProduct;
 use App\Models\BusinessProductMovement;
+use App\Models\ProductCategory;
 use App\Models\Tributes;
 use App\Services\OctopusService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Imports\BusinessProductImport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
@@ -30,7 +31,8 @@ class ProductController extends Controller
     public function index()
     {
         try {
-            return view('business.products.index');
+            $business = Business::find(session("business"));
+            return view('business.products.index', ['business' => $business]);
         } catch (\Exception $e) {
             return back()->with([
                 'error' => 'Error',
