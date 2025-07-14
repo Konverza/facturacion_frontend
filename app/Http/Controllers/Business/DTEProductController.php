@@ -988,7 +988,11 @@ class DTEProductController extends Controller
         $this->dte["total_pagar"] = $this->precise_round($this->dte["total"] - $this->dte["total_descuentos"], 8);
 
         if ($this->dte["type"] !== "14") {
-            $this->dte["total_iva_retenido"] = $this->precise_round((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0) * 0.01, 8);
+            if($this->dte["type"] == "01"){
+                $this->dte["total_iva_retenido"] = $this->precise_round((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0) * 0.01, 8);
+            } else {
+                $this->dte["total_iva_retenido"] = $this->precise_round((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) ?? 0) * 0.01, 8);
+            }
             $total_servicios = array_sum(
                 array_map(
                     function ($product) {
