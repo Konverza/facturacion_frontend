@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
+use App\Imports\BusinessCustomerImport;
+use App\Models\Business;
 use App\Models\BusinessCustomer;
 use App\Models\BusinessUser;
 use App\Services\OctopusService;
@@ -12,6 +14,8 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class CustomerContoller extends Controller
 {
@@ -20,7 +24,7 @@ class CustomerContoller extends Controller
     public $tipos_documentos;
     public $actividades_economicas;
     public $countries;
-    public $dte; 
+    public $dte;
 
     public function __construct()
     {
@@ -31,9 +35,11 @@ class CustomerContoller extends Controller
     public function index()
     {
         try {
+            $business = Business::find(session("business"));
             $business_customers = BusinessCustomer::where("business_id", session("business"))->orderBy("id", "desc")->get();
             return view('business.customers.index', [
-                'business_customers' => $business_customers
+                'business_customers' => $business_customers,
+                'business' => $business,
             ]);
         } catch (\Exception $e) {
             return redirect()->route('business.customers.index')
@@ -82,8 +88,8 @@ class CustomerContoller extends Controller
             }
 
             $business_user = BusinessUser::where("business_id", session("business"))
-                                ->where("user_id", auth()->user()->id)
-                                ->first();
+                ->where("user_id", auth()->user()->id)
+                ->first();
             DB::beginTransaction();
 
             $business_customer = new BusinessCustomer([
@@ -174,7 +180,7 @@ class CustomerContoller extends Controller
                 }
             }
 
-            $business_customer = BusinessCustomer::findOrFail($id); 
+            $business_customer = BusinessCustomer::findOrFail($id);
             DB::beginTransaction();
             $business_customer->update([
                 "tipoDocumento" => $request->tipo_documento,
@@ -220,7 +226,7 @@ class CustomerContoller extends Controller
                 "customer" => $business_customer
             ]));
 
-            if($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
+            if ($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
                 $business_customer->numDocumento = str_replace("-", "", $business_customer->numDocumento);
             }
 
@@ -275,7 +281,23 @@ class CustomerContoller extends Controller
             $request->validate([
                 'file' => 'required|file|mimes:xlsx,xls,csv'
             ]);
-
+            $departamentos = $this->octopus_service->simpleDepartamentos();
+            $tipos_documentos = $this->octopus_service->getCatalog("CAT-022");
+            $tipos_personas = [
+                '1' => 'Natural',
+                '2' => 'Juridica',
+            ];
+            $actividades_economicas = $this->octopus_service->getCatalog("CAT-019");
+            $countries = $this->octopus_service->getCatalog("CAT-020");
+            $business_id = session("business");
+            Excel::import(new BusinessCustomerImport(
+                $business_id,
+                $tipos_documentos,
+                $tipos_personas,
+                $actividades_economicas,
+                $countries,
+                $departamentos
+            ), $request->file('file'));
             // $business_id = session("business");
             // $unidades_medidas = $this->unidades_medidas;
             // Excel::import(new BusinessProductImport($business_id, $unidades_medidas), $request->file('file'));

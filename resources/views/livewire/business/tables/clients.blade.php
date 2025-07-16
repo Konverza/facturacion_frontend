@@ -17,11 +17,11 @@
         </div>
 
         <!-- Botones de acción -->
-        {{-- <div class="flex-1">
+        <div class="flex-1">
             <x-button data-id="" typeButton="success" data-target="#modal-import"
                 class="show-modal btn-remove-stock flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900"
                 text="Importar Clientes" icon="cloud-upload" />
-        </div> --}}
+        </div>
         <div class="flex-1">
             <x-button wire:click="exportToExcel" typeButton="secondary" icon="download" text="Exportar a Excel"
                 class="w-full" wire:loading.attr="disabled" />

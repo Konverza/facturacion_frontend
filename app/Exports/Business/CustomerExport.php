@@ -62,9 +62,9 @@ class CustomerExport implements FromQuery, WithHeadings, WithMapping, ShouldAuto
             'Num. Documento',
             'Teléfono',
             'Email',
-            'Dirección',
             'Departamento',
             'Municipio',
+            'Dirección',
             'Fecha de Creación',
         ];
     }
@@ -77,10 +77,10 @@ class CustomerExport implements FromQuery, WithHeadings, WithMapping, ShouldAuto
             $customer->nrc,
             $customer->numDocumento,
             $customer->telefono,
-            $customer->email,
-            $customer->direccion,
+            $customer->correo,
             $customer->departamento ? $this->obtenerNombreDepartamento($customer->departamento) : '',
             $customer->municipio ? $this->obtenerNombreMunicipio($customer->departamento, $customer->municipio) : '',
+            $customer->complemento,
             $customer->created_at ? $customer->created_at->format('Y-m-d H:i:s') : '',
         ];
     }

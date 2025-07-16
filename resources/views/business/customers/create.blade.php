@@ -59,7 +59,8 @@
                     <div class="flex-1" id="select-municipio">
                         <x-select name="municipio" label="Municipio" id="municipality" required :options="[
                             'Selecciona un municipio' => 'Seleccione un municipio',
-                        ]" value="{{old('municipio')}}" />
+                        ]"
+                            value="{{ old('municipio') }}" />
                     </div>
                 </div>
                 <div class="mt-4">
@@ -76,10 +77,11 @@
                             placeholder="XXXX XXXX" value="{{ old('phone') }}" />
                     </div>
                 </div>
-                @if($business->show_special_prices)
-                <div class="mt-4">
-                    <x-input type="checkbox" label="Aplicar precio especial a este cliente" name="special_price" id="special_price" />
-                </div>
+                @if ($business->show_special_prices)
+                    <div class="mt-4">
+                        <x-input type="checkbox" label="Aplicar precio especial a este cliente" name="special_price"
+                            id="special_price" />
+                    </div>
                 @endif
                 <div class="mt-4">
                     <x-input type="checkbox" label="Rellenar datos de exportación" name="export_data" id="export-data" />
@@ -91,8 +93,8 @@
                         </div>
                         <div class="flex-1">
                             <x-select label="Tipo de persona" name="tipo_persona" id="tipo_persona" :options="[
-                                'Persona natural' => 'Persona natural',
-                                'Persona Jurídica' => 'Persona jurídica',
+                                '1' => 'Persona natural',
+                                '2' => 'Persona jurídica',
                             ]" />
                         </div>
                     </div>
