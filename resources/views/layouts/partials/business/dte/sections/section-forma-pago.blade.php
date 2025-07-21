@@ -10,8 +10,8 @@
         </div>
         <div class="flex-1">
             <x-input type="number" label="Monto" name="monto" id="monto_total"
-                value="{{ isset($dte['monto_pendiente']) ? round($dte['monto_pendiente'], 2) : 0 }}" step="0.01"
-                icon="currency-dollar" placeholder="0.00" />
+                value="{{ isset($dte['monto_pendiente']) && $dte['monto_pendiente'] > 0 ? round($dte['monto_pendiente'], 2) : 0 }}"
+                step="0.01" icon="currency-dollar" placeholder="0.00" />
         </div>
         <div class="flex-[2]">
             <x-input type="text" label="Número de documento" id="numero_documento" name="numero_documento_pago"
@@ -27,6 +27,15 @@
             data-action="{{ Route('business.dte.payment-method.store') }}" />
     </div>
     <div class="mt-4">
+        @if ($number === '15')
+            <div class="mb-4 border-l-4 border-blue-500 bg-blue-100 p-4 text-sm text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                role="alert">
+                <div class="flex justify-start gap-2">
+                    <x-icon icon="info-circle" class="h-5 w-5" />
+                    Solo debe ingresar una forma de pago si la donación recibida es monetaria. Si se reciben bienes o servicios, no completar
+                </div>
+            </div>
+        @endif
         <x-table :datatable="false">
             <x-slot name="thead">
                 <x-tr>

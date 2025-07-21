@@ -100,6 +100,16 @@ $(document).ready(function () {
         $("#total_product").val(redondear(total_descuento, 8));
     });
 
+    // Drawer new donación
+    $("#count_product, #valor_unitario, #depreciacion").on("input", function () {
+        const count = parseFloat($("#count_product").val()) || 0;
+        const valorUnitario = parseFloat($("#valor_unitario").val()) || 0;
+        const depreciacion = parseFloat($("#depreciacion").val()) || 0;
+
+        const total = (count * valorUnitario) - depreciacion;
+        $("#valor_donado").val(redondear(total, 8));
+    });
+
     function updatePrices(price, count) {
         const iva = count * (price / 1.13) * 0.13;
         const turismo = count * (price / 1.13) * 0.05;

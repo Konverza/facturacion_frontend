@@ -42,6 +42,7 @@ class OctopusService
                 case "CAT-010":
                 case "CAT-030":
                 case "CAT-031":
+                case "CAT-032":
                     return $this->formatCatalog($values, 'code', 'value', $diff, $doble_value);
                 case "CAT-002":
                 case "CAT-009":

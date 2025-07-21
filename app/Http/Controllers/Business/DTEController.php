@@ -118,15 +118,18 @@ class DTEController extends Controller
                 '06' => 'Nota de débito',
                 '07' => 'Comprobante de retención',
                 '11' => 'Factura de exportación',
-                '14' => 'Factura de sujeto excluido'
+                '14' => 'Factura de sujeto excluido',
+                '15' => 'Comprobante de Donación'
             ];
 
             $document_type = $types[$number];
             $currentDate = date("Y-m-d");
 
             if (!$id || $id !== "") {
-                $dteProductController = new DTEProductController();
-                $dteProductController->totals();
+                if ($number !== "15"){
+                    $dteProductController = new DTEProductController();
+                    $dteProductController->totals();
+                }
             }
 
             $sucursals = Sucursal::where("business_id", session("business"))->get()->pluck("nombre", "id")->toArray();
@@ -195,10 +198,15 @@ class DTEController extends Controller
                 case "14":
                     $view = "business.dtes.factura_sujeto_excluido";
                     break;
+                
+                case "15":
+                    $view = "business.dtes.comprobante_donacion";
+                    break;
             }
             return view($view, $data);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
+            Log::error($e->getTraceAsString());
             return redirect()->route("business.index")
                 ->with("error", "Error")->with("error_message", "Ha ocurrido un error al cargar la vista");
         }
@@ -457,6 +465,23 @@ class DTEController extends Controller
         $this->handleResponse($data, $request);
     }
 
+    public function comprobante_donacion(Request $request)
+    {
+        $numero_documento = $request->numero_documento;
+        if ($request->tipo_documento === "36") {
+            if (strlen($numero_documento) !== 14) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
+            }
+        } else if ($request->tipo_documento === "13") {
+            if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
+                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+            }
+        }
+
+        $data = $this->processDTE($request, "15", "/comprobante_donacion/");
+        $this->handleResponse($data, $request);
+    }
+
     public function buildDTE(Request $request, $type, $business_id)
     {
         $business = Business::find($business_id);
@@ -495,6 +520,8 @@ class DTEController extends Controller
 
         if ($type === "14") {
             $dte["sujetoExcluido"] = $receptor;
+        } elseif ($type === "15") {
+            $dte["donante"] = $receptor;
         } else {
             $dte["receptor"] = $receptor;
         }
@@ -534,6 +561,8 @@ class DTEController extends Controller
             $dte["resumen"]["condicionOperacion"] = $request->condicion_operacion;
             $dte["resumen"]["reteRenta"] = round((float) $this->dte["isr"] ?? 0, 2);
             $dte["resumen"]["observaciones"] = $this->dte["extension"]["observaciones"] ?? null;
+        } elseif ($type === "15") {
+            $dte["resumen"]["pagos"] = $this->pagos();
         } else {
             $dte["resumen"]["descuNoSuj"] = round((float) $this->dte["descuento_venta_no_sujeta"] ?? 0, 2);
             $dte["resumen"]["descuExtenta"] = round((float) $this->dte["descuento_venta_exenta"] ?? 0, 2);
@@ -550,12 +579,14 @@ class DTEController extends Controller
             $dte["resumen"]["ivaPerci1"] = $this->dte["percibir_iva"] === "active" ? round((float) $this->dte["total_iva_retenido"] ?? 0, 2) : 0;
         }
 
-        if ($type !== "14") {
+        if ($type !== "14" && $type !== "15") {
             $dte["resumen"]["tributos"] = $this->getTributos();
         }
 
         if ($type === "07") {
             $dte["cuerpoDocumento"] = $this->getCuerpoDocumentoComprobanteRetencion();
+        } elseif ($type === "15") {
+            $dte["cuerpoDocumento"] = $this->getCuerpoDocumentoComprobanteDonacion();
         } else {
             if (isset($this->dte["products"]) && count($this->dte["products"]) > 0) {
                 foreach ($this->dte["products"] as $product) {
@@ -575,6 +606,29 @@ class DTEController extends Controller
                     return redirect()->back()->with([
                         'error' => "Error",
                         'error_message' => "Debe agregar al menos un producto"
+                    ])->send();
+                }
+            }
+
+            if($this->dte["type"] === "15") {
+
+                if(!$this->otrosDocumentos()) {
+                    return redirect()->back()->with([
+                        'error' => "Error",
+                        'error_message' => "Debe agregar al menos un documento asociado a la donación"
+                    ])->send();
+                }
+
+                $total_pagar = array_sum(array_column(
+                    array_filter($this->dte["products"], function ($product) {
+                        return $product["tipo_donacion"] == 1;
+                    }),
+                    "valor_donado"
+                ));
+                if($total_pagar > 0 && !$this->pagos()) {
+                    return redirect()->back()->with([
+                        'error' => "Error",
+                        'error_message' => "Debe agregar al menos una forma de pago"
                     ])->send();
                 }
             }
@@ -644,7 +698,7 @@ class DTEController extends Controller
         $business_id = Session::get('business') ?? null;
         if (isset($data["estado"])) {
             if ($data["estado"] === "PROCESADO" || $data["estado"] === "CONTINGENCIA") {
-                if ($this->dte["type"] !== "07" && $this->dte["type"] !== "14" && $this->dte["type"] !== "04") {
+                if ($this->dte["type"] !== "07" && $this->dte["type"] !== "14" && $this->dte["type"] !== "04" && $this->dte["type"] !== "15") {
                     $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida");
                     if ($request->condicion_operacion === 2) {
                         $this->createCXC($data, $request);
@@ -843,6 +897,29 @@ class DTEController extends Controller
                     "telefono" => $request->telefono,
                     "correo" => $request->correo,
                 ];
+            case "15":
+                case "07":
+                $actividad = $this->actividades_economicas[$request->actividad_economica] ?? null;
+                $descActividad = explode("-", $actividad);
+                $descActividad = trim($descActividad[1] ?? null);
+                return [
+                    "tipoDocumento" => $request->tipo_documento,
+                    "numDocumento" => $request->numero_documento,
+                    "nrc" => $request->nrc_customer,
+                    "nombre" => $request->nombre_customer,
+                    "nombreComercial" => $request->nombre_comercial,
+                    "codActividad" => $request->actividad_economica,
+                    "descActividad" => $descActividad,
+                    "direccion" => [
+                        "departamento" => $request->departamento,
+                        "municipio" => $request->municipio,
+                        "complemento" => $request->complemento
+                    ],
+                    "telefono" => $request->telefono,
+                    "correo" => $request->correo,
+                    "codDomiciliado" => $request->cod_domiciliado,
+                    "codPais" => $request->codigo_pais,
+                ];
             default:
                 return [];
         }
@@ -932,6 +1009,26 @@ class DTEController extends Controller
             ];
         }
         return $documentos_relacionados;
+    }
+
+    public function getCuerpoDocumentoComprobanteDonacion()
+    {
+        $donaciones = [];
+        $num = 0;
+        foreach ($this->dte["products"] as $donacion) {
+            $num++;
+            $donaciones[] = [
+                "tipoDonacion" => $donacion["tipo_donacion"],
+                "cantidad" => $donacion["cantidad"],
+                "codigo" => null,
+                "uniMedida" => $donacion["unidad_medida"],
+                "descripcion" => $donacion["descripcion"],
+                "depreciacion" => round($donacion["depreciacion"], 2),
+                "valorUni" => round($donacion["valor_unitario"], 2),
+                "valor" => round($donacion["valor_donado"], 2),
+            ];
+        }
+        return $donaciones;
     }
 
     public function createCXC($data, $request)
@@ -1060,13 +1157,21 @@ class DTEController extends Controller
         if (isset($this->dte["metodos_pago"])) {
             $metodos_pago = [];
             foreach ($this->dte["metodos_pago"] as $pago) {
-                $metodos_pago[] = [
-                    "codigo" => $pago["forma_pago"],
-                    "montoPago" => round((float) $pago["monto"], 2),
-                    "referencia" => $pago["numero_documento"],
-                    "plazo" => $pago["plazo"] ?? null,
-                    "periodo" => $pago["periodo"] ?? null,
-                ];
+                if($this->dte["type"] !== "15"){
+                    $metodos_pago[] = [
+                        "codigo" => $pago["forma_pago"],
+                        "montoPago" => round((float) $pago["monto"], 2),
+                        "referencia" => $pago["numero_documento"],
+                        "plazo" => $pago["plazo"] ?? null,
+                        "periodo" => $pago["periodo"] ?? null,
+                    ];
+                } else {
+                    $metodos_pago[] = [
+                        "codigo" => $pago["forma_pago"],
+                        "montoPago" => round((float) $pago["monto"], 2),
+                        "referencia" => $pago["numero_documento"]
+                    ];
+                }
             }
             return $metodos_pago;
         } else {

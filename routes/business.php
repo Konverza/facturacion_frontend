@@ -10,6 +10,7 @@ use App\Http\Controllers\Business\DashboardController;
 use App\Http\Controllers\Business\DocumentController;
 use App\Http\Controllers\Business\DTEController;
 use App\Http\Controllers\Business\DTEDocumentsController;
+use App\Http\Controllers\Business\DTEDonationController;
 use App\Http\Controllers\Business\DTEProductController;
 use App\Http\Controllers\Business\MailController;
 use App\Http\Controllers\Business\MovementController;
@@ -95,6 +96,11 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
             Route::post("/store-electric", [DTEDocumentsController::class, "storeElectric"])->name('store-electric');
         });
 
+        Route::prefix("donation")->name("donation.")->group(function () {
+            Route::post("/store", [DTEDonationController::class, "store"])->name('store');
+            Route::get("/delete/{id}", [DTEDonationController::class, "delete"])->name('delete');
+        });
+
         Route::prefix("payment-method")->name("payment-method.")->group(function () {
             Route::post("/store", [PaymentMethodController::class, "store"])->name('store');
             Route::get("/delete/{id}", [PaymentMethodController::class, "delete"])->name('delete');
@@ -109,6 +115,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         Route::post("/comprobante-retencion", [DTEController::class, "comprobante_retencion"])->name('comprobante-retencion');
         Route::post("/factura-exportacion", [DTEController::class, "factura_exportacion"])->name('factura-exportacion');
         Route::post("/factura-sujeto-excluido", [DTEController::class, "factura_sujeto_excluido"])->name('factura-sujeto-excluido');
+        Route::post("/comprobante-donacion", [DTEController::class, "comprobante_donacion"])->name('comprobante-donacion');
     });
 
     Route::get("/get-session", function () {

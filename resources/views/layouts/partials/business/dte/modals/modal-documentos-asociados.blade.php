@@ -25,12 +25,22 @@
                             <x-icon icon="info-circle" class="size-5" />
                             Datos generales del documento
                         </span>
-                        <x-select :options="[
-                            '1' => 'Emisor',
-                            '2' => 'Receptor',
-                            '3' => 'Médico',
-                        ]" name="documento_asociado" id="documento_asociado"
-                            label="Documento asociado" :search="false" required />
+                        <x-select :options="($number == 15)
+                            ? [
+                                '1' => 'Emisor',
+                                '2' => 'Receptor',
+                            ]
+                            : [
+                                '1' => 'Emisor',
+                                '2' => 'Receptor',
+                                '3' => 'Médico',
+                            ]"
+                            name="documento_asociado"
+                            id="documento_asociado"
+                            label="Documento asociado"
+                            :search="false"
+                            required
+                        />
                     </div>
                     <div id="container-data-documento-asociado">
                         <div class="mt-4 flex flex-col gap-4">

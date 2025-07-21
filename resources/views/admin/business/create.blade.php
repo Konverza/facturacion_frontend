@@ -125,6 +125,8 @@
                                             label="Factura de exportación" value="11" />
                                         <x-input type="toggle" id="14" name="dtes[]"
                                             label="Factura de sujeto excluido" value="14" />
+                                        <x-input type="toggle" id="15" name="dtes[]"
+                                            label="Comprobante de Donación" value="15" />
                                     </div>
                                 </div>
                             </div>

@@ -151,6 +151,8 @@
                                             label="Factura de exportación" value="11" :checked="in_array('11', $dtes_habilitados)" />
                                         <x-input type="toggle" id="14" name="dtes[]"
                                             label="Factura de sujeto excluido" value="14" :checked="in_array('14', $dtes_habilitados)" />
+                                        <x-input type="toggle" id="15" name="dtes[]"
+                                            label="Comprobante de Donación" value="15" :checked="in_array('15', $dtes_habilitados)" />
                                     </div>
                                 </div>
                             </div>

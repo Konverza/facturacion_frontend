@@ -2,6 +2,7 @@
     'documentos_relaciones' => true,
     'venta_cuenta_terceros' => true,
     'otros_documentos_asociados' => true,
+    'medico' => true,
 ])
 
 <!-- Sección otra información del DTE -->
@@ -148,6 +149,16 @@
                     <p class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-300">
                         Otros documentos asociados
                     </p>
+                    @if($number === '15')
+                        <div class="mb-4 border-l-4 border-red-500 bg-red-100 p-4 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
+                            role="alert">
+                            <div class="flex justify-start gap-2">
+                                <x-icon icon="info-circle" class="h-5 w-5" />
+                                Sección obligatoria, debe ingresar el
+                                detalle de al menos un documento asociado 
+                            </div>
+                        </div>
+                    @endif
                     <x-table :datatable="false">
                         <x-slot name="thead">
                             <x-tr>
@@ -168,7 +179,7 @@
                         </x-slot>
                     </x-table>
                 </div>
-                @if ($number !== '11')
+                @if ($number !== '11' && $medico)
                     <div class="mt-4">
                         <p class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-300">
                             Medicos relacionados
