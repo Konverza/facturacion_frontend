@@ -25,7 +25,7 @@ class DashboardController extends Controller
     }
 
     private $types = [
-        '01' => 'Factura Electrónica',
+        '01' => 'Factura Consumidor Final',
         '03' => 'Comprobante de crédito fiscal',
         '04' => 'Nota de Remisión',
         '05' => 'Nota de crédito',

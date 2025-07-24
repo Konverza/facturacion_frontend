@@ -244,7 +244,7 @@
                             Datos del documento fisico
                         </span>
                         <x-select :options="[
-                            '01' => 'Factura electrónica',
+                            '01' => 'Factura Consumidor Final',
                             '03' => 'Comprobantre de crédito fiscal',
                             '14' => 'Factura de sujeto excluido',
                         ]" name="tipo_generacion" id="tipo_documento_fisico"

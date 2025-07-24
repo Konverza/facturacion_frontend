@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Business\Tables;
 
+use App\Services\OctopusService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Http;
@@ -11,6 +12,8 @@ use App\Models\BusinessPlan;
 use App\Models\BusinessUser;
 use App\Models\Sucursal;
 use App\Models\PuntoVenta;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\Business\DteExport;
 
 
 class DtesTable extends Component
@@ -33,7 +36,7 @@ class DtesTable extends Component
     ];
     public $types = [
         '' => 'Todos',
-        '01' => 'Factura Electrónica',
+        '01' => 'Factura Consumidor Final',
         '03' => 'Comprobante de crédito fiscal',
         '04' => 'Nota de Remisión',
         '05' => 'Nota de crédito',
@@ -48,6 +51,14 @@ class DtesTable extends Component
     public $q;
     public $statistics;
     protected $updatesQueryString = ['page'];
+    protected $octopus_service;
+    public $formas_pago;
+
+    public function mount()
+    {
+        $this->octopus_service = new OctopusService();
+        $this->formas_pago = $this->octopus_service->getCatalog("CAT-017");
+    }
 
     public function updating($property)
     {
@@ -106,11 +117,14 @@ class DtesTable extends Component
         // Obtener el plan de negocio y los tipos de DTE disponibles
         $business_plan = BusinessPlan::where("nit", $business->nit)->first();
         $plan_dtes = json_decode($business_plan->dtes);
-        $dte_options = [];
-        foreach ($plan_dtes as $dte) {
-            $dte_options[$dte] = $this->types[$dte];
+        
+        foreach ($this->types as $dte_key => $dte_value) {
+            if (!in_array($dte_key, $plan_dtes)) {
+                unset($this->types[$dte_key]);
+            }
         }
-        $dte_options = array_merge(['' => 'Todos'], $dte_options);
+        $dte_options = array_merge(['' => 'Todos'], $this->types);
+
 
         // Realizar la solicitud a la API de Octopus para obtener los DTEs
         $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes",   array_merge($parameters, [
@@ -157,11 +171,53 @@ class DtesTable extends Component
             'dtes' => $dtes,
             'total' => $data['total'] ?? 0,
             'total_pages' => $data['total_pages'] ?? 0,
-            'dte_options' => $dte_options,
+            'dte_options' => $this->types,
             'sucursal_options' => $sucursal_options,
             'punto_venta_options' => $punto_venta_options,
             'only_default_pos' => $business_user->only_default_pos,
             'only_fcf' => auth()->user()->only_fcf,
+            'formas_pago' => $this->formas_pago,
         ]);
+    }
+
+    public function exportAsExcel()
+    {
+        // Obtener el NIT del negocio desde la sesión
+        $business_id = Session::get('business') ?? null;
+        $business = Business::find($business_id);
+        $business_user = $business_user = BusinessUser::where("user_id", auth()->user()->id)->first();
+        $this->nit = $business->nit ?? null;
+        if ($business_user->only_default_pos) {
+            $puntoVenta = PuntoVenta::find($business_user->default_pos_id);
+            $this->codSucursal = $puntoVenta->sucursal->codSucursal ?? null;
+            $this->codPuntoVenta = $puntoVenta->codPuntoVenta ?? null;
+        }
+        if (auth()->user()->only_fcf) {
+            $this->tipo_dte = '01'; // Default to Factura Electrónica if the user only wants FCF
+        }
+
+        // Parametros
+        $parameters = [
+            'nit' => $this->nit,
+            'fechaInicio' => $this->fechaInicio ? "{$this->fechaInicio}T00:00:00" : null,
+            'fechaFin' => $this->fechaFin ? "{$this->fechaFin}T23:59:59" : null,
+            'codSucursal' => $this->codSucursal,
+            'codPuntoVenta' => $this->codPuntoVenta,
+            'tipo_dte' => $this->tipo_dte,
+            'estado' => $this->estado,
+            'documento_receptor' => $this->documento_receptor,
+            'q' => $this->q
+        ];
+        // Realizar la solicitud a la API de Octopus para obtener los DTEs
+        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes",   $parameters);
+        $data = $response_dtes->json();
+        $dtes = array_map(function ($dte) {
+            $dte["documento"] = json_decode($dte["documento"]);
+            return $dte;
+        }, $data['items'] ?? []);
+
+        $fileName = 'dtes_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(new DteExport($dtes, $this->formas_pago, $this->types), $fileName);
     }
 }

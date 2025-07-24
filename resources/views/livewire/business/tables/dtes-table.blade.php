@@ -63,12 +63,13 @@
                     </div>
 
                     <div class="flex sm:flex-row flex-col gap-4">
-                        @if(!$only_fcf)
-                        <div class="flex-1">
-                            <x-select id="tipo_dte" :options="$dte_options" name="tipo_dte"
-                                placeholder="Seleccione un tipo de DTE" wire:model.live.debounce.500ms="tipo_dte"
-                                :value="$tipo_dte" :selected="$tipo_dte" :search="false" label="Buscar por tipo de DTE" />
-                        </div>
+                        @if (!$only_fcf)
+                            <div class="flex-1">
+                                <x-select id="tipo_dte" :options="$dte_options" name="tipo_dte"
+                                    placeholder="Seleccione un tipo de DTE" wire:model.live.debounce.500ms="tipo_dte"
+                                    :value="$tipo_dte" :selected="$tipo_dte" :search="false"
+                                    label="Buscar por tipo de DTE" />
+                            </div>
                         @endif
                         <div class="flex-1">
                             <x-select id="documento_receptor" :options="$receptores_unicos" name="documento_receptor"
@@ -89,19 +90,20 @@
                         </div>
                     </div>
 
-                    @if(!$only_default_pos)
-                    <div class="flex sm:flex-row flex-col gap-4">
-                        <div class="flex-1">
-                            <x-select id="codSucursal" :options="$sucursal_options" name="codSucursal"
-                                placeholder="Seleccione una sucursal" wire:model.live.debounce.500ms="codSucursal"
-                                :value="$codSucursal" :selected="$codSucursal" label="Buscar por sucursal" />
+                    @if (!$only_default_pos)
+                        <div class="flex sm:flex-row flex-col gap-4">
+                            <div class="flex-1">
+                                <x-select id="codSucursal" :options="$sucursal_options" name="codSucursal"
+                                    placeholder="Seleccione una sucursal" wire:model.live.debounce.500ms="codSucursal"
+                                    :value="$codSucursal" :selected="$codSucursal" label="Buscar por sucursal" />
+                            </div>
+                            <div class="flex-1">
+                                <x-select id="codPuntoVenta" :options="$punto_venta_options" name="codPuntoVenta"
+                                    placeholder="Seleccione un punto de venta" label="Buscar por punto de venta"
+                                    wire:model.live.debounce.500ms="codPuntoVenta" :value="$codPuntoVenta"
+                                    :selected="$codPuntoVenta" />
+                            </div>
                         </div>
-                        <div class="flex-1">
-                            <x-select id="codPuntoVenta" :options="$punto_venta_options" name="codPuntoVenta"
-                                placeholder="Seleccione un punto de venta" label="Buscar por punto de venta"
-                                wire:model.live.debounce.500ms="codPuntoVenta" :value="$codPuntoVenta" :selected="$codPuntoVenta" />
-                        </div>
-                    </div>
                     @endif
                     <!-- Botón Limpiar Filtros (centrado) -->
                     <div class="flex justify-center">
@@ -168,6 +170,15 @@
                 </div>
             </div>
         </div>
+        <div class="flex-1">
+            <div class="flex justify-end">
+                <x-button wire:click="exportAsExcel" typeButton="success" icon="excel" text="Exportar esta tabla a Excel"
+                    class="my-3" wire:loading.attr="disabled" />
+            </div>
+            <div wire:loading wire:target="exportAsExcel" class="mt-2 text-sm text-gray-500">
+                Generando archivo Excel, por favor espere...
+            </div>
+        </div>
         <div class="relative">
             <!-- Overlay mientras carga -->
             <div wire:loading.delay
@@ -186,11 +197,11 @@
             <x-table class="space-y-2">
                 <x-slot name="thead">
                     <x-tr>
-                        <x-th>Tipo</x-th>
-                        <x-th>Hacienda</x-th>
+                        <x-th>Tipo de documento</x-th>
+                        <x-th>Respuesta de Hacienda</x-th>
                         <x-th>Receptor</x-th>
                         <x-th>Fecha</x-th>
-                        <x-th>Estado</x-th>
+                        <x-th>Monto de Operación</x-th>
                         <x-th>Observaciones</x-th>
                         <x-th :last="true">Accciones</x-th>
                     </x-tr>
@@ -210,7 +221,34 @@
                         @endphp
 
                         <x-tr class="{{ $style }}" :last="$loop->last">
-                            <x-td>{{ $types[$invoice['tipo_dte']] }}</x-td>
+                            <x-td>
+                                {{ $types[$invoice['tipo_dte']] }}
+                                @if ($invoice['estado'] === 'PROCESADO')
+                                    <span
+                                        class="flex items-center gap-1 bg-green-200 dark:bg-green-900/50 px-2 py-1 rounded-lg w-max font-bold text-green-800 dark:text-green-300 text-xs uppercase text-nowrap">
+                                        <x-icon icon="circle-check" class="size-4" />
+                                        Procesado
+                                    </span>
+                                @elseif($invoice['estado'] === 'RECHAZADO')
+                                    <span
+                                        class="flex items-center gap-1 bg-red-200 dark:bg-red-900/50 px-2 py-1 rounded-lg w-max font-bold text-red-800 dark:text-red-300 text-xs uppercase text-nowrap">
+                                        <x-icon icon="circle-x" class="size-4" />
+                                        Rechazado
+                                    </span>
+                                @elseif($invoice['estado'] === 'CONTINGENCIA')
+                                    <span
+                                        class="flex items-center gap-1 bg-yellow-200 dark:bg-yellow-900/50 px-2 py-1 rounded-lg w-max font-bold text-yellow-800 dark:text-yellow-300 text-xs uppercase text-nowrap">
+                                        <x-icon icon="warning" class="size-4" />
+                                        Contingencia
+                                    </span>
+                                @elseif($invoice['estado'] === 'ANULADO')
+                                    <span
+                                        class="flex items-center gap-1 bg-yellow-200 dark:bg-yellow-900/50 px-2 py-1 rounded-lg w-max font-bold text-yellow-800 dark:text-yellow-300 text-xs uppercase text-nowrap">
+                                        <x-icon icon="circle-minus" class="size-4" />
+                                        Anulado
+                                    </span>
+                                @endif
+                            </x-td>
                             <x-td>
                                 <div class="flex flex-col gap-1 text-xs">
                                     <span class="font-semibold">Código generación:</span>
@@ -241,30 +279,70 @@
                                     {{ \Carbon\Carbon::parse($invoice['fhProcesamiento'])->format('d/m/Y h:i:s A') }}
                                 </span>
                             </x-td>
-                            <x-td class="uppercase">
-                                @if ($invoice['estado'] === 'PROCESADO')
-                                    <span
-                                        class="flex items-center gap-1 bg-green-200 dark:bg-green-900/50 px-2 py-1 rounded-lg w-max font-bold text-green-800 dark:text-green-300 text-xs uppercase text-nowrap">
-                                        <x-icon icon="circle-check" class="size-4" />
-                                        Procesado
-                                    </span>
-                                @elseif($invoice['estado'] === 'RECHAZADO')
-                                    <span
-                                        class="flex items-center gap-1 bg-red-200 dark:bg-red-900/50 px-2 py-1 rounded-lg w-max font-bold text-red-800 dark:text-red-300 text-xs uppercase text-nowrap">
-                                        <x-icon icon="circle-x" class="size-4" />
-                                        Rechazado
-                                    </span>
-                                @elseif($invoice['estado'] === 'CONTINGENCIA')
-                                    <span class="flex items-center gap-1 font-semibold text-yellow-500 text-xs">
-                                        <x-icon icon="exclamation-triangle" class="w-4 h-4" />
-                                        Contingencia
-                                    </span>
-                                @elseif($invoice['estado'] === 'ANULADO')
-                                    <span
-                                        class="flex items-center gap-1 bg-yellow-200 dark:bg-yellow-900/50 px-2 py-1 rounded-lg w-max font-bold text-yellow-800 dark:text-yellow-300 text-xs uppercase text-nowrap">
-                                        <x-icon icon="circle-minus" class="size-4" />
-                                        Anulado
-                                    </span>
+                            <x-td class="text-xs">
+                                @switch($invoice['tipo_dte'])
+                                    @case('01')
+                                        <strong>Total:
+                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar, 2, '.', ',') }}
+                                    @break
+
+                                    @case('03')
+                                        <strong>Neto:
+                                        </strong>${{ number_format($invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
+                                        <strong>IVA:
+                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar - $invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
+                                        <strong>Total:
+                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar, 2, '.', ',') }}
+                                    @break
+
+                                    @case('05')
+                                        <strong>Neto:
+                                        </strong>${{ number_format($invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
+                                        <strong>IVA:
+                                        </strong>${{ number_format($invoice['documento']->resumen->montoTotalOperacion - $invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
+                                        <strong>Total:
+                                        </strong>${{ number_format($invoice['documento']->resumen->montoTotalOperacion, 2, '.', ',') }}
+                                    @break
+
+                                    @case('07')
+                                        <strong>Sujeto a Retención:
+                                        </strong>${{ number_format($invoice['documento']->resumen->totalSujetoRetencion, 2, '.', ',') }}<br>
+                                        <strong>IVA Retenido:
+                                        </strong>${{ number_format($invoice['documento']->resumen->totalIVAretenido, 2, '.', ',') }}
+                                    @break
+
+                                    @case('11')
+                                        <strong>Total:
+                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar, 2, '.', ',') }}
+                                    @break
+
+                                    @case('14')
+                                        <strong>Total:
+                                        </strong>${{ number_format($invoice['documento']->resumen->totalCompra, 2, '.', ',') }}
+                                    @break
+
+                                    @case('15')
+                                        <strong>Total:
+                                        </strong>${{ number_format($invoice['documento']->resumen->valorTotal, 2, '.', ',') }}
+                                    @break
+
+                                    @default
+                                        <strong>Total: $0.00</strong>
+                                    @break
+                                @endswitch
+                                <hr class="my-3">
+                                <strong>Forma(s) de Pago</strong><br>
+                                @if (property_exists($invoice['documento']->resumen, 'pagos'))
+                                    @forelse ($invoice['documento']->resumen->pagos ?? [] as $pago)
+                                        <span class="text-xs">
+                                            {{ $formas_pago[$pago->codigo] }}:
+                                            ${{ number_format($pago->montoPago, 2, '.', ',') }}
+                                        </span><br>
+                                    @empty
+                                        <span class="text-xs">Desconocido</span><br>
+                                    @endforelse
+                                @else
+                                    <span class="text-xs">Desconocido</span>
                                 @endif
                             </x-td>
                             <x-td>

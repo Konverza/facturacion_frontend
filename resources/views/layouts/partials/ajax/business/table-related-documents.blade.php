@@ -4,7 +4,7 @@ $tipo_generacion = [
     2 => 'Electrónico',
 ];
 $tipos_documentos = [
-    '01' => 'Factura Electrónica',
+    '01' => 'Factura Consumidor Final',
     '03' => 'Comprobante de Crédito Fiscal',
     '04' => 'Nota de Remisión',
     '05' => 'Nota de Crédito',

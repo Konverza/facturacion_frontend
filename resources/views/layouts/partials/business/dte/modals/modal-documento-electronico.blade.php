@@ -18,7 +18,7 @@
             break;
         case '04':
             $tipos_documentos = [
-                '01' => 'Factura Electrónica',
+                '01' => 'Factura Consumidor Final',
                 '03' => 'Comprobante de crédito fiscal',
             ];
             break;
