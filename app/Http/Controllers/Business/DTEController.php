@@ -898,7 +898,6 @@ class DTEController extends Controller
                     "correo" => $request->correo,
                 ];
             case "15":
-                case "07":
                 $actividad = $this->actividades_economicas[$request->actividad_economica] ?? null;
                 $descActividad = explode("-", $actividad);
                 $descActividad = trim($descActividad[1] ?? null);

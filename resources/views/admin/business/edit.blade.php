@@ -72,10 +72,6 @@
                                             value="{{ old('departamento', $empresa['departamento']) }}"
                                             selected="{{ old('departamento', $empresa['departamento']) }}"
                                             data-action="{{ Route('business.get-municipios') }}" />
-                                        {{-- <x-select name="department" label="Departamento" id="departamento"
-                                            name="departamento" required :options="$departamentos"
-                                            value="{{ old('departamento') }}" :selected="old('departamento', $empresa['departamento'])"
-                                            data-action="{{ Route('admin.get-municipios') }}" /> --}}
                                     </div>
                                     <div class="flex-1" id="select-municipio">
                                         <x-select name="municipio" label="Municipio" id="municipality" required
@@ -90,10 +86,6 @@
                                                     {{$municipio_anterior ? $municipio_anterior->valores : ""}}
                                                 </span>
                                             </div>
-                                        {{-- <x-select name="municipio" label="Municipio" id="municipio"
-                                                name="municipio" required :options="$municipios"
-                                                value="{{ old('municipio', $empresa['municipio']) }}"
-                                                selected="{{ old('municipio', $empresa['municipio']) }}"/> --}}
                                     </div>
                                 </div>
                                 <x-input type="text" label="Dirección" name="complemento"
@@ -135,22 +127,22 @@
                                         $dtes_habilitados = json_decode($business_plan->dtes, true);
                                     @endphp
                                     <div class="mt-4 flex flex-col gap-2">
-                                        <x-input type="toggle" name="dtes[]" label="Facturación electrónica"
+                                        <x-input type="toggle" name="dtes[]" label="Factura Electrónica"
                                             value="01" id="01" :checked="in_array('01', $dtes_habilitados)" />
-                                        <x-input type="toggle" name="dtes[]" label="Comprobante de crédito fiscal"
+                                        <x-input type="toggle" name="dtes[]" label="Comprobante de Crédito Fiscal"
                                             value="03" id="03" :checked="in_array('03', $dtes_habilitados)" />
-                                        <x-input type="toggle" id="04" name="dtes[]" label="Nota de remisión"
+                                        <x-input type="toggle" id="04" name="dtes[]" label="Nota de Remisión"
                                             value="04" :checked="in_array('04', $dtes_habilitados)" />
-                                        <x-input type="toggle" id="05" name="dtes[]" label="Nota de crédito"
+                                        <x-input type="toggle" id="05" name="dtes[]" label="Nota de Crédito"
                                             value="05" :checked="in_array('05', $dtes_habilitados)" />
-                                        <x-input type="toggle" id="06" name="dtes[]" label="Nota de débito"
+                                        <x-input type="toggle" id="06" name="dtes[]" label="Nota de Débito"
                                             value="06" :checked="in_array('06', $dtes_habilitados)" />
                                         <x-input type="toggle" id="07" name="dtes[]"
-                                            label="Comprobante de retención" value="07" :checked="in_array('07', $dtes_habilitados)" />
+                                            label="Comprobante de Retención" value="07" :checked="in_array('07', $dtes_habilitados)" />
                                         <x-input type="toggle" id="11" name="dtes[]"
-                                            label="Factura de exportación" value="11" :checked="in_array('11', $dtes_habilitados)" />
+                                            label="Factura de Exportación" value="11" :checked="in_array('11', $dtes_habilitados)" />
                                         <x-input type="toggle" id="14" name="dtes[]"
-                                            label="Factura de sujeto excluido" value="14" :checked="in_array('14', $dtes_habilitados)" />
+                                            label="Factura de Sujeto Excluido" value="14" :checked="in_array('14', $dtes_habilitados)" />
                                         <x-input type="toggle" id="15" name="dtes[]"
                                             label="Comprobante de Donación" value="15" :checked="in_array('15', $dtes_habilitados)" />
                                     </div>
