@@ -758,7 +758,7 @@ class DTEController extends Controller
             $this->dte["customer"] = [
                 "tipoDocumento" => $request->tipo_documento,
                 "numDocumento" => $request->numero_documento,
-                "nrc" => $request->nrc_customer,
+                "nrc" => str_replace("-", "", $request->nrc_customer),
                 "nombre" => $request->nombre_customer,
                 "codActividad" => $request->actividad_economica,
                 "nombreComercial" => $request->nombre_comercial,
@@ -809,7 +809,7 @@ class DTEController extends Controller
                         "complemento" => $request->complemento
                     ],
                     "nit" => $request->numero_documento,
-                    "nrc" => $request->nrc_customer,
+                    "nrc" => str_replace("-", "", $request->nrc_customer),
                 ];
             case "04":
                 return [
@@ -831,7 +831,7 @@ class DTEController extends Controller
             case "05":
             case "06":
                 return [
-                    "nrc" => $request->nrc_customer,
+                    "nrc" => str_replace("-", "", $request->nrc_customer),
                     "nombre" => $request->nombre_customer,
                     "codActividad" => $request->actividad_economica,
                     "descActividad" => $descActividad,
@@ -853,7 +853,7 @@ class DTEController extends Controller
                 return [
                     "tipoDocumento" => $request->tipo_documento,
                     "numDocumento" => $request->numero_documento,
-                    "nrc" => $request->nrc_customer,
+                    "nrc" => str_replace("-", "", $request->nrc_customer),
                     "nombre" => $request->nombre_customer,
                     "nombreComercial" => $request->nombre_comercial,
                     "codActividad" => $request->actividad_economica,
@@ -904,7 +904,7 @@ class DTEController extends Controller
                 return [
                     "tipoDocumento" => $request->tipo_documento,
                     "numDocumento" => $request->numero_documento,
-                    "nrc" => $request->nrc_customer,
+                    "nrc" => str_replace("-", "", $request->nrc_customer),
                     "nombre" => $request->nombre_customer,
                     "nombreComercial" => $request->nombre_comercial,
                     "codActividad" => $request->actividad_economica,

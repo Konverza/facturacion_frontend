@@ -70,7 +70,7 @@ class ProfileController extends Controller
         $data_business_response = Http::put($this->octopus_url . "/datos_empresa/" . $request->id, [
             "nombre" => $request->nombre,
             "nit" => $request->nit,
-            "nrc" => $request->nrc,
+            "nrc" => str_replace("-", "", $request->nrc),
             "codActividad" => $codigo_actividad_economica,
             "descActividad" => $descripcion_actividad_economica,
             "nombreComercial" => $request->nombre_comercial,

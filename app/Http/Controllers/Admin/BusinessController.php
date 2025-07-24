@@ -76,7 +76,7 @@ class BusinessController extends Controller
         $data_business_repsonse = Http::post($this->octopus_url . "/datos_empresa/", [
             "nombre" => $request->razon_social,
             "nit" => $request->nit,
-            "nrc" => $request->nrc,
+            "nrc" => str_replace("-", "", $request->nrc),
             "codActividad" => $codigo_actividad_economica,
             "descActividad" => $descripcion_actividad_economica,
             "nombreComercial" => $request->nombre_comercial,
@@ -99,7 +99,7 @@ class BusinessController extends Controller
 
             $credentials = [
                 ["name" => "nit", "contents" => $request->nit],
-                ["name" => "nrc", "contents" => "$request->nrc"],
+                ["name" => "nrc", "contents" => str_replace("-", "", $request->nrc)],
                 ["name" => "api_password", "contents" => $api_password],
                 ["name" => "certificate_password", "contents" => $certificate_password],
                 [
