@@ -3,18 +3,22 @@
 namespace App\Exports\Business;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class DteExport implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles, WithColumnFormatting, WithEvents
+class DteExport extends DefaultValueBinder implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles, WithColumnFormatting, WithEvents, WithColumnWidths, WithCustomValueBinder
 {
 
     protected $dtes;
@@ -75,7 +79,7 @@ class DteExport implements FromCollection, WithHeadings, ShouldAutoSize, WithSty
                 "formas_de_pago" => $formas_de_pago,
                 "codigo_sucursal" => $dte['codSucursal'],
                 "codigo_punto_venta" => $dte['codPuntoVenta'],
-                "observaciones" => $dte['observaciones'] ?? '',
+                "observaciones" => $dte['observaciones'] != '[]' ? $dte['observaciones'] : '',
             ];
         }
 
@@ -125,8 +129,7 @@ class DteExport implements FromCollection, WithHeadings, ShouldAutoSize, WithSty
             'E' => '@', // Número de Control
             'F' => '@', // Sello Recibido
             'G' => '@', // Nombre del Receptor
-            'H' => '@', // Documento del Receptor
-            'I' => '_-$* #,##0.00000000_-;-$* #,##0.00000000_-;_-$* "-"????????_-;_-@_-', // Monto de Operación
+            'I' => '_-$* #,##0.00_-;-$* #,##0.00_-;_-$* "-"??_-;_-@_-', // Monto de Operación
             'J' => '@', // Formas de Pago
             'K' => '@', // Código de Sucursal
             'L' => '@', // Código de Punto de Venta
@@ -180,7 +183,24 @@ class DteExport implements FromCollection, WithHeadings, ShouldAutoSize, WithSty
 
                 $lastRow = $sheet->getHighestRow();
                 $event->sheet->getStyle("A1:M{$lastRow}")->applyFromArray($tableStyle);
+                $sheet->getStyle('M:M')->getAlignment()->setWrapText(true);
             },
         ];
+    }
+
+    public function columnWidths(): array
+    {
+        return [
+            'M' => 55, // Observaciones
+        ];
+    }
+
+    public function bindValue(\PhpOffice\PhpSpreadsheet\Cell\Cell $cell, $value)
+    {
+        if (in_array($cell->getColumn(), ["H"])) {
+            $cell->setValueExplicit($value, DataType::TYPE_STRING);
+            return true;
+        }
+        return parent::bindValue($cell, $value);
     }
 }
