@@ -287,6 +287,10 @@
             </div>
         @endif
 
+        <div class="my-4 flex flex-col gap-4 xl:flex-row">
+            <x-ad-carousel :ads="$ads" />
+        </div>
+
         <x-delete-modal modalId="deleteModal" title="¿Estás seguro de eliminar el DTE?"
             message="No podrás recuperar este registro" />
     </section>

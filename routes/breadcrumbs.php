@@ -73,6 +73,23 @@ Breadcrumbs::for("admin.users.businesses", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Negocios Asociados", route("admin.users.index"));
 });
 
+// Ads
+Breadcrumbs::for("admin.ads.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='ad' class='w-4 h-4'/>");
+    $trail->parent("admin");
+    $trail->push($icon . "Anuncios", route("admin.ads.index"));
+});
+Breadcrumbs::for("admin.ads.create", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='plus' class='w-4 h-4'/>");
+    $trail->parent("admin.ads.index");
+    $trail->push($icon . "Nuevo Anuncio", route("admin.ads.create"));
+});
+Breadcrumbs::for("admin.ads.edit", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='pencil' class='w-4 h-4'/>");
+    $trail->parent("admin.ads.index");
+    $trail->push($icon . "Editar Anuncio", route("admin.ads.edit", $id));
+});
+
 
 //BUSINESS
 

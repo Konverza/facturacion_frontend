@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdController;
 use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Admin\ConfigurationController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -39,4 +40,7 @@ Route::middleware(['auth', 'role:admin'])->prefix("admin")->name("admin.")->grou
     Route::put("/business/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [SucursalController::class, "update_punto_venta"])->name("puntos-venta.update_punto_venta");
     Route::delete("/business/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [SucursalController::class, "delete_punto_venta"])->name("puntos-venta.delete_punto_venta");
     Route::get("/puntos_venta/", [SucursalController::class, "getPuntosVenta"])->name("puntos_venta.json");
+
+    // Anuncios
+    Route::resource("/ads", AdController::class);
 });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Business;
 
+use App\Models\AdBanner;
 use App\Models\PuntoVenta;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -91,6 +92,7 @@ class DashboardController extends Controller
             $products = BusinessProduct::where('business_id', $business->id)->count('id');
             $customers = BusinessCustomer::where('business_id', $business->id)->count('id');
             $types = $this->types;
+            $ads = AdBanner::all();
 
             return view('business.dashboard.index', compact(
                 'statistics',
@@ -102,7 +104,8 @@ class DashboardController extends Controller
                 'types',
                 'dtes_pending',
                 'inicio_mes',
-                'fin_mes'
+                'fin_mes',
+                'ads'
             ));
         } catch (\Exception $e) {
             return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al cargar los datos. Contacte al administrador." . $e->getMessage());
