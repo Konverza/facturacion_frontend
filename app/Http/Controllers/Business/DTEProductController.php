@@ -988,24 +988,38 @@ class DTEProductController extends Controller
         $this->dte["total_pagar"] = $this->precise_round($this->dte["total"] - $this->dte["total_descuentos"], 8);
 
         if ($this->dte["type"] !== "14") {
-            if($this->dte["type"] == "01"){
+            if ($this->dte["type"] == "01") {
                 $this->dte["total_iva_retenido"] = $this->precise_round((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) / 1.13 ?? 0) * 0.01, 8);
+                $total_servicios = array_sum(
+                    array_map(
+                        function ($product) {
+                            $tipo_item = ($product["product"] && is_array($product["product"])) ? $product["product"]["tipoItem"] ?? null : $product["tipo_item"] ?? null;
+                            if ($tipo_item == 2) {
+                                return $product["ventas_gravadas"] ?? 0;
+                            }
+                            return 0;
+                        },
+                        $this->dte["products"] ?? []
+                    )
+                );
+                $this->dte["isr"] = $this->precise_round(($total_servicios / 1.13) * 0.10, 8);
             } else {
                 $this->dte["total_iva_retenido"] = $this->precise_round((($this->dte["total_ventas_gravadas"] - ($this->dte["descuento_venta_gravada"] ?? 0)) ?? 0) * 0.01, 8);
+                $total_servicios = array_sum(
+                    array_map(
+                        function ($product) {
+                            $tipo_item = ($product["product"] && is_array($product["product"])) ? $product["product"]["tipoItem"] ?? null : $product["tipo_item"] ?? null;
+                            if ($tipo_item == 2) {
+                                return $product["ventas_gravadas"] ?? 0;
+                            }
+                            return 0;
+                        },
+                        $this->dte["products"] ?? []
+                    )
+                );
+                $this->dte["isr"] = $this->precise_round($total_servicios * 0.10, 8);
             }
-            $total_servicios = array_sum(
-                array_map(
-                    function ($product) {
-                        $tipo_item = ($product["product"] && is_array($product["product"])) ? $product["product"]["tipoItem"] ?? null : $product["tipo_item"] ?? null;
-                        if ($tipo_item == 2) {
-                            return $product["ventas_gravadas"] ?? 0;
-                        }
-                        return 0;
-                    },
-                    $this->dte["products"] ?? []
-                )
-            );
-            $this->dte["isr"] = $this->precise_round($total_servicios * 0.10, 8);
+
         } else if ($this->dte["type"] === "14") {
             $total_servicios = array_sum(
                 array_map(
