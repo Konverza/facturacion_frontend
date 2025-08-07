@@ -25,6 +25,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("business.")->group(function () {
     Route::get("/select-business", [DashboardController::class, "business"])->name('select');
     Route::post("/select-business", [DashboardController::class, "selectBusiness"])->name('select-store');
+    Route::get("/select-sucursal", [DashboardController::class, "sucursales"])->name('select-sucursal');
+    Route::post("/select-sucursal", [DashboardController::class, "selectSucursal"])->name('select-sucursal-store');
 
     Route::get("/", [DashboardController::class, "index"])->name('index');
     Route::get("/dashboard", [DashboardController::class, "index"])->name('dashboard');

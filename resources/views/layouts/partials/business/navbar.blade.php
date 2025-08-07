@@ -10,11 +10,18 @@
     <div class="fixed top-0 z-[90] flex h-12 w-full items-center justify-center bg-red-500 px-2 text-white sm:h-8">
         <span class="flex items-center gap-2 text-xs font-semibold sm:text-sm">
             <x-icon icon="info-circle" class="h-4 w-4 min-w-4 max-w-4" />
-            Aviso: Haremos un mantenimiento breve a las 12:30 PM, con una duración aproximada de <b class="uppercase">15 minutos.</b> Por favor, no realice ninguna operación durante este tiempo. Agradecemos su comprensión.
+            Aviso: Haremos un mantenimiento breve a las 12:30 PM, con una duración aproximada de <b class="uppercase">15
+                minutos.</b> Por favor, no realice ninguna operación durante este tiempo. Agradecemos su comprensión.
         </span>
     </div>
 @endif
-
+@php
+    $business_id = Session::get('business') ?? null;
+    $business = \App\Models\Business::find($business_id);
+    $business_user = \App\Models\BusinessUser::where('user_id', auth()->user()->id)
+        ->where('business_id', $business_id)
+        ->first();
+@endphp
 <nav class="@if ($test_enviroment || $maintenance_notice) mt-12 sm:mt-8 @endif z-20 ms-auto h-14 w-full border-b border-gray-300 bg-transparent dark:border-gray-800 lg:w-calc-full-minus-64"
     id="navbar">
     <div class="flex h-full items-center px-3 lg:px-5 lg:pl-3">
@@ -82,6 +89,16 @@
                                             </button>
                                         </li>
                                     @endif
+                                    @if ($business_user->branch_selector)
+                                        <li>
+                                            <a href="{{ Route('business.select-sucursal') }}"
+                                                class="flex items-center gap-1 rounded-lg px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white"
+                                                role="menuitem">
+                                                <x-icon icon="refresh" class="h-4 w-4" />
+                                                Cambiar de sucursal
+                                            </a>
+                                        </li>
+                                    @endif
                                 </ul>
                                 <div class="p-1">
                                     <form action="{{ Route('logout') }}" method="POST">
@@ -145,13 +162,10 @@
                     Documentos emitidos
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
-            </li>            
-            @php
-                $business_id = Session::get('business') ?? null;
-                $business = \App\Models\Business::find($business_id);
-            @endphp
+            </li>
             <li>
-                <a href="{{ Route('business.sucursales.index', $business_id) }}" data-tooltip-target="tooltip-sucursales"
+                <a href="{{ Route('business.sucursales.index', $business_id) }}"
+                    data-tooltip-target="tooltip-sucursales"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
                     <x-icon icon="building-store"
                         class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />

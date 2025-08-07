@@ -24,6 +24,7 @@
                         <x-th>Negocio</x-th>
                         <x-th>Punto de Venta predeterminado</x-th>
                         <x-th>¿Solo ver DTEs de ese punto de venta?</x-th>
+                        <x-th>¿Seleccionar Sucursal para ver?</x-th>
                         <x-th>Acciones</x-th>
                     </x-tr>
                 </x-slot>
@@ -37,6 +38,15 @@
                             <x-td>{{ $business->default_pos->nombre ?? 'N/A' }}</x-td>
                             <x-td>
                                 @if ($business->only_default_pos)
+                                    <span
+                                        class="inline-block px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">Sí</span>
+                                @else
+                                    <span
+                                        class="inline-block px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded">No</span>
+                                @endif
+                            </x-td>
+                            <x-td>
+                                @if ($business->branch_selector)
                                     <span
                                         class="inline-block px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">Sí</span>
                                 @else
@@ -129,6 +139,10 @@
                         <div class="mt-4">
                             <x-input type="toggle" name="only_default_pos" label="¿Solo ver DTEs de ese punto de venta?"
                                 value="1" id="only_default_pos" />
+                        </div>
+                        <div class="mt-4">
+                            <x-input type="toggle" name="branch_selector" label="¿Seleccionar Sucursal para ver?"
+                                value="1" id="branch_selector" />
                         </div>
                     </div>
                     <!-- Modal footer -->

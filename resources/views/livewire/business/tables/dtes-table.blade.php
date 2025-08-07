@@ -33,6 +33,13 @@
                 </div>
             @endif
         </div>
+        @if (Session::has('sucursal'))
+            <div
+                class="my-4 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-yellow-500 dark:bg-yellow-950/30">
+                Actualmente está viendo solo los DTEs de la sucursal seleccionada: {{ $codSucursal }}
+                {{ $sucursal_options[$codSucursal] }}
+            </div>
+        @endif
         <div x-data="{ showFilters: false }"
             class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
 
@@ -90,7 +97,7 @@
                         </div>
                     </div>
 
-                    @if (!$only_default_pos)
+                    @if (!$only_default_pos && !Session::has('sucursal'))
                         <div class="flex sm:flex-row flex-col gap-4">
                             <div class="flex-1">
                                 <x-select id="codSucursal" :options="$sucursal_options" name="codSucursal"
@@ -172,8 +179,8 @@
         </div>
         <div class="flex-1">
             <div class="flex justify-end">
-                <x-button wire:click="exportAsExcel" typeButton="success" icon="excel" text="Exportar esta tabla a Excel"
-                    class="my-3" wire:loading.attr="disabled" />
+                <x-button wire:click="exportAsExcel" typeButton="success" icon="excel"
+                    text="Exportar esta tabla a Excel" class="my-3" wire:loading.attr="disabled" />
             </div>
             <div wire:loading wire:target="exportAsExcel" class="mt-2 text-sm text-gray-500">
                 Generando archivo Excel, por favor espere...

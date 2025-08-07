@@ -58,6 +58,15 @@ class DtesTable extends Component
     {
         $this->octopus_service = new OctopusService();
         $this->formas_pago = $this->octopus_service->getCatalog("CAT-017");
+        if(Session::has('sucursal')) {
+            $sucursal_id = Session::get('sucursal');
+            $sucursal = Sucursal::find($sucursal_id);
+            $this->codSucursal = $sucursal->codSucursal ?? null;
+            $this->codPuntoVenta = $sucursal->puntosVentas->first()->codPuntoVenta ?? null;
+        } else {
+            $this->codSucursal = null;
+            $this->codPuntoVenta = null;
+        }
     }
 
     public function updating($property)

@@ -158,6 +158,7 @@ class UserController extends Controller
             'business_id' => 'required|exists:business,id',
             'default_pos_id' => 'nullable|exists:punto_ventas,id',
             'only_default_pos' => 'nullable|boolean',
+            'branch_selector' => 'nullable|boolean', // Indicates if the user can select branches
         ]);
 
         DB::beginTransaction();
@@ -173,6 +174,7 @@ class UserController extends Controller
                 'role' => 'negocio', // Default role for business user
                 'default_pos_id' => $request->default_pos_id,
                 'only_default_pos' => $request->only_default_pos ?? false,
+                'branch_selector' => $request->branch_selector ?? false,
             ]);
 
             DB::commit();

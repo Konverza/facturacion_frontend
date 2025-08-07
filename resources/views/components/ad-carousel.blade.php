@@ -13,7 +13,7 @@
     <div id="{{ $carouselId }}" class="relative max-w-[{{ $maxWidth }}] max-h-[{{ $maxHeight }}] bg-slate-300"
         data-carousel="slide" data-carousel-interval="{{ $duration }}">
         <!-- Carousel wrapper -->
-        <div class="relative h-56 overflow-hidden rounded-lg md:h-96 max-h-[300px]">
+        <div class="relative h-56 overflow-hidden md:h-96 max-h-[300px]">
             @foreach ($ads as $ad)
                 <div class="hidden duration-1000 ease-in-out" data-carousel-item>
                     <a href="{{ $ad->link_url }}" target="_blank">

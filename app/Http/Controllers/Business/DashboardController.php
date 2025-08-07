@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Business;
 
 use App\Models\AdBanner;
 use App\Models\PuntoVenta;
+use App\Models\Sucursal;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
@@ -180,7 +181,67 @@ class DashboardController extends Controller
             ]);
         }
 
+        Session::forget('sucursal');
         Session::put('business', $request->business);
         return redirect()->route('business.index');
     }
+
+    public function sucursales()
+    {
+        $business_id = Session::get('business') ?? null;
+        $business = Business::find($business_id);
+        if (!$business) {
+            return redirect()->route('business.select')->with([
+                'error' => 'Oops!',
+                'error_message' => 'Empresa no encontrada'
+            ]);
+        }
+        $sucursales = Sucursal::where('business_id', $business->id)
+            ->orderBy('nombre', 'asc')
+            ->get();
+        return view('business.select-sucursal', compact('sucursales'));
+    }
+
+    public function selectSucursal(Request $request)
+    {
+        $request->validate([
+            'sucursal' => 'nullable|exists:sucursals,id',
+        ]);
+
+        if ($request->has('no_sucursal')) {
+            Session::forget('sucursal');
+            return redirect()->route('business.index');
+        }
+
+        $user = auth()->user();
+
+        if (!$user) {
+            return redirect()->route('login')->with([
+                'error' => 'Oops!',
+                'error_message' => 'Usuario no encontrado'
+            ]);
+        }
+
+        $businessSucursal = Sucursal::where('id', $request->sucursal)
+            ->where('business_id', Session::get('business'))
+            ->exists();
+        if (!$businessSucursal) {
+            return redirect()->route('business.select-sucursal')->with([
+                'error' => 'Oops!',
+                'error_message' => 'No tiene permisos para acceder a esta sucursal'
+            ]);
+        }
+
+        $sucursal = Sucursal::find($request->sucursal);
+        if (!$sucursal) {
+            return redirect()->route('business.select-sucursal')->with([
+                'error' => 'Oops!',
+                'error_message' => 'Sucursal no encontrada'
+            ]);
+        }
+
+        Session::put('sucursal', $request->sucursal);
+        return redirect()->route('business.index');
+    }
+
 }

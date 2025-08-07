@@ -17,6 +17,7 @@ class BusinessUser extends Model
         'role',
         'default_pos_id',
         'only_default_pos',
+        'branch_selector', // Indicates if the user can select branches
     ];
 
     public function business()

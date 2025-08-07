@@ -3,7 +3,7 @@
 @section('content')
     <section class="flex min-h-screen items-center justify-center">
         <div class="px-4 py-8 text-center lg:px-40">
-            <h1 class="mb-4 text-7xl font-extrabold text-primary-500 dark:text-primary-300 lg:text-9xl">503</h1>
+            <h1 class="mb-4 text-7xl font-extrabold text-primary-500 dark:text-primary-300 lg:text-9xl">Mantenimiento</h1>
             <p class="mb-4 text-3xl font-bold tracking-tight dark:text-gray-300 md:text-4xl">
                 ¡Ups! El Servidor no está disponible.
             </p>
