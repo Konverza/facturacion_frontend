@@ -38,7 +38,7 @@ class DTEController extends Controller
     public $formas_pago;
     public $tipo_servicio;
     public $modo_transporte;
-    public $incoterms; 
+    public $incoterms;
     public $bienTitulo;
     public $dte;
 
@@ -65,8 +65,8 @@ class DTEController extends Controller
     {
         try {
             $business_user = BusinessUser::where("business_id", session("business"))
-                                ->where("user_id", auth()->user()->id)
-                                ->first();
+                ->where("user_id", auth()->user()->id)
+                ->first();
             $number = $request->input("document_type");
             $id = $request->input("id") ?? "";
             $business_products = BusinessProduct::where("business_id", session("business"))
@@ -85,7 +85,7 @@ class DTEController extends Controller
                 $dtes = $dtes->filter(function ($dte) {
                     return in_array($dte["tipo_dte"], ["01", "03"]);
                 })->toArray();
-            }elseif ($number === "05" || $number === "06") {
+            } elseif ($number === "05" || $number === "06") {
                 $dtes = $dtes->filter(function ($dte) {
                     return in_array($dte["tipo_dte"], ["03", "07"]);
                 })->toArray();
@@ -126,7 +126,7 @@ class DTEController extends Controller
             $currentDate = date("Y-m-d");
 
             if (!$id || $id !== "") {
-                if ($number !== "15"){
+                if ($number !== "15") {
                     $dteProductController = new DTEProductController();
                     $dteProductController->totals();
                 }
@@ -174,7 +174,7 @@ class DTEController extends Controller
                 case "03":
                     $view = "business.dtes.comprobante_credito_fiscal";
                     break;
-                
+
                 case "04":
                     $view = "business.dtes.nota_remision";
                     break;
@@ -198,7 +198,7 @@ class DTEController extends Controller
                 case "14":
                     $view = "business.dtes.factura_sujeto_excluido";
                     break;
-                
+
                 case "15":
                     $view = "business.dtes.comprobante_donacion";
                     break;
@@ -489,7 +489,7 @@ class DTEController extends Controller
 
         $punto_venta = PuntoVenta::find($request->pos_id);
 
-        if(!$punto_venta) {
+        if (!$punto_venta) {
             return redirect()->back()->withErrors(['pos_id' => 'El punto de venta seleccionado no es válido.']);
         }
 
@@ -536,7 +536,7 @@ class DTEController extends Controller
             $this->dte["emisor"]["tipoItemExpor"] = $request->tipo_item_exportar;
             session(["dte" => $this->dte]);
         }
-        if ($type === "04"){
+        if ($type === "04") {
             $dte["resumen"]["descuNoSuj"] = round((float) $this->dte["descuento_venta_no_sujeta"] ?? 0, 2);
             $dte["resumen"]["descuExenta"] = round((float) $this->dte["descuento_venta_exenta"] ?? 0, 2);
             $dte["resumen"]["descuGravada"] = round((float) $this->dte["descuento_venta_gravada"] ?? 0, 2);
@@ -610,9 +610,9 @@ class DTEController extends Controller
                 }
             }
 
-            if($this->dte["type"] === "15") {
+            if ($this->dte["type"] === "15") {
 
-                if(!$this->otrosDocumentos()) {
+                if (!$this->otrosDocumentos()) {
                     return redirect()->back()->with([
                         'error' => "Error",
                         'error_message' => "Debe agregar al menos un documento asociado a la donación"
@@ -625,7 +625,7 @@ class DTEController extends Controller
                     }),
                     "valor_donado"
                 ));
-                if($total_pagar > 0 && !$this->pagos()) {
+                if ($total_pagar > 0 && !$this->pagos()) {
                     return redirect()->back()->with([
                         'error' => "Error",
                         'error_message' => "Debe agregar al menos una forma de pago"
@@ -651,7 +651,7 @@ class DTEController extends Controller
                 }
             }
 
-            if($this->dte["type"] !== "04"){
+            if ($this->dte["type"] !== "04") {
                 if (isset($this->dte["monto_abonado"]) && isset($this->dte["total_pagar"])) {
                     if (round($this->dte["monto_abonado"], 2) != round($this->dte["total_pagar"], 2)) {
                         return redirect()->back()->with([
@@ -793,7 +793,10 @@ class DTEController extends Controller
                             "complemento" => $request->complemento
                         ],
                         "tipoDocumento" => $request->tipo_documento,
-                        "numDocumento" => $request->numero_documento
+                        "numDocumento" => $request->numero_documento,
+                        "codActividad" => $request->actividad_economica,
+                        "descActividad" => $descActividad,
+                        "nrc" => $request->nrc_customer != "" ? str_replace("-", "", $request->nrc_customer) : null,
                     ];
             case "03":
                 return [
@@ -813,21 +816,21 @@ class DTEController extends Controller
                 ];
             case "04":
                 return [
-                        "nombre" => $request->nombre_receptor,
-                        "nombreComercial" => $request->nombre_comercial,
-                        "codActividad" => $request->actividad_economica,
-                        "descActividad" => $descActividad,
-                        "telefono" => $request->telefono,
-                        "correo" => $request->correo,
-                        "direccion" => [
-                            "departamento" => $request->departamento,
-                            "municipio" => $request->municipio,
-                            "complemento" => $request->complemento
-                        ],
-                        "tipoDocumento" => $request->tipo_documento,
-                        "numDocumento" => $request->numero_documento,
-                        "bienTitulo" => $request->bienTitulo,
-                    ];
+                    "nombre" => $request->nombre_receptor,
+                    "nombreComercial" => $request->nombre_comercial,
+                    "codActividad" => $request->actividad_economica,
+                    "descActividad" => $descActividad,
+                    "telefono" => $request->telefono,
+                    "correo" => $request->correo,
+                    "direccion" => [
+                        "departamento" => $request->departamento,
+                        "municipio" => $request->municipio,
+                        "complemento" => $request->complemento
+                    ],
+                    "tipoDocumento" => $request->tipo_documento,
+                    "numDocumento" => $request->numero_documento,
+                    "bienTitulo" => $request->bienTitulo,
+                ];
             case "05":
             case "06":
                 return [
@@ -927,7 +930,7 @@ class DTEController extends Controller
     public function getProductData($product, $type, $documentos_relacionados = null)
     {
         if ($type !== "14") {
-            $tributos =  is_array($product["product"]) ? json_decode($product["product"]["tributos"], true) : json_decode($product["tributos"], true);
+            $tributos = is_array($product["product"]) ? json_decode($product["product"]["tributos"], true) : json_decode($product["tributos"], true);
             $tributos = array_filter($tributos, function ($value) {
                 return $value != "20";
             });
@@ -960,7 +963,7 @@ class DTEController extends Controller
         } else {
 
             $documentoRelacionado = isset($product["documento_relacionado"]) && $product["documento_relacionado"] !== null ? $product["documento_relacionado"] : null;
-            if($documentoRelacionado && $documentos_relacionados) {
+            if ($documentoRelacionado && $documentos_relacionados) {
                 // Find in documentos_relacionados where numero_documento matches documentoRelacionado
                 $relatedDoc = collect($documentos_relacionados)->firstWhere('numero_documento', $documentoRelacionado);
                 if ($relatedDoc && $relatedDoc["tipo_documento"] == "07") {
@@ -1156,7 +1159,7 @@ class DTEController extends Controller
         if (isset($this->dte["metodos_pago"])) {
             $metodos_pago = [];
             foreach ($this->dte["metodos_pago"] as $pago) {
-                if($this->dte["type"] !== "15"){
+                if ($this->dte["type"] !== "15") {
                     $metodos_pago[] = [
                         "codigo" => $pago["forma_pago"],
                         "montoPago" => round((float) $pago["monto"], 2),
@@ -1272,7 +1275,7 @@ class DTEController extends Controller
             ];
         }
 
-        return $tributos_dte  != [] ? $tributos_dte : null;
+        return $tributos_dte != [] ? $tributos_dte : null;
     }
 
     public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida")
@@ -1390,7 +1393,7 @@ class DTEController extends Controller
             ]);
             $data = $response->json();
             if ($response->status() == 201) {
-                if(!in_array($dte["tipo_dte"], ["04", "07", "14"])) {
+                if (!in_array($dte["tipo_dte"], ["04", "07", "14"])) {
                     $products_dte = $documento->cuerpoDocumento;
                     $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada");
                 }

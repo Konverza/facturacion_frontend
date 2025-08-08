@@ -18,7 +18,8 @@
                     @if (!$default_pos)
                         <div
                             class="my-4 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-yellow-500 dark:bg-yellow-950/30">
-                            <b>Nota: </b> No tiene un punto de venta predeterminado, por favor seleccione uno en la pestaña "Emisor" antes de enviar el DTE
+                            <b>Nota: </b> No tiene un punto de venta predeterminado, por favor seleccione uno en la pestaña
+                            "Emisor" antes de enviar el DTE
                         </div>
                     @endif
                     <div>
@@ -69,6 +70,20 @@
                                                 id="numero_documento_customer" required name="numero_documento"
                                                 value="{{ old('numero_documento', isset($dte['customer']) ? $dte['customer']['numDocumento'] : '') }}"
                                                 placeholder="Ingresar el número de documento" />
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 flex flex-col gap-4 sm:flex-row">
+                                        <div class="flex-1">
+                                            <x-input type="text" label="NRC (opcional)"
+                                                placeholder="Número de documento" id="nrc_customer"
+                                                value="{{ old('nrc_customer', isset($dte['customer']) ? $dte['customer']['nrc'] : '') }}"
+                                                name="nrc_customer" />
+                                        </div>
+                                        <div class="flex-1" id="select-actividad-economica">
+                                            <x-select id="actividad_economica_customer" :options="$actividades_economicas"
+                                                label="Actividad económica (opcional)" name="actividad_economica"
+                                                value="{{ old('actividad_economica', isset($dte['customer']) ? $dte['customer']['codActividad'] : '') }}"
+                                                selected="{{ old('actividad_economica', isset($dte['customer']) ? $dte['customer']['codActividad'] : '') }}" />
                                         </div>
                                     </div>
                                     <div class="mt-4 flex gap-4">
