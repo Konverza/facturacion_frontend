@@ -795,7 +795,7 @@ class DTEController extends Controller
                         "tipoDocumento" => $request->tipo_documento,
                         "numDocumento" => $request->numero_documento,
                         "codActividad" => $request->actividad_economica,
-                        "descActividad" => $descActividad,
+                        "descActividad" => $actividad,
                         "nrc" => $request->nrc_customer != "" ? str_replace("-", "", $request->nrc_customer) : null,
                     ];
             case "03":
