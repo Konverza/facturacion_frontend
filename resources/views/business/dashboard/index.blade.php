@@ -1,13 +1,26 @@
 @extends('layouts.auth-template')
 @section('title', 'Dashboard')
 @section('content')
+    @php
+        $types = [
+            '01' => 'Factura Consumidor Final',
+            '03' => 'Comprobante de crédito fiscal',
+            '04' => 'Nota de Remisión',
+            '05' => 'Nota de crédito',
+            '06' => 'Nota de débito',
+            '07' => 'Comprobante de retención',
+            '11' => 'Factura de exportación',
+            '14' => 'Factura de sujeto excluido',
+            '15' => 'Comprobante de Donación',
+        ];
+    @endphp
     <section class="my-4 px-4 pb-4">
         <div class="flex flex-wrap justify-between gap-4">
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
                 Bienvenido, {{ Auth::user()->name }}
             </h1>
             <div class="mt-4 flex w-full flex-col items-center gap-2 sm:mt-0 sm:w-auto sm:flex-row">
-                @include("layouts.partials.business.button-new-dte")
+                @include('layouts.partials.business.button-new-dte')
                 <x-button type="a" href="{{ Route('business.customers.create') }}" typeButton="secondary"
                     text="Nuevo cliente" icon="user-plus" class="w-full sm:w-auto" />
                 <x-button type="a" href="{{ Route('business.products.create') }}" typeButton="warning"
@@ -30,7 +43,8 @@
                                 Documentos emitidos
                             </h1>
                             <h1 class="text-sm text-gray-500 dark:text-gray-300">
-                                ({{ \Carbon\Carbon::parse($inicio_mes)->format("d/m/Y") }} - {{ \Carbon\Carbon::parse($fin_mes)->format("d/m/Y") }})
+                                ({{ \Carbon\Carbon::parse($inicio_mes)->format('d/m/Y') }} -
+                                {{ \Carbon\Carbon::parse($fin_mes)->format('d/m/Y') }})
                             </h1>
                             <x-button type="a" href="{{ Route('business.documents.index') }}" typeButton="info"
                                 text="Ver documentos" size="normal" />
@@ -86,6 +100,85 @@
                 </div>
             </div>
         </div>
+        @if (session('ambiente') == '2')
+            <div class="my-4 flex flex-col gap-4 xl:flex-row">
+                <div class="flex-1">
+                    <h2 class="text-2xl font-bold text-gray-600 dark:text-white">
+                        Progreso de pruebas
+                    </h2>
+                    <div class="mt-2">
+                        <x-table id="table-progress-tests" :datatable="false">
+                            <x-slot name="thead">
+                                <x-tr>
+                                    <x-th>
+                                        Tipo de Documento
+                                    </x-th>
+                                    <x-th :last="true">
+                                        Progreso
+                                    </x-th>
+                                </x-tr>
+                            </x-slot>
+                            <x-slot name="tbody">
+                                @if (isset($statistics_by_dte['statistics']) && count($statistics_by_dte['statistics']) > 0)
+                                    @foreach ($statistics_by_dte['statistics'] as $item)
+                                        @php
+                                            $progress_percentage = ($item['aprobados'] / 5) * 100;
+                                            $progress_percentage = min($progress_percentage, 100); // No puede ser mayor al 100%
+                                            
+                                            // Definir colores según el porcentaje
+                                            if ($progress_percentage < 50) {
+                                                $bar_color = 'bg-red-500';
+                                                $icon_color = 'text-red-500';
+                                            } elseif ($progress_percentage < 100) {
+                                                $bar_color = 'bg-yellow-500';
+                                                $icon_color = 'text-yellow-500';
+                                            } else {
+                                                $bar_color = 'bg-green-500';
+                                                $icon_color = 'text-green-500';
+                                            }
+                                        @endphp
+                                        <x-tr :last="$loop->last">
+                                            <x-td class="w-1/3">
+                                                <span class="text-zinc-800 dark:text-zinc-100">
+                                                    {{ $types[$item['tipo_dte']] }} ({{ $item['aprobados'] }}/5)
+                                                </span>
+                                            </x-td>
+                                            <x-td :last="true">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="flex-1 h-3 w-full rounded-full bg-secondary-200 dark:bg-secondary-900">
+                                                        <div class="h-full rounded-full {{ $bar_color }}" style="width: {{ $progress_percentage }}%;"></div>
+                                                    </div>
+                                                    <span class="text-xs text-zinc-500 dark:text-zinc-400 min-w-max">
+                                                        {{ number_format($progress_percentage, 1) }}%
+                                                    </span>
+                                                    @if ($progress_percentage >= 100)
+                                                        <x-icon icon="check" class="size-5 {{ $icon_color }} ml-1" />
+                                                    @else
+                                                        <x-icon icon="x" class="size-5 {{ $icon_color }} ml-1" />
+                                                    @endif
+                                                </div>
+                                            </x-td>
+                                        </x-tr>
+                                    @endforeach
+                                @else
+                                    <x-tr>
+                                        <x-td colspan="2" class="text-center py-8">
+                                            <div class="flex flex-col items-center gap-3">
+                                                <x-icon icon="info-circle" class="size-12 text-gray-400 dark:text-gray-600" />
+                                                <div class="text-gray-500 dark:text-gray-400">
+                                                    <p class="text-lg font-medium">No se encontraron estadísticas</p>
+                                                    <p class="text-sm">Aún no has emitido DTEs para mostrar el progreso de pruebas</p>
+                                                </div>
+                                            </div>
+                                        </x-td>
+                                    </x-tr>
+                                @endif
+                            </x-slot>
+                        </x-table>
+                    </div>
+                </div>
+            </div>
+        @endif
         <div class="my-4 flex flex-col gap-4 xl:flex-row">
             <div class="flex-[2]">
                 <h2 class="text-2xl font-bold text-gray-600 dark:text-white">
@@ -114,7 +207,7 @@
                         </x-slot>
                         <x-slot name="tbody">
                             {{-- Grab first 5 $dte --}}
-                            @foreach ($dtes["items"] as $item)
+                            @foreach ($dtes['items'] as $item)
                                 <x-tr :last="$loop->last">
                                     <x-td>
                                         {{ $loop->iteration }}
@@ -163,7 +256,7 @@
             </div>
             <div class="h-max flex-1 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
                 <h2 class="text-2xl font-bold text-gray-600 dark:text-white">
-                    Resumen
+                    Datos de la empresa:
                 </h2>
                 <div class="mt-2">
                     <div class="flex items-start gap-1 text-left text-sm">

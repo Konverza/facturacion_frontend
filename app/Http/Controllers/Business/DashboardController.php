@@ -70,6 +70,8 @@ class DashboardController extends Controller
             //Solicitudes a la API
             $statistics = Http::timeout(30)->get($this->octopus_url . '/dtes/statistics/?' . http_build_query($params))
                 ->json();
+            $statistics_by_dte = Http::timeout(30)->get($this->octopus_url . '/dtes/statistics_by_dte/?nit=' . $business->nit)
+                ->json();
             $datos_empresa = Http::timeout(30)->get($this->octopus_url . '/datos_empresa/nit/' . $business->nit)
                 ->json();
 
@@ -106,7 +108,8 @@ class DashboardController extends Controller
                 'dtes_pending',
                 'inicio_mes',
                 'fin_mes',
-                'ads'
+                'ads',
+                'statistics_by_dte'
             ));
         } catch (\Exception $e) {
             return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al cargar los datos. Contacte al administrador." . $e->getMessage());
