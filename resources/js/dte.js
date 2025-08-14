@@ -261,7 +261,7 @@ $(document).ready(function () {
         const total = redondear(
             parseFloat(count) * parseFloat(price) -
             descuento
-        , 8);
+            , 8);
         if (count > max) {
             showAlert(
                 "error",
@@ -681,7 +681,7 @@ $(document).ready(function () {
     //Submit forms
     $(document).on("click", ".submit-form", function () {
         const form = $(this).closest("form");
-        console.log(form);
+        // console.log(form);
 
         let isValid = true;
 
@@ -767,6 +767,20 @@ $(document).ready(function () {
                         $("#container-total-discount").html(
                             data.total_discounts
                         );
+                    }
+
+                    if (data.comprobante_retencion !== undefined) {
+                        if (data.success) {
+                            $("#container-data-hacienda").removeClass("hidden");
+                            $("#cod-generacion-hacienda").val(data.data.codGeneracion);
+                            $("#tipo-dte-hacienda").val(data.data.tipoDte);
+                            $("#fecha-emision-hacienda").val(data.data.fechaEmision);
+                            $("#monto-documento-hacienda").val(data.data.sujetoRetencion);
+                            $("#iva-retenido-documento-hacienda").val(data.data.ivaRetenido);
+                            $("#descripcion-retencion-hacienda").val(data.data.descripcion);
+                        } else {
+                            showAlert("error", "Error", data.message);
+                        }
                     }
                 } else {
                     showAlert("error", "Error", data.message);
@@ -1043,6 +1057,44 @@ $(document).ready(function () {
 
         $("#loader").removeClass("hidden");
         $("body").addClass("overflow-hidden");
+    });
+
+    $(document).on("submit", "#form-query-dte", function (e) {
+        e.preventDefault();
+        const form = $(this);
+        const url = form.attr("action");
+        const method = form.attr("method");
+        const formData = form.serialize();
+
+        $("#loader").removeClass("hidden");
+        $("body").addClass("overflow-hidden");
+
+        axios({
+            method: method,
+            url: url,
+            data: formData,
+        })
+            .then((response) => {
+                const data = response.data;
+
+                if (data.success) {
+                    $("#container-data-hacienda").removeClass("hidden");
+                    $("#cod-generacion-hacienda").val(data.codGeneracion);
+                    $("#monto-documento-hacienda").val(data.sujetoRetencion);
+                    $("#iva-retenido-documento-hacienda").val(data.ivaRetenido);
+                    $("#descripcion-retencion-hacienda").val(data.descripcion);
+                    showAlert("success", "Éxito", "Consulta realizada correctamente");
+                } else {
+                    showAlert("error", "Error", data.message);
+                }
+            })
+            .catch((error) => {
+                console.error("Error al realizar la consulta:", error);
+            })
+            .finally(() => {
+                $("#loader").addClass("hidden");
+                $("body").removeClass("overflow-hidden");
+            });
     });
 
 

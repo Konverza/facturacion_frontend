@@ -95,7 +95,9 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
             Route::post("/store", [DTEDocumentsController::class, "store"])->name('store');
             Route::get("/delete/{id}", [DTEDocumentsController::class, "delete"])->name('delete');
             Route::get("/selected", [DTEDocumentsController::class, "selected"])->name('selected');
+            Route::post("/query", [DTEDocumentsController::class, "queryDTE"])->name('queryDTE');
             Route::post("/store-electric", [DTEDocumentsController::class, "storeElectric"])->name('store-electric');
+            Route::post("/store-hacienda", [DTEDocumentsController::class, "storeHacienda"])->name('store-hacienda');
         });
 
         Route::prefix("donation")->name("donation.")->group(function () {
