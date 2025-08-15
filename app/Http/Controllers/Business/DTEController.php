@@ -75,25 +75,25 @@ class DTEController extends Controller
             $business_customers = BusinessCustomer::where("business_id", $business_user->business_id)->get();
             $business = Business::find($business_user->business_id);
             $datos_empresa = $this->octopus_service->get("/datos_empresa/nit/" . $business->nit);
-            $dtes = Http::timeout(30)->get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
-            $dtes = $dtes["items"] ?? [];
-            $dtes = collect($dtes)
-                ->filter(function ($dte) {
-                    return $dte["estado"] === "PROCESADO";
-                });
-            if ($number === "04") {
-                $dtes = $dtes->filter(function ($dte) {
-                    return in_array($dte["tipo_dte"], ["01", "03"]);
-                })->toArray();
-            } elseif ($number === "05" || $number === "06") {
-                $dtes = $dtes->filter(function ($dte) {
-                    return in_array($dte["tipo_dte"], ["03", "07"]);
-                })->toArray();
-            } else if ($number === "07") {
-                $dtes = $dtes->filter(function ($dte) {
-                    return in_array($dte["tipo_dte"], ["01", "03", "14"]);
-                })->toArray();
-            }
+            // $dtes = Http::timeout(30)->get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
+            // $dtes = $dtes["items"] ?? [];
+            // $dtes = collect($dtes)
+            //     ->filter(function ($dte) {
+            //         return $dte["estado"] === "PROCESADO";
+            //     });
+            // if ($number === "04") {
+            //     $dtes = $dtes->filter(function ($dte) {
+            //         return in_array($dte["tipo_dte"], ["01", "03"]);
+            //     })->toArray();
+            // } elseif ($number === "05" || $number === "06") {
+            //     $dtes = $dtes->filter(function ($dte) {
+            //         return in_array($dte["tipo_dte"], ["03", "07"]);
+            //     })->toArray();
+            // } else if ($number === "07") {
+            //     $dtes = $dtes->filter(function ($dte) {
+            //         return in_array($dte["tipo_dte"], ["01", "03", "14"]);
+            //     })->toArray();
+            // }
 
             if ($id) {
                 $dte = DTE::find($id);
@@ -162,7 +162,7 @@ class DTEController extends Controller
                 "modo_transporte" => $this->modo_transporte,
                 "incoterms" => $this->incoterms,
                 "bienTitulo" => $this->bienTitulo,
-                "dtes" => $dtes
+                // "dtes" => $dtes
             ];
 
             $view = "";
