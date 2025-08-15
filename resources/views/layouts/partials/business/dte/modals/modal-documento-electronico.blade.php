@@ -52,7 +52,11 @@
                 </div>
                 <!-- Modal body -->
                 <div class="flex flex-col gap-4 p-4">
-                    <span class="flex items-center gap-1 text-base font-semibold text-gray-500 dark:text-gray-300">
+                    @php
+                        $documento_receptor = isset($dte['customer']) ? $dte['customer']['numDocumento'] : null;
+                    @endphp
+                    @livewire('business.tables.documentos-electronicos-table', ['nit' => $business->nit, 'number' => $number, 'numero_documento' => $documento_receptor])
+                    {{-- <span class="flex items-center gap-1 text-base font-semibold text-gray-500 dark:text-gray-300">
                         <x-icon icon="info-circle" class="size-5" />
                         Criterios de consulta
                     </span>
@@ -84,53 +88,8 @@
                         Resultados de la consulta
                     </span>
                     <div id="container-table-dtes">
-                        <x-table id="table-dtes">
-                            <x-slot name="thead">
-                                <x-tr>
-                                    <x-th>Tipo</x-th>
-                                    <x-th>NIT</x-th>
-                                    <x-th>Fecha de emisión</x-th>
-                                    <x-th>Código de generación</x-th>
-                                    <x-th></x-th>
-                                </x-tr>
-                            </x-slot>
-                            <x-slot name="tbody">
-                                @foreach ($dtes as $dte)
-                                    <x-tr>
-                                        <x-td class="text-xs">
-                                            {{ $dte['tipo_dte'] }} - {{$tipos_documentos[$dte['tipo_dte']] ?? 'No definido'}}
-                                        </x-td>
-                                        <x-td class="text-xs">
-                                            @php
-                                                $documento = json_decode($dte['documento'], true);
-                                            @endphp
-                                            @if (isset($documento['receptor']['numDocumento']))
-                                                {{ $documento['receptor']['numDocumento'] }}
-                                            @elseif(isset($documento['receptor']['nit']))
-                                                {{ $documento['receptor']['nit'] }}
-                                            @elseif(isset($documento['sujetoExcluido']))
-                                                {{ $documento['sujetoExcluido']['numDocumento'] }}
-                                            @endif
-                                        </x-td>
-                                        <x-td class="text-xs">
-                                            {{ \Carbon\Carbon::parse($dte['fhProcesamiento'])->format('d/m/Y') }}
-                                        </x-td>
-                                        <x-td class="text-xs">
-                                            {{ $dte['codGeneracion'] }}
-                                        </x-td>
-                                        <x-td :last="true">
-                                            <x-button type="button" icon="arrow-next" size="small"
-                                                data-url="{{ route('business.dte.related-documents.store-electric') }}"
-                                                typeButton="secondary" text="Seleccionar"
-                                                data-cod="{{ $dte['codGeneracion'] }}"
-                                                class="btn-selected-document-electric" />
-                                        </x-td>
-                                    </x-tr>
-                                @endforeach
-                            </x-slot>
-                        </x-table>
                     </div>
-                </div>
+                </div> --}}
                 <!-- Modal footer -->
                 <div
                     class="flex items-center justify-end gap-4 rounded-b border-t border-gray-300 p-4 dark:border-gray-800">

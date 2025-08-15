@@ -159,6 +159,7 @@ $(document).ready(function () {
                 $("#nit-receptor")
                     .val(data.customer.numDocumento ?? "")
                     .trigger("input");
+                Livewire.dispatch('refreshNumeroDocumento', {nuevoNumeroDocumento: data.customer.numDocumento ?? ""});
 
                 $("#nombre_customer").val(data.customer.nombre);
                 $("#nombre_comercial_customer").val(
