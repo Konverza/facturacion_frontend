@@ -147,12 +147,10 @@
                                     </dl>
                                     <input type="hidden" name="omitir_datos_receptor" value="1" />
                                     <input type="hidden" name="condicion_operacion" value="1" />
+                                    <input type="hidden" name="pos_id" value="{{ $default_pos->id ?? '' }}">
                                     <x-button type="submit" typeButton="primary" text="Finalizar Venta (Ticket)"
                                         class="w-full sm:w-auto" icon="file-symlink" name="action" value="generate" />
-                                    <x-button type="submit" typeButton="secondary" text="Finalizar Venta (Consumidor Final)"
-                                        class="w-full sm:w-auto" icon="file-symlink" name="action" value="generate_invoice" />
-                                    <x-button type="button" typeButton="info" text="Finalizar Venta (Crédito Fiscal)"
-                                        class="w-full sm:w-auto" icon="file-symlink" name="action" value="generate_credit" />
+                                    
                                     <x-button type="button" typeButton="danger" text="Cancelar documento" icon="cancel"
                                         class="show-modal w-full sm:w-auto" data-target="#cancel-dte" />
                                 @endif

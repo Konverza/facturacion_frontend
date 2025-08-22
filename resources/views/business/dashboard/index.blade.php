@@ -124,7 +124,7 @@
                                         @php
                                             $progress_percentage = ($item['aprobados'] / 5) * 100;
                                             $progress_percentage = min($progress_percentage, 100); // No puede ser mayor al 100%
-                                            
+
                                             // Definir colores según el porcentaje
                                             if ($progress_percentage < 50) {
                                                 $bar_color = 'bg-red-500';
@@ -145,16 +145,26 @@
                                             </x-td>
                                             <x-td :last="true">
                                                 <div class="flex items-center gap-3">
-                                                    <div class="flex-1 h-3 w-full rounded-full bg-secondary-200 dark:bg-secondary-900">
-                                                        <div class="h-full rounded-full {{ $bar_color }}" style="width: {{ $progress_percentage }}%;"></div>
+                                                    <div
+                                                        class="flex-1 h-3 w-full rounded-full bg-secondary-200 dark:bg-secondary-900">
+                                                        <div class="h-full rounded-full {{ $bar_color }}"
+                                                            style="width: {{ $progress_percentage }}%;"></div>
                                                     </div>
                                                     <span class="text-xs text-zinc-500 dark:text-zinc-400 min-w-max">
                                                         {{ number_format($progress_percentage, 1) }}%
                                                     </span>
                                                     @if ($progress_percentage >= 100)
-                                                        <x-icon icon="check" class="size-5 {{ $icon_color }} ml-1" />
+                                                        <span
+                                                            class="flex items-center gap-1 text-nowrap rounded-lg border border-green-300 bg-green-200 px-2 py-1 text-xs font-light uppercase text-green-800 dark:border-green-900 dark:bg-green-900/50 dark:text-green-300">
+                                                            <x-icon icon="circle-check" class="size-4" />
+                                                            Completado - Listo para producción
+                                                        </span>
                                                     @else
-                                                        <x-icon icon="x" class="size-5 {{ $icon_color }} ml-1" />
+                                                        <span
+                                                            class="flex items-center gap-1 text-nowrap rounded-lg border border-yellow-300 bg-yellow-200 px-2 py-1 text-xs font-light uppercase text-yellow-800 dark:border-yellow-900 dark:bg-yellow-900/50 dark:text-yellow-300">
+                                                            <x-icon icon="clock" class="size-4" />
+                                                            En progreso - Mínimo 5 aprobados
+                                                        </span>
                                                     @endif
                                                 </div>
                                             </x-td>
@@ -164,10 +174,12 @@
                                     <x-tr>
                                         <x-td colspan="2" class="text-center py-8">
                                             <div class="flex flex-col items-center gap-3">
-                                                <x-icon icon="info-circle" class="size-12 text-gray-400 dark:text-gray-600" />
+                                                <x-icon icon="info-circle"
+                                                    class="size-12 text-gray-400 dark:text-gray-600" />
                                                 <div class="text-gray-500 dark:text-gray-400">
                                                     <p class="text-lg font-medium">No se encontraron estadísticas</p>
-                                                    <p class="text-sm">Aún no has emitido DTEs para mostrar el progreso de pruebas</p>
+                                                    <p class="text-sm">Aún no has emitido DTEs para mostrar el progreso de
+                                                        pruebas</p>
                                                 </div>
                                             </div>
                                         </x-td>
