@@ -234,6 +234,8 @@
             '<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon-tabler icon-tabler-file-x icons-tabler-outline icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9.5 9.5l5 5m0 -5l-5 5" /></svg>',
         'ad' => 
             '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler icon-tabler-ad icons-tabler-outline icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M10.5 8.5l3.5 7.5l3.5 -7.5h-7z" /></svg>',
+        'arrow-up' =>
+            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler icon-tabler-arrow-up icons-tabler-outline icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 4v16m-8-8l8-8l8 8" /></svg>',
     ];
 
     $iconSvg = $icons[$icon] ?? null;

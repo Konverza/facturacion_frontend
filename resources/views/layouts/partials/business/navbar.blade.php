@@ -34,9 +34,7 @@
                     <x-icon icon="menu" class="h-6 w-6" />
                 </button>
             </div>
-            <div class="flex w-full items-center justify-end lg:justify-between">
-                <x-button type="button" size="small" id="toggle-sidebar" onlyIcon icon="arrow-bar-left"
-                    typeButton="secondary" class="hidden lg:block" />
+            <div class="flex w-full items-center justify-end">
                 <div class="flex">
                     <x-toggle-theme />
                     <div class="ms-3 flex items-center">
@@ -121,176 +119,165 @@
 </nav>
 
 <aside id="sidebar"
-    class="@if ($test_enviroment || $maintenance_notice) mt-12 sm:mt-8 @endif fixed left-0 top-0 z-40 h-screen w-64 -translate-x-full border-r border-gray-300 bg-white pt-4 transition-transform dark:border-gray-800 dark:bg-gray-950 lg:z-[35] lg:translate-x-0 lg:dark:bg-transparent"
+    class="@if ($test_enviroment || $maintenance_notice) mt-12 sm:mt-8 @endif  fixed left-0 top-0 z-40 h-screen w-72 -translate-x-full border-r border-secondary-300 bg-white pt-4 transition-transform dark:border-secondary-800 dark:bg-secondary-950 lg:z-[35] lg:translate-x-0 lg:dark:bg-transparent"
     aria-label="Sidebar">
-    <div class="overflow-y-auto px-2 pb-4">
-        <div id="icon-complete">
-            <a href="#" class="ms-2 flex">
-                <img src="{{ asset('images/logo.png') }}" class="me-3 h-8" alt="FlowBite Logo" />
-            </a>
-        </div>
-        <div class="hidden" id="only-icon">
-            <a href="#" class="ms-2 flex">
-                <img src="{{ asset('images/only-icon.png') }}" class="me-3 h-8" alt="FlowBite Logo" />
-            </a>
-        </div>
+    <div class="flex h-full flex-col overflow-y-auto px-2 pb-2">
+        <a href="#" class="ms-2 flex">
+            <img src="{{ asset('images/logo.png') }}" class="me-3 h-8" alt="Logo Konverza" />
+        </a>
         <ul class="mt-2 space-y-2 font-medium">
             <li>
-                <a href="{{ Route('business.dashboard') }}" data-tooltip-target="tooltip-dashboard"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                <a href="{{ Route('business.dashboard') }}"
+                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
                     <x-icon icon="dashboard"
                         class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3">Dashboard</span>
+                    <span class="ms-3">Inicio</span>
                 </a>
-                <div id="tooltip-dashboard" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Dashboard
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
             </li>
             <li>
-                <a href="{{ Route('business.documents.index') }}" data-tooltip-target="tooltip-documents"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="files"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
-                        Documentos emitidos
-                    </span>
-                </a>
-                <div id="tooltip-documents" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Documentos emitidos
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
-            </li>
-            <li>
-                <a href="{{ Route('business.sucursales.index', $business_id) }}"
-                    data-tooltip-target="tooltip-sucursales"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="building-store"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
-                        Sucursales
-                    </span>
-                </a>
-                <div id="tooltip-sucursales" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Sucursales
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
-            </li>
-            @if ($business->posmode)
-                <li>
-                    <a href="{{ Route('business.categories.index') }}" data-tooltip-target="tooltip-categories"
-                        class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                        <x-icon icon="address-book"
-                            class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                        <span class="ms-3 flex-1 whitespace-nowrap">
-                            Categorías
-                        </span>
-                    </a>
-                    <div id="tooltip-categories" role="tooltip"
-                        class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                        Categorías
-                        <div class="tooltip-arrow" data-popper-arrow></div>
-                    </div>
-                </li>
-            @endif
-            <li>
-                <a href="{{ Route('business.products.index') }}" data-tooltip-target="tooltip-products"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="box"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
-                        Productos
-                    </span>
-                </a>
-                <div id="tooltip-products" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Productos
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
-            </li>
-            <li>
-                <a href="{{ Route('business.movements.index') }}" data-tooltip-target="tooltip-movements"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="arrow-sort"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
-                        Movimientos
-                    </span>
-                </a>
-                <div id="tooltip-movements" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Movimientos
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
-            </li>
-            {{--      <li>
-                <a href="{{ Route('business.customers.index') }}" data-tooltip-target="tooltip-cuentas-por-pagar"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="home-dollar"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
-                        Cuentas por pagar
-                    </span>
-                </a>
-                <div id="tooltip-cuentas-por-pagar" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Cuentas por pagar
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
-            </li> --}}
-            <li>
-                <a href="{{ Route('business.customers.index') }}" data-tooltip-target="tooltip-customers"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                <a href="{{ Route('business.customers.index') }}"
+                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
                     <x-icon icon="users"
                         class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
-                        Clientes
-                    </span>
+                    <span class="ms-3">Clientes</span>
                 </a>
-                <div id="tooltip-customers" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                    Clientes
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
             </li>
-            @if (!auth()->user()->only_fcf)
-                <li>
-                    <a href="{{ Route('business.cuentas-por-cobrar.index') }}"
-                        data-tooltip-target="tooltip-cuentas-por-cobrar"
-                        class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                        <x-icon icon="coin"
-                            class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                        <span class="ms-3 flex-1 whitespace-nowrap">
-                            Cuentas por cobrar
-                        </span>
-                    </a>
-                    <div id="tooltip-cuentas-por-cobrar" role="tooltip"
-                        class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                        Cuentas por cobrar
-                        <div class="tooltip-arrow" data-popper-arrow></div>
-                    </div>
-                </li>
-            @endif
+
             @if ($business->posmode)
                 <li>
-                    <a href="{{ Route('business.pos.index') }}" data-tooltip-target="tooltip-pos"
-                        class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                        <x-icon icon="cash-register"
-                            class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                        <span class="ms-3 flex-1 whitespace-nowrap">
-                            Punto de venta
-                        </span>
-                    </a>
-                    <div id="tooltip-pos" role="tooltip"
-                        class="shadow-xs tooltip invisible absolute z-10 hidden text-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
-                        Punto de venta
-                        <div class="tooltip-arrow" data-popper-arrow></div>
-                    </div>
-                </li>
+                <a href="{{ Route('business.pos.index') }}"
+                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
+                    <x-icon icon="cash-register"
+                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3">Punto de venta</span>
+                </a>
+            </li>
             @endif
+            <li>
+                <button type="button"
+                    class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                    aria-controls="dropdown-ventas" data-collapse-toggle="dropdown-ventas">
+                    <x-icon icon="receipt"
+                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Ventas</span>
+                    <x-icon icon="arrow-down"
+                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                </button>
+                <ul id="dropdown-ventas" class="hidden space-y-2 py-2">
+                    <li>
+                        <a href="{{ Route('business.documents.index') }}"
+                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                            <span class="ms-3 flex-1 whitespace-nowrap">
+                                Documentos emitidos
+                            </span>
+                        </a>
+                    </li>
+                    @if ($business->posmode)
+                        <li>
+                            <a href="{{ Route('business.categories.index') }}"
+                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                                <span class="ms-3 flex-1 whitespace-nowrap">
+                                    Categorías
+                                </span>
+                            </a>
+                        </li>
+                    @endif
+                    <li>
+                        <a href="{{ Route('business.products.index') }}"
+                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                            <span class="ms-3 flex-1 whitespace-nowrap">
+                                Productos
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ Route('business.movements.index') }}"
+                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                            <span class="ms-3 flex-1 whitespace-nowrap">
+                                Movimientos
+                            </span>
+                        </a>
+                    </li>
+                    @if (!auth()->user()->only_fcf)
+                        <li>
+                            <a href="{{ Route('business.cuentas-por-cobrar.index') }}"
+                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                                <span class="ms-3 flex-1 whitespace-nowrap">
+                                    Cuentas por Cobrar
+                                </span>
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </li>
+            <li>
+                <button type="button"
+                    class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                    aria-controls="dropdown-compras" data-collapse-toggle="dropdown-compras">
+                    <x-icon icon="shopping-cart"
+                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Compras</span>
+                    <x-icon icon="arrow-down"
+                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                </button>
+                <ul id="dropdown-compras" class="hidden space-y-2 py-2">
+                    <li>
+                        <a href="#"
+                            class="group pointer-events-none flex cursor-not-allowed items-center rounded-lg p-2 text-secondary-400 opacity-50 dark:text-secondary-600 dark:opacity-50"
+                            tabindex="-1" aria-disabled="true">
+                            <span class="ms-3 flex-1 whitespace-nowrap">
+                                Documentos Recibidos
+                            </span>
+                            <span
+                                class="ml-2 inline-block rounded-full bg-secondary-300 px-2 py-0.5 text-xs font-semibold text-secondary-700 dark:bg-secondary-700 dark:text-secondary-300">
+                                Próximamente
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            class="group pointer-events-none flex cursor-not-allowed items-center rounded-lg p-2 text-secondary-400 opacity-50 dark:text-secondary-600 dark:opacity-50"
+                            tabindex="-1" aria-disabled="true">
+                            <span class="ms-3 flex-1 whitespace-nowrap">
+                                Cuentas por pagar
+                            </span>
+                            <span
+                                class="ml-2 inline-block rounded-full bg-secondary-300 px-2 py-0.5 text-xs font-semibold text-secondary-700 dark:bg-secondary-700 dark:text-secondary-300">
+                                Próximamente
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <button type="button"
+                    class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                    aria-controls="dropdown-configuracion" data-collapse-toggle="dropdown-configuracion">
+                    <x-icon icon="settings"
+                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Configuración</span>
+                    <x-icon icon="arrow-down"
+                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                </button>
+                <ul id="dropdown-configuracion" class="hidden space-y-2 py-2">
+                    <li>
+                        <a href="{{ Route('business.sucursales.index', $business_id) }}"
+                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                            <span class="ms-3 flex-1 whitespace-nowrap">
+                                Sucursales
+                            </span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ Route('business.profile.index') }}"
+                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                            <span class="ms-3 flex-1 whitespace-nowrap">
+                                Datos del Negocio
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
             <li>
                 @include('layouts.partials.business.button-new-dte')
             </li>

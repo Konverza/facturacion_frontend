@@ -1350,6 +1350,26 @@ class DTEController extends Controller
         }
     }
 
+    public function delete_all()
+    {
+        try {
+            $business_id = Session::get('business') ?? null;
+            if ($business_id) {
+                DB::beginTransaction();
+                DTE::where("business_id", $business_id)->delete();
+                DB::commit();
+                return redirect()->route("business.index")
+                    ->with("success", "Exito")
+                    ->with("success_message", "Documentos eliminados correctamente");
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route("business.index")
+                ->with("error", "Error")
+                ->with("error_message", "Ha ocurrido un error al eliminar los documentos");
+        }
+    }
+
     public function anular(Request $request)
     {
         try {

@@ -43,6 +43,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::post("/cuentas-por-cobrar/movement", [CuentasCobrarController::class, "movement"])->name('cuentas-por-cobrar.movement');
 
     Route::delete("/delete-dte/{id}", [DTEController::class, "delete"])->name('delete-dte');
+    Route::delete("/delete-all-dte", [DTEController::class, "delete_all"])->name('delete-all-dte');
 
     //Profile
     Route::get("/profile", [ProfileController::class, "index"])->name('profile.index');

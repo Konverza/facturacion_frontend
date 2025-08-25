@@ -10,7 +10,7 @@
         No hay anuncios disponibles.
     </div>
 @else
-    <div id="{{ $carouselId }}" class="relative max-w-[{{ $maxWidth }}] max-h-[{{ $maxHeight }}] bg-slate-300"
+    <div id="{{ $carouselId }}" class="relative max-w-[{{ $maxWidth }}] max-h-[{{ $maxHeight }}]"
         data-carousel="slide" data-carousel-interval="{{ $duration }}">
         <!-- Carousel wrapper -->
         <div class="relative h-56 overflow-hidden md:h-96 max-h-[300px]">
