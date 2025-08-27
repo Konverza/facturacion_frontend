@@ -9,6 +9,7 @@ export default defineConfig({
                 "resources/js/app.js",
                 "resources/js/dte.js",
                 "resources/js/password.js",
+                "resources/js/reporting.js",
             ],
             refresh: true,
         }),

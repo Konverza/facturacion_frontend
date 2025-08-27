@@ -140,4 +140,13 @@ class OctopusService
 
         return $values;
     }
+
+    public function getDatosEmpresa(string $nit) {
+        $values = Cache::remember("octopus_datos_empresa_$nit", now()->addHours(6), function () use ($nit) {
+            $response = $this->get("/datos_empresa/nit/$nit");
+            return $response ?: [];
+        });
+
+        return $values;
+    }
 }

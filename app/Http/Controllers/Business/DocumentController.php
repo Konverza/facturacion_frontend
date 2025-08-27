@@ -47,13 +47,11 @@ class DocumentController extends Controller
                     $pdfContent = $dte["enlace_pdf"] ? Http::get($dte["enlace_pdf"])->body() : null;
                     $jsonContent = $dte["enlace_json"] ? Http::get($dte["enlace_json"])->body() : null;
                     $ticketContent = $dte["enlace_rtf"] ? Http::get($dte["enlace_rtf"])->body() : null;
-                    $zip->addFromString("{$fechaProcesamiento}/{$codGeneracion}/{$codGeneracion}.pdf", $pdfContent);
-                    $zip->addFromString("{$fechaProcesamiento}/{$codGeneracion}/{$codGeneracion}.json", $jsonContent);
                     if ($pdfContent) {
-                        $zip->addFromString("{$fechaProcesamiento}/{$codGeneracion}/{$codGeneracion}_pdf.pdf", $pdfContent);
+                        $zip->addFromString("{$fechaProcesamiento}/{$codGeneracion}/{$codGeneracion}.pdf", $pdfContent);
                     }
                     if ($jsonContent) {
-                        $zip->addFromString("{$fechaProcesamiento}/{$codGeneracion}/{$codGeneracion}_json.json", $jsonContent);
+                        $zip->addFromString("{$fechaProcesamiento}/{$codGeneracion}/{$codGeneracion}.json", $jsonContent);
                     }
                     if ($ticketContent) {
                         $zip->addFromString("{$fechaProcesamiento}/{$codGeneracion}/{$codGeneracion}_ticket.pdf", $ticketContent);

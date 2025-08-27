@@ -224,3 +224,10 @@ Breadcrumbs::for("business.puntos-venta.index", function (BreadcrumbTrail $trail
     $trail->parent("business.sucursales.index", $business_id);
     $trail->push($icon . "Puntos de Venta", route("business.puntos-venta.index", [$business_id, $sucursal_id]));
 });
+
+// Reportería
+Breadcrumbs::for("business.reporting.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='file-report' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Reportería", route("business.reporting.index"));
+});

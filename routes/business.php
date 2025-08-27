@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\BusinessController;
-use App\Http\Controllers\Business\BusinessSucursalController;
 use App\Http\Controllers\Business\AssociatedDocumentsController;
+use App\Http\Controllers\Business\BusinessSucursalController;
 use App\Http\Controllers\Business\CategoryController;
 use App\Http\Controllers\Business\CuentasCobrarController;
 use App\Http\Controllers\Business\CustomerContoller;
@@ -19,6 +19,7 @@ use App\Http\Controllers\Business\PosController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\ProfileController;
 use App\Http\Controllers\Business\RelatedDocumentsController;
+use App\Http\Controllers\Business\ReportingController;
 use App\Http\Controllers\Business\WhatsAppController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +45,10 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
 
     Route::delete("/delete-dte/{id}", [DTEController::class, "delete"])->name('delete-dte');
     Route::delete("/delete-all-dte", [DTEController::class, "delete_all"])->name('delete-all-dte');
+
+    // Reporting
+    Route::get("/reporting", [ReportingController::class, "index"])->name('reporting.index');
+    Route::post("/reporting", [ReportingController::class, "store"])->name('reporting.store');
 
     //Profile
     Route::get("/profile", [ProfileController::class, "index"])->name('profile.index');

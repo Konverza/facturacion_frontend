@@ -4,7 +4,7 @@
     "name": "alert"
   },
   "resources/css/app.css": {
-    "file": "assets/app-IH_Ia8mY.css",
+    "file": "assets/app-DI0kSDsn.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -31,5 +31,11 @@
     "imports": [
       "_alert-Cg1FgE4f.js"
     ]
+  },
+  "resources/js/reporting.js": {
+    "file": "assets/reporting-DQLcM_5b.js",
+    "name": "reporting",
+    "src": "resources/js/reporting.js",
+    "isEntry": true
   }
 }

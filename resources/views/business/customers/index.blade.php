@@ -1,5 +1,5 @@
 @extends('layouts.auth-template')
-@section('title', 'Negocios')
+@section('title', 'Clientes')
 @section('content')
     <section class="my-4 px-4">
         <div class="flex w-full justify-between">
