@@ -34,7 +34,9 @@
                     <x-icon icon="menu" class="h-6 w-6" />
                 </button>
             </div>
-            <div class="flex w-full items-center justify-end">
+            <div class="flex w-full items-center justify-end lg:justify-between">
+                <x-button type="button" size="small" id="toggle-sidebar" onlyIcon icon="arrow-bar-left"
+                    typeButton="secondary" class="hidden lg:block lg:ms-8" />
                 <div class="flex">
                     <x-toggle-theme />
                     <div class="ms-3 flex items-center">
@@ -145,13 +147,13 @@
 
             @if ($business->posmode)
                 <li>
-                <a href="{{ Route('business.pos.index') }}"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
-                    <x-icon icon="cash-register"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3">Punto de venta</span>
-                </a>
-            </li>
+                    <a href="{{ Route('business.pos.index') }}"
+                        class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
+                        <x-icon icon="cash-register"
+                            class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                        <span class="ms-3">Punto de venta</span>
+                    </a>
+                </li>
             @endif
             <li>
                 <button type="button"
