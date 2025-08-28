@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Session;
 
@@ -106,9 +107,9 @@ class ReportingController extends Controller
             }
 
             switch ($book) {
-                // case 'contribuyentes':
-                //     $file_path = $this->exportContribuyentes($dtes_filter, $datos_empresa, $months_string, $request);
-                //     break;
+                case 'contribuyentes':
+                    $file_path = $this->exportContribuyentes($dtes_filter, $datos_empresa, $months_string, $years_string, $request);
+                    break;
                 case 'consumidores':
                     $file_path = $this->exportConsumidores($dtes_filter, $datos_empresa, $months_string, $years_string, $request);
                     break;
@@ -131,6 +132,7 @@ class ReportingController extends Controller
             return response()->download($file_path);
 
         } catch (\Exception $e) {
+            Log::error("Error generating report: " . $e->getMessage());
             return redirect()->back()->with([
                 "error" => "Error",
                 "error_message" => "Ha ocurrido un error al generar el libro. Vuelve a intentarlo.",
@@ -216,14 +218,102 @@ class ReportingController extends Controller
         }
 
         // Set totals 
-        $sheet->setCellValue("I" . ($row), $totalDocNoSujetas);
-        $sheet->setCellValue("J" . ($row), $totalDocExentas);
-        $sheet->setCellValue("K" . ($row), $totalDocGravadas);
-        $sheet->setCellValue("L" . ($row), $totalDocExportacion);
-        $sheet->setCellValue("M" . ($row), "=SUM(I" . ($row) . ":L" . ($row) . ")");
+        $sheet->setCellValue("I$row", $totalDocNoSujetas);
+        $sheet->setCellValue("J$row", $totalDocExentas);
+        $sheet->setCellValue("K$row", $totalDocGravadas);
+        $sheet->setCellValue("L$row", $totalDocExportacion);
+        $sheet->setCellValue("M$row", "=SUM(I$row:L$row)");
 
         return $this->saveSpreadsheet($spreadsheet, "libro_consumidores_", $request);
     }
+
+    private function exportContribuyentes(array $dtes, array $datos_empresa, string $months, string $years, $request): string
+    {
+        $path = public_path("reportes/formato_contribuyentes.xlsx");
+        $spreadsheet = IOFactory::load($path);
+        $sheet = $spreadsheet->getActiveSheet();
+        $startRow = 10;
+        $total_dtes = count($dtes);
+        if ($total_dtes > 1) {
+            $sheet->insertNewRowBefore($startRow + 1, $total_dtes - 1);
+        }
+
+        $sheet->setCellValue("A1", $datos_empresa["nombre"] ?? "");
+        $sheet->setCellValue("A2", $datos_empresa["complemento"] ?? "");
+        $sheet->setCellValue("A3", "Número de Registro de Contribuyente: " . $datos_empresa["nrc"] . " NIT: " . $datos_empresa["nit"]);
+        $sheet->setCellValue("C6", $months);
+        $sheet->setCellValue("C7", $years);
+
+        $row = $startRow;
+
+        $totalDocExentas = 0;
+        $totalDocGravadas = 0;
+        $totalDocNoSujetas = 0;
+        $totalIva = 0;
+
+        foreach ($dtes as $index => $dte) {
+            $doc = $dte["documento"] ?: [];
+            $resumen = $doc["resumen"] ?: [];
+            $identificacion = $doc["identificacion"] ?: [];
+            $respuesta_hacienda = $doc["respuesta_hacienda"] ?? [];
+            if (is_string($respuesta_hacienda)) {
+                $respuesta_hacienda = json_decode($respuesta_hacienda, true) ?? [];
+            }
+
+            $sello_recibido = $doc["selloRecibido"] ?? $respuesta_hacienda["selloRecibido"] ?? "";
+
+            $iva = 0;
+            if (!empty($resumen["tributos"]) && is_array($resumen["tributos"])) {
+                foreach ($resumen["tributos"] as $tributo) {
+                    if (($tributo["codigo"] ?? '') === "20") {
+                        $iva = $tributo["valor"] ?? 0;
+                        break;
+                    }
+                }
+            }
+
+            $date = Carbon::parse($identificacion["fecEmi"] ?? '')->format('d/m/Y');
+
+            $tipo_documento = "";
+            if ($identificacion["tipoDte"] === "03") {
+                $tipo_documento = "03.COMPROBANTE DE CRÉDITO FISCAL";
+            } elseif ($identificacion["tipoDte"] === "05") {
+                $tipo_documento = "05.NOTA DE CRÉDITO";
+            } elseif ($identificacion["tipoDte"] === "06") {
+                $tipo_documento = "06.NOTA DE DÉBITO";
+            }
+
+            $totalDocExentas += $resumen["totalExenta"] ?? 0;
+            $totalDocGravadas += $resumen["totalGravada"] ?? 0;
+            $totalDocNoSujetas += $resumen["totalNoSuj"] ?? 0;
+            $totalIva += $iva;
+
+            $sheet->setCellValue("A{$row}", $date);
+            $sheet->setCellValue("B{$row}", "4.DOCUMENTO TRIBUTARIO ELECTRÓNICO (DTE)");
+            $sheet->setCellValue("C{$row}", $tipo_documento);
+            $sheet->setCellValue("D{$row}", $doc["identificacion"]["numeroControl"] ?? "");
+            $sheet->setCellValue("E{$row}", $sello_recibido);
+            $sheet->setCellValue("F{$row}", $doc["identificacion"]["codigoGeneracion"] ?? "");
+            $sheet->setCellValue("G{$row}", $doc["receptor"]["nrc"] ?? "");
+            $sheet->setCellValue("H{$row}", $doc["receptor"]["nombre"] ?? "");
+            $sheet->setCellValue("I{$row}", $resumen["totalExenta"] ?? 0);
+            $sheet->setCellValue("J{$row}", $resumen["totalNoSuj"] ?? 0);
+            $sheet->setCellValue("K{$row}", $resumen["totalGravada"] ?? 0);
+            $sheet->setCellValue("L{$row}", $iva);
+            $sheet->setCellValue("M{$row}","=SUM(I$row:L$row)");
+            $row++;
+        }
+
+        // Set totals
+        $sheet->setCellValue("I{$row}", $totalDocExentas);
+        $sheet->setCellValue("J{$row}", $totalDocNoSujetas);
+        $sheet->setCellValue("K{$row}", $totalDocGravadas);
+        $sheet->setCellValue("L{$row}", $totalIva);
+        $sheet->setCellValue("M{$row}","=SUM(I$row:L$row)");
+
+        return $this->saveSpreadsheet($spreadsheet, "libro_contribuyentes_", $request); 
+    }
+
 
     private function processUploadedFiles($files)
     {
@@ -347,7 +437,7 @@ class ReportingController extends Controller
     private function getCodesByBookType(string $book_type): array
     {
         return match ($book_type) {
-            "contribuyentes" => ["03", "04", "05"],
+            "contribuyentes" => ["03", "05", "06"],
             "consumidores" => ["01", "11"],
             "percepcion_iva" => ["03", "06", "05"],
             "retencion_iva" => ["07", "05", "06"],
