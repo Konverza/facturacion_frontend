@@ -443,7 +443,7 @@
                                             data-modal-toggle="deleteModal" data-modal-target="deleteModal"
                                             data-form="form-delete-dte-{{ $dte->id }}" onlyIcon />
                                     </form>
-                                    <x-button type="a" href="{{ Route('business.dte.create', ['document_type' => $dte->type, 'id' => $dte->id]) }}" icon="arrow-right"
+                                    <x-button type="a" href="{!! Route('business.dte.create', ['document_type' => $dte->type]) . '&id=' . $dte->id !!}" icon="arrow-right"
                                         typeButton="secondary" onlyIcon />
                                 </div>
                             </div>

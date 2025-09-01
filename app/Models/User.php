@@ -26,6 +26,7 @@ class User extends Authenticatable
         'remember_token',
         'status',
         'last_login_at',
+        'easypay_access',
     ];
 
     /**

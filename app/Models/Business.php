@@ -34,4 +34,9 @@ class Business extends Model
     {
         return $this->belongsTo(Plan::class);
     }
+
+    public function users()
+    {
+        return $this->hasMany(BusinessUser::class);
+    }
 }

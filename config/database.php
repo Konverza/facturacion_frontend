@@ -112,6 +112,46 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'registro_fe' => [
+            'driver' => 'mysql',
+            'url' => env('REGISTRO_FE_DB_URL'),
+            'host' => env('REGISTRO_FE_DB_HOST', 'localhost'),
+            'port' => env('REGISTRO_FE_DB_PORT', '3306'),
+            'database' => env('REGISTRO_FE_DB_DATABASE', 'laravel'),
+            'username' => env('REGISTRO_FE_DB_USERNAME', 'root'),
+            'password' => env('REGISTRO_FE_DB_PASSWORD', ''),
+            'unix_socket' => env('REGISTRO_FE_DB_SOCKET', ''),
+            'charset' => env('REGISTRO_FE_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('REGISTRO_FE_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
+        'easypay' => [
+            'driver' => 'mysql',
+            'url' => env('EASYPAY_DB_URL'),
+            'host' => env('EASYPAY_DB_HOST', 'localhost'),
+            'port' => env('EASYPAY_DB_PORT', '3306'),
+            'database' => env('EASYPAY_DB_DATABASE', 'laravel'),
+            'username' => env('EASYPAY_DB_USERNAME', 'root'),
+            'password' => env('EASYPAY_DB_PASSWORD', ''),
+            'unix_socket' => env('EASYPAY_DB_SOCKET', ''),
+            'charset' => env('EASYPAY_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('EASYPAY_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
+
     ],
 
     /*
