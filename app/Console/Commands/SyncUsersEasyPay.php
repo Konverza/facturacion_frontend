@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\Business;
-use App\Models\BusinessUser;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -83,16 +82,37 @@ class SyncUsersEasyPay extends Command
                     ->orWhere('empresa_id', $empresa->id)
                     ->first();
 
+                $user_dui = str_replace("-", "", json_decode($empresa->datos_empresa)->dui_nit) ?? "";
+                $servicio_id = 1; // ID del servicio que deseas asignar
+
                 if ($usuario) {
                     $this->info("Usuario ya creado: {$usuario->email}");
+
+                    // Verificar si existe la relación en usuarios_servicios
+                    $relacion = DB::connection("easypay")->table("usuarios_servicios")
+                        ->where('usuario_id', $usuario->id)
+                        ->where('user_dui', $user_dui)
+                        ->where('servicio_id', $servicio_id)
+                        ->first();
+
+                    if (!$relacion) {
+                        DB::connection("easypay")->table("usuarios_servicios")->insert([
+                            'usuario_id' => $usuario->id,
+                            'user_dui' => $user_dui,
+                            'servicio_id' => $servicio_id,
+                        ]);
+                        $this->info("Relación usuario-servicio creada para: {$usuario->email}");
+                    } else {
+                        $this->info("Relación usuario-servicio ya existe para: {$usuario->email}");
+                    }
                 } else {
                     $this->info("Usuario no encontrado, creando: {$user->email}");
 
                     // Obtener el correlativo más alto de usuarios
                     $correlativo = DB::connection("easypay")->table("users")->max("correlativo") + 1;
 
-                    DB::connection("easypay")->table("users")->insert([
-                        'dui' => str_replace("-", "", json_decode($empresa->datos_empresa)->dui_nit) ?? "",
+                    $userId = DB::connection("easypay")->table("users")->insertGetId([
+                        // 'dui' => str_replace("-", "", json_decode($empresa->datos_empresa)->dui_nit) ?? "",
                         'empresa_id' => $empresa->id,
                         'correlativo' => $correlativo,
                         'tipo' => 'user',
@@ -102,6 +122,12 @@ class SyncUsersEasyPay extends Command
                         'email' => $user->email,
                         'enlace_foto' => null,
                         'password' => $user->password,
+                    ]);
+
+                    DB::connection("easypay")->table("usuarios_servicios")->insert([
+                        'usuario_id' => $userId,
+                        'user_dui' => $user_dui,
+                        'servicio_id' => $servicio_id,
                     ]);
 
                     $this->info("Usuario creado: {$user->email}");
