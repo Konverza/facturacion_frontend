@@ -63,6 +63,7 @@ class SyncUsersEasyPay extends Command
             $empresa = DB::connection("registro_fe")
                 ->table("empresas")
                 ->whereRaw('REPLACE(JSON_UNQUOTE(JSON_EXTRACT(`datos_empresa`, "$.nrc")), "-", "") = ?', [$nrc])
+                ->where("softDelete", 0)
                 ->first();
 
             // Obtener el usuario más antiguo asociado al negocio
