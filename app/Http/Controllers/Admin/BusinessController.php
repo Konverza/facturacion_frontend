@@ -76,6 +76,7 @@ class BusinessController extends Controller
         $data_business_repsonse = Http::post($this->octopus_url . "/datos_empresa/", [
             "nombre" => $request->razon_social,
             "nit" => $request->nit,
+            "dui" => str_replace("-", "", $request->dui),
             "nrc" => str_replace("-", "", $request->nrc),
             "codActividad" => $codigo_actividad_economica,
             "descActividad" => $descripcion_actividad_economica,

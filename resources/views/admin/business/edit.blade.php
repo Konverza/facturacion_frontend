@@ -29,6 +29,8 @@
                             <div class="mt-2 flex flex-col gap-4">
                                 <x-input type="text" label="NIT" placeholder="Ingresa el NIT del negocio"
                                     name="nit" id="nit" value="{{ old('nit', $empresa['nit']) }}" />
+                                <x-input type="text" label="DUI" placeholder="Ingresa el DUI del negocio"
+                                    name="dui" id="dui" value="{{ old('dui', $empresa['dui']) }}" />
                                 <x-input type="text" label="NRC" placeholder="Ingresa el NRC del negocio"
                                     name="nrc" id="nrc" value="{{ old('nrc', $empresa['nrc']) }}" />
                                 <x-input type="text" label="Razón social" name="razon_social" id="razon-social"
