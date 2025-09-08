@@ -24,6 +24,8 @@ class DtesTable extends Component
     public $page = 1;
     public $fechaInicio;
     public $fechaFin;
+    public $emisionInicio;
+    public $emisionFin;
     public $codSucursal;
     public $codPuntoVenta;
     public $tipo_dte;
@@ -81,6 +83,8 @@ class DtesTable extends Component
         $this->reset([
             'fechaInicio',
             'fechaFin',
+            'emisionInicio',
+            'emisionFin',
             'codSucursal',
             'codPuntoVenta',
             'tipo_dte',
@@ -114,6 +118,8 @@ class DtesTable extends Component
             'nit' => $this->nit,
             'fechaInicio' => $this->fechaInicio ? "{$this->fechaInicio}T00:00:00" : null,
             'fechaFin' => $this->fechaFin ? "{$this->fechaFin}T23:59:59" : null,
+            'emisionInicio' => $this->emisionInicio ? "{$this->emisionInicio}T00:00:00" : null,
+            'emisionFin' => $this->emisionFin ? "{$this->emisionFin}T23:59:59" : null,
             'codSucursal' => $this->codSucursal,
             'codPuntoVenta' => $this->codPuntoVenta,
             'tipo_dte' => $this->tipo_dte,
@@ -136,7 +142,7 @@ class DtesTable extends Component
 
 
         // Realizar la solicitud a la API de Octopus para obtener los DTEs
-        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes",   array_merge($parameters, [
+        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes/",   array_merge($parameters, [
             'page' => $this->page,
             'limit' => $this->perPage,
             'sort' => $this->sort,
@@ -210,6 +216,8 @@ class DtesTable extends Component
             'nit' => $this->nit,
             'fechaInicio' => $this->fechaInicio ? "{$this->fechaInicio}T00:00:00" : null,
             'fechaFin' => $this->fechaFin ? "{$this->fechaFin}T23:59:59" : null,
+            'emisionInicio' => $this->emisionInicio ? "{$this->emisionInicio}T00:00:00" : null,
+            'emisionFin' => $this->emisionFin ? "{$this->emisionFin}T23:59:59" : null,
             'codSucursal' => $this->codSucursal,
             'codPuntoVenta' => $this->codPuntoVenta,
             'tipo_dte' => $this->tipo_dte,
@@ -218,7 +226,7 @@ class DtesTable extends Component
             'q' => $this->q
         ];
         // Realizar la solicitud a la API de Octopus para obtener los DTEs
-        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes",   $parameters);
+        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes/",   $parameters);
         $data = $response_dtes->json();
         $dtes = array_map(function ($dte) {
             $dte["documento"] = json_decode($dte["documento"]);

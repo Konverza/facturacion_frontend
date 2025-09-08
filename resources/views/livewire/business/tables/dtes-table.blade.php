@@ -60,15 +60,24 @@
                 <div class="animate-fade-in space-y-4">
                     <div class="flex sm:flex-row flex-col gap-4">
                         <div class="flex-1">
-                            <x-input type="date" wire:model.live.debounce.500ms="fechaInicio"
+                            <x-input type="date" wire:model.live.debounce.500ms="emisionInicio"
                                 label="Fecha emitido desde" />
                         </div>
                         <div class="flex-1">
-                            <x-input type="date" wire:model.live.debounce.500ms="fechaFin"
+                            <x-input type="date" wire:model.live.debounce.500ms="emisionFin"
                                 label="Fecha emitido hasta" />
                         </div>
                     </div>
-
+                    <div class="flex sm:flex-row flex-col gap-4">
+                        <div class="flex-1">
+                            <x-input type="date" wire:model.live.debounce.500ms="fechaInicio"
+                                label="Fecha de procesamiento desde" />
+                        </div>
+                        <div class="flex-1">
+                            <x-input type="date" wire:model.live.debounce.500ms="fechaFin"
+                                label="Fecha de procesamiento hasta" />
+                        </div>
+                    </div>
                     <div class="flex sm:flex-row flex-col gap-4">
                         @if (!$only_fcf)
                             <div class="flex-1">
@@ -178,7 +187,12 @@
             </div>
         </div>
         <div class="flex-1">
-            <div class="flex justify-end">
+            <div class="flex justify-between items-center">
+                <div
+                    class="my-4 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30 text-sm">
+                    <b>Fecha de Procesamiento: </b>Fecha en la que el DTE recibe el sello de Hacienda. <br>
+                    <b>Fecha de Emisión: </b>Fecha en la que el DTE fue generado en el sistema.
+                </div>
                 <x-button wire:click="exportAsExcel" typeButton="success" icon="excel"
                     text="Exportar esta tabla a Excel" class="my-3" wire:loading.attr="disabled" />
             </div>
@@ -283,7 +297,12 @@
                             </x-td>
                             <x-td>
                                 <span class="text-xs">
+                                    <strong>Fecha de procesamiento:</strong><br>
                                     {{ \Carbon\Carbon::parse($invoice['fhProcesamiento'])->format('d/m/Y h:i:s A') }}
+                                </span><br>
+                                <span class="text-xs">
+                                    <strong>Fecha de emisión:</strong><br>
+                                    {{ \Carbon\Carbon::parse($invoice['fhEmision'])->format('d/m/Y h:i:s A') }}
                                 </span>
                             </x-td>
                             <x-td class="text-xs">

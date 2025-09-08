@@ -455,8 +455,8 @@ class ReportingController extends Controller
         // Parametros
         $parameters = [
             'nit' => $nit,
-            'fechaInicio' => $start_date ? "{$start_date}T00:00:00" : null,
-            'fechaFin' => $end_date ? "{$end_date}T23:59:59" : null,
+            'emisionInicio' => $start_date ? "{$start_date}T00:00:00" : null,
+            'emisionFin' => $end_date ? "{$end_date}T23:59:59" : null,
             // 'codSucursal' => $this->codSucursal,
             // 'codPuntoVenta' => $this->codPuntoVenta,
             // 'tipo_dte' => $this->tipo_dte,
@@ -465,7 +465,7 @@ class ReportingController extends Controller
         ];
 
         // Realizar la solicitud a la API de Octopus para obtener los DTEs
-        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes", $parameters);
+        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes/", $parameters);
         $data = $response_dtes->json();
         $dtes = array_map(function ($dte) {
             $dte["documento"] = json_decode($dte["documento"], true);
