@@ -59,8 +59,8 @@ class DocumentosElectronicosTable extends Component
             'q' => $this->search,
             'tipo_dte' => $this->tipo_documento,
             'documento_receptor' => $this->numero_documento,
-            'fechaInicio' => $this->emitido_desde ? $this->emitido_desde . 'T00:00:00' : null,
-            'fechaFin' => $this->emitido_hasta ? $this->emitido_hasta . 'T23:59:59' : null,
+            'emisionInicio' => $this->emitido_desde ? $this->emitido_desde . 'T00:00:00' : null,
+            'emisionFin' => $this->emitido_hasta ? $this->emitido_hasta . 'T23:59:59' : null,
         ];
 
         // Limpiar nulos
