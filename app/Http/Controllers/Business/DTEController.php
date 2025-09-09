@@ -1475,8 +1475,8 @@ class DTEController extends Controller
 
                 // Agrupar por fecha y ordenar dentro de cada grupo por fecha y hora
                 $grouped_dtes = $dte_collection
-                    ->sortBy('fhProcesamiento') // Ordenar globalmente antes de agrupar
-                    ->groupBy(fn($dte) => \Carbon\Carbon::parse($dte["fhProcesamiento"])->toDateString())
+                    ->sortBy('fhEmision') // Ordenar globalmente antes de agrupar
+                    ->groupBy(fn($dte) => \Carbon\Carbon::parse($dte["fhEmision"])->toDateString())
                     ->map(fn($dtes) => $dtes->groupBy('tipo_dte'));
 
                 $result = [];

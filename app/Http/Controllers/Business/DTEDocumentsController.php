@@ -164,7 +164,7 @@ class DTEDocumentsController extends Controller
                 "numero_documento" => $dte["codGeneracion"],
                 "codigo_retencion" => $request->codigo_tributo,
                 "descripcion_retencion" => $request->descripcion_retencion,
-                "fecha_documento" => Carbon::parse($dte["fhProcesamiento"])->format("Y-m-d"),
+                "fecha_documento" => Carbon::parse($dte["fhEmision"])->format("Y-m-d"),
                 "monto_sujeto_retencion" => $request->monto_sujeto_retencion,
                 "iva_retenido" => $request->iva_retenido
             ];

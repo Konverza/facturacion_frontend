@@ -53,7 +53,7 @@ class Contribuyente implements FromCollection, WithColumnFormatting, WithStrictN
             }
 
             $data[] = [
-                \Carbon\Carbon::parse($dte["fhProcesamiento"])->format('d/m/Y'),
+                \Carbon\Carbon::parse($dte["fhEmision"])->format('d/m/Y'),
                 "4",
                 $dte["tipo_dte"],
                 str_replace('-', '', $dte["codGeneracion"]),

@@ -152,7 +152,7 @@ class RelatedDocumentsController extends Controller
                 "tipo_documento" => $document["tipo_dte"],
                 "tipo_generacion" => 2,
                 "numero_documento" => $request->codGeneracion,
-                "fecha_documento" => Carbon::parse($document["fhProcesamiento"])->format("Y-m-d"),
+                "fecha_documento" => Carbon::parse($document["fhEmision"])->format("Y-m-d"),
             ];
 
             session(["dte" => $this->dte]);
