@@ -80,7 +80,6 @@ class SyncUsersEasyPay extends Command
                 $usuario = DB::connection("easypay")
                     ->table("users")
                     ->where('email', $user->email)
-                    ->orWhere('empresa_id', $empresa->id)
                     ->first();
 
                 $user_dui = str_replace("-", "", json_decode($empresa->datos_empresa)->dui_nit) ?? "";
@@ -94,10 +93,12 @@ class SyncUsersEasyPay extends Command
                         ->where('usuario_id', $usuario->id)
                         ->where('user_dui', $user_dui)
                         ->where('servicio_id', $servicio_id)
+                        ->where("empresa_id", $empresa->id)
                         ->first();
 
                     if (!$relacion) {
                         DB::connection("easypay")->table("usuarios_servicios")->insert([
+                            'empresa_id' => $empresa->id,
                             'usuario_id' => $usuario->id,
                             'user_dui' => $user_dui,
                             'servicio_id' => $servicio_id,
@@ -114,7 +115,6 @@ class SyncUsersEasyPay extends Command
 
                     $userId = DB::connection("easypay")->table("users")->insertGetId([
                         // 'dui' => str_replace("-", "", json_decode($empresa->datos_empresa)->dui_nit) ?? "",
-                        'empresa_id' => $empresa->id,
                         'correlativo' => $correlativo,
                         'tipo' => 'user',
                         'telefono' => "+503" . str_replace("-", "", json_decode($empresa->representante_legal)->telefono ?? ""),
