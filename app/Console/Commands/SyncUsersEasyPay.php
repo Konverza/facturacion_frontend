@@ -126,6 +126,7 @@ class SyncUsersEasyPay extends Command
                     ]);
 
                     DB::connection("easypay")->table("usuarios_servicios")->insert([
+                        'empresa_id' => $empresa->id,
                         'usuario_id' => $userId,
                         'user_dui' => $user_dui,
                         'servicio_id' => $servicio_id,
