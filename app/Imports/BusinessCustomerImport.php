@@ -96,15 +96,18 @@ class BusinessCustomerImport implements ToModel, WithHeadingRow, WithUpserts, Wi
             return null; // Skip rows with invalid Municipio
         }
 
-
-        return new BusinessCustomer([
-            'business_id' => $this->business_id,
-            'tipoDocumento' => $tipoDocumento,
+        // Update or create based on numDocumento
+        return BusinessCustomer::updateOrCreate(
+            [
             'numDocumento' => $row["Número de Documento"],
-            'nrc' => $row["NRC"] ?? null,
+            'business_id' => $this->business_id,
+            ],
+            [
+            'tipoDocumento' => $tipoDocumento,
+            'nrc' => $row["NRC (Solo si es contribuyente)"] ?? null,
             'nombre' => $row["Nombre Completo, Razon Social o Denominacion"],
             'codActividad' => $codActividad,
-            'nombreComercial' => $row["Nombre Comercial"] ?? null,
+            'nombreComercial' => $row["Nombre Comercial (si aplica)"] ?? null,
             'departamento' => $departamento,
             'municipio' => $municipio,
             'complemento' => $row["Direccion"] ?? null,
@@ -113,7 +116,8 @@ class BusinessCustomerImport implements ToModel, WithHeadingRow, WithUpserts, Wi
             'codPais' => $codPais ?? null,
             'tipoPersona' => $tipoPersona ?? null,
             'special_price' => isset($row["¿Aplicar Descuento?"]) && mb_strtolower($row["¿Aplicar Descuento?"]) === "sí" ? 1 : 0
-        ]);
+            ]
+        );
     }
 
     // Función para quitar tildes y normalizar
