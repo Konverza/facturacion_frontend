@@ -2,7 +2,7 @@
 @section('title', 'Generar factura electrónica')
 @section('content')
     <section class="my-4 pb-4">
-        @include('layouts.partials.business.dte.header', ['title' => 'Generar factura electrónica'])
+        @include('layouts.partials.business.dte.header', ['title' => 'Generar Factura de Consumidor Final'])
         <form action="{{ Route('business.dte.factura') }}" method="POST">
             @csrf
             @include('layouts.partials.business.dte.data-top-dte')
