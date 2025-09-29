@@ -155,6 +155,37 @@
                     </a>
                 </li>
             @endif
+            @if ($business->bulk_emission)
+                <li>
+                    <button type="button"
+                        class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
+                        aria-controls="dropdown-lotes" data-collapse-toggle="dropdown-lotes">
+                        <x-icon icon="files"
+                            class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                        <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Facturación por lotes</span>
+                        <x-icon icon="arrow-down"
+                            class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    </button>
+                    <ul id="dropdown-lotes" class="hidden space-y-2 py-2">
+                        <li>
+                            <a href="{{ Route('business.documents.index') }}"
+                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                                <span class="ms-3 flex-1 whitespace-nowrap">
+                                    Plantillas de DTE
+                                </span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ Route('business.products.index') }}"
+                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                                <span class="ms-3 flex-1 whitespace-nowrap">
+                                    Envío Masivo
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            @endif
             <li>
                 <button type="button"
                     class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"

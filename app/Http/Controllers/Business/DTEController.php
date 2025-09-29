@@ -80,6 +80,17 @@ class DTEController extends Controller
                 $this->dte = json_decode($dte->content, true);
                 $this->dte["id"] = $id;
                 $this->dte["type"] = $dte->type;
+                if (!$request->input("use_template")) {
+                    $this->dte["status"] = $dte->status;
+                    $this->dte["name"] = $dte->name;
+                } else {
+                    $this->dte["status"] = null;
+                    $this->dte["name"] = null;
+                    $this->dte["use_template"] = true;
+                }
+            } else {
+                $this->dte["status"] = null;
+                $this->dte["name"] = null;
             }
 
             if (session()->has("dte") && session("dte.type") !== $number) {
@@ -672,7 +683,7 @@ class DTEController extends Controller
                 }
                 session()->forget('dte');
                 return $data = [
-                    "estado" => "BORRADOR",
+                    "estado" => "PLANTILLA",
                     "observaciones" => "Documento guardado como plantilla"
                 ];
             }
@@ -704,7 +715,7 @@ class DTEController extends Controller
                     }
                 }
 
-                if ($request->id_dte !== "" && $request->id_dte !== null) {
+                if ($request->id_dte !== "" && $request->id_dte !== null && !$request->use_template) {
                     DTE::where("id", $request->id_dte)->delete();
                 }
 
@@ -715,7 +726,7 @@ class DTEController extends Controller
                         'success_message' => "Documento generado correctamente",
                     ])->send();
             } elseif ($data["estado"] === "RECHAZADO") {
-                if ($request->id_dte !== "" && $request->id_dte !== null) {
+                if ($request->id_dte !== "" && $request->id_dte !== null && !$request->use_template) {
                     $this->updateDtePending($request->id_dte, "error", $data["observaciones"] ?? "Error al generar el documento");
                 } else {
                     $this->createDtePending($data["observaciones"] ?? "Error al generar el documento", "error");
@@ -732,6 +743,13 @@ class DTEController extends Controller
                     ->with(
                         "success_message",
                         "Documento guardado como borrador"
+                    )->send();
+            } elseif ($data["estado"] === "PLANTILLA") {
+                return redirect()->route('business.index')
+                    ->with('success', "Exito")
+                    ->with(
+                        "success_message",
+                        "Documento guardado como plantilla"
                     )->send();
             }
         } else {
