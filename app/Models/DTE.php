@@ -11,6 +11,7 @@ class DTE extends Model
     protected $fillable = [
         "business_id",
         "content",
+        "name",
         "type",
         "status",
         "error_message"

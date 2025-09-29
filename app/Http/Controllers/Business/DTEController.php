@@ -666,9 +666,9 @@ class DTEController extends Controller
 
             if ($request->input("action") === "template") {
                 if ($request->id_dte !== "" && $request->id_dte !== null) {
-                    $this->updateDtePending($request->id_dte, "template", "Documento actualizado como plantilla");
+                    $this->updateDtePending($request->id_dte, "template", "Documento actualizado como plantilla", $request->template_name);
                 } else {
-                    $this->createDtePending("Documento guardado como plantilla", "template");
+                    $this->createDtePending("Documento guardado como plantilla", "template", $request->template_name);
                 }
                 session()->forget('dte');
                 return $data = [
@@ -1068,7 +1068,7 @@ class DTEController extends Controller
         }
     }
 
-    public function createDtePending($error, $status = "pending")
+    public function createDtePending($error, $status = "pending", $name = null)
     {
         try {
             DB::beginTransaction();
@@ -1076,6 +1076,7 @@ class DTEController extends Controller
                 "business_id" => session("business"),
                 "content" => json_encode($this->dte),
                 "type" => $this->dte["type"],
+                "name" => $name,
                 "status" => $status,
                 "error_message" => $error
             ]);
@@ -1092,13 +1093,14 @@ class DTEController extends Controller
         }
     }
 
-    public function updateDtePending($id, $status = "pending", $error)
+    public function updateDtePending($id, $status = "pending", $error, $name = null)
     {
         try {
             DB::beginTransaction();
             DTE::where("id", $id)->update([
                 "content" => json_encode($this->dte),
                 "status" => $status,
+                "name" => $name,
                 "error_message" => $error
             ]);
             DB::commit();

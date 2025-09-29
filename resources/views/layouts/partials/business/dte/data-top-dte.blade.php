@@ -24,9 +24,15 @@
     <div class="my-4 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30">
         Puede guardar el DTE como plantilla para enviarlo por lotes o reutilizarlo nuevamente.
     </div>
-    <div class="mt-2">
-        <x-input type="checkbox" label="Guardar DTE como plantilla" name="save_as_template"
+    <div class="mt-2 flex flex-col gap-2">
+        <div>
+            <x-input type="checkbox" label="Guardar DTE como plantilla" name="save_as_template"
             id="save_as_template" />
+        </div>
+        <div id="template_name" class="hidden">
+            <x-input type="text" label="Nombre de la plantilla" name="template_name" placeholder="Nombre de la plantilla"
+            class="w-full" value="{{ $dte['name'] ?? '' }}" required />
+        </div>
     </div>
 </div>
 @endif

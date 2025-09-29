@@ -909,11 +909,13 @@ $(document).ready(function () {
             $("#generate-button").addClass("hidden");
             $("#draft-button").addClass("hidden");
             $("#template-button").removeClass("hidden");
+            $("#template_name").removeClass("hidden");
         } else {
             $("#omitir-datos-receptor-container").removeClass("hidden");
             $("#generate-button").removeClass("hidden");
             $("#draft-button").removeClass("hidden");
             $("#template-button").addClass("hidden");
+            $("#template_name").addClass("hidden");
         }
 
         if ($(this).is(":checked")) {
