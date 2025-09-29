@@ -903,7 +903,19 @@ $(document).ready(function () {
     });
 
     // Omitir Datos Emisor
-    $("#omitir_datos_receptor").on("change", function () {
+    $("#omitir_datos_receptor, #save_as_template").on("change", function () {
+        if ($("#save_as_template").is(":checked")) {
+            $("#omitir-datos-receptor-container").addClass("hidden");
+            $("#generate-button").addClass("hidden");
+            $("#draft-button").addClass("hidden");
+            $("#template-button").removeClass("hidden");
+        } else {
+            $("#omitir-datos-receptor-container").removeClass("hidden");
+            $("#generate-button").removeClass("hidden");
+            $("#draft-button").removeClass("hidden");
+            $("#template-button").addClass("hidden");
+        }
+
         if ($(this).is(":checked")) {
             // Clear all the inputs within the div #datos-receptor and make them readonly and not required
             $(

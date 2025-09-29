@@ -48,7 +48,7 @@
                         </div>
                         <div id="default-styled-tab-content">
                             <div class="hidden" id="styled-receptor" role="tabpanel" aria-labelledby="receptor-tab">
-                                <div class="flex flex-col justify-between gap-y-4 sm:flex-row sm:items-center">
+                                <div class="flex flex-col justify-between gap-y-4 sm:flex-row sm:items-center" id="omitir-datos-receptor-container">
                                     <div>
                                         <x-input type="checkbox" label="Omitir datos del receptor"
                                             name="omitir_datos_receptor" id="omitir_datos_receptor" />

@@ -75,26 +75,6 @@ class DTEController extends Controller
             $business_customers = BusinessCustomer::where("business_id", $business_user->business_id)->get();
             $business = Business::find($business_user->business_id);
             $datos_empresa = $this->octopus_service->get("/datos_empresa/nit/" . $business->nit);
-            // $dtes = Http::timeout(30)->get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
-            // $dtes = $dtes["items"] ?? [];
-            // $dtes = collect($dtes)
-            //     ->filter(function ($dte) {
-            //         return $dte["estado"] === "PROCESADO";
-            //     });
-            // if ($number === "04") {
-            //     $dtes = $dtes->filter(function ($dte) {
-            //         return in_array($dte["tipo_dte"], ["01", "03"]);
-            //     })->toArray();
-            // } elseif ($number === "05" || $number === "06") {
-            //     $dtes = $dtes->filter(function ($dte) {
-            //         return in_array($dte["tipo_dte"], ["03", "07"]);
-            //     })->toArray();
-            // } else if ($number === "07") {
-            //     $dtes = $dtes->filter(function ($dte) {
-            //         return in_array($dte["tipo_dte"], ["01", "03", "14"]);
-            //     })->toArray();
-            // }
-
             if ($id) {
                 $dte = DTE::find($id);
                 $this->dte = json_decode($dte->content, true);
@@ -237,9 +217,11 @@ class DTEController extends Controller
 
     public function credito_fiscal(Request $request)
     {
-        $request->validate([
-            "nrc_customer" => "required|string",
-        ]);
+        if (!$request->has("save_as_template")) {
+            $request->validate([
+                "nrc_customer" => "required|string",
+            ]);
+        }
 
         $numero_documento = $request->numero_documento;
         $isNIT = strlen($numero_documento) === 14 && ctype_digit($numero_documento);
@@ -426,13 +408,15 @@ class DTEController extends Controller
     public function factura_exportacion(Request $request)
     {
 
-        $request->validate([
-            "regimen_exportacion" => "nullable|string",
-            "recinto_fiscal" => "nullable|string",
-            "tipo_item_exportar" => "required|string",
-            "codigo_pais" => "required|string",
-            "tipo_persona" => "required|string",
-        ]);
+        if (!$request->has("save_as_template")) {
+            $request->validate([
+                "regimen_exportacion" => "nullable|string",
+                "recinto_fiscal" => "nullable|string",
+                "tipo_item_exportar" => "required|string",
+                "codigo_pais" => "required|string",
+                "tipo_persona" => "required|string",
+            ]);
+        }
 
         $numero_documento = $request->numero_documento;
         if ($request->tipo_documento === "36") {
@@ -450,14 +434,16 @@ class DTEController extends Controller
 
     public function factura_sujeto_excluido(Request $request)
     {
-        $numero_documento = $request->numero_documento;
-        if ($request->tipo_documento === "36") {
-            if (strlen($numero_documento) !== 14) {
-                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
-            }
-        } else if ($request->tipo_documento === "13") {
-            if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
-                return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+        if (!$request->has("save_as_template")) {
+            $numero_documento = $request->numero_documento;
+            if ($request->tipo_documento === "36") {
+                if (strlen($numero_documento) !== 14) {
+                    return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener exactamente 14 dígitos.']);
+                }
+            } else if ($request->tipo_documento === "13") {
+                if (!preg_match('/^\d{8}-\d{1}$/', $numero_documento)) {
+                    return redirect()->back()->withErrors(['numero_documento' => 'El número de documento debe tener el formato XXXXXXXX-X.']);
+                }
             }
         }
 
@@ -678,6 +664,19 @@ class DTEController extends Controller
                 ];
             }
 
+            if ($request->input("action") === "template") {
+                if ($request->id_dte !== "" && $request->id_dte !== null) {
+                    $this->updateDtePending($request->id_dte, "template", "Documento actualizado como plantilla");
+                } else {
+                    $this->createDtePending("Documento guardado como plantilla", "template");
+                }
+                session()->forget('dte');
+                return $data = [
+                    "estado" => "BORRADOR",
+                    "observaciones" => "Documento guardado como plantilla"
+                ];
+            }
+
             // dd($dte);
             $response = Http::timeout(30)->post(env("OCTOPUS_API_URL") . $endpoint, $dte);
             $data = json_decode($response->body(), true);
@@ -771,6 +770,16 @@ class DTEController extends Controller
             ];
         }
 
+        if ($request->has("save_as_template")) {
+            return [
+                "nombre" => "Clientes Plantilla",
+                "telefono" => null,
+                "correo" => null,
+                "direccion" => null,
+                "tipoDocumento" => null,
+                "numDocumento" => null
+            ];
+        }
 
         switch ($type) {
             case "01":

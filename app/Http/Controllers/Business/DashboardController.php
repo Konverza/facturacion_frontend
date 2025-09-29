@@ -48,7 +48,7 @@ class DashboardController extends Controller
             $business_user = BusinessUser::where("user_id", $user->id)->first();
             $business = Business::find($business_id);
             $business_plan = BusinessPlan::where("nit", $business->nit)->with('plan')->first();
-            $dtes_pending = DTE::where('business_id', $business->id);
+            $dtes_pending = DTE::where('business_id', $business->id)->whereNot('status', 'template');
             if ($user->only_fcf) {
                 $dtes_pending = $dtes_pending->where('type', '01');
             } else {
