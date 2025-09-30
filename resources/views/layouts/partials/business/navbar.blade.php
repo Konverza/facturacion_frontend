@@ -168,7 +168,7 @@
                     </button>
                     <ul id="dropdown-lotes" class="hidden space-y-2 py-2">
                         <li>
-                            <a href="{{ Route('business.documents.index') }}"
+                            <a href="{{ Route('business.bulk.index') }}"
                                 class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
                                 <span class="ms-3 flex-1 whitespace-nowrap">
                                     Plantillas de DTE
@@ -176,7 +176,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ Route('business.products.index') }}"
+                            <a href="{{ Route('business.bulk.send') }}"
                                 class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
                                 <span class="ms-3 flex-1 whitespace-nowrap">
                                     Envío Masivo

@@ -127,7 +127,7 @@ class DTEProductController extends Controller
             $product_tributes = json_decode($business_product->tributos, true) ?? [];
 
             if (!$found) {
-                if ($customer && $customer["special_price"]) {
+                if ($customer && isset($customer["special_price"]) && $customer["special_price"]) {
                     $precio = (float) $business_product->special_price_with_iva;
                     $precio_sin_tributos = (float) $business_product->special_price;
                 } else {
@@ -191,7 +191,7 @@ class DTEProductController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 "success" => false,
-                "message" => "Ha ocurrido un error al guardar el producto: " . $e->getMessage(),
+                "message" => "Ha ocurrido un error al guardar el producto: " . $e->getMessage() . " ". $e->getLine(),
             ]);
         }
     }

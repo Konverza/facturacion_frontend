@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BusinessController;
 use App\Http\Controllers\Business\AssociatedDocumentsController;
+use App\Http\Controllers\Business\BulkController;
 use App\Http\Controllers\Business\BusinessSucursalController;
 use App\Http\Controllers\Business\CategoryController;
 use App\Http\Controllers\Business\CuentasCobrarController;
@@ -56,6 +57,12 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     // POS
     Route::get("/pos", [PosController::class, "index"])->name('pos.index');
 
+    // Bulk Emission
+    Route::get("/bulk", [BulkController::class, "index"])->name('bulk.index');
+    Route::delete("/bulk/{id}", [BulkController::class, "destroy"])->name('bulk.destroy');
+    Route::get("/bulk/send", [BulkController::class, "send"])->name('bulk.send');
+    Route::get("/bulk/template/{id}", [BulkController::class, "template"])->name('bulk.template');
+
     Route::prefix("dte")->name("dte.")->group(function () {
         Route::get("/generate", [DTEController::class, "create"])->name('create');
         Route::get("/cancel", [DTEController::class, "cancel"])->name('cancel');
@@ -65,6 +72,9 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         Route::post("/send-email", [MailController::class, "send"])->name('send-email');
         Route::post("/send-whatsapp", [WhatsAppController::class, "send"])->name('send-whatsapp');
         Route::post("/download", [DocumentController::class, "zipAndDownload"])->name('download-dtes');
+    // Nuevos endpoints JSON/Excel
+    Route::post('/import-customers-excel', [DTEController::class, 'importCustomersExcel'])->name('import-customers-excel');
+    Route::post('/submit-from-json', [DTEController::class, 'submitFromJson'])->name('submit-from-json');
 
         Route::prefix("product")->name("product.")->group(function () {
             //Products

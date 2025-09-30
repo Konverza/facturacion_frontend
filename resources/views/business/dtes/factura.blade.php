@@ -57,7 +57,7 @@
                                         data-target="#selected-customer" class="show-modal w-full sm:w-auto"
                                         icon="user" />
                                 </div>
-                                <div class="mt-4" id="datos-receptor">
+                                <div class="mt-4 {{$dte['status'] == 'template' ? 'hidden' : ''}}" id="datos-receptor">
                                     <div class="flex flex-col gap-4 sm:flex-row">
                                         <div class="flex-1" id="select-tipos-documentos">
                                             <x-select label="Tipo de documento" name="tipo_documento" id="type_document"
@@ -67,7 +67,7 @@
                                         </div>
                                         <div class="flex-[2]">
                                             <x-input type="text" label="Número de documento"
-                                                id="numero_documento_customer" required name="numero_documento"
+                                                id="numero_documento_customer" :required="$dte['status'] != 'template'" name="numero_documento"
                                                 value="{{ old('numero_documento', isset($dte['customer']) ? $dte['customer']['numDocumento'] : '') }}"
                                                 placeholder="Ingresar el número de documento" />
                                         </div>
@@ -97,13 +97,13 @@
                                     <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                                         <div class="flex-1" id="select-departamentos">
                                             <x-select name="department" label="Departamento" id="departamento"
-                                                name="departamento" required :options="$departamentos"
+                                                name="departamento" :required="$dte['status'] != 'template'" :options="$departamentos"
                                                 value="{{ old('departamento', isset($dte['customer']) ? $dte['customer']['departamento'] : '') }}"
                                                 selected="{{ old('departamento', isset($dte['customer']) ? $dte['customer']['departamento'] : '') }}"
                                                 data-action="{{ Route('business.get-municipios') }}" />
                                         </div>
                                         <div class="flex-1" id="select-municipio">
-                                            <x-select name="municipio" label="Municipio" id="municipality" required
+                                            <x-select name="municipio" label="Municipio" id="municipality" :required="$dte['status'] != 'template'"
                                                 :options="$municipios ?? [
                                                     'Seleccione un departamento' => 'Seleccione un departamento',
                                                 ]"

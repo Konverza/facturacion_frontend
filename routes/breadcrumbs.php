@@ -231,3 +231,16 @@ Breadcrumbs::for("business.reporting.index", function (BreadcrumbTrail $trail) {
     $trail->parent("business");
     $trail->push($icon . "Reportería", route("business.reporting.index"));
 });
+
+// Bulk Emission
+Breadcrumbs::for("business.bulk.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='files' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Plantillas de DTEs", route("business.bulk.index"));
+});
+
+Breadcrumbs::for("business.bulk.send", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='paper-plane' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Envío Masivo", route("business.bulk.send"));
+});

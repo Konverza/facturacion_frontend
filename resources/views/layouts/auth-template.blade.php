@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>
         {{ env('APP_NAME') }} | @yield('title')
     </title>
@@ -17,6 +18,26 @@
     <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Configura CSRF para axios y jQuery usando la meta tag
+        (function() {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (window.axios) {
+                if (token) {
+                    window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+                }
+                // Asegura compatibilidad con Laravel (cookie XSRF-TOKEN -> cabecera X-XSRF-TOKEN)
+                window.axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+                window.axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
+                window.axios.defaults.withCredentials = true; // same-origin: envía cookies
+            }
+            if (window.jQuery && token) {
+                window.jQuery.ajaxSetup({ headers: { 'X-CSRF-TOKEN': token } });
+            }
+            // Expone global por si se necesita en scripts inline
+            window.csrfToken = token || '';
+        })();
+    </script>
     <script>
         (function() {
             let theme = localStorage.getItem('theme') || "light"

@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\CustomerListImport;
+use Illuminate\Support\Arr;
 
 class DTEController extends Controller
 {
@@ -607,6 +609,45 @@ class DTEController extends Controller
                 }
             }
 
+            // Validación de stock: sólo para tipos que impactan inventario
+            if (!in_array($this->dte['type'], ["07", "14", "04", "15"])) {
+                // Agrupar cantidad solicitada por producto de base de datos con stock habilitado
+                $cantidadesPorProducto = [];
+                $productosCargados = [];
+                foreach ($this->dte['products'] as $p) {
+                    if (is_array($p) && isset($p['product']) && is_array($p['product']) && isset($p['product']['id'])) {
+                        $bp = $productosCargados[$p['product']['id']] ?? BusinessProduct::find($p['product']['id']);
+                        if ($bp) {
+                            $productosCargados[$bp->id] = $bp; // cache simple
+                            if ($bp->has_stock) {
+                                $cantidadesPorProducto[$bp->id] = ($cantidadesPorProducto[$bp->id] ?? 0) + (float)($p['cantidad'] ?? 0);
+                            }
+                            // Si no tiene stock habilitado, se ignora (no se valida), según condición #2
+                        }
+                        // Si no existe en base de datos, se ignora (no se valida), según condición #2
+                    }
+                    // Si el item no es de base de datos, se ignora (no se valida)
+                }
+
+                // Verificar existencia suficiente para cada producto con stock habilitado
+                $faltantes = [];
+                foreach ($cantidadesPorProducto as $productId => $cantidadSolicitada) {
+                    $bp = $productosCargados[$productId] ?? BusinessProduct::find($productId);
+                    if ($bp && $bp->has_stock) {
+                        $disponible = (float) $bp->stockActual;
+                        if ($cantidadSolicitada > $disponible) {
+                            $faltantes[] = $bp->descripcion . " (solicitado: " . $cantidadSolicitada . ", disponible: " . $disponible . ")";
+                        }
+                    }
+                }
+                if (count($faltantes) > 0) {
+                    return redirect()->back()->with([
+                        'error' => 'Error',
+                        'error_message' => 'Stock insuficiente para: ' . implode('; ', $faltantes)
+                    ])->send();
+                }
+            }
+
             if ($this->dte["type"] === "15") {
 
                 if (!$this->otrosDocumentos()) {
@@ -766,25 +807,118 @@ class DTEController extends Controller
 
     public function getReceptorData(Request $request, $type)
     {
+        // Helpers locales para normalización y resolución por catálogos
+        $normalize = function ($text) {
+            if ($text === null) return null;
+            $text = mb_strtolower(trim((string)$text), 'UTF-8');
+            $replacements = [
+                'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n',
+                'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ñ' => 'n',
+            ];
+            return strtr($text, $replacements);
+        };
+
+        $resolveActividad = function ($value) use ($normalize) {
+            if ($value === null || $value === '') return [null, null];
+            // Acepta valores como "001 - Comercio al por menor" o solo código "001" o solo texto
+            $code = null; $desc = null;
+            $parts = preg_split('/\s*-\s*/', (string)$value, 2);
+            if (count($parts) === 2 && ctype_digit($parts[0])) {
+                $code = $parts[0];
+                $desc = $parts[1];
+            } elseif (ctype_digit((string)$value)) {
+                $code = (string)$value;
+            } else {
+                // buscar por descripción aproximada
+                foreach ($this->actividades_economicas as $k => $v) {
+                    if ($normalize($v) === $normalize($value)) {
+                        $code = (string)$k; $desc = $v; break;
+                    }
+                }
+            }
+            if ($code !== null && $desc === null) {
+                $desc = $this->actividades_economicas[$code] ?? null;
+            }
+            // Extraer solo descripción después del guion si aplica
+            if ($desc !== null && strpos($desc, '-') !== false) {
+                $tmp = explode('-', $desc, 2); $desc = trim($tmp[1]);
+            }
+            return [$code, $desc];
+        };
+
+        $resolveDepartamento = function ($value) use ($normalize) {
+            if ($value === null || $value === '') return null;
+            // value puede ser código o nombre
+            if (isset($this->departamentos[$value])) return $value;
+            foreach ($this->departamentos as $code => $dep) {
+                $nombre = is_array($dep) ? ($dep['nombre'] ?? (is_string($dep) ? $dep : '')) : (string)$dep;
+                if ($normalize($nombre) === $normalize($value)) return (string)$code;
+            }
+            return null;
+        };
+
+        $resolveMunicipio = function ($departamentoCode, $value) use ($normalize) {
+            if ($departamentoCode === null || $value === null || $value === '') return null;
+            $munis = $this->octopus_service->getCatalog("CAT-012", $departamentoCode);
+            if (isset($munis[$value])) return $value;
+            foreach ($munis as $code => $mun) {
+                $nombre = is_array($mun) ? ($mun['nombre'] ?? (is_string($mun) ? $mun : '')) : (string)$mun;
+                if ($normalize($nombre) === $normalize($value)) return (string)$code;
+            }
+            return null;
+        };
+
+        $normalizeTipoPersona = function ($value) use ($normalize) {
+            if ($value === null || $value === '') return null;
+            // Mapear por nombre al código según CAT correspondiente que viene en $this->tipo_servicio? No hay catálogo directo acá;
+            // aplicamos convención más usada en import: buscar key cuyo valor textual coincida
+            $map = [
+                'juridica' => '02',
+                'natural' => '01',
+            ];
+            $v = $normalize($value);
+            return $map[$v] ?? $value; // si ya viene código, lo dejamos
+        };
 
         $actividad = $this->actividades_economicas[$request->actividad_economica] ?? null;
         $descActividad = explode("-", $actividad);
         $descActividad = $descActividad[1] ?? null;
 
+        // Normalizaciones: tipo y número de documento, nrc y teléfono
+        $docCode = $this->normalizeDocType($request->tipo_documento);
+        $numDoc = $this->normalizeNumeroDocumento($request->numero_documento, $docCode, $type);
+        $nrcDigits = $this->onlyDigits($request->nrc_customer);
+
+        // Regla específica para Factura Consumidor Final (type 01):
+        // Si el tipo de documento es DUI (13) pero hay NRC presente,
+        // convertir el tipo de documento a NIT (36) y asegurar que el número quede sólo con dígitos (sin guiones).
+        if ($type === '01' && $docCode === '13' && $nrcDigits) {
+            $docCode = '36';
+            $numDigits = preg_replace('/\D+/', '', (string)$request->numero_documento);
+            $numDoc = $numDigits !== '' ? $numDigits : null;
+        }
+        $telefonoStr = ($request->telefono !== null && $request->telefono !== '') ? (string)$request->telefono : null;
+
+        // Resolver actividad, depto/mun, y tipo persona normalizados
+        [$codActividad, $descAct] = $resolveActividad($request->actividad_economica);
+        $departamentoCode = $resolveDepartamento($request->departamento);
+        $municipioCode = $resolveMunicipio($departamentoCode, $request->municipio);
+        $tipoPersonaCode = $normalizeTipoPersona($request->tipo_persona);
+
         if (!isset($this->dte["customer"])) {
             $this->dte["customer"] = [
-                "tipoDocumento" => $request->tipo_documento,
-                "numDocumento" => $request->numero_documento,
-                "nrc" => str_replace("-", "", $request->nrc_customer),
+                "tipoDocumento" => $docCode,
+                "numDocumento" => $numDoc,
+                "nrc" => $nrcDigits,
                 "nombre" => $request->nombre_customer,
-                "codActividad" => $request->actividad_economica,
+                "codActividad" => $codActividad ?? $request->actividad_economica,
                 "nombreComercial" => $request->nombre_comercial,
-                "departamento" => $request->departamento,
-                "municipio" => $request->municipio,
+                "departamento" => $departamentoCode ?? $request->departamento,
+                "municipio" => $municipioCode ?? $request->municipio,
                 "complemento" => $request->complemento,
-                "telefono" => $request->telefono,
+                "telefono" => $telefonoStr,
                 "correo" => $request->correo,
-                "tipoPersona" => $request->tipo_persona,
+                "tipoPersona" => $tipoPersonaCode ?? $request->tipo_persona,
             ];
         }
 
@@ -812,67 +946,67 @@ class DTEController extends Controller
                     ] :
                     [
                         "nombre" => $request->nombre_receptor,
-                        "telefono" => $request->telefono,
+                        "telefono" => $telefonoStr,
                         "correo" => $request->correo,
                         "direccion" => [
-                            "departamento" => $request->departamento,
-                            "municipio" => $request->municipio,
+                            "departamento" => $departamentoCode ?? $request->departamento,
+                            "municipio" => $municipioCode ?? $request->municipio,
                             "complemento" => $request->complemento
                         ],
-                        "tipoDocumento" => $request->tipo_documento,
-                        "numDocumento" => $request->numero_documento,
-                        "codActividad" => $request->actividad_economica,
-                        "descActividad" => $actividad,
-                        "nrc" => $request->nrc_customer != "" ? str_replace("-", "", $request->nrc_customer) : null,
+                        "tipoDocumento" => $docCode,
+                        "numDocumento" => $numDoc,
+                        "codActividad" => $codActividad ?? $request->actividad_economica,
+                        "descActividad" => $descAct ?? $actividad,
+                        "nrc" => $nrcDigits ?: null,
                     ];
             case "03":
                 return [
                     "nombre" => $request->nombre_customer,
                     "nombreComercial" => $request->nombre_comercial,
-                    "codActividad" => $request->actividad_economica,
-                    "descActividad" => $descActividad,
-                    "telefono" => $request->telefono,
+                    "codActividad" => $codActividad ?? $request->actividad_economica,
+                    "descActividad" => $descAct ?? $descActividad,
+                    "telefono" => $telefonoStr,
                     "correo" => $request->correo,
                     "direccion" => [
-                        "departamento" => $request->departamento,
-                        "municipio" => $request->municipio,
+                        "departamento" => $departamentoCode ?? $request->departamento,
+                        "municipio" => $municipioCode ?? $request->municipio,
                         "complemento" => $request->complemento
                     ],
-                    "nit" => $request->numero_documento,
-                    "nrc" => str_replace("-", "", $request->nrc_customer),
+                    "nit" => $numDoc,
+                    "nrc" => $nrcDigits,
                 ];
             case "04":
                 return [
                     "nombre" => $request->nombre_receptor,
                     "nombreComercial" => $request->nombre_comercial,
-                    "codActividad" => $request->actividad_economica,
-                    "descActividad" => $descActividad,
-                    "telefono" => $request->telefono,
+                    "codActividad" => $codActividad ?? $request->actividad_economica,
+                    "descActividad" => $descAct ?? $descActividad,
+                    "telefono" => $telefonoStr,
                     "correo" => $request->correo,
                     "direccion" => [
-                        "departamento" => $request->departamento,
-                        "municipio" => $request->municipio,
+                        "departamento" => $departamentoCode ?? $request->departamento,
+                        "municipio" => $municipioCode ?? $request->municipio,
                         "complemento" => $request->complemento
                     ],
-                    "tipoDocumento" => $request->tipo_documento,
-                    "numDocumento" => $request->numero_documento,
+                    "tipoDocumento" => $docCode,
+                    "numDocumento" => $numDoc,
                     "bienTitulo" => $request->bienTitulo,
                 ];
             case "05":
             case "06":
                 return [
-                    "nrc" => str_replace("-", "", $request->nrc_customer),
+                    "nrc" => $nrcDigits,
                     "nombre" => $request->nombre_customer,
-                    "codActividad" => $request->actividad_economica,
-                    "descActividad" => $descActividad,
+                    "codActividad" => $codActividad ?? $request->actividad_economica,
+                    "descActividad" => $descAct ?? $descActividad,
                     "direccion" => [
-                        "departamento" => $request->departamento,
-                        "municipio" => $request->municipio,
+                        "departamento" => $departamentoCode ?? $request->departamento,
+                        "municipio" => $municipioCode ?? $request->municipio,
                         "complemento" => $request->complemento
                     ],
-                    "telefono" => $request->telefono,
+                    "telefono" => $telefonoStr,
                     "correo" => $request->correo,
-                    "nit" => $request->numero_documento,
+                    "nit" => $numDoc,
                     "nombreComercial" => $request->nombre_comercial,
                 ];
 
@@ -881,50 +1015,49 @@ class DTEController extends Controller
                 $descActividad = explode("-", $actividad);
                 $descActividad = trim($descActividad[1] ?? null);
                 return [
-                    "tipoDocumento" => $request->tipo_documento,
-                    "numDocumento" => $request->numero_documento,
-                    "nrc" => str_replace("-", "", $request->nrc_customer),
+                    "tipoDocumento" => $docCode,
+                    "numDocumento" => $numDoc,
+                    "nrc" => $nrcDigits,
                     "nombre" => $request->nombre_customer,
                     "nombreComercial" => $request->nombre_comercial,
-                    "codActividad" => $request->actividad_economica,
-                    "descActividad" => $descActividad,
+                    "codActividad" => $codActividad ?? $request->actividad_economica,
+                    "descActividad" => $descAct ?? $descActividad,
                     "direccion" => [
-                        "departamento" => $request->departamento,
-                        "municipio" => $request->municipio,
+                        "departamento" => $departamentoCode ?? $request->departamento,
+                        "municipio" => $municipioCode ?? $request->municipio,
                         "complemento" => $request->complemento
                     ],
-                    "telefono" => $request->telefono,
+                    "telefono" => $telefonoStr,
                     "correo" => $request->correo,
                 ];
             case "11":
                 $pais = $this->countries[$request->codigo_pais] ?? null;
                 return [
-                    "tipoDocumento" => $request->tipo_documento,
-                    "numDocumento" => $request->numero_documento,
+                    "tipoDocumento" => $docCode,
+                    "numDocumento" => $numDoc,
                     "nombre" => $request->nombre_customer,
-                    "descActividad" => $descActividad,
+                    "descActividad" => $descAct ?? $descActividad,
                     "codPais" => $request->codigo_pais,
                     "nombrePais" => $pais,
                     "complemento" => $request->complemento,
                     "nombreComercial" => $request->nombre_customer,
-                    "tipoPersona" => $request->tipo_persona,
-                    "telefono" => $request->telefono,
+                    "tipoPersona" => $tipoPersonaCode ?? $request->tipo_persona,
+                    "telefono" => $telefonoStr,
                     "correo" => $request->correo,
                 ];
             case "14":
-                $numero_documento = str_replace("-", "", $request->numero_documento);
                 return [
-                    "tipoDocumento" => $request->tipo_documento,
-                    "numDocumento" => $numero_documento,
+                    "tipoDocumento" => $docCode,
+                    "numDocumento" => $numDoc,
                     "nombre" => $request->nombre_customer,
-                    "codActividad" => $request->actividad_economica,
-                    "descActividad" => $descActividad,
+                    "codActividad" => $codActividad ?? $request->actividad_economica,
+                    "descActividad" => $descAct ?? $descActividad,
                     "direccion" => [
-                        "departamento" => $request->departamento,
-                        "municipio" => $request->municipio,
+                        "departamento" => $departamentoCode ?? $request->departamento,
+                        "municipio" => $municipioCode ?? $request->municipio,
                         "complemento" => $request->complemento
                     ],
-                    "telefono" => $request->telefono,
+                    "telefono" => $telefonoStr,
                     "correo" => $request->correo,
                 ];
             case "15":
@@ -932,19 +1065,19 @@ class DTEController extends Controller
                 $descActividad = explode("-", $actividad);
                 $descActividad = trim($descActividad[1] ?? null);
                 return [
-                    "tipoDocumento" => $request->tipo_documento,
-                    "numDocumento" => $request->numero_documento,
-                    "nrc" => str_replace("-", "", $request->nrc_customer),
+                    "tipoDocumento" => $docCode,
+                    "numDocumento" => $numDoc,
+                    "nrc" => $nrcDigits,
                     "nombre" => $request->nombre_customer,
                     "nombreComercial" => $request->nombre_comercial,
-                    "codActividad" => $request->actividad_economica,
-                    "descActividad" => $descActividad,
+                    "codActividad" => $codActividad ?? $request->actividad_economica,
+                    "descActividad" => $descAct ?? $descActividad,
                     "direccion" => [
-                        "departamento" => $request->departamento,
-                        "municipio" => $request->municipio,
+                        "departamento" => $departamentoCode ?? $request->departamento,
+                        "municipio" => $municipioCode ?? $request->municipio,
                         "complemento" => $request->complemento
                     ],
-                    "telefono" => $request->telefono,
+                    "telefono" => $telefonoStr,
                     "correo" => $request->correo,
                     "codDomiciliado" => $request->cod_domiciliado,
                     "codPais" => $request->codigo_pais,
@@ -1581,4 +1714,198 @@ class DTEController extends Controller
                 ])->deleteFileAfterSend(true);
         }
     }
-}
+
+    /**
+     * Importa un Excel de clientes y devuelve la lista normalizada.
+     */
+    public function importCustomersExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        try {
+            $import = new CustomerListImport();
+            Excel::import($import, $request->file('file'));
+            $items = $import->getItems();
+
+            return response()->json([
+                'success' => true,
+                'count' => count($items),
+                'items' => $items,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error("Excel import error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo procesar el archivo. Verifique el formato de columnas.',
+            ], 422);
+        }
+    }
+
+    /**
+     * Recibe un JSON de plantilla (estructura de dte_template_example.json),
+     * lo carga en session('dte') y envía el DTE al servicio manteniendo la lógica.
+     * Retorna el JSON del resultado sin redirecciones.
+     */
+    public function submitFromJson(Request $request)
+    {
+        $request->validate([
+            'dte' => 'required|array',
+        ]);
+
+        $payload = $request->input('dte');
+
+        // 1) Cargar JSON en sesión
+        $this->dte = $payload;
+        // Asegurar claves mínimas
+        $this->dte['type'] = $payload['type'] ?? $payload['tipo'] ?? ($this->dte['type'] ?? null);
+        if (!isset($this->dte['products'])) { $this->dte['products'] = []; }
+        if (!isset($this->dte['customer'])) { $this->dte['customer'] = []; }
+        session(['dte' => $this->dte]);
+
+        // 2) Endpoint por tipo
+        $type = $this->dte['type'];
+        $endpointByType = [
+            '01' => '/factura/',
+            '03' => '/credito_fiscal/',
+            '04' => '/nota_remision/',
+            '05' => '/nota_credito/',
+            '06' => '/nota_debito/',
+            '07' => '/comprobante_retencion/',
+            '11' => '/factura_exportacion/',
+            '14' => '/sujeto_excluido/',
+            '15' => '/comprobante_donacion/',
+        ];
+        if (!$type || !isset($endpointByType[$type])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tipo de DTE no soportado o ausente.'
+            ], 422);
+        }
+
+        // 3) POS por defecto
+        $business_user = BusinessUser::where('business_id', session('business'))
+            ->where('user_id', auth()->id())
+            ->first();
+        $pos_id = $business_user?->default_pos_id;
+        if (!$pos_id) {
+            $pos = PuntoVenta::where('business_id', session('business'))->first();
+            $pos_id = $pos?->id;
+        }
+        if (!$pos_id) {
+            return response()->json(['success' => false, 'message' => 'No hay Punto de Venta configurado.'], 422);
+        }
+
+        // 4) Construir Request mínimo desde JSON
+        $c = $this->dte['customer'] ?? [];
+        $req = new Request();
+        $req->merge([
+            'pos_id' => $pos_id,
+            'tipo_documento' => $c['tipoDocumento'] ?? null,
+            'numero_documento' => $c['numDocumento'] ?? null,
+            'nrc_customer' => $c['nrc'] ?? null,
+            'nombre_customer' => $c['nombre'] ?? null,
+            'nombre_receptor' => $c['nombre'] ?? null,
+            'nombre_comercial' => $c['nombreComercial'] ?? null,
+            'actividad_economica' => $c['codActividad'] ?? null,
+            'departamento' => $c['departamento'] ?? null,
+            'municipio' => $c['municipio'] ?? null,
+            'complemento' => $c['complemento'] ?? null,
+            'telefono' => $c['telefono'] ?? null,
+            'correo' => $c['correo'] ?? null,
+            'tipo_persona' => $c['tipoPersona'] ?? null,
+            'codigo_pais' => $c['pais'] ?? null,
+            'bienTitulo' => $this->dte['bienTitulo'] ?? null,
+            'condicion_operacion' => $this->dte['condicion_operacion'] ?? ($this->dte['resumen']['condicionOperacion'] ?? '1'),
+            'action' => 'send',
+        ]);
+
+        // Exportación: parámetros del emisor si vinieran en JSON
+        if ($type === '11') {
+            $req->merge([
+                'regimen_exportacion' => Arr::get($this->dte, 'emisor.regimen'),
+                'recinto_fiscal' => Arr::get($this->dte, 'emisor.recintoFiscal'),
+                'tipo_item_exportar' => Arr::get($this->dte, 'emisor.tipoItemExpor'),
+                'incoterms' => Arr::get($this->dte, 'resumen.codIncoterms') ?? Arr::get($this->dte, 'incoterms'),
+            ]);
+        }
+
+        try {
+            $data = $this->processDTE($req, $type, $endpointByType[$type]);
+            // Si la validación interna retornó un RedirectResponse (errores), traducir a JSON 422
+            if ($data instanceof \Illuminate\Http\RedirectResponse) {
+                $msg = session('error_message') ?? 'Error de validación';
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            // En algunos flujos internos se usa ->send() en el RedirectResponse, lo cual produce null aquí.
+            if ($data === null && (session()->has('error') || session()->has('error_message'))) {
+                $msg = session('error_message') ?? 'Error de validación';
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return response()->json($data);
+        } catch (\Throwable $e) {
+            Log::error('submitFromJson error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar el DTE desde JSON.'
+            ], 500);
+        }
+    }
+
+        // Helpers privados de normalización
+        private function onlyDigits($value)
+        {
+            if ($value === null) return null;
+            $digits = preg_replace('/\D+/', '', (string)$value);
+            return $digits !== '' ? $digits : null;
+        }
+
+        private function normalizeDocType($value)
+        {
+            if ($value === null) return null;
+            $val = mb_strtolower(trim((string)$value), 'UTF-8');
+            $map = [
+                'nit' => '36',
+                'dui' => '13',
+                'pasaporte' => '02',
+                'pasport' => '02',
+                'passport' => '02',
+                'carnet de residente' => '03',
+                'carnet residencia' => '03',
+                'carnet de residencia' => '03',
+                'residente' => '03',
+                'otro' => '37',
+                'otros' => '37',
+            ];
+            if (isset($map[$val])) return $map[$val];
+            // si ya viene código conocido
+            $allowed = ['02','03','13','36','37'];
+            $v = strtoupper((string)$value);
+            return in_array($v, $allowed, true) ? $v : null;
+        }
+
+        private function normalizeNumeroDocumento($numero, $docCode, $type)
+        {
+            if ($numero === null) return null;
+            $raw = trim((string)$numero);
+            $digits = preg_replace('/\D+/', '', $raw);
+
+            if ($docCode === '36') { // NIT
+                return $digits ?: null;
+            }
+
+            if ($docCode === '13') { // DUI
+                if (in_array($type, ['03','05','06'], true)) {
+                    return $digits ?: null; // sin guion en CCF/NC/ND por validación MH
+                }
+                if (strlen($digits) === 9) {
+                    return substr($digits, 0, 8) . '-' . substr($digits, 8, 1);
+                }
+                return $digits ?: null; // si trae otros símbolos, los quitamos
+            }
+
+            // Otros documentos pueden incluir letras; devolver tal cual, recortado
+            return $raw !== '' ? $raw : null;
+        }
+    }
