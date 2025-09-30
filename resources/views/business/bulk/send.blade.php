@@ -209,7 +209,7 @@
                         $countOk.text('0'); $countFail.text('0'); $countTotal.text(customers.length);
                         $progress.css('width', '0%');
                         // Enviar en cola
-                        await runQueue(customers, 3);
+                        await runQueue(customers, 1);
                     } finally {
                         $("#loader").addClass('hidden');
                         $results.removeClass('hidden');
