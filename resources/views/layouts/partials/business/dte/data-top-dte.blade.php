@@ -18,7 +18,7 @@
 @if (isset($dte['use_template']))
     <input type="hidden" name="use_template" value="1" />
 @endif
-@if ($business->bulk_emission && in_array($number, ['01', '03', '11', '14']) && !isset($dte['use_template']))
+@if ($business->bulk_emission && in_array($number, ['01', '03']) && !isset($dte['use_template']))
     <div class="mt-4 border-t border-gray-300 px-4 pt-4 dark:border-gray-800">
         <h2 class="flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300">
             <x-icon icon="files" class="size-5" />
@@ -35,7 +35,7 @@
             </div>
             <div id="template_name" class="{{ $dte['status'] == 'template' ? '' : 'hidden' }}">
                 <x-input type="text" label="Nombre de la plantilla" name="template_name"
-                    placeholder="Nombre de la plantilla" class="w-full" value="{{ $dte['name'] ?? '' }}" required />
+                    placeholder="Nombre de la plantilla" class="w-full" value="{{ $dte['name'] ?? '' }}" />
             </div>
         </div>
     </div>

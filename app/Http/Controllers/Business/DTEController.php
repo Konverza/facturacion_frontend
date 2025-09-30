@@ -129,6 +129,7 @@ class DTEController extends Controller
 
             $default_pos = $business_user->default_pos_id ? PuntoVenta::with("sucursal")->find($business_user->default_pos_id) : null;
 
+            
             $data = [
                 "business" => $business,
                 "sucursals" => $sucursals,
@@ -234,25 +235,25 @@ class DTEController extends Controller
             $request->validate([
                 "nrc_customer" => "required|string",
             ]);
+            $numero_documento = $request->numero_documento;
+            $isNIT = strlen($numero_documento) === 14 && ctype_digit($numero_documento);
+            $isDUI = strlen($numero_documento) === 9 && ctype_digit($numero_documento);
+    
+            if (
+                !$isNIT && !$isDUI
+            ) {
+                return redirect()->back()->withErrors([
+                    'numero_documento' => 'El número de documento debe tener exactamente 14 o 9 dígitos'
+                ]);
+            }
+    
+            if ($request->nrc_customer && strlen($request->nrc_customer) > 8) {
+                return redirect()->back()->withErrors([
+                    'nrc_customer' => 'El NRC debe tener como máximo 8 dígitos.'
+                ]);
+            }
         }
 
-        $numero_documento = $request->numero_documento;
-        $isNIT = strlen($numero_documento) === 14 && ctype_digit($numero_documento);
-        $isDUI = strlen($numero_documento) === 9 && ctype_digit($numero_documento);
-
-        if (
-            !$isNIT && !$isDUI
-        ) {
-            return redirect()->back()->withErrors([
-                'numero_documento' => 'El número de documento debe tener exactamente 14 o 9 dígitos'
-            ]);
-        }
-
-        if ($request->nrc_customer && strlen($request->nrc_customer) > 8) {
-            return redirect()->back()->withErrors([
-                'nrc_customer' => 'El NRC debe tener como máximo 8 dígitos.'
-            ]);
-        }
         $data = $this->processDTE($request, "03", "/credito_fiscal/");
         $response = $this->handleResponse($data, $request);
         if ($response === "PROCESADO") {
