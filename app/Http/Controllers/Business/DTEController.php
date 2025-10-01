@@ -898,6 +898,13 @@ class DTEController extends Controller
             $numDigits = preg_replace('/\D+/', '', (string)$request->numero_documento);
             $numDoc = $numDigits !== '' ? $numDigits : null;
         }
+
+        // Regla específica para Factura de Sujeto Excluido (type 14):
+        // El DUI se escribe sin guion
+        if ($type === '14' && $docCode === '13' && $numDoc !== null) {
+            $numDoc = preg_replace('/\D+/', '', (string)$numDoc);
+        }
+
         $telefonoStr = ($request->telefono !== null && $request->telefono !== '') ? (string)$request->telefono : null;
 
         // Resolver actividad, depto/mun, y tipo persona normalizados
