@@ -94,6 +94,9 @@ class BusinessController extends Controller
 
                     if ($bp_row) {
                         $prefill['plan_id'] = $bp_row->plan_id;
+                        $prefill['plan_name'] = DB::connection('pruebas')->table('plans')
+                            ->where('id', $bp_row->plan_id)
+                            ->value('nombre');
                         $prefill['dtes'] = json_decode($bp_row->dtes, true);
                     }
 

@@ -112,6 +112,11 @@
                             <div class="mt-2 flex flex-col gap-4">
                                 <x-select label="Plan contratado" name="plan_id" id="plan" :options="$plans->pluck('nombre', 'id')->toArray()"
                                     value="{{ old('plan_id') }}" selected="{{ old('plan_id', $prefill['plan_id'] ?? '') }}" required />
+                                @if(isset($prefill['plan_name']))
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        Plan actual: {{ $prefill['plan_name'] }}
+                                    </p>
+                                @endif
                                 <div>
                                     <span
                                         class="mb-1 block text-sm font-medium text-gray-500 after:ml-0.5 dark:text-gray-300">
