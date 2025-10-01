@@ -17,6 +17,8 @@ Route::middleware(['auth', 'role:admin'])->prefix("admin")->name("admin.")->grou
     Route::resource("/plans", PlansController::class);
     Route::resource("/users", UserController::class);
     Route::get("/get-municipios", [BusinessController::class, "getMunicipios"])->name("get-municipios");
+    // Proxy para datos empresa por NIT (evita CORS desde el navegador)
+    Route::get('/business/datos-empresa/nit/{nit}', [BusinessController::class, 'datosEmpresaPorNit'])->name('business.datos-empresa');
 
     // Negocios asignados a un usuario
     Route::get("/users/{id}/businesses", [UserController::class, "userBusinesses"])->name("users.businesses");

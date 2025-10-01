@@ -6,6 +6,8 @@
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
                 Nuevo negocio
             </h1>
+            <x-button type="button" icon="plus" typeButton="primary" text="Obtener del ambiente de pruebas"
+                id="obtener-pruebas" />
             <a href="{{ Route('admin.business.index') }}"
                 class="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                 <x-icon icon="arrow-back" class="size-5" />
@@ -29,69 +31,74 @@
                             </span>
                             <div class="mt-2 flex flex-col gap-4">
                                 <x-input type="text" label="NIT" placeholder="Ingresa el NIT del negocio"
-                                    name="nit" id="nit" value="{{ old('nit') }}" required/>
+                                    name="nit" id="nit" value="{{ old('nit', $prefill['nit'] ?? '') }}" required />
                                 <x-input type="text" label="DUI" placeholder="Ingresa el DUI del negocio"
-                                    name="dui_emisor" id="dui_emisor" value="{{ old('dui_emisor') }}" required/>
+                                    name="dui_emisor" id="dui_emisor" value="{{ old('dui_emisor', $prefill['dui_emisor'] ?? '') }}" required />
                                 <x-input type="text" label="NRC" placeholder="Ingresa el NRC del negocio"
-                                    name="nrc" id="nrc" value="{{ old('nrc') }}" required/>
+                                    name="nrc" id="nrc" value="{{ old('nrc', $prefill['nrc'] ?? '') }}" required />
                                 <x-input type="text" label="Razón social" name="razon_social" id="razon-social"
-                                    value="{{ old('razon_social') }}" required/>
+                                    value="{{ old('razon_social', $prefill['razon_social'] ?? '') }}" required />
                                 <x-input type="text" label="Nombre comercial" name="nombre_comercial"
-                                    value="{{ old('nombre_comercial') }}" required/>
+                                    value="{{ old('nombre_comercial', $prefill['nombre_comercial'] ?? '') }}" required />
                                 <x-select id="actividad_economica" :options="$actividades_economicas" label="Actividad económica"
-                                    name="actividad_economica" value="{{ old('actividad_economica') }}" required/>
+                                    name="actividad_economica" value="{{ old('actividad_economica', $prefill['actividad_economica'] ?? '') }}" selected="{{ old('actividad_economica', $prefill['actividad_economica'] ?? '') }}" required />
                                 <x-select name="tipo_establecimiento" id="tipo_establecimiento"
-                                    value="{{ old('tipo_establecimiento') }}" label="Tipo de establecimiento"
-                                    :options="$tipo_establecimiento" required/>
+                                    value="{{ old('tipo_establecimiento', $prefill['tipo_establecimiento'] ?? '') }}" selected="{{ old('tipo_establecimiento', $prefill['tipo_establecimiento'] ?? '') }}" label="Tipo de establecimiento"
+                                    :options="$tipo_establecimiento" required />
                                 <div class="flex flex-col gap-4">
                                     <div class="flex-1">
                                         <x-input type="text" label="Código establecimiento" placeholder="0001"
-                                            name="codigo_establecimiento" value="{{ old('codigo_establecimiento') }}" required/>
+                                            name="codigo_establecimiento" value="{{ old('codigo_establecimiento', $prefill['codigo_establecimiento'] ?? '') }}"
+                                            required />
                                     </div>
                                     <div class="flex-1">
                                         <x-input type="text" label="Código establecimiento (Ministerio de Hacienda)"
                                             name="codigo_establecimiento_mh"
-                                            value="{{ old('codigo_establecimiento_mh') }}"/>
+                                            value="{{ old('codigo_establecimiento_mh', $prefill['codigo_establecimiento_mh'] ?? '') }}" />
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-4">
                                     <div class="flex-1">
                                         <x-input type="text" label="Código punto de venta" name="codigo_punto_venta"
-                                            placeholder="01" value="01" value="{{ old('codigo_punto_venta') }}" required/>
+                                            placeholder="01" value="{{ old('codigo_punto_venta', $prefill['codigo_punto_venta'] ?? '01') }}"
+                                            required />
                                     </div>
                                     <div class="flex-1">
                                         <x-input type="text" label="Código punto de venta (Ministerio de Hacienda)"
-                                            name="codigo_punto_venta_mh" value="{{ old('codigo_punto_venta_mh') }}"/>
+                                            name="codigo_punto_venta_mh" value="{{ old('codigo_punto_venta_mh', $prefill['codigo_punto_venta_mh'] ?? '') }}" />
                                     </div>
                                 </div>
                                 <div class="flex flex-col gap-4 sm:flex-row">
                                     <div class="flex-1">
                                         <x-select name="department" label="Departamento" id="departamento"
                                             name="departamento" required :options="$departamentos"
-                                            value="{{ old('departamento') }}" selected="{{ old('departamento') }}"
-                                            data-action="{{ Route('admin.get-municipios') }}"/>
+                                            value="{{ old('departamento', $prefill['departamento'] ?? '') }}" selected="{{ old('departamento', $prefill['departamento'] ?? '') }}"
+                                            data-action="{{ Route('admin.get-municipios') }}" />
                                     </div>
                                     <div class="flex-1" id="select-municipio">
-                                        <x-select name="municipio" label="Municipio" id="municipality" required
-                                            :options="[
-                                                'Selecciona un departamento' => 'Seleccione un departamento',
-                                            ]" />
+                                        @if(isset($municipios) && is_array($municipios))
+                                            <x-select name="municipio" label="Municipio" id="municipality" required
+                                                :options="$municipios" value="{{ old('municipio', $municipio_prefill ?? '') }}" selected="{{ old('municipio', $municipio_prefill ?? '') }}" />
+                                        @else
+                                            <x-select name="municipio" label="Municipio" id="municipality" required
+                                                :options="['Selecciona un departamento' => 'Seleccione un departamento']" />
+                                        @endif
                                     </div>
                                 </div>
-                                <x-input type="text" label="Dirección" name="complemento" required/>
+                                <x-input type="text" label="Dirección" name="complemento" value="{{ old('complemento', $prefill['complemento'] ?? '') }}" required />
                                 <div class="flex flex-col gap-4 sm:flex-row">
                                     <div class="flex-[2]">
                                         <x-input type="email" label="Correo electrónico" icon="email" name="correo"
-                                            placeholder="example@exam.com" value="{{ old('correo') }}" required/>
+                                            placeholder="example@exam.com" value="{{ old('correo', $prefill['correo'] ?? '') }}" required />
                                     </div>
                                     <div class="flex-1">
                                         <x-input type="text" placeholder="XXXX - XXXX" label="Teléfono"
-                                            icon="phone" name="telefono" value="{{ old('telefono') }}" required/>
+                                            icon="phone" name="telefono" value="{{ old('telefono', $prefill['telefono'] ?? '') }}" required />
                                     </div>
                                 </div>
                                 <!-- Input logo empresa -->
                                 <x-input type="file" label="Logo de la empresa" name="logo" id="logo"
-                                    accept=".png, .jpg, .jpeg, .webp" maxSize="3072" required/>
+                                    accept=".png, .jpg, .jpeg, .webp" maxSize="3072" required />
                             </div>
                         </div>
                     </div>
@@ -104,7 +111,7 @@
                             </span>
                             <div class="mt-2 flex flex-col gap-4">
                                 <x-select label="Plan contratado" name="plan_id" id="plan" :options="$plans->pluck('nombre', 'id')->toArray()"
-                                    value="{{ old('plan_id') }}" selected="{{ old('plan_id') }}" required/>
+                                    value="{{ old('plan_id') }}" selected="{{ old('plan_id', $prefill['plan_id'] ?? '') }}" required />
                                 <div>
                                     <span
                                         class="mb-1 block text-sm font-medium text-gray-500 after:ml-0.5 dark:text-gray-300">
@@ -114,13 +121,21 @@
                                         @php
                                             $dte_options = [
                                                 ['id' => '01', 'label' => 'Factura Electrónica', 'value' => '01'],
-                                                ['id' => '03', 'label' => 'Comprobante de Crédito Fiscal', 'value' => '03'],
+                                                [
+                                                    'id' => '03',
+                                                    'label' => 'Comprobante de Crédito Fiscal',
+                                                    'value' => '03',
+                                                ],
                                                 ['id' => '04', 'label' => 'Nota de Remisión', 'value' => '04'],
                                                 ['id' => '05', 'label' => 'Nota de Crédito', 'value' => '05'],
                                                 ['id' => '06', 'label' => 'Nota de Débito', 'value' => '06'],
                                                 ['id' => '07', 'label' => 'Comprobante de Retención', 'value' => '07'],
                                                 ['id' => '11', 'label' => 'Factura de Exportación', 'value' => '11'],
-                                                ['id' => '14', 'label' => 'Factura de Sujeto Excluido', 'value' => '14'],
+                                                [
+                                                    'id' => '14',
+                                                    'label' => 'Factura de Sujeto Excluido',
+                                                    'value' => '14',
+                                                ],
                                                 ['id' => '15', 'label' => 'Comprobante de Donación', 'value' => '15'],
                                             ];
                                         @endphp
@@ -129,15 +144,18 @@
                                             <span class="text-red-500 text-sm">{{ $message }}</span>
                                         @enderror
 
-                                        @foreach($dte_options as $dte)
+                                        @foreach ($dte_options as $dte)
+                                            @php
+                                                $checked = in_array($dte['value'], old('dtes', $prefill['dtes'] ?? []));
+                                            @endphp
                                             <x-input type="toggle" name="dtes[]" label="{{ $dte['label'] }}"
-                                                value="{{ $dte['value'] }}" id="{{ $dte['id'] }}" />
+                                                value="{{ $dte['value'] }}" id="{{ $dte['id'] }}" :checked="$checked" />
                                         @endforeach
 
                                         <script>
-                                            document.addEventListener('DOMContentLoaded', function () {
+                                            document.addEventListener('DOMContentLoaded', function() {
                                                 const form = document.querySelector('form');
-                                                form.addEventListener('submit', function (e) {
+                                                form.addEventListener('submit', function(e) {
                                                     const checked = document.querySelectorAll('input[name="dtes[]"]:checked');
                                                     if (checked.length === 0) {
                                                         e.preventDefault();
@@ -160,18 +178,18 @@
                                 <div class="flex flex-col gap-4 sm:flex-row">
                                     <div class="flex-1">
                                         <x-input type="text" placeholder="DUI" label="Documento de identidad"
-                                            name="dui" id="dui" value="{{ old('dui') }}" required />
+                                            name="dui" id="dui" value="{{ old('dui', $prefill['dui'] ?? '') }}" required />
                                     </div>
                                     <div class="flex-1">
                                         <x-input type="text" label="Teléfono" icon="phone"
-                                            value="{{ old('telefono_responsable') }}" name="telefono_responsable"
+                                            value="{{ old('telefono_responsable', $prefill['telefono_responsable'] ?? '') }}" name="telefono_responsable"
                                             id="telefono_responsable" required placeholder="XXXX - XXXX" />
                                     </div>
                                 </div>
                                 <x-input type="text" label="Nombre según documento"
-                                    value="{{ old('nombre_responsable') }}" name="nombre_responsable" required />
+                                    value="{{ old('nombre_responsable', $prefill['nombre_responsable'] ?? '') }}" name="nombre_responsable" required />
                                 <x-input type="text" label="Correo electrónico" icon="email"
-                                    value="{{ old('correo_responsable') }}" name="correo_responsable"
+                                    value="{{ old('correo_responsable', $prefill['correo_responsable'] ?? '') }}" name="correo_responsable"
                                     id="correo_responsable" placeholder="example@exam.com" required />
                             </div>
                         </div>
@@ -183,11 +201,11 @@
                             </span>
                             <div class="mt-2 flex flex-col gap-4">
                                 <x-input type="file" label="Certificado de firma electrónica" name="certificado_file"
-                                    id="certificado" accept=".crt" maxSize="3072" required/>
+                                    id="certificado" accept=".crt" maxSize="3072" required />
                                 <x-input type="text" label="Clave PRIVADA del certificado" name="certificate_password"
-                                    id="certificate_password" value="{{ old('certificate_password') }}" required/>
+                                    id="certificate_password" value="{{ old('certificate_password', $prefill['certificate_password'] ?? '') }}" required />
                                 <x-input type="text" label="Clave de USUARIO API registrada en Hacienda"
-                                    name="api_password" id="api_password" value="{{ old('api_password') }}" required/>
+                                    name="api_password" id="api_password" value="{{ old('api_password', $prefill['api_password'] ?? '') }}" required />
                             </div>
                         </div>
                     </div>
@@ -199,4 +217,20 @@
             </form>
         </div>
     </section>
+    @push('scripts')
+        <script>
+            $(document).ready(function() {
+                $(document).on("click", "#obtener-pruebas", function() {
+                    const nit = $("#nit").val().trim();
+                    if (!nit) {
+                        alert("Por favor ingrese un NIT válido");
+                        return;
+                    }
+                    const urlCreate = new URL("{{ route('admin.business.create') }}", window.location.origin);
+                    urlCreate.searchParams.set('nit', nit);
+                    window.location.href = urlCreate.toString();
+                });
+            });
+        </script>
+    @endpush
 @endsection

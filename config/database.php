@@ -152,6 +152,25 @@ return [
             ]) : [],
         ],
 
+        'pruebas' => [
+            'driver' => 'mysql',
+            'url' => env('PRUEBAS_DB_URL'),
+            'host' => env('PRUEBAS_DB_HOST', 'localhost'),
+            'port' => env('PRUEBAS_DB_PORT', '3306'),
+            'database' => env('PRUEBAS_DB_DATABASE', 'laravel'),
+            'username' => env('PRUEBAS_DB_USERNAME', 'root'),
+            'password' => env('PRUEBAS_DB_PASSWORD', ''),
+            'unix_socket' => env('PRUEBAS_DB_SOCKET', ''),
+            'charset' => env('PRUEBAS_DB_CHARSET', 'utf8mb4'),
+            'collation' => env('PRUEBAS_DB_COLLATION', 'utf8mb4_unicode_ci'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
+        ],
     ],
 
     /*

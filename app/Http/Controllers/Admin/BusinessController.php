@@ -52,18 +52,97 @@ class BusinessController extends Controller
         return view('admin.business.index', compact('business', 'inicio_mes', 'fin_mes'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $tipo_establecimiento = $this->octopus_service->getCatalog("CAT-009");
         $departamentos = $this->octopus_service->getCatalog("CAT-012");
         $actividades_economicas = $this->octopus_service->getCatalog("CAT-019", null, true, true);
         $plans = Plan::all();
 
+        $prefill = [];
+        $municipios = null;
+        $municipio_prefill = null;
+
+        $nit = trim((string) $request->query('nit', ''));
+        if (!empty($nit)) {
+            try {
+                $empresa_api_resp = Http::timeout(20)->get(env("PRUEBAS_URL") . "/datos_empresa/nit/" . $nit);
+                if ($empresa_api_resp->ok()) {
+                    $data = $empresa_api_resp->json();
+                    $prefill = [
+                        'nit' => $data['nit'] ?? '',
+                        'dui_emisor' => $data['dui'] ?? '',
+                        'nrc' => $data['nrc'] ?? '',
+                        'razon_social' => $data['nombre'] ?? '',
+                        'nombre_comercial' => $data['nombreComercial'] ?? '',
+                        'actividad_economica' => $data['codActividad'] ?? '',
+                        'tipo_establecimiento' => $data['tipoEstablecimiento'] ?? '',
+                        'codigo_establecimiento' => $data['codEstable'] ?? '',
+                        'codigo_establecimiento_mh' => $data['codEstableMH'] ?? '',
+                        'codigo_punto_venta' => $data['codPuntoVenta'] ?? '',
+                        'codigo_punto_venta_mh' => $data['codPuntoVentaMH'] ?? '',
+                        'departamento' => $data['departamento'] ?? '',
+                        'municipio' => $data['municipio'] ?? '',
+                        'complemento' => $data['complemento'] ?? '',
+                        'correo' => $data['correo'] ?? '',
+                        'telefono' => $data['telefono'] ?? '',
+                    ];
+
+                    $bp_row = DB::connection('pruebas')->table('business_plan')
+                        ->where('nit', $data['nit'])
+                        ->first();
+
+                    if ($bp_row) {
+                        $prefill['plan_id'] = $bp_row->plan_id;
+                        $prefill['dtes'] = json_decode($bp_row->dtes, true);
+                    }
+
+                    $bs_row = DB::connection('pruebas')->table('business')
+                        ->where('nit', $data['nit'])
+                        ->first();
+                    if ($bs_row) {
+                        $prefill['nombre_responsable'] = $bs_row->nombre_responsable;
+                        $prefill['correo_responsable'] = $bs_row->correo_responsable;
+                        $prefill['telefono_responsable'] = $bs_row->telefono;
+                        $prefill['dui'] = $bs_row->dui;
+                    }
+
+                    if (!empty($data['departamento'])) {
+                        $municipios = $this->octopus_service->getCatalog("CAT-012", $data['departamento']);
+                        $municipio_prefill = $data['municipio'] ?? null;
+                    }
+
+                    $username = env("PRUEBAS_USER");
+                    $password = env("PRUEBAS_PASS");
+                    $token_response = Http::asForm()->post(env("PRUEBAS_URL") . "/auth/login", [
+                        "username" => $username,
+                        "password" => $password
+                    ]);
+                    $token = $token_response->json()['access_token'] ?? null;
+                    $credentials_response = Http::withToken($token)
+                        ->get(env("PRUEBAS_URL") . "/credenciales/");
+                    $credentials = $credentials_response->json();
+                    foreach($credentials as $credential){
+                        if($credential['nit'] == $data['nit']){
+                            $prefill['api_password'] = $credential['api_password'] ?? '';
+                            $prefill['certificate_password'] = $credential['certificate_password'] ?? '';
+                            break;
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // No hacer nada, no se pudo obtener datos de la empresa
+            }
+        }
+
         return view('admin.business.create', [
             'departamentos' => $departamentos,
             'tipo_establecimiento' => $tipo_establecimiento,
             'plans' => $plans,
-            'actividades_economicas' => $actividades_economicas
+            'actividades_economicas' => $actividades_economicas,
+            'prefill' => $prefill,
+            'municipios' => $municipios,
+            'municipio_prefill' => $municipio_prefill,
         ]);
     }
 
@@ -272,6 +351,32 @@ class BusinessController extends Controller
             'business_plan' => $business_plan,
             'business' => $empresa
         ]);
+    }
+
+    /**
+     * Proxy para consultar datos de empresa por NIT evitando CORS en el navegador.
+     */
+    public function datosEmpresaPorNit(string $nit)
+    {
+        try {
+            $response = Http::timeout(20)->get($this->octopus_url . "/datos_empresa/nit/" . $nit);
+            if ($response->failed()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se pudieron obtener los datos de la empresa',
+                    'status' => $response->status(),
+                    'detail' => $response->json()['detail'] ?? null,
+                ], $response->status());
+            }
+
+            return response()->json($response->json());
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error interno al consultar el servicio',
+                'detail' => $e->getMessage(),
+            ], 500);
+        }
     }
 
 }
