@@ -149,7 +149,7 @@ class DTEProductController extends Controller
                     "descripcion" => $business_product->descripcion,
                     "cantidad" => $cantidad,
                     "tipo" => $request->tipo,
-                    "precio" => $precio,
+                    "precio" => $request->tipo == "Gravada" ? $precio : $precio_sin_tributos,
                     "precio_sin_tributos" => $precio_sin_tributos,
                     "descuento" => $descuento,
                     "ventas_gravadas" => $request->tipo === "Gravada" ? $total : 0,
@@ -485,8 +485,9 @@ class DTEProductController extends Controller
         }
     }
 
-    public function delete(string $id)
+    public function delete(string $id, Request $request)
     {
+        $from_pos = $request->input("from_pos", false);
         try {
             foreach ($this->dte["products"] as $key => $product) {
                 if ($product["id"] == $id) {
@@ -527,6 +528,25 @@ class DTEProductController extends Controller
             }
 
             $this->totals();
+
+            if ($from_pos) {
+                if (isset($this->dte["metodos_pago"]) && count($this->dte["metodos_pago"]) > 0) {
+                    unset($this->dte["metodos_pago"]);
+                    $this->dte["metodos_pago"][] = [
+                        "id" => rand(1, 1000),
+                        "forma_pago" => "01",
+                        "monto" => array_sum(array_column($this->dte["products"], "total")),
+                        "numero_documento" => null,
+                        "plazo" => null,
+                        "periodo" => null,
+                    ];
+                }
+
+                $this->dte["monto_abonado"] = array_sum(array_column($this->dte["products"], "total"));
+                $this->dte["monto_pendiente"] = $this->dte["total_pagar"] - $this->dte["monto_abonado"];
+                $this->totals();
+            }
+
             session(["dte" => $this->dte]);
             return response()->json([
                 "success" => true,

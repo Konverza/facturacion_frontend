@@ -44,8 +44,9 @@ class ProductController extends Controller
     public function create()
     {
         try {
+            $business = Business::find(session("business"));
             $tributes = Tributes::all();
-            $categories = ProductCategory::all()->map(function ($category) {
+            $categories = ProductCategory::where('business_id', $business->id)->get()->map(function ($category) {
                 $category->full_path = $category->getFullPath();
                 return $category;
             })->pluck('full_path', 'id')->toArray();

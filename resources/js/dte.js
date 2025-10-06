@@ -100,6 +100,51 @@ $(document).ready(function () {
         $("#total_product").val(redondear(total_descuento, 8));
     });
 
+    $("#tipo_venta").on("Changed", function () {
+        const type_sale = $("#tipo_venta").val();
+        const url = new URL(window.location.href);
+        const document_type = url.searchParams.get("document_type");
+        if (document_type === "01") {
+            if (type_sale !== "Gravada") {
+                // Change label "Precio (con IVA) " to "Precio (sin IVA)"
+                $("label[for='price']").text("Precio (sin IVA)");
+            } else {
+                $("label[for='price']").text("Precio (con IVA)");
+            }
+        }
+    });
+
+    let originalProductPrice = null;
+
+    $("#type-sale").on("Changed", function () {
+        const type_sale = $("#type-sale").val();
+        const url = new URL(window.location.href);
+        const document_type = url.searchParams.get("document_type");
+
+        if (document_type === "01") {
+            let product_price = parseFloat($("#product_price").val());
+
+            // Save the original price only once
+            if (originalProductPrice === null && !isNaN(product_price)) {
+                originalProductPrice = product_price;
+            }
+
+            if (type_sale !== "Gravada") {
+                if (!isNaN(product_price)) {
+                    product_price = product_price / 1.13;
+                }
+                $("#product_price").val(redondear(product_price, 8));
+                $("#count").trigger("input");
+            } else {
+                // Restore original price if available
+                if (originalProductPrice !== null) {
+                    $("#product_price").val(redondear(originalProductPrice, 8));
+                    $("#count").trigger("input");
+                }
+            }
+        }
+    });
+
     // Drawer new donación
     $("#count_product, #valor_unitario, #depreciacion").on("input", function () {
         const count = parseFloat($("#count_product").val()) || 0;
@@ -159,7 +204,7 @@ $(document).ready(function () {
                 $("#nit-receptor")
                     .val(data.customer.numDocumento ?? "")
                     .trigger("input");
-                Livewire.dispatch('refreshNumeroDocumento', {nuevoNumeroDocumento: data.customer.numDocumento ?? ""});
+                Livewire.dispatch('refreshNumeroDocumento', { nuevoNumeroDocumento: data.customer.numDocumento ?? "" });
 
                 $("#nombre_customer").val(data.customer.nombre);
                 $("#nombre_comercial_customer").val(

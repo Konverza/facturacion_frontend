@@ -129,7 +129,7 @@
                                             class="text-base items-center font-medium text-gray-900 dark:text-gray-100 flex flex-row gap-2">
                                             ${{ number_format($product['total'], 2) }}
                                             <x-button type="a" icon="trash"
-                                                href="{{ Route('business.dte.product.delete', $product['id']) }}"
+                                                href="{{ Route('business.dte.product.delete', ['id' => $product['id'], 'from_pos' => true]) }}"
                                                 typeButton="danger" onlyIcon="true" class="btn-delete" />
                                         </dd>
                                     </dl>
@@ -150,7 +150,6 @@
                                     <input type="hidden" name="pos_id" value="{{ $default_pos->id ?? '' }}">
                                     <x-button type="submit" typeButton="primary" text="Finalizar Venta (Ticket)"
                                         class="w-full sm:w-auto" icon="file-symlink" name="action" value="generate" />
-                                    
                                     <x-button type="button" typeButton="danger" text="Cancelar documento" icon="cancel"
                                         class="show-modal w-full sm:w-auto" data-target="#cancel-dte" />
                                 @endif
