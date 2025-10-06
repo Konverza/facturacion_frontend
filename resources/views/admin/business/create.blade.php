@@ -6,8 +6,10 @@
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
                 Nuevo negocio
             </h1>
-            <x-button type="button" icon="plus" typeButton="primary" text="Obtener del ambiente de pruebas"
+            @if(env("AMBIENTE_HACIENDA") == "01")
+                <x-button type="button" icon="plus" typeButton="primary" text="Obtener del ambiente de pruebas"
                 id="obtener-pruebas" />
+            @endif
             <a href="{{ Route('admin.business.index') }}"
                 class="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                 <x-icon icon="arrow-back" class="size-5" />
