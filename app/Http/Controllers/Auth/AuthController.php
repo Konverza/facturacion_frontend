@@ -154,6 +154,24 @@ class AuthController extends Controller
             try {
                 $user->password = Hash::make($validated["new_password"]);
                 $user->save();
+
+                if(env("AMBIENTE_HACIENDA") == "00") {
+                    // ACTUALIZAR CONTRASEÑA EN EASY PAY
+                    $existsInEasyPay = DB::connection("easypay")
+                        ->table("users")
+                        ->where("email", $user->email)
+                        ->exists();
+
+                    if ($existsInEasyPay) {
+                        DB::connection("easypay")
+                            ->table("users")
+                            ->where("email", $user->email)
+                            ->update([
+                                "password" => Hash::make($validated["new_password"])
+                            ]);
+                    }
+                }
+
                 DB::commit();
                 return response()->json([
                     "success" => "Contraseña actualizada correctamente"

@@ -125,8 +125,8 @@ class BusinessController extends Controller
                     $credentials_response = Http::withToken($token)
                         ->get(env("PRUEBAS_URL") . "/credenciales/");
                     $credentials = $credentials_response->json();
-                    foreach($credentials as $credential){
-                        if($credential['nit'] == $data['nit']){
+                    foreach ($credentials as $credential) {
+                        if ($credential['nit'] == $data['nit']) {
                             $prefill['api_password'] = $credential['api_password'] ?? '';
                             $prefill['certificate_password'] = $credential['certificate_password'] ?? '';
                             break;
@@ -265,6 +265,64 @@ class BusinessController extends Controller
                         $business_user->role = "negocio";
                         $business_user->default_pos_id = $punto_venta->id;
                         $business_user->save();
+
+                        /// CREACIÓN DE USUARIO EN EASY PAY
+                        if (env("AMBIENTE_HACIENDA") == "00") {
+                            // Verificar si el usuario ya existe en la empresa
+                            $usuario = DB::connection("easypay")
+                                ->table("users")
+                                ->where('email', $user->email)
+                                ->first();
+
+                            $user_dui = str_replace("-", "", $request->dui_emisor) ?? str_replace("-", "", $request->nit) ?? "";
+                            $servicio_id = 1; // ID del servicio que deseas asignar
+
+                            if ($usuario) {
+                                // Verificar si existe la relación en usuarios_servicios
+                                $relacion = DB::connection("easypay")->table("usuarios_servicios")
+                                    ->where('usuario_id', $usuario->id)
+                                    ->where('user_dui', $user_dui)
+                                    ->where('servicio_id', $servicio_id)
+                                    ->where("empresa_id", $business->id)
+                                    ->first();
+
+                                if (!$relacion) {
+                                    DB::connection("easypay")->table("usuarios_servicios")->insert([
+                                        'empresa_id' => $business->id,
+                                        'usuario_id' => $usuario->id,
+                                        'user_dui' => $user_dui,
+                                        'servicio_id' => $servicio_id,
+                                    ]);
+                                } else {
+                                }
+                            } else {
+                                // Obtener el correlativo más alto de usuarios
+                                $correlativo = DB::connection("easypay")->table("users")->max("correlativo") + 1;
+
+                                $userId = DB::connection("easypay")->table("users")->insertGetId([
+                                    // 'dui' => str_replace("-", "", json_decode($empresa->datos_empresa)->dui_nit) ?? "",
+                                    'correlativo' => $correlativo,
+                                    'tipo' => 'user',
+                                    'telefono' => "+503" . str_replace("-", "", $business->telefono ?? ""),
+                                    'name' => $user->name,
+                                    'apellidos' => "",
+                                    'email' => $user->email,
+                                    'enlace_foto' => null,
+                                    'password' => $user->password,
+                                ]);
+
+                                DB::connection("easypay")->table("usuarios_servicios")->insert([
+                                    'empresa_id' => $business->id,
+                                    'usuario_id' => $userId,
+                                    'user_dui' => $user_dui,
+                                    'servicio_id' => $servicio_id,
+                                ]);
+                            }
+
+                            $user->update([
+                                'easypay_access' => true,
+                            ]);
+                        }
 
                         Mail::to($request->correo_responsable)
                             ->send(new UsuarioMail(
