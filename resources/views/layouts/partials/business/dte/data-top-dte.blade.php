@@ -31,9 +31,9 @@
         <div class="mt-2 flex flex-col gap-2">
             <div>
                 <x-input type="checkbox" label="Guardar DTE como plantilla" name="save_as_template"
-                    id="save_as_template" :checked="$dte['status'] == 'template'" />
+                    id="save_as_template" :checked="(($dte['status'] ?? null) === 'template')" />
             </div>
-            <div id="template_name" class="{{ $dte['status'] == 'template' ? '' : 'hidden' }}">
+            <div id="template_name" class="{{ (($dte['status'] ?? null) === 'template') ? '' : 'hidden' }}">
                 <x-input type="text" label="Nombre de la plantilla" name="template_name"
                     placeholder="Nombre de la plantilla" class="w-full" value="{{ $dte['name'] ?? '' }}" />
             </div>

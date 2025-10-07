@@ -73,6 +73,9 @@ class DTEController extends Controller
                 ->where("user_id", auth()->user()->id)
                 ->first();
             $number = $request->input("document_type");
+            if (!$number) { // fallback seguro si no se envía el parámetro
+                $number = $this->dte['type'] ?? '01';
+            }
             $id = $request->input("id") ?? "";
             $business_products = BusinessProduct::where("business_id", session("business"))
                 ->whereIn("estado_stock", ["disponible", "por_agotarse"])
@@ -133,6 +136,16 @@ class DTEController extends Controller
             $default_pos = $business_user->default_pos_id ? PuntoVenta::with("sucursal")->find($business_user->default_pos_id) : null;
 
 
+            // Municipio: sólo si existe customer.departamento y está en catálogo
+            $municipios = [];
+            if (isset($this->dte['customer']['departamento']) && $this->dte['customer']['departamento'] && isset($this->departamentos[$this->dte['customer']['departamento']])) {
+                try {
+                    $municipios = $this->getMunicipios($this->dte['customer']['departamento']);
+                } catch (\Throwable $e) {
+                    Log::warning('No se pudieron obtener municipios: ' . $e->getMessage());
+                }
+            }
+
             $data = [
                 "business" => $business,
                 "sucursals" => $sucursals,
@@ -153,7 +166,7 @@ class DTEController extends Controller
                 "datos_empresa" => $datos_empresa,
                 "tipos_establecimientos" => $this->tipos_establecimientos,
                 "dte" => $this->dte,
-                "municipios" => isset($this->dte["customer"]) ? $this->getMunicipios($this->dte["customer"]["departamento"]) : [],
+                "municipios" => $municipios,
                 "metodos_pago" => $this->formas_pago,
                 "tipo_servicio" => $this->tipo_servicio,
                 "modo_transporte" => $this->modo_transporte,
@@ -1972,6 +1985,35 @@ class DTEController extends Controller
         if (!isset($this->dte['customer']) || !is_array($this->dte['customer'])) {
             $this->dte['customer'] = [];
         }
+        // Asegurar subclaves mínimas del customer usadas en la vista
+        $customerDefaultKeys = [
+            'tipoDocumento',
+            'numDocumento',
+            'nrc',
+            'nombre',
+            'nombreComercial',
+            'codActividad',
+            'descActividad',
+            'departamento',
+            'municipio',
+            'complemento',
+            'telefono',
+            'correo',
+            'tipoPersona',
+        ];
+        foreach ($customerDefaultKeys as $ck) {
+            if (!array_key_exists($ck, $this->dte['customer'])) {
+                $this->dte['customer'][$ck] = null;
+            }
+        }
+
+        // Claves de meta del DTE usadas en vistas parciales
+        if (!array_key_exists('status', $this->dte)) {
+            $this->dte['status'] = null;
+        }
+        if (!array_key_exists('name', $this->dte)) {
+            $this->dte['name'] = null;
+        }
     }
 
     /**
@@ -1996,9 +2038,10 @@ class DTEController extends Controller
         }
 
         try {
-            $import = new \App\Imports\CustomerProductsImport();
+            $import = new \App\Imports\CustomerProductsImport($type);
             Excel::import($import, $request->file('file'));
             $rows = $import->getRows();
+            $discarded = $import->getDiscarded();
 
             if (empty($rows)) {
                 return response()->json(['success' => false, 'message' => 'El archivo no contiene filas válidas'], 422);
@@ -2121,7 +2164,16 @@ class DTEController extends Controller
                 $g['total_ventas_gravadas'] = round($grav, 8);
                 $g['total_ventas_exentas'] = round($exe, 8);
                 $g['total_ventas_no_sujetas'] = round($nos, 8);
-                $g['subtotal'] = $grav + $exe + $nos;
+                // Para CCF (03) el subtotal base es sin IVA (grav representa base), IVA separado
+                $iva_calculado = 0;
+                if ($g['type'] === '03') {
+                    // Reconstruir IVA a partir de productos gravados base
+                    $baseGravada = array_sum(array_map(fn($p)=> $p['tipo']==='Gravada' ? ($p['cantidad']*$p['precio_sin_tributos']) : 0, $g['products']));
+                    $iva_calculado = round($baseGravada * 0.13, 8);
+                    $g['subtotal'] = $baseGravada + $exe + $nos; // base sin IVA
+                } else {
+                    $g['subtotal'] = $grav + $exe + $nos; // ya incluye IVA en gravadas (flujo consumidor final)
+                }
                 // Inicializaciones alineadas con total_init()
                 $g['descuento_venta_gravada'] = 0;
                 $g['descuento_venta_exenta'] = 0;
@@ -2136,7 +2188,8 @@ class DTEController extends Controller
                 $g['flete'] = 0;
                 $g['seguro'] = 0;
                 $g['total_descuentos'] = 0;
-                $g['total_taxes'] = 0; // IVA ya embebido en ventas_gravadas para factura CF; en CCF se calcula aparte si fuera necesario
+                // Para CCF exponer IVA separado; para CF queda embebido
+                $g['total_taxes'] = $g['type'] === '03' ? $iva_calculado : 0;
                 $g['total_iva_retenido'] = 0;
                 $g['isr'] = 0;
                 if ($g['type'] !== '11' && $g['type'] !== '14' && $g['type'] !== '07' && $g['type'] !== '01') {
@@ -2144,18 +2197,52 @@ class DTEController extends Controller
                 } else {
                     $g['total'] = $g['subtotal'];
                 }
-                $g['total_pagar'] = round($g['total'] - $g['total_descuentos'], 8);
+                // En CCF el total a pagar es subtotal + IVA
+                if ($g['type'] === '03') {
+                    $g['total_pagar'] = round(($g['subtotal'] + $iva_calculado) - $g['total_descuentos'], 8);
+                } else {
+                    $g['total_pagar'] = round($g['total'] - $g['total_descuentos'], 8);
+                }
                 // Método de pago por defecto (forma 99) cubre el total
                 $g['metodos_pago'] = [[
                     'id' => rand(1,100000),
-                    'forma_pago' => '99',
-                    'monto' => (string) $g['total_pagar'],
+                    'forma_pago' => '99', // Otros
+                    'monto' => (string) $g['total_pagar'], // debe reflejar total con IVA si CCF
                     'numero_documento' => '0',
                     'plazo' => null,
                     'periodo' => null,
                 ]];
                 $g['monto_abonado'] = $g['total_pagar'];
                 $g['monto_pendiente'] = 0;
+
+                // Etiqueta documento legible (sólo para vista previa)
+                $docMap = [ '36' => 'NIT', '13' => 'DUI', '02' => 'Pasaporte', '03' => 'Carnet Residente', '37' => 'Otros' ];
+                $docCode = $g['customer']['tipoDocumento'] ?? '';
+                $g['customer']['tipoDocumentoLabel'] = $docMap[$docCode] ?? $docCode;
+
+                // Detalle IVA separado para preview (solo CCF)
+                if ($g['type'] === '03') {
+                    $g['preview_totals'] = [
+                        'base' => round($g['subtotal'], 2),
+                        'iva' => round($iva_calculado, 2),
+                        'total' => round($g['total_pagar'], 2)
+                    ];
+                }
+
+                // Resumen compacto de items para modal/desplegable (incluye desglose por tipo de venta e IVA)
+                $g['items_preview'] = array_map(function($p){
+                    return [
+                        'descripcion' => $p['descripcion'] ?? '',
+                        'cantidad' => $p['cantidad'] ?? 0,
+                        'precio' => $p['precio'] ?? 0,
+                        'tipo' => $p['tipo'] ?? null,
+                        'iva' => $p['iva'] ?? 0,
+                        'gravada' => $p['ventas_gravadas'] ?? ($p['tipo'] === 'Gravada' ? ($p['total'] ?? 0) - ($p['iva'] ?? 0) : 0),
+                        'exenta' => $p['ventas_exentas'] ?? ($p['tipo'] === 'Exenta' ? ($p['total'] ?? 0) : 0),
+                        'no_suj' => $p['ventas_no_sujetas'] ?? ($p['tipo'] === 'No sujeta' ? ($p['total'] ?? 0) : 0),
+                        'total' => $p['total'] ?? 0,
+                    ];
+                }, $g['products']);
                 $result[] = $g;
             }
 
@@ -2163,6 +2250,7 @@ class DTEController extends Controller
                 'success' => true,
                 'count' => count($result),
                 'items' => $result,
+                'discarded' => $discarded,
             ]);
         } catch (\Throwable $e) {
             Log::error('importCustomersProductsExcel error: '.$e->getMessage());
@@ -2171,6 +2259,13 @@ class DTEController extends Controller
                 'message' => 'Error al procesar el archivo combinado.'
             ], 422);
         }
+    }
+
+    /** Limpia la sesión dte (para finalizar flujo masivo) */
+    public function clearSessionAfterBulk(Request $request)
+    {
+        session()->forget('dte');
+        return response()->json(['success' => true]);
     }
 
     // Helpers privados de normalización

@@ -77,6 +77,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::post('/submit-from-json', [DTEController::class, 'submitFromJson'])->name('submit-from-json');
     // Nuevo: importación combinada clientes+productos
     Route::post('/import-customers-products-excel', [DTEController::class, 'importCustomersProductsExcel'])->name('import-customers-products-excel');
+    Route::post('/clear-bulk-session', [DTEController::class, 'clearSessionAfterBulk'])->name('clear-bulk-session');
 
         Route::prefix("product")->name("product.")->group(function () {
             //Products

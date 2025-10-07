@@ -48,7 +48,7 @@
                         </div>
                         <div id="default-styled-tab-content">
                             <div class="hidden" id="styled-receptor" role="tabpanel" aria-labelledby="receptor-tab">
-                                <div class="flex flex-col justify-between gap-y-4 sm:flex-row sm:items-center {{$dte['status'] == 'template' ? 'hidden' : ''}}" id="omitir-datos-receptor-container">
+                                <div class="flex flex-col justify-between gap-y-4 sm:flex-row sm:items-center {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}}" id="omitir-datos-receptor-container">
                                     <div>
                                         <x-input type="checkbox" label="Omitir datos del receptor"
                                             name="omitir_datos_receptor" id="omitir_datos_receptor" />
@@ -57,7 +57,7 @@
                                         data-target="#selected-customer" class="show-modal w-full sm:w-auto"
                                         icon="user" />
                                 </div>
-                                <div class="mt-4 {{$dte['status'] == 'template' ? 'hidden' : ''}}" id="datos-receptor">
+                                <div class="mt-4 {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}}" id="datos-receptor">
                                     <div class="flex flex-col gap-4 sm:flex-row">
                                         <div class="flex-1" id="select-tipos-documentos">
                                             <x-select label="Tipo de documento" name="tipo_documento" id="type_document"
@@ -67,7 +67,7 @@
                                         </div>
                                         <div class="flex-[2]">
                                             <x-input type="text" label="Número de documento"
-                                                id="numero_documento_customer" :required="$dte['status'] != 'template'" name="numero_documento"
+                                                id="numero_documento_customer" :required="(($dte['status'] ?? null) !== 'template')" name="numero_documento"
                                                 value="{{ old('numero_documento', isset($dte['customer']) ? $dte['customer']['numDocumento'] : '') }}"
                                                 placeholder="Ingresar el número de documento" />
                                         </div>
@@ -97,13 +97,13 @@
                                     <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                                         <div class="flex-1" id="select-departamentos">
                                             <x-select name="department" label="Departamento" id="departamento"
-                                                name="departamento" :required="$dte['status'] != 'template'" :options="$departamentos"
+                                                name="departamento" :required="(($dte['status'] ?? null) !== 'template')" :options="$departamentos"
                                                 value="{{ old('departamento', isset($dte['customer']) ? $dte['customer']['departamento'] : '') }}"
                                                 selected="{{ old('departamento', isset($dte['customer']) ? $dte['customer']['departamento'] : '') }}"
                                                 data-action="{{ Route('business.get-municipios') }}" />
                                         </div>
                                         <div class="flex-1" id="select-municipio">
-                                            <x-select name="municipio" label="Municipio" id="municipality" :required="$dte['status'] != 'template'"
+                                            <x-select name="municipio" label="Municipio" id="municipality" :required="(($dte['status'] ?? null) !== 'template')"
                                                 :options="$municipios ?? [
                                                     'Seleccione un departamento' => 'Seleccione un departamento',
                                                 ]"

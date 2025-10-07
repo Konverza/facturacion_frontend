@@ -48,15 +48,15 @@
                         </div>
                         <div id="default-styled-tab-content">
                             <div class="hidden" id="styled-receptor" role="tabpanel" aria-labelledby="receptor-tab">
-                                <div class="flex flex-col items-center justify-end gap-y-4 sm:flex-row {{$dte['status'] == 'template' ? 'hidden' : ''}}" id="omitir-datos-receptor-container">
+                                <div class="flex flex-col items-center justify-end gap-y-4 sm:flex-row {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}}" id="omitir-datos-receptor-container">
                                     <x-button type="button" text="Seleccionar cliente existente" typeButton="success"
                                         data-target="#selected-customer" class="show-modal w-full sm:w-auto"
                                         icon="user" />
                                 </div>
-                                <div class="mt-4 {{$dte['status'] == 'template' ? 'hidden' : ''}}" id="datos-receptor">
+                                <div class="mt-4 {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}}" id="datos-receptor">
                                     <div class="flex flex-col gap-4 sm:flex-row">
                                         <div class="flex-1">
-                                            <x-input type="text" label="NIT" id="numero_documento_customer" :required="$dte['status'] != 'template'"
+                                            <x-input type="text" label="NIT" id="numero_documento_customer" :required="(($dte['status'] ?? null) !== 'template')"
                                                 name="numero_documento"
                                                 value="{{ old('numero_documento', isset($dte['customer']) ? $dte['customer']['numDocumento'] : '') }}"
                                                 placeholder="Número de documento" />
@@ -90,13 +90,13 @@
                                     <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                                         <div class="flex-1" id="select-departamentos">
                                             <x-select name="department" label="Departamento" id="departamento"
-                                                name="departamento" :required="$dte['status'] != 'template'" :options="$departamentos"
+                                                name="departamento" :required="(($dte['status'] ?? null) !== 'template')" :options="$departamentos"
                                                 value="{{ old('departamento', isset($dte['customer']) ? $dte['customer']['departamento'] : '') }}"
                                                 selected="{{ old('departamento', isset($dte['customer']) ? $dte['customer']['departamento'] : '') }}"
                                                 data-action="{{ Route('business.get-municipios') }}" />
                                         </div>
                                         <div class="flex-1" id="select-municipio">
-                                            <x-select name="municipio" label="Municipio" id="municipality" :required="$dte['status'] != 'template'"
+                                            <x-select name="municipio" label="Municipio" id="municipality" :required="(($dte['status'] ?? null) !== 'template')"
                                                 :options="$municipios ?? [
                                                     'Seleccione un departamento' => 'Seleccione un departamento',
                                                 ]"
@@ -114,13 +114,13 @@
                                         <div class="flex-1">
                                             <x-input type="text" label="Correo electrónico" icon="email"
                                                 value="{{ old('correo', isset($dte['customer']) ? $dte['customer']['correo'] : '') }}"
-                                                :required="$dte['status'] != 'template'" name="correo" placeholder="example@examp.com"
+                                                :required="(($dte['status'] ?? null) !== 'template')" name="correo" placeholder="example@examp.com"
                                                 id="correo_customer" />
                                         </div>
                                         <div class="flex-1">
                                             <x-input type="text" label="Teléfono" icon="phone" name="telefono"
                                                 value="{{ old('telefono', isset($dte['customer']) ? $dte['customer']['telefono'] : '') }}"
-                                                :required="$dte['status'] != 'template'" placeholder="XXXX XXXX" id="telefono_customer" />
+                                                :required="(($dte['status'] ?? null) !== 'template')" placeholder="XXXX XXXX" id="telefono_customer" />
                                         </div>
                                     </div>
                                 </div>
