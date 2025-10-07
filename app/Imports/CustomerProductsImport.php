@@ -102,7 +102,7 @@ class CustomerProductsImport implements ToCollection, WithHeadingRow
             if (empty($entry['cantidad'])) { $reasons[] = 'Cantidad faltante'; }
             if (empty($entry['precio_unitario_sin_iva'])) { $reasons[] = 'Precio unitario faltante'; }
 
-            // Validaciones específicas Crédito Fiscal (03)
+            // Validaciones específicas Crédito Fiscal (03) (tipo 14 no requiere NRC / actividad)
             if ($this->type === '03') {
                 if (empty($entry['nrc'])) { $reasons[] = 'NRC requerido para Crédito Fiscal'; }
                 if (empty($entry['codActividad'])) { $reasons[] = 'Actividad económica requerida para Crédito Fiscal'; }

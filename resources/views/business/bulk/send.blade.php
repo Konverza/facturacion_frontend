@@ -90,61 +90,71 @@
             </div>
             <div class="hidden rounded-lg" id="excel" role="tabpanel" aria-labelledby="excel-tab">
                 <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <p class="text-md text-gray-500 dark:text-gray-400 mb-4">Suba un Excel donde <strong class="font-medium text-gray-800 dark:text-white">cada fila contenga los datos del cliente y de un producto</strong>. Se agruparán automáticamente los productos por cliente para generar múltiples DTEs. Sólo se admiten tipos 01 (Consumidor Final) y 03 (Crédito Fiscal).</p>
-                    <div class="grid gap-4 sm:grid-cols-3">
-                        <div>
-                            <x-select label="Tipo de DTE" id="bulk_dte_type" name="bulk_dte_type" :options="['01'=>'Consumidor Final','03'=>'Crédito Fiscal']" />
-                        </div>
-                        <div class="sm:col-span-2 flex flex-col sm:flex-row sm:items-end gap-4">
-                            <x-input type="file" label="Excel Clientes + Productos" id="file_customers_products" name="file_customers_products" accept=".xlsx,.xls,.csv" />
-                            <button id="parse-customers-products" type="button" class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-400 disabled:opacity-50 mt-2">Procesar</button>
-                        </div>
+                    <p class="text-md text-gray-500 dark:text-gray-400 mb-4">Suba un Excel donde <strong
+                            class="font-medium text-gray-800 dark:text-white">cada fila contenga los datos del cliente y de
+                            un producto</strong>. Se agruparán automáticamente los productos por cliente para generar
+                        múltiples DTEs. Sólo se admiten Consumidor Final y Crédito Fiscal.</p>
+                </div>
+                <div
+                        class="my-2 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30">
+                        <b>Nota: </b> Debe utilizar el archivo de plantilla de DTE masivo en formato <b>.xlsx</b> disponible en
+                        <a href="{{ url('templates/plantilla_dte_masivo.xlsx') }}" target="_blank"
+                            class="text-blue-600 underline dark:text-blue-400">este enlace</a> para
+                        enviar los DTEs.
                     </div>
-                    <div class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                        Columnas adicionales esperadas: tipo de item, unidad de medida, cantidad, precio unitario (sin IVA), descripcion, tipo de venta (gravada|exenta|no sujeta).
+                <div class="mt-4 flex flex-col gap-2 px-4">
+                    <x-select label="Tipo de DTE" id="bulk_dte_type" name="bulk_dte_type" :options="['01' => 'Consumidor Final', '03' => 'Crédito Fiscal', '14' => 'Sujeto Excluido']"
+                        class="w-full mb-2" />
+                    <x-input type="file" label="Excel Clientes + Productos" id="file_customers_products"
+                        name="file_customers_products" accept=".xlsx,.xls,.csv" class="w-full mb-2" />
+                    <div class="mt-4 flex flex-col items-center justify-center gap-4 px-4 sm:flex-row">
+                        <x-button id="parse-customers-products" type="button" typeButton="primary" icon="file-symlink"
+                            text="Subir archivo" />
                     </div>
-                    <div id="bulk-dte-preview" class="mt-6 hidden">
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-lg font-semibold text-primary-600 dark:text-primary-300">DTEs generados <span id="bulk-dte-count" class="text-sm font-normal text-gray-500"></span></h3>
-                            <button id="send-bulk-generated" type="button" class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50">Enviar DTEs</button>
-                        </div>
-                        <div class="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
-                            <table class="w-full text-sm">
-                                <thead class="bg-gray-100 dark:bg-gray-700">
+                </div>
+                <div id="bulk-dte-preview" class="mt-6 hidden">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-lg font-semibold text-primary-600 dark:text-primary-300">DTEs generados <span
+                                id="bulk-dte-count" class="text-sm font-normal text-gray-500"></span></h3>
+                        <button id="send-bulk-generated" type="button"
+                            class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50">Enviar
+                            DTEs</button>
+                    </div>
+                    <div class="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-100 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-3 py-2 text-left">#</th>
+                                    <th class="px-3 py-2 text-left">Cliente</th>
+                                    <th class="px-3 py-2 text-left">Documento</th>
+                                    <th class="px-3 py-2 text-left">Items</th>
+                                    <th class="px-3 py-2 text-right">Total</th>
+                                    <th class="px-3 py-2 text-left">Estado</th>
+                                    <th class="px-3 py-2 text-left">Ver</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bulk-dte-body"></tbody>
+                        </table>
+                    </div>
+                    <div id="bulk-discarded" class="mt-6 hidden">
+                        <h4 class="text-md font-semibold text-red-600 dark:text-red-400 mb-2">Filas descartadas</h4>
+                        <div class="overflow-x-auto rounded border border-red-200 dark:border-red-700 max-h-60">
+                            <table class="w-full text-xs">
+                                <thead class="bg-red-100 dark:bg-red-900/40">
                                     <tr>
-                                        <th class="px-3 py-2 text-left">#</th>
-                                        <th class="px-3 py-2 text-left">Cliente</th>
-                                        <th class="px-3 py-2 text-left">Documento</th>
-                                        <th class="px-3 py-2 text-left">Items</th>
-                                        <th class="px-3 py-2 text-right">Total</th>
-                                        <th class="px-3 py-2 text-left">Estado</th>
-                                        <th class="px-3 py-2 text-left">Ver</th>
+                                        <th class="px-2 py-1 text-left">Fila</th>
+                                        <th class="px-2 py-1 text-left">Motivos</th>
+                                        <th class="px-2 py-1 text-left">Descripción Producto</th>
                                     </tr>
                                 </thead>
-                                <tbody id="bulk-dte-body"></tbody>
+                                <tbody id="bulk-discarded-body"></tbody>
                             </table>
                         </div>
-                        <div id="bulk-discarded" class="mt-6 hidden">
-                            <h4 class="text-md font-semibold text-red-600 dark:text-red-400 mb-2">Filas descartadas</h4>
-                            <div class="overflow-x-auto rounded border border-red-200 dark:border-red-700 max-h-60">
-                                <table class="w-full text-xs">
-                                    <thead class="bg-red-100 dark:bg-red-900/40">
-                                        <tr>
-                                            <th class="px-2 py-1 text-left">Fila</th>
-                                            <th class="px-2 py-1 text-left">Motivos</th>
-                                            <th class="px-2 py-1 text-left">Descripción Producto</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="bulk-discarded-body"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="mt-3 text-sm text-gray-500 dark:text-gray-400" id="bulk-dte-progress"></div>
                     </div>
+                    <div class="mt-3 text-sm text-gray-500 dark:text-gray-400" id="bulk-dte-progress"></div>
                 </div>
             </div>
         </div>
-
     </section>
     @push('scripts')
         <script>
@@ -264,7 +274,10 @@
                         let data;
                         if (window.axios) {
                             const res = await window.axios.post('/business/dte/submit-from-json', payload, {
-                                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+                                headers: {
+                                    'X-CSRF-TOKEN': CSRF,
+                                    'Accept': 'application/json'
+                                }
                             });
                             data = res.data;
                         } else {
@@ -273,13 +286,16 @@
                                 method: 'POST',
                                 data: JSON.stringify(payload),
                                 contentType: 'application/json',
-                                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+                                headers: {
+                                    'X-CSRF-TOKEN': CSRF,
+                                    'Accept': 'application/json'
+                                }
                             });
                         }
                         if (!data || typeof data !== 'object' || (!data.estado && data.success === undefined)) {
                             throw new Error('Respuesta inesperada (posible redirección)');
                         }
-                        
+
                         const estado = data.estado || (data.success === false ? 'RECHAZADO' : 'PROCESADO');
                         const mensaje = data.observaciones || data.message || '';
                         $(`#state-${idx}`).html(badge(estado, mensaje));
@@ -385,11 +401,16 @@
                 const $sendCP = $('#send-bulk-generated');
                 let generatedDtes = [];
 
-                function currency(v){
-                    return '$' + Number(v || 0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+                function currency(v) {
+                    return '$' + Number(v || 0).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
                 }
+
                 function renderCPRow(idx, item) {
-                    const c = item.customer || {}; const name = c.nombre || c.nombreComercial || 'Cliente';
+                    const c = item.customer || {};
+                    const name = c.nombre || c.nombreComercial || 'Cliente';
                     const docLabel = c.tipoDocumentoLabel || c.tipoDocumento || '';
                     const docNumber = c.numDocumento || '';
                     let totalCell;
@@ -399,33 +420,122 @@
                             <span>IVA: ${currency(item.preview_totals.iva)}</span>
                             <span class="border-t border-dashed mt-0.5 pt-0.5">Total: <strong>${currency(item.preview_totals.total)}</strong></span>
                         </div>`;
+                    } else if (item.type === '14') {
+                                        // Desglose para Sujeto Excluido usando preview_totals uniforme
+                                        const base14 = Number(item.preview_totals?.base || 0);
+                                        const renta14 = Number(item.preview_totals?.renta || 0);
+                                        const total14 = Number(item.preview_totals?.total || item.total_pagar || 0);
+                        totalCell = `<div class="flex flex-col text-right leading-tight">
+                            <span class="font-semibold">Base: ${currency(base14)}</span>
+                            <span>Renta: ${currency(renta14)}</span>
+                            <span class="border-t border-dashed mt-0.5 pt-0.5">Total: <strong>${currency(total14)}</strong></span>
+                        </div>`;
                     } else {
                         totalCell = `<span class="font-semibold">${currency(item.total_pagar ?? item.total ?? 0)}</span>`;
                     }
                     // Botón para modal/desplegable
                     const modalId = `items-modal-${idx}`;
                     // Helper para mostrar montos con placeholder
-                    const fmt = (v, opts={placeholder:true}) => {
-                        const num = Number(v||0);
-                        if(num > 0) return currency(num);
+                    const fmt = (v, opts = {
+                        placeholder: true
+                    }) => {
+                        const num = Number(v || 0);
+                        if (num > 0) return currency(num);
                         return opts.placeholder ? '$ -' : currency(0);
                     };
-                    let ivaTotal = 0, gravadaTotal = 0, exentaTotal = 0, noSujTotal = 0;
-                    const listItems = (item.items_preview||[]).map(p=>{
-                        const gravadaConIva = (Number(p.gravada||0) + Number(p.iva||0));
-                        ivaTotal += Number(p.iva||0);
+                    // Modal específico para tipo 14 (Sujeto Excluido)
+                    if (item.type === '14') {
+                        let subtotal14 = 0, renta14 = 0, neto14 = 0;
+                        const listItems14 = (item.items_preview || []).map(p => {
+                            const subtotal = Number(p.subtotal || (p.precio_unitario * p.cantidad) || 0);
+                            const renta = Number(p.retencion_renta || 0);
+                            const neto = (p.total_neto !== undefined) ? Number(p.total_neto) : (subtotal - renta);
+                            subtotal14 += subtotal;
+                            renta14 += renta;
+                            neto14 += neto;
+                            return `<tr>
+                                <td class='px-2 py-1'>${p.descripcion}</td>
+                                <td class='px-2 py-1 text-right'>${currency(p.precio_unitario ?? p.precio ?? 0)}</td>
+                                <td class='px-2 py-1 text-center'>${p.cantidad}</td>
+                                <td class='px-2 py-1 text-right'>${fmt(subtotal,{placeholder:false})}</td>
+                                <td class='px-2 py-1 text-right'>${fmt(renta,{placeholder:true})}</td>
+                                <td class='px-2 py-1 text-right'>${fmt(neto,{placeholder:false})}</td>
+                            </tr>`;
+                        }).join('');
+                            const totalsRow14 = `<tr class='font-semibold bg-gray-50 dark:bg-gray-700/50'>
+                                <td class='px-2 py-1 text-right' colspan='3'>Totales</td>
+                                <td class='px-2 py-1 text-right'>${fmt(subtotal14,{placeholder:false})}</td>
+                                <td class='px-2 py-1 text-right'>${fmt(renta14,{placeholder:false})}</td>
+                                <td class='px-2 py-1 text-right'>${fmt(neto14,{placeholder:false})}</td>
+                            </tr>`;
+                        const modalHtml14 = `<div id="${modalId}" tabindex="-1" aria-hidden="true" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                            <div class="w-full max-w-2xl rounded-lg bg-white p-4 dark:bg-gray-800 shadow">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h5 class="text-lg font-semibold text-gray-800 dark:text-gray-100">Items DTE #${idx+1} (Tipo 14)</h5>
+                                    <button type="button" data-modal-hide="${modalId}" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                        <span class="sr-only">Cerrar</span>
+                                        &times;
+                                    </button>
+                                </div>
+                                <div class="overflow-x-auto border rounded border-gray-200 dark:border-gray-700 max-h-80">
+                                    <table class="w-full text-xs">
+                                        <thead class="bg-gray-100 dark:bg-gray-700">
+                                            <tr>
+                                                <th class="px-2 py-1 text-left">Descripción</th>
+                                                <th class="px-2 py-1 text-right">Precio Unitario</th>
+                                                <th class="px-2 py-1 text-center">Cant</th>
+                                                <th class="px-2 py-1 text-right">SubTotal</th>
+                                                <th class="px-2 py-1 text-right">Renta</th>
+                                                <th class="px-2 py-1 text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>${listItems14}</tbody>
+                                        <tfoot>${totalsRow14}</tfoot>
+                                    </table>
+                                </div>
+                                <div class="mt-3 flex justify-end">
+                                    <div class="text-sm font-semibold text-gray-700 dark:text-gray-200">Total General: <span class="text-primary-600 dark:text-primary-300">${currency(neto14)}</span></div>
+                                </div>
+                                <div class="mt-4 text-right">
+                                    <button data-modal-hide="${modalId}" class="inline-flex items-center rounded bg-primary-600 px-3 py-1.5 text-white text-sm hover:bg-primary-700">Cerrar</button>
+                                </div>
+                            </div>
+                        </div>`;
+                        setTimeout(() => {
+                            if (!document.getElementById(modalId)) {
+                                document.body.insertAdjacentHTML('beforeend', modalHtml14);
+                            }
+                        }, 0);
+                        return `<tr id="cp-row-${idx}" class="border-b border-gray-100 dark:border-gray-700">
+                            <td class="px-3 py-1">${idx + 1}</td>
+                            <td class="px-3 py-1">${name}</td>
+                            <td class="px-3 py-1">${docLabel} ${docNumber}</td>
+                            <td class="px-3 py-1">${item.products.length}</td>
+                            <td class="px-3 py-1">${totalCell}</td>
+                            <td class="px-3 py-1"><span class="inline-flex rounded bg-gray-300 dark:bg-gray-600 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:text-gray-100" data-status>LISTO</span></td>
+                            <td class="px-3 py-1 text-center"><button data-modal-target="${modalId}" data-modal-toggle="${modalId}" class="text-primary-600 hover:underline text-xs">Ver</button></td>
+                        </tr>`;
+                    }
+                    let ivaTotal = 0,
+                        gravadaTotal = 0,
+                        exentaTotal = 0,
+                        noSujTotal = 0;
+                    const listItems = (item.items_preview || []).map(p => {
+                        const gravadaConIva = (Number(p.gravada || 0) + Number(p.iva || 0));
+                        ivaTotal += Number(p.iva || 0);
                         gravadaTotal += gravadaConIva;
-                        exentaTotal += Number(p.exenta||0);
-                        noSujTotal += Number(p.no_suj||0);
+                        exentaTotal += Number(p.exenta || 0);
+                        noSujTotal += Number(p.no_suj || 0);
                         return `<tr>
                             <td class='px-2 py-1'>${p.descripcion}</td>
-                            <td class='px-2 py-1 text-right'>${currency(p.precio)}</td>
+                            <td class='px-2 py-1 text-right'>${currency(p.precio_unitario ?? p.precio ?? 0)}</td>
                             <td class='px-2 py-1 text-center'>${p.cantidad}</td>
                             <td class='px-2 py-1 text-right'>${fmt(p.iva)}</td>
                             <td class='px-2 py-1 text-right'>${fmt(gravadaConIva)}</td>
                             <td class='px-2 py-1 text-right'>${fmt(p.exenta)}</td>
                             <td class='px-2 py-1 text-right'>${fmt(p.no_suj)}</td>
-                        </tr>`;}).join('');
+                        </tr>`;
+                    }).join('');
                     const totalsRow = `<tr class='font-semibold bg-gray-50 dark:bg-gray-700/50'>
                         <td class='px-2 py-1 text-right' colspan='3'>Totales</td>
                         <td class='px-2 py-1 text-right'>${fmt(ivaTotal,{placeholder:false})}</td>
@@ -469,7 +579,11 @@
                         </div>
                     </div>`;
                     // Insert modal into DOM (lazy container)
-                    setTimeout(()=>{ if(!document.getElementById(modalId)){ document.body.insertAdjacentHTML('beforeend', modalHtml); } },0);
+                    setTimeout(() => {
+                        if (!document.getElementById(modalId)) {
+                            document.body.insertAdjacentHTML('beforeend', modalHtml);
+                        }
+                    }, 0);
                     return `<tr id="cp-row-${idx}" class="border-b border-gray-100 dark:border-gray-700">
                         <td class="px-3 py-1">${idx + 1}</td>
                         <td class="px-3 py-1">${name}</td>
@@ -482,30 +596,47 @@
                 }
 
                 async function importCustomersProductsExcel(file, dteType) {
-                    const fd = new FormData(); fd.append('file', file); fd.append('dte_type', dteType); if (CSRF) fd.append('_token', CSRF);
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('dte_type', dteType);
+                    if (CSRF) fd.append('_token', CSRF);
                     const res = await http.post('/business/dte/import-customers-products-excel', fd, {
-                        headers: { 'X-CSRF-TOKEN': CSRF }
+                        headers: {
+                            'X-CSRF-TOKEN': CSRF
+                        }
                     });
                     return res.data || res;
                 }
 
                 async function sendOneCP(idx, dte) {
-                    const $row = $(`#cp-row-${idx}`); const $st = $row.find('[data-status]');
-                    $st.text('ENVIANDO').removeClass().addClass('inline-flex rounded bg-blue-500 px-2 py-0.5 text-xs font-semibold text-white');
+                    const $row = $(`#cp-row-${idx}`);
+                    const $st = $row.find('[data-status]');
+                    $st.text('ENVIANDO').removeClass().addClass(
+                        'inline-flex rounded bg-blue-500 px-2 py-0.5 text-xs font-semibold text-white');
                     try {
                         let data;
                         if (window.axios) {
-                            const res = await window.axios.post('/business/dte/submit-from-json', { dte }, {
-                                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+                            const res = await window.axios.post('/business/dte/submit-from-json', {
+                                dte
+                            }, {
+                                headers: {
+                                    'X-CSRF-TOKEN': CSRF,
+                                    'Accept': 'application/json'
+                                }
                             });
                             data = res.data;
                         } else {
                             const res = await $.ajax({
                                 url: '/business/dte/submit-from-json',
                                 method: 'POST',
-                                data: JSON.stringify({ dte }),
+                                data: JSON.stringify({
+                                    dte
+                                }),
                                 contentType: 'application/json',
-                                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+                                headers: {
+                                    'X-CSRF-TOKEN': CSRF,
+                                    'Accept': 'application/json'
+                                }
                             });
                             data = res;
                         }
@@ -514,23 +645,32 @@
                         }
                         const estado = data.estado || (data.success === false ? 'RECHAZADO' : 'PROCESADO');
                         if (estado === 'PROCESADO' || estado === 'CONTINGENCIA') {
-                            $st.text('PROCESADO').removeClass().addClass('inline-flex rounded bg-green-600 px-2 py-0.5 text-xs font-semibold text-white');
+                            $st.text('PROCESADO').removeClass().addClass(
+                                'inline-flex rounded bg-green-600 px-2 py-0.5 text-xs font-semibold text-white');
                             return true;
                         }
-                        $st.text(estado).removeClass().addClass('inline-flex rounded bg-red-600 px-2 py-0.5 text-xs font-semibold text-white');
+                        $st.text(estado).removeClass().addClass(
+                            'inline-flex rounded bg-red-600 px-2 py-0.5 text-xs font-semibold text-white');
                         return false;
                     } catch (e) {
-                        $st.text('ERROR').removeClass().addClass('inline-flex rounded bg-red-600 px-2 py-0.5 text-xs font-semibold text-white');
+                        $st.text('ERROR').removeClass().addClass(
+                            'inline-flex rounded bg-red-600 px-2 py-0.5 text-xs font-semibold text-white');
                         return false;
                     }
                 }
 
                 async function runCPQueue(concurrency = 2) {
-                    let done = 0, ok = 0; const total = generatedDtes.length; $progressCP.text(`0/${total}`);
+                    let done = 0,
+                        ok = 0;
+                    const total = generatedDtes.length;
+                    $progressCP.text(`0/${total}`);
                     const pool = new Array(Math.min(concurrency, total)).fill(null);
                     async function next() {
-                        const idx = done; if (idx >= total) return; done++;
-                        const success = await sendOneCP(idx, generatedDtes[idx]); if (success) ok++;
+                        const idx = done;
+                        if (idx >= total) return;
+                        done++;
+                        const success = await sendOneCP(idx, generatedDtes[idx]);
+                        if (success) ok++;
                         $progressCP.text(`${done}/${total} procesados (Exitosos: ${ok})`);
                         await next();
                     }
@@ -538,66 +678,92 @@
                 }
 
                 $btnParseCP.on('click', async function() {
-                    const file = $fileCP[0].files?.[0]; const dteType = $typeCP.val();
-                    if (!file) return alert('Seleccione un archivo'); if (!dteType) return alert('Seleccione el tipo de DTE');
+                    const file = $fileCP[0].files?.[0];
+                    const dteType = $typeCP.val();
+                    if (!file) return alert('Seleccione un archivo');
+                    if (!dteType) return alert('Seleccione el tipo de DTE');
                     $('#loader').removeClass('hidden');
                     try {
                         const data = await importCustomersProductsExcel(file, dteType);
                         if (!data.success) throw new Error(data.message || 'Error');
                         generatedDtes = data.items || [];
-                        $bodyCP.empty(); generatedDtes.forEach((d,i)=> $bodyCP.append(renderCPRow(i,d)));
+                        $bodyCP.empty();
+                        generatedDtes.forEach((d, i) => $bodyCP.append(renderCPRow(i, d)));
                         // Descartados
                         const discarded = data.discarded || [];
                         const $discardBody = $('#bulk-discarded-body');
                         $discardBody.empty();
-                        if (discarded.length){
-                            discarded.forEach(r=>{
-                                $discardBody.append(`<tr><td class='px-2 py-1'>${r.row}</td><td class='px-2 py-1'>${r.reasons.join('; ')}</td><td class='px-2 py-1'>${r.data?.descripcion || ''}</td></tr>`);
+                        if (discarded.length) {
+                            discarded.forEach(r => {
+                                $discardBody.append(
+                                    `<tr><td class='px-2 py-1'>${r.row}</td><td class='px-2 py-1'>${r.reasons.join('; ')}</td><td class='px-2 py-1'>${r.data?.descripcion || ''}</td></tr>`
+                                );
                             });
                             $('#bulk-discarded').removeClass('hidden');
                         } else {
                             $('#bulk-discarded').addClass('hidden');
                         }
-                        $countCP.text(`(${generatedDtes.length})`); $previewCP.removeClass('hidden');
-                    } catch (e) { alert(e.message || 'Error al procesar el Excel'); } finally { $('#loader').addClass('hidden'); }
+                        $countCP.text(`(${generatedDtes.length})`);
+                        $previewCP.removeClass('hidden');
+                    } catch (e) {
+                        alert(e.message || 'Error al procesar el Excel');
+                    } finally {
+                        $('#loader').addClass('hidden');
+                    }
                 });
 
                 $sendCP.on('click', async function() {
                     if (!generatedDtes.length) return alert('No hay DTEs generados');
                     if (!confirm('¿Enviar todos los DTEs generados?')) return;
-                    $('#loader').removeClass('hidden'); $sendCP.prop('disabled', true);
-                    try { await runCPQueue(2); } finally { $('#loader').addClass('hidden'); $sendCP.prop('disabled', false); }
+                    $('#loader').removeClass('hidden');
+                    $sendCP.prop('disabled', true);
+                    try {
+                        await runCPQueue(2);
+                    } finally {
+                        $('#loader').addClass('hidden');
+                        $sendCP.prop('disabled', false);
+                    }
                     // Limpiar sesión DTE para nuevo inicio
-                    try { await http.post('/business/dte/clear-bulk-session', { _token: CSRF }, { headers: { 'X-CSRF-TOKEN': CSRF }}); } catch(e) {}
+                    try {
+                        await http.post('/business/dte/clear-bulk-session', {
+                            _token: CSRF
+                        }, {
+                            headers: {
+                                'X-CSRF-TOKEN': CSRF
+                            }
+                        });
+                    } catch (e) {}
                 });
 
                 /* ================== MANEJO DE MODALES DINÁMICOS (Items DTE) ================== */
                 // Delegación para abrir
-                document.addEventListener('click', function(e){
+                document.addEventListener('click', function(e) {
                     const toggleBtn = e.target.closest('[data-modal-toggle]');
-                    if(toggleBtn){
-                        const id = toggleBtn.getAttribute('data-modal-target') || toggleBtn.getAttribute('data-modal-toggle');
+                    if (toggleBtn) {
+                        const id = toggleBtn.getAttribute('data-modal-target') || toggleBtn.getAttribute(
+                            'data-modal-toggle');
                         const modal = document.getElementById(id);
-                        if(modal){
+                        if (modal) {
                             modal.classList.remove('hidden');
                             // Evitar scroll de fondo opcional
                             document.documentElement.classList.add('overflow-y-hidden');
                         }
                     }
                     const hideBtn = e.target.closest('[data-modal-hide]');
-                    if(hideBtn){
+                    if (hideBtn) {
                         const id = hideBtn.getAttribute('data-modal-hide');
                         const modal = document.getElementById(id);
-                        if(modal){
+                        if (modal) {
                             modal.classList.add('hidden');
                             document.documentElement.classList.remove('overflow-y-hidden');
                         }
                     }
                 });
                 // Cerrar al hacer click en el overlay (zona oscura fuera del contenido)
-                document.addEventListener('click', function(e){
+                document.addEventListener('click', function(e) {
                     const modalEl = e.target;
-                    if(modalEl && modalEl.classList && modalEl.classList.contains('fixed') && modalEl.getAttribute('id')?.startsWith('items-modal-')){
+                    if (modalEl && modalEl.classList && modalEl.classList.contains('fixed') && modalEl.getAttribute(
+                            'id')?.startsWith('items-modal-')) {
                         // click directo al overlay
                         modalEl.classList.add('hidden');
                         document.documentElement.classList.remove('overflow-y-hidden');

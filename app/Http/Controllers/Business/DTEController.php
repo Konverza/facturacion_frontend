@@ -1161,15 +1161,26 @@ class DTEController extends Controller
                 "noGravado" => 0,
             ];
         } elseif ($type === "14") {
+            // Para sujeto excluido no hay IVA; el campo 'compra' debe reflejar el valor de la línea (base) después de descuento.
+            // En la construcción previa marcamos todo como exento, por lo que ventas_gravadas = 0 y ventas_exentas contiene la base.
+            $cantidad = (float) ($product['cantidad'] ?? 0);
+            $precioBase = (float) ($product['precio_sin_tributos'] ?? $product['precio'] ?? 0); // siempre sin IVA
+            $descuento = (float) ($product['descuento'] ?? 0);
+            $lineaBruta = $cantidad * $precioBase; // base total antes de descuento
+            // Si tenemos ventas_exentas úsala como base de referencia (puede venir ya redondeada), de lo contrario usamos cálculo directo
+            $baseDeclarada = isset($product['ventas_exentas']) ? (float)$product['ventas_exentas'] : $lineaBruta;
+            // Ajuste final de compra = base - descuento (no debe ser negativa)
+            $compra = max(0, $baseDeclarada - $descuento);
+            // Redondeos: precioUni a 8 decimales para consistencia API; compra y montoDescu también a 8 para evitar holgura
             return [
-                "tipoItem" => $product["tipo_item"],
-                "cantidad" => $product["cantidad"],
-                "codigo" => null,
-                "uniMedida" => $product["unidad_medida"],
-                "descripcion" => $product["descripcion"],
-                "precioUni" => round($product["precio"], 8),
-                "montoDescu" => round($product["descuento"], 8),
-                "compra" => round($product["ventas_gravadas"], 8),
+                'tipoItem' => $product['tipo_item'],
+                'cantidad' => $cantidad,
+                'codigo' => null,
+                'uniMedida' => $product['unidad_medida'],
+                'descripcion' => $product['descripcion'],
+                'precioUni' => round($precioBase, 8),
+                'montoDescu' => round($descuento, 8),
+                'compra' => round($compra, 8),
             ];
         } else {
 
@@ -2019,7 +2030,7 @@ class DTEController extends Controller
     /**
      * Importa Excel que contiene en cada fila datos de cliente + un producto.
      * Agrupa por cliente generando estructuras de DTE listas para ser enviadas luego
-     * mediante submitFromJson. Sólo soporta tipos 01 (Factura Consumidor Final) y 03 (Crédito Fiscal).
+    * mediante submitFromJson. Soporta tipos 01 (Factura Consumidor Final), 03 (Crédito Fiscal) y 14 (Factura Sujeto Excluido).
      * Request params:
      *  - file: archivo excel
      *  - dte_type: '01' | '03'
@@ -2028,7 +2039,7 @@ class DTEController extends Controller
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:20480',
-            'dte_type' => 'required|in:01,03'
+            'dte_type' => 'required|in:01,03,14'
         ]);
 
         $type = $request->input('dte_type');
@@ -2067,7 +2078,7 @@ class DTEController extends Controller
                 };
             };
 
-            // Mapeo tipo venta -> claves internas (Gravada, Exenta, No sujeta)
+            // Mapeo tipo venta -> claves internas (Gravada, Exenta, No sujeta) (ignorado para tipo 14: se tratará como Exenta)
             $mapTipoVenta = function($txt) {
                 $t = mb_strtolower(trim((string)($txt ?? '')));
                 return match($t) {
@@ -2091,22 +2102,29 @@ class DTEController extends Controller
                 if ($cantidad <= 0 || $precioSinIVA <= 0) { continue; }
 
                 $tipoVenta = $mapTipoVenta($r['tipo_venta_txt'] ?? null);
+                if ($type === '14') { // sujeto excluido sin IVA
+                    $tipoVenta = 'Exenta';
+                }
                 $tipoItem = $mapTipoItem($r['tipo_item_txt'] ?? null);
                 $uniMedida = $mapUnidad($r['unidad_medida_txt'] ?? null);
 
                 $totalBase = $cantidad * $precioSinIVA;
                 $precioConIVA = ($tipoVenta === 'Gravada')
-                    ? $precioSinIVA * ($type === '03' ? 1 : 1.13) // en CCF precioSinIVA ya base, en factura CF original lógica divide
-                    : $precioSinIVA; // exenta / no sujeta no se suma IVA
-
+                    ? $precioSinIVA * ($type === '03' ? 1 : 1.13)
+                    : $precioSinIVA;
                 $iva = 0;
-                if ($tipoVenta === 'Gravada') {
-                    $iva = $type === '03' ? $totalBase * 0.13 : (($totalBase) * 0.13); // en factura CF el total viene con IVA, pero internal calc usa base
+                if ($tipoVenta === 'Gravada' && $type !== '14') {
+                    $iva = $type === '03' ? $totalBase * 0.13 : ($totalBase * 0.13);
                 }
+                $ventaGravada = ($tipoVenta === 'Gravada' && $type !== '14') ? ($type === '03' ? $totalBase : ($totalBase * 1.13)) : 0;
+                $ventaExenta = ($tipoVenta === 'Exenta' || $type === '14') ? $totalBase : 0;
+                $ventaNoSuj = ($tipoVenta === 'No sujeta') ? $totalBase : 0;
 
-                $ventaGravada = $tipoVenta === 'Gravada' ? ($type === '03' ? $totalBase : ($totalBase * 1.13)) : 0;
-                $ventaExenta = $tipoVenta === 'Exenta' ? $totalBase : 0;
-                $ventaNoSuj = $tipoVenta === 'No sujeta' ? $totalBase : 0;
+                // Retención de renta por línea (solo tipo 14 y servicios/ambos)
+                $retencionLinea = 0;
+                if ($type === '14' && in_array($tipoItem, [2,3], true)) {
+                    $retencionLinea = round($totalBase * 0.10, 8);
+                }
 
                 $productArray = [
                     'id' => rand(1,100000),
@@ -2117,7 +2135,7 @@ class DTEController extends Controller
                     'descripcion' => $r['descripcion'] ?? 'Producto',
                     'cantidad' => $cantidad,
                     'tipo' => $tipoVenta,
-                    'precio' => $tipoVenta === 'Gravada' ? ($type === '03' ? $precioSinIVA : $precioConIVA) : $precioSinIVA,
+                    'precio' => $tipoVenta === 'Gravada' && $type !== '14' ? ($type === '03' ? $precioSinIVA : $precioConIVA) : $precioSinIVA,
                     'precio_sin_tributos' => $precioSinIVA,
                     'descuento' => 0,
                     'ventas_gravadas' => $ventaGravada,
@@ -2127,6 +2145,7 @@ class DTEController extends Controller
                     'iva' => $iva,
                     'tipo_item' => $tipoItem,
                     'tributos' => json_encode(['20']), // por defecto
+                    'retencion_renta' => $retencionLinea,
                 ];
 
                 if (!isset($groups[$groupKey])) {
@@ -2171,6 +2190,9 @@ class DTEController extends Controller
                     $baseGravada = array_sum(array_map(fn($p)=> $p['tipo']==='Gravada' ? ($p['cantidad']*$p['precio_sin_tributos']) : 0, $g['products']));
                     $iva_calculado = round($baseGravada * 0.13, 8);
                     $g['subtotal'] = $baseGravada + $exe + $nos; // base sin IVA
+                } else if ($g['type'] === '14') {
+                    // En sujeto excluido, subtotal es la suma de las bases (sin IVA, todo tratado como exento/servicio)
+                    $g['subtotal'] = $grav + $exe + $nos; // grav debería ser 0 siempre aquí
                 } else {
                     $g['subtotal'] = $grav + $exe + $nos; // ya incluye IVA en gravadas (flujo consumidor final)
                 }
@@ -2189,7 +2211,7 @@ class DTEController extends Controller
                 $g['seguro'] = 0;
                 $g['total_descuentos'] = 0;
                 // Para CCF exponer IVA separado; para CF queda embebido
-                $g['total_taxes'] = $g['type'] === '03' ? $iva_calculado : 0;
+                $g['total_taxes'] = $g['type'] === '03' ? $iva_calculado : 0; // tipo 14 sin IVA
                 $g['total_iva_retenido'] = 0;
                 $g['isr'] = 0;
                 if ($g['type'] !== '11' && $g['type'] !== '14' && $g['type'] !== '07' && $g['type'] !== '01') {
@@ -2202,6 +2224,22 @@ class DTEController extends Controller
                     $g['total_pagar'] = round(($g['subtotal'] + $iva_calculado) - $g['total_descuentos'], 8);
                 } else {
                     $g['total_pagar'] = round($g['total'] - $g['total_descuentos'], 8);
+                }
+                // Retención 10% sólo en tipo 14 para líneas servicio o ambos
+                if ($g['type'] === '14') {
+                    $retencionBase = 0;
+                    foreach ($g['products'] as $p) {
+                        if (isset($p['tipo_item']) && in_array((int)$p['tipo_item'], [2,3], true)) {
+                            $retencionBase += (float)($p['total'] ?? 0);
+                        }
+                    }
+                    if ($retencionBase > 0) {
+                        $isr = round($retencionBase * 0.10, 8);
+                        $g['retener_renta'] = 'active';
+                        $g['isr'] = $isr;
+                        $g['total_pagar'] = max(0, round($g['total_pagar'] - $isr, 8));
+                        $g['monto_abonado'] = $g['total_pagar'];
+                    }
                 }
                 // Método de pago por defecto (forma 99) cubre el total
                 $g['metodos_pago'] = [[
@@ -2220,27 +2258,50 @@ class DTEController extends Controller
                 $docCode = $g['customer']['tipoDocumento'] ?? '';
                 $g['customer']['tipoDocumentoLabel'] = $docMap[$docCode] ?? $docCode;
 
-                // Detalle IVA separado para preview (solo CCF)
-                if ($g['type'] === '03') {
+                // Totales de preview uniformes según tipo
+                if ($g['type'] === '03') { // Crédito Fiscal: base + IVA + total
                     $g['preview_totals'] = [
                         'base' => round($g['subtotal'], 2),
                         'iva' => round($iva_calculado, 2),
+                        'renta' => 0.00,
                         'total' => round($g['total_pagar'], 2)
+                    ];
+                } elseif ($g['type'] === '14') { // Sujeto Excluido: base, renta (retención) y total neto
+                    $base14 = round($g['subtotal'], 2);
+                    $renta14 = round($g['isr'] ?? 0, 2);
+                    $total14 = round($g['total_pagar'], 2); // ya viene con renta descontada
+                    $g['preview_totals'] = [
+                        'base' => $base14,
+                        'iva' => 0.00,
+                        'renta' => $renta14,
+                        'total' => $total14,
                     ];
                 }
 
                 // Resumen compacto de items para modal/desplegable (incluye desglose por tipo de venta e IVA)
                 $g['items_preview'] = array_map(function($p){
+                    $cantidad = (float)($p['cantidad'] ?? 0);
+                    $iva = (float)($p['iva'] ?? 0);
+                    $total = (float)($p['total'] ?? 0);
+                    // Si existe precio_sin_tributos úsalo como base; sino calcula base a partir del total - iva
+                    $baseTotal = $p['ventas_gravadas'] ?? ($p['tipo'] === 'Gravada' ? ($total - $iva) : ($total - $iva));
+                    $precioUnitarioBase = $p['precio_sin_tributos'] ?? ($cantidad > 0 ? $baseTotal / $cantidad : ($p['precio'] ?? 0));
+                    $subtotal = $cantidad * $precioUnitarioBase;
+                    $retencionLinea = (float)($p['retencion_renta'] ?? 0);
                     return [
                         'descripcion' => $p['descripcion'] ?? '',
-                        'cantidad' => $p['cantidad'] ?? 0,
-                        'precio' => $p['precio'] ?? 0,
+                        'cantidad' => $cantidad,
+                        'precio_unitario' => $precioUnitarioBase, // sin IVA
                         'tipo' => $p['tipo'] ?? null,
-                        'iva' => $p['iva'] ?? 0,
-                        'gravada' => $p['ventas_gravadas'] ?? ($p['tipo'] === 'Gravada' ? ($p['total'] ?? 0) - ($p['iva'] ?? 0) : 0),
-                        'exenta' => $p['ventas_exentas'] ?? ($p['tipo'] === 'Exenta' ? ($p['total'] ?? 0) : 0),
-                        'no_suj' => $p['ventas_no_sujetas'] ?? ($p['tipo'] === 'No sujeta' ? ($p['total'] ?? 0) : 0),
-                        'total' => $p['total'] ?? 0,
+                        'iva' => $iva,
+                        'gravada' => $p['ventas_gravadas'] ?? ($p['tipo'] === 'Gravada' ? ($total - $iva) : 0),
+                        'exenta' => $p['ventas_exentas'] ?? ($p['tipo'] === 'Exenta' ? $total : 0),
+                        'no_suj' => $p['ventas_no_sujetas'] ?? ($p['tipo'] === 'No sujeta' ? $total : 0),
+                        'total' => $total,
+                        'tipo_item' => $p['tipo_item'] ?? null,
+                        'retencion_renta' => $retencionLinea,
+                        'subtotal' => $subtotal,
+                        'total_neto' => max(0, $subtotal - $retencionLinea),
                     ];
                 }, $g['products']);
                 $result[] = $g;
