@@ -75,6 +75,8 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     // Nuevos endpoints JSON/Excel
     Route::post('/import-customers-excel', [DTEController::class, 'importCustomersExcel'])->name('import-customers-excel');
     Route::post('/submit-from-json', [DTEController::class, 'submitFromJson'])->name('submit-from-json');
+    // Nuevo: importación combinada clientes+productos
+    Route::post('/import-customers-products-excel', [DTEController::class, 'importCustomersProductsExcel'])->name('import-customers-products-excel');
 
         Route::prefix("product")->name("product.")->group(function () {
             //Products

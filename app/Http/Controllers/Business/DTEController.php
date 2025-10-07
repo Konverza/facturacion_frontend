@@ -61,6 +61,9 @@ class DTEController extends Controller
         $this->incoterms = $this->octopus_service->getCatalog("CAT-031", null, true, true);
         $this->bienTitulo = $this->octopus_service->getCatalog("CAT-025");
         $this->dte = session("dte", []);
+        // Asegurar llaves por defecto para evitar "Undefined array key" en flujos masivos / JSON
+        $this->ensureDteDefaults();
+        session(['dte' => $this->dte]);
     }
 
     public function create(Request $request)
@@ -129,7 +132,7 @@ class DTEController extends Controller
 
             $default_pos = $business_user->default_pos_id ? PuntoVenta::with("sucursal")->find($business_user->default_pos_id) : null;
 
-            
+
             $data = [
                 "business" => $business,
                 "sucursals" => $sucursals,
@@ -238,7 +241,7 @@ class DTEController extends Controller
             $numero_documento = $request->numero_documento;
             $isNIT = strlen($numero_documento) === 14 && ctype_digit($numero_documento);
             $isDUI = strlen($numero_documento) === 9 && ctype_digit($numero_documento);
-    
+
             if (
                 !$isNIT && !$isDUI
             ) {
@@ -246,7 +249,7 @@ class DTEController extends Controller
                     'numero_documento' => 'El número de documento debe tener exactamente 14 o 9 dígitos'
                 ]);
             }
-    
+
             if ($request->nrc_customer && strlen($request->nrc_customer) > 8) {
                 return redirect()->back()->withErrors([
                     'nrc_customer' => 'El NRC debe tener como máximo 8 dígitos.'
@@ -603,10 +606,10 @@ class DTEController extends Controller
         try {
             if ($this->dte["type"] !== "07") {
                 if (!isset($this->dte["products"]) || count($this->dte["products"]) === 0) {
-                    return redirect()->back()->with([
-                        'error' => "Error",
-                        'error_message' => "Debe agregar al menos un producto"
-                    ])->send();
+                    if ($request->boolean('json_mode')) {
+                        return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos un producto' ];
+                    }
+                    return redirect()->back()->with(['error' => "Error", 'error_message' => "Debe agregar al menos un producto"])->send();
                 }
             }
 
@@ -621,7 +624,7 @@ class DTEController extends Controller
                         if ($bp) {
                             $productosCargados[$bp->id] = $bp; // cache simple
                             if ($bp->has_stock) {
-                                $cantidadesPorProducto[$bp->id] = ($cantidadesPorProducto[$bp->id] ?? 0) + (float)($p['cantidad'] ?? 0);
+                                $cantidadesPorProducto[$bp->id] = ($cantidadesPorProducto[$bp->id] ?? 0) + (float) ($p['cantidad'] ?? 0);
                             }
                             // Si no tiene stock habilitado, se ignora (no se valida), según condición #2
                         }
@@ -642,20 +645,20 @@ class DTEController extends Controller
                     }
                 }
                 if (count($faltantes) > 0) {
-                    return redirect()->back()->with([
-                        'error' => 'Error',
-                        'error_message' => 'Stock insuficiente para: ' . implode('; ', $faltantes)
-                    ])->send();
+                    if ($request->boolean('json_mode')) {
+                        return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Stock insuficiente para: ' . implode('; ', $faltantes) ];
+                    }
+                    return redirect()->back()->with(['error' => 'Error','error_message' => 'Stock insuficiente para: ' . implode('; ', $faltantes)])->send();
                 }
             }
 
             if ($this->dte["type"] === "15") {
 
                 if (!$this->otrosDocumentos()) {
-                    return redirect()->back()->with([
-                        'error' => "Error",
-                        'error_message' => "Debe agregar al menos un documento asociado a la donación"
-                    ])->send();
+                    if ($request->boolean('json_mode')) {
+                        return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos un documento asociado a la donación' ];
+                    }
+                    return redirect()->back()->with(['error' => "Error",'error_message' => "Debe agregar al menos un documento asociado a la donación"])->send();
                 }
 
                 $total_pagar = array_sum(array_column(
@@ -665,10 +668,10 @@ class DTEController extends Controller
                     "valor_donado"
                 ));
                 if ($total_pagar > 0 && !$this->pagos()) {
-                    return redirect()->back()->with([
-                        'error' => "Error",
-                        'error_message' => "Debe agregar al menos una forma de pago"
-                    ])->send();
+                    if ($request->boolean('json_mode')) {
+                        return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos una forma de pago' ];
+                    }
+                    return redirect()->back()->with(['error' => "Error", 'error_message' => "Debe agregar al menos una forma de pago"])->send();
                 }
             }
 
@@ -682,10 +685,10 @@ class DTEController extends Controller
                         }
                     }
                     if (!$related) {
-                        return redirect()->back()->with([
-                            'error' => "Error",
-                            'error_message' => "Cada documento relacionado debe estar asociado al menos a un producto ingresado."
-                        ])->send();
+                        if ($request->boolean('json_mode')) {
+                            return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Cada documento relacionado debe estar asociado al menos a un producto ingresado.' ];
+                        }
+                        return redirect()->back()->with(['error' => "Error", 'error_message' => "Cada documento relacionado debe estar asociado al menos a un producto ingresado."])->send();
                     }
                 }
             }
@@ -693,10 +696,11 @@ class DTEController extends Controller
             if ($this->dte["type"] !== "04") {
                 if (isset($this->dte["monto_abonado"]) && isset($this->dte["total_pagar"])) {
                     if (round($this->dte["monto_abonado"], 2) != round($this->dte["total_pagar"], 2)) {
-                        return redirect()->back()->with([
-                            'error' => "Error",
-                            'error_message' => "El monto total pagado no coincide con el total a pagar. Monto abonado: $" . round($this->dte["monto_abonado"], 2) . ", Total a pagar: $" . round($this->dte["total_pagar"], 2)
-                        ])->send();
+                        $obs = "El monto total pagado no coincide con el total a pagar. Monto abonado: $" . round($this->dte["monto_abonado"], 2) . ", Total a pagar: $" . round($this->dte["total_pagar"], 2);
+                        if ($request->boolean('json_mode')) {
+                            return [ 'estado' => 'RECHAZADO', 'observaciones' => $obs ];
+                        }
+                        return redirect()->back()->with(['error' => "Error", 'error_message' => $obs])->send();
                     }
                 }
             }
@@ -711,10 +715,11 @@ class DTEController extends Controller
                     $this->createDtePending("Documento guardado como borrador");
                 }
                 session()->forget('dte');
-                return $data = [
+                $data = [
                     "estado" => "BORRADOR",
                     "observaciones" => "Documento guardado como borrador"
                 ];
+                return $request->boolean('json_mode') ? $data : $data; // (en modo normal seguirá flujo de handleResponse más adelante si se adaptara)
             }
 
             if ($request->input("action") === "template") {
@@ -724,24 +729,26 @@ class DTEController extends Controller
                     $this->createDtePending("Documento guardado como plantilla", "template", $request->template_name);
                 }
                 session()->forget('dte');
-                return $data = [
+                $data = [
                     "estado" => "PLANTILLA",
                     "observaciones" => "Documento guardado como plantilla"
                 ];
+                return $request->boolean('json_mode') ? $data : $data;
             }
 
             // dd($dte);
             $response = Http::timeout(30)->post(env("OCTOPUS_API_URL") . $endpoint, $dte);
-            $data = json_decode($response->body(), true);
+            $data = json_decode($response->body(), true) ?? [];
             return $data;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             Log::error($e->getTraceAsString());
             $this->createDtePending($e->getMessage(), "error");
-            return $data = [
+            $data = [
                 "estado" => "RECHAZADO",
                 "observaciones" => $e->getMessage()
             ];
+            return $data;
         }
     }
 
@@ -810,30 +817,45 @@ class DTEController extends Controller
     {
         // Helpers locales para normalización y resolución por catálogos
         $normalize = function ($text) {
-            if ($text === null) return null;
-            $text = mb_strtolower(trim((string)$text), 'UTF-8');
+            if ($text === null)
+                return null;
+            $text = mb_strtolower(trim((string) $text), 'UTF-8');
             $replacements = [
-                'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ñ' => 'n',
-                'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', 'Ñ' => 'n',
+                'á' => 'a',
+                'é' => 'e',
+                'í' => 'i',
+                'ó' => 'o',
+                'ú' => 'u',
+                'ñ' => 'n',
+                'Á' => 'a',
+                'É' => 'e',
+                'Í' => 'i',
+                'Ó' => 'o',
+                'Ú' => 'u',
+                'Ñ' => 'n',
             ];
             return strtr($text, $replacements);
         };
 
         $resolveActividad = function ($value) use ($normalize) {
-            if ($value === null || $value === '') return [null, null];
+            if ($value === null || $value === '')
+                return [null, null];
             // Acepta valores como "001 - Comercio al por menor" o solo código "001" o solo texto
-            $code = null; $desc = null;
-            $parts = preg_split('/\s*-\s*/', (string)$value, 2);
+            $code = null;
+            $desc = null;
+            $parts = preg_split('/\s*-\s*/', (string) $value, 2);
             if (count($parts) === 2 && ctype_digit($parts[0])) {
                 $code = $parts[0];
                 $desc = $parts[1];
-            } elseif (ctype_digit((string)$value)) {
-                $code = (string)$value;
+            } elseif (ctype_digit((string) $value)) {
+                $code = (string) $value;
             } else {
                 // buscar por descripción aproximada
                 foreach ($this->actividades_economicas as $k => $v) {
                     if ($normalize($v) === $normalize($value)) {
-                        $code = (string)$k; $desc = $v; break;
+                        $code = (string) $k;
+                        $desc = $v;
+                        break;
                     }
                 }
             }
@@ -842,35 +864,43 @@ class DTEController extends Controller
             }
             // Extraer solo descripción después del guion si aplica
             if ($desc !== null && strpos($desc, '-') !== false) {
-                $tmp = explode('-', $desc, 2); $desc = trim($tmp[1]);
+                $tmp = explode('-', $desc, 2);
+                $desc = trim($tmp[1]);
             }
             return [$code, $desc];
         };
 
         $resolveDepartamento = function ($value) use ($normalize) {
-            if ($value === null || $value === '') return null;
+            if ($value === null || $value === '')
+                return null;
             // value puede ser código o nombre
-            if (isset($this->departamentos[$value])) return $value;
+            if (isset($this->departamentos[$value]))
+                return $value;
             foreach ($this->departamentos as $code => $dep) {
-                $nombre = is_array($dep) ? ($dep['nombre'] ?? (is_string($dep) ? $dep : '')) : (string)$dep;
-                if ($normalize($nombre) === $normalize($value)) return (string)$code;
+                $nombre = is_array($dep) ? ($dep['nombre'] ?? (is_string($dep) ? $dep : '')) : (string) $dep;
+                if ($normalize($nombre) === $normalize($value))
+                    return (string) $code;
             }
             return null;
         };
 
         $resolveMunicipio = function ($departamentoCode, $value) use ($normalize) {
-            if ($departamentoCode === null || $value === null || $value === '') return null;
+            if ($departamentoCode === null || $value === null || $value === '')
+                return null;
             $munis = $this->octopus_service->getCatalog("CAT-012", $departamentoCode);
-            if (isset($munis[$value])) return $value;
+            if (isset($munis[$value]))
+                return $value;
             foreach ($munis as $code => $mun) {
-                $nombre = is_array($mun) ? ($mun['nombre'] ?? (is_string($mun) ? $mun : '')) : (string)$mun;
-                if ($normalize($nombre) === $normalize($value)) return (string)$code;
+                $nombre = is_array($mun) ? ($mun['nombre'] ?? (is_string($mun) ? $mun : '')) : (string) $mun;
+                if ($normalize($nombre) === $normalize($value))
+                    return (string) $code;
             }
             return null;
         };
 
         $normalizeTipoPersona = function ($value) use ($normalize) {
-            if ($value === null || $value === '') return null;
+            if ($value === null || $value === '')
+                return null;
             // Mapear por nombre al código según CAT correspondiente que viene en $this->tipo_servicio? No hay catálogo directo acá;
             // aplicamos convención más usada en import: buscar key cuyo valor textual coincida
             $map = [
@@ -895,17 +925,17 @@ class DTEController extends Controller
         // convertir el tipo de documento a NIT (36) y asegurar que el número quede sólo con dígitos (sin guiones).
         if ($type === '01' && $docCode === '13' && $nrcDigits) {
             $docCode = '36';
-            $numDigits = preg_replace('/\D+/', '', (string)$request->numero_documento);
+            $numDigits = preg_replace('/\D+/', '', (string) $request->numero_documento);
             $numDoc = $numDigits !== '' ? $numDigits : null;
         }
 
         // Regla específica para Factura de Sujeto Excluido (type 14):
         // El DUI se escribe sin guion
         if ($type === '14' && $docCode === '13' && $numDoc !== null) {
-            $numDoc = preg_replace('/\D+/', '', (string)$numDoc);
+            $numDoc = preg_replace('/\D+/', '', (string) $numDoc);
         }
 
-        $telefonoStr = ($request->telefono !== null && $request->telefono !== '') ? (string)$request->telefono : null;
+        $telefonoStr = ($request->telefono !== null && $request->telefono !== '') ? (string) $request->telefono : null;
 
         // Resolver actividad, depto/mun, y tipo persona normalizados
         [$codActividad, $descAct] = $resolveActividad($request->actividad_economica);
@@ -1768,8 +1798,14 @@ class DTEController extends Controller
         $this->dte = $payload;
         // Asegurar claves mínimas
         $this->dte['type'] = $payload['type'] ?? $payload['tipo'] ?? ($this->dte['type'] ?? null);
-        if (!isset($this->dte['products'])) { $this->dte['products'] = []; }
-        if (!isset($this->dte['customer'])) { $this->dte['customer'] = []; }
+        if (!isset($this->dte['products'])) {
+            $this->dte['products'] = [];
+        }
+        if (!isset($this->dte['customer'])) {
+            $this->dte['customer'] = [];
+        }
+        // Garantizar llaves de tributos / descuentos / retenciones
+        $this->ensureDteDefaults();
         session(['dte' => $this->dte]);
 
         // 2) Endpoint por tipo
@@ -1827,6 +1863,7 @@ class DTEController extends Controller
             'bienTitulo' => $this->dte['bienTitulo'] ?? null,
             'condicion_operacion' => $this->dte['condicion_operacion'] ?? ($this->dte['resumen']['condicionOperacion'] ?? '1'),
             'action' => 'send',
+            'json_mode' => true,
         ]);
 
         // Exportación: parámetros del emisor si vinieran en JSON
@@ -1861,59 +1898,338 @@ class DTEController extends Controller
         }
     }
 
-        // Helpers privados de normalización
-        private function onlyDigits($value)
-        {
-            if ($value === null) return null;
-            $digits = preg_replace('/\D+/', '', (string)$value);
-            return $digits !== '' ? $digits : null;
+    /**
+     * Inicializa todas las llaves esperadas en $this->dte para evitar warnings/errores
+     * cuando se consumen estructuras construidas externamente (por ejemplo importación masiva JSON/Excel).
+     */
+    private function ensureDteDefaults(): void
+    {
+        if (!is_array($this->dte)) {
+            $this->dte = [];
         }
 
-        private function normalizeDocType($value)
-        {
-            if ($value === null) return null;
-            $val = mb_strtolower(trim((string)$value), 'UTF-8');
-            $map = [
-                'nit' => '36',
-                'dui' => '13',
-                'pasaporte' => '02',
-                'pasport' => '02',
-                'passport' => '02',
-                'carnet de residente' => '03',
-                'carnet residencia' => '03',
-                'carnet de residencia' => '03',
-                'residente' => '03',
-                'otro' => '37',
-                'otros' => '37',
-            ];
-            if (isset($map[$val])) return $map[$val];
-            // si ya viene código conocido
-            $allowed = ['02','03','13','36','37'];
-            $v = strtoupper((string)$value);
-            return in_array($v, $allowed, true) ? $v : null;
+        // Listado de llaves numéricas usadas en cálculos / getTributos()
+        $numericKeys = [
+            'turismo_por_alojamiento',
+            'turismo_salida_pais_via_aerea',
+            'fovial',
+            'contrans',
+            'bebidas_alcoholicas',
+            'tabaco_cigarillos',
+            'tabaco_cigarros',
+            'total_ventas_gravadas',
+            'total_ventas_exentas',
+            'total_ventas_no_sujetas',
+            'descuento_venta_gravada',
+            'descuento_venta_exenta',
+            'descuento_venta_no_sujeta',
+            'total_descuentos',
+            'iva',
+            'total_taxes',
+            'subtotal',
+            'total',
+            'total_pagar',
+            'monto_abonado',
+            'monto_pendiente',
+            'total_iva_retenido',
+            'isr',
+            'flete',
+            'seguro'
+        ];
+        foreach ($numericKeys as $k) {
+            if (!array_key_exists($k, $this->dte) || $this->dte[$k] === null || $this->dte[$k] === '') {
+                $this->dte[$k] = 0;
+            }
         }
 
-        private function normalizeNumeroDocumento($numero, $docCode, $type)
-        {
-            if ($numero === null) return null;
-            $raw = trim((string)$numero);
-            $digits = preg_replace('/\D+/', '', $raw);
-
-            if ($docCode === '36') { // NIT
-                return $digits ?: null;
+        // Flags / switches
+        $flagKeys = [
+            'retener_iva',
+            'retener_renta',
+            'percibir_iva',
+            'remove_discounts'
+        ];
+        foreach ($flagKeys as $k) {
+            if (!array_key_exists($k, $this->dte)) {
+                $this->dte[$k] = null; // mantener null para distinguir de 'active'
             }
+        }
 
-            if ($docCode === '13') { // DUI
-                if (in_array($type, ['03','05','06'], true)) {
-                    return $digits ?: null; // sin guion en CCF/NC/ND por validación MH
-                }
-                if (strlen($digits) === 9) {
-                    return substr($digits, 0, 8) . '-' . substr($digits, 8, 1);
-                }
-                return $digits ?: null; // si trae otros símbolos, los quitamos
+        // Arreglos estructurales
+        $arrayKeys = [
+            'products',
+            'metodos_pago',
+            'documentos_relacionados',
+            'otros_documentos'
+        ];
+        foreach ($arrayKeys as $k) {
+            if (!isset($this->dte[$k]) || !is_array($this->dte[$k])) {
+                $this->dte[$k] = [];
             }
+        }
 
-            // Otros documentos pueden incluir letras; devolver tal cual, recortado
-            return $raw !== '' ? $raw : null;
+        // Cliente base (evitar accesos indefinidos en buildDTE)
+        if (!isset($this->dte['customer']) || !is_array($this->dte['customer'])) {
+            $this->dte['customer'] = [];
         }
     }
+
+    /**
+     * Importa Excel que contiene en cada fila datos de cliente + un producto.
+     * Agrupa por cliente generando estructuras de DTE listas para ser enviadas luego
+     * mediante submitFromJson. Sólo soporta tipos 01 (Factura Consumidor Final) y 03 (Crédito Fiscal).
+     * Request params:
+     *  - file: archivo excel
+     *  - dte_type: '01' | '03'
+     */
+    public function importCustomersProductsExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:20480',
+            'dte_type' => 'required|in:01,03'
+        ]);
+
+        $type = $request->input('dte_type');
+        $business_id = Session::get('business');
+        if (!$business_id) {
+            return response()->json(['success' => false, 'message' => 'Sesión de empresa no encontrada'], 401);
+        }
+
+        try {
+            $import = new \App\Imports\CustomerProductsImport();
+            Excel::import($import, $request->file('file'));
+            $rows = $import->getRows();
+
+            if (empty($rows)) {
+                return response()->json(['success' => false, 'message' => 'El archivo no contiene filas válidas'], 422);
+            }
+
+            // Catálogo de unidades para mapear texto -> código índice
+            $unidades = $this->unidades_medidas ?? [];
+            $mapUnidad = function($txt) use ($unidades) {
+                if ($txt === null) return '59'; // default
+                $lower = mb_strtolower(trim((string)$txt));
+                $idx = array_search($lower, array_map(fn($v) => mb_strtolower($v), $unidades), true);
+                return $idx === false ? '59' : (string)$idx;
+            };
+
+            // Mapeo tipo item texto
+            $mapTipoItem = function($txt) {
+                $t = mb_strtolower(trim((string)($txt ?? '')));
+                return match($t) {
+                    'bienes' => 1,
+                    'servicios' => 2,
+                    'ambos (bienes y servicios)', 'ambos' => 3,
+                    default => 1,
+                };
+            };
+
+            // Mapeo tipo venta -> claves internas (Gravada, Exenta, No sujeta)
+            $mapTipoVenta = function($txt) {
+                $t = mb_strtolower(trim((string)($txt ?? '')));
+                return match($t) {
+                    'gravada','gravado' => 'Gravada',
+                    'exenta','exento' => 'Exenta',
+                    'no sujeta','nosujeta','no_sujeta' => 'No sujeta',
+                    default => 'Gravada',
+                };
+            };
+
+            // Agrupar por cliente (clave compuesta doc|nombre si no hay doc)
+            $groups = [];
+            foreach ($rows as $r) {
+                $doc = $this->onlyDigits($r['numDocumento'] ?? null) ?? '';
+                $docType = $this->normalizeDocType($r['tipoDocumento'] ?? null);
+                $nombre = trim($r['nombre'] ?? $r['nombreComercial'] ?? '');
+                $groupKey = ($docType ?: 'XX') . '|' . ($doc ?: $nombre);
+
+                $cantidad = (float) ($r['cantidad'] ?? 0);
+                $precioSinIVA = (float) ($r['precio_unitario_sin_iva'] ?? 0);
+                if ($cantidad <= 0 || $precioSinIVA <= 0) { continue; }
+
+                $tipoVenta = $mapTipoVenta($r['tipo_venta_txt'] ?? null);
+                $tipoItem = $mapTipoItem($r['tipo_item_txt'] ?? null);
+                $uniMedida = $mapUnidad($r['unidad_medida_txt'] ?? null);
+
+                $totalBase = $cantidad * $precioSinIVA;
+                $precioConIVA = ($tipoVenta === 'Gravada')
+                    ? $precioSinIVA * ($type === '03' ? 1 : 1.13) // en CCF precioSinIVA ya base, en factura CF original lógica divide
+                    : $precioSinIVA; // exenta / no sujeta no se suma IVA
+
+                $iva = 0;
+                if ($tipoVenta === 'Gravada') {
+                    $iva = $type === '03' ? $totalBase * 0.13 : (($totalBase) * 0.13); // en factura CF el total viene con IVA, pero internal calc usa base
+                }
+
+                $ventaGravada = $tipoVenta === 'Gravada' ? ($type === '03' ? $totalBase : ($totalBase * 1.13)) : 0;
+                $ventaExenta = $tipoVenta === 'Exenta' ? $totalBase : 0;
+                $ventaNoSuj = $tipoVenta === 'No sujeta' ? $totalBase : 0;
+
+                $productArray = [
+                    'id' => rand(1,100000),
+                    'product' => null,
+                    'product_id' => null,
+                    'codigo' => null,
+                    'unidad_medida' => $uniMedida,
+                    'descripcion' => $r['descripcion'] ?? 'Producto',
+                    'cantidad' => $cantidad,
+                    'tipo' => $tipoVenta,
+                    'precio' => $tipoVenta === 'Gravada' ? ($type === '03' ? $precioSinIVA : $precioConIVA) : $precioSinIVA,
+                    'precio_sin_tributos' => $precioSinIVA,
+                    'descuento' => 0,
+                    'ventas_gravadas' => $ventaGravada,
+                    'ventas_exentas' => $ventaExenta,
+                    'ventas_no_sujetas' => $ventaNoSuj,
+                    'total' => $ventaGravada + $ventaExenta + $ventaNoSuj,
+                    'iva' => $iva,
+                    'tipo_item' => $tipoItem,
+                    'tributos' => json_encode(['20']), // por defecto
+                ];
+
+                if (!isset($groups[$groupKey])) {
+                    $groups[$groupKey] = [
+                        'type' => $type,
+                        'customer' => [
+                            'tipoDocumento' => $docType,
+                            'numDocumento' => $this->normalizeNumeroDocumento($doc, $docType, $type),
+                            'nrc' => $this->onlyDigits($r['nrc'] ?? null),
+                            'nombre' => $nombre,
+                            'nombreComercial' => $r['nombreComercial'] ?? null,
+                            'codActividad' => $r['codActividad'] ?? null,
+                            'departamento' => $r['departamento'] ?? null,
+                            'municipio' => $r['municipio'] ?? null,
+                            'complemento' => $r['complemento'] ?? null,
+                            'telefono' => $r['telefono'] ?? null,
+                            'correo' => $r['correo'] ?? null,
+                            'pais' => $r['pais'] ?? null,
+                            'tipoPersona' => $r['tipoPersona'] ?? null,
+                        ],
+                        'products' => [],
+                        'condicion_operacion' => 1,
+                    ];
+                }
+
+                $groups[$groupKey]['products'][] = $productArray;
+            }
+
+            // Totales por cada DTE (simplificados reutilizando lógica parcial de totals()).
+            $result = [];
+            foreach ($groups as $g) {
+                $grav = array_sum(array_map(fn($p) => $p['ventas_gravadas'], $g['products']));
+                $exe = array_sum(array_map(fn($p) => $p['ventas_exentas'], $g['products']));
+                $nos = array_sum(array_map(fn($p) => $p['ventas_no_sujetas'], $g['products']));
+                $g['total_ventas_gravadas'] = round($grav, 8);
+                $g['total_ventas_exentas'] = round($exe, 8);
+                $g['total_ventas_no_sujetas'] = round($nos, 8);
+                $g['subtotal'] = $grav + $exe + $nos;
+                // Inicializaciones alineadas con total_init()
+                $g['descuento_venta_gravada'] = 0;
+                $g['descuento_venta_exenta'] = 0;
+                $g['descuento_venta_no_sujeta'] = 0;
+                $g['percentaje_descuento_venta_gravada'] = 0;
+                $g['percentaje_descuento_venta_exenta'] = 0;
+                $g['percentaje_descuento_venta_no_sujeta'] = 0;
+                $g['retener_iva'] = 'inactive';
+                $g['retener_renta'] = 'inactive';
+                $g['percibir_iva'] = 'inactive';
+                $g['monto_abonado'] = 0;
+                $g['flete'] = 0;
+                $g['seguro'] = 0;
+                $g['total_descuentos'] = 0;
+                $g['total_taxes'] = 0; // IVA ya embebido en ventas_gravadas para factura CF; en CCF se calcula aparte si fuera necesario
+                $g['total_iva_retenido'] = 0;
+                $g['isr'] = 0;
+                if ($g['type'] !== '11' && $g['type'] !== '14' && $g['type'] !== '07' && $g['type'] !== '01') {
+                    $g['total'] = $g['subtotal'] + $g['total_taxes'];
+                } else {
+                    $g['total'] = $g['subtotal'];
+                }
+                $g['total_pagar'] = round($g['total'] - $g['total_descuentos'], 8);
+                // Método de pago por defecto (forma 99) cubre el total
+                $g['metodos_pago'] = [[
+                    'id' => rand(1,100000),
+                    'forma_pago' => '99',
+                    'monto' => (string) $g['total_pagar'],
+                    'numero_documento' => '0',
+                    'plazo' => null,
+                    'periodo' => null,
+                ]];
+                $g['monto_abonado'] = $g['total_pagar'];
+                $g['monto_pendiente'] = 0;
+                $result[] = $g;
+            }
+
+            return response()->json([
+                'success' => true,
+                'count' => count($result),
+                'items' => $result,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('importCustomersProductsExcel error: '.$e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar el archivo combinado.'
+            ], 422);
+        }
+    }
+
+    // Helpers privados de normalización
+    private function onlyDigits($value)
+    {
+        if ($value === null)
+            return null;
+        $digits = preg_replace('/\D+/', '', (string) $value);
+        return $digits !== '' ? $digits : null;
+    }
+
+    private function normalizeDocType($value)
+    {
+        if ($value === null)
+            return null;
+        $val = mb_strtolower(trim((string) $value), 'UTF-8');
+        $map = [
+            'nit' => '36',
+            'dui' => '13',
+            'pasaporte' => '02',
+            'pasport' => '02',
+            'passport' => '02',
+            'carnet de residente' => '03',
+            'carnet residencia' => '03',
+            'carnet de residencia' => '03',
+            'residente' => '03',
+            'otro' => '37',
+            'otros' => '37',
+        ];
+        if (isset($map[$val]))
+            return $map[$val];
+        // si ya viene código conocido
+        $allowed = ['02', '03', '13', '36', '37'];
+        $v = strtoupper((string) $value);
+        return in_array($v, $allowed, true) ? $v : null;
+    }
+
+    private function normalizeNumeroDocumento($numero, $docCode, $type)
+    {
+        if ($numero === null)
+            return null;
+        $raw = trim((string) $numero);
+        $digits = preg_replace('/\D+/', '', $raw);
+
+        if ($docCode === '36') { // NIT
+            return $digits ?: null;
+        }
+
+        if ($docCode === '13') { // DUI
+            if (in_array($type, ['03', '05', '06'], true)) {
+                return $digits ?: null; // sin guion en CCF/NC/ND por validación MH
+            }
+            if (strlen($digits) === 9) {
+                return substr($digits, 0, 8) . '-' . substr($digits, 8, 1);
+            }
+            return $digits ?: null; // si trae otros símbolos, los quitamos
+        }
+
+        // Otros documentos pueden incluir letras; devolver tal cual, recortado
+        return $raw !== '' ? $raw : null;
+    }
+}

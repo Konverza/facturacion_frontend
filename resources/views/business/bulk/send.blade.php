@@ -7,64 +7,132 @@
                 Envío Masivo
             </h1>
         </div>
-        <div class="mt-4 pb-4">
-            <div class="mt-4 border-t border-gray-300 px-4 pt-4 dark:border-gray-800">
-                <h2 class="flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300">
-                    <x-icon icon="users" class="size-5" />
-                    Paso 1. Seleccione los clientes a los que enviará el DTE
-                </h2>
-                <div
-                    class="my-2 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30">
-                    <b>Nota: </b> Debe utilizar un archivo en formato <b>.xlsx</b> disponible en
-                    <a href="{{ url('templates/importacion_clientes.xlsx') }}" target="_blank"
-                        class="text-blue-600 underline dark:text-blue-400">este enlace</a> para
-                    seleccionar clientes.
-                </div>
-                <x-input type="file" label="Archivo de Clientes" name="file" id="file" accept=".xlsx"
-                    maxSize="3072" />
-            </div>
-            <div class="mt-4 border-t border-gray-300 px-4 pt-4 dark:border-gray-800">
-                <h2 class="flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300 mb-2">
-                    <x-icon icon="files" class="size-5" />
-                    Paso 2. Seleccione la plantilla de DTE a enviar
-                </h2>
-                <x-select name="template_id" label="Plantilla de DTE" id="template_id" :options="$templates" />
-                <div class="mt-4 flex flex-col items-center justify-center gap-4 px-4 sm:flex-row">
-                    <x-button type="submit" typeButton="primary" icon="file-symlink" text="Enviar DTEs"
-                        class="w-full sm:w-auto" name="action" value="generate" id="masivos-dte" />
-                </div>
-            </div>
 
-            <div id="resultados" class="my-5 hidden">
-                <div class="mb-3 flex items-center justify-between">
-                    <div class="text-sm text-gray-600 dark:text-gray-300">
-                        <span id="bulk-count-ok" class="text-green-600 dark:text-green-400">0</span> procesados •
-                        <span id="bulk-count-fail" class="text-red-600 dark:text-red-400">0</span> con error •
-                        <span id="bulk-count-total">0</span> total
+
+        <div class="my-4 border-b border-gray-200 dark:border-gray-700">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="default-tab"
+                data-tabs-toggle="#default-tab-content" role="tablist">
+                <li class="me-2" role="presentation">
+                    <button class="inline-block p-4 border-b-2 rounded-t-lg" id="plantilla-tab"
+                        data-tabs-target="#plantilla" type="button" role="tab" aria-controls="plantilla"
+                        aria-selected="false">Envío de Plantilla de DTE</button>
+                </li>
+                <li class="me-2" role="presentation">
+                    <button
+                        class="inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300"
+                        id="excel-tab" data-tabs-target="#excel" type="button" role="tab" aria-controls="excel"
+                        aria-selected="false">Envío de DTEs desde Excel</button>
+                </li>
+            </ul>
+        </div>
+        <div id="default-tab-content">
+            <div class="hidden pb-4 rounded-lg" id="plantilla" role="tabpanel" aria-labelledby="plantilla-tab">
+                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <p class="text-md text-gray-500 dark:text-gray-400">Esta opción permite enviar <strong
+                            class="font-medium text-gray-800 dark:text-white">la misma plantilla de DTE</strong>
+                        a distintos clientes, utilizando una plantilla creada previamente y la lista de clientes que adjunte
+                        en el Paso 1. <br>Si desea enviar distintos DTEs a distintos clientes, utilice la opción
+                        <strong class="font-medium text-gray-800 dark:text-white">Envío de DTEs desde Excel</strong>.
+                    </p>
+                </div>
+                <div class="mt-4 border-gray-300 px-4 pt-4 dark:border-gray-800">
+                    <h2 class="flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300">
+                        <x-icon icon="users" class="size-5" />
+                        Paso 1. Seleccione los clientes a los que enviará el DTE
+                    </h2>
+                    <div
+                        class="my-2 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30">
+                        <b>Nota: </b> Debe utilizar un archivo en formato <b>.xlsx</b> disponible en
+                        <a href="{{ url('templates/importacion_clientes.xlsx') }}" target="_blank"
+                            class="text-blue-600 underline dark:text-blue-400">este enlace</a> para
+                        seleccionar clientes.
                     </div>
-                    <div class="w-1/2 h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                        <div id="bulk-progress" class="h-2 bg-primary-500" style="width:0%"></div>
+                    <x-input type="file" label="Archivo de Clientes" name="file" id="file" accept=".xlsx"
+                        maxSize="3072" />
+                </div>
+                <div class="mt-4 border-t border-gray-300 px-4 pt-4 dark:border-gray-800">
+                    <h2 class="flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300 mb-2">
+                        <x-icon icon="files" class="size-5" />
+                        Paso 2. Seleccione la plantilla de DTE a enviar
+                    </h2>
+                    <x-select name="template_id" label="Plantilla de DTE" id="template_id" :options="$templates" />
+                    <div class="mt-4 flex flex-col items-center justify-center gap-4 px-4 sm:flex-row">
+                        <x-button type="submit" typeButton="primary" icon="file-symlink" text="Enviar DTEs"
+                            class="w-full sm:w-auto" name="action" value="generate" id="masivos-dte" />
                     </div>
                 </div>
-                <x-table>
-                    <x-slot name="thead">
-                        <x-tr>
-                            <x-th>Cliente</x-th>
-                            <x-th>Documento</x-th>
-                            <x-th>Plantilla</x-th>
-                            <x-th :last="true">Estado</x-th>
-                        </x-tr>
-                    </x-slot>
-                    <x-slot name="tbody">
-                        <tbody id="bulk-results-body"></tbody>
-                    </x-slot>
-                </x-table>
+
+                <div id="resultados" class="my-5 hidden">
+                    <div class="mb-3 flex items-center justify-between">
+                        <div class="text-sm text-gray-600 dark:text-gray-300">
+                            <span id="bulk-count-ok" class="text-green-600 dark:text-green-400">0</span> procesados •
+                            <span id="bulk-count-fail" class="text-red-600 dark:text-red-400">0</span> con error •
+                            <span id="bulk-count-total">0</span> total
+                        </div>
+                        <div class="w-1/2 h-2 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                            <div id="bulk-progress" class="h-2 bg-primary-500" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <x-table>
+                        <x-slot name="thead">
+                            <x-tr>
+                                <x-th>Cliente</x-th>
+                                <x-th>Documento</x-th>
+                                <x-th>Plantilla</x-th>
+                                <x-th :last="true">Estado</x-th>
+                            </x-tr>
+                        </x-slot>
+                        <x-slot name="tbody">
+                            <tbody id="bulk-results-body"></tbody>
+                        </x-slot>
+                    </x-table>
+                </div>
+            </div>
+            <div class="hidden rounded-lg" id="excel" role="tabpanel" aria-labelledby="excel-tab">
+                <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <p class="text-md text-gray-500 dark:text-gray-400 mb-4">Suba un Excel donde <strong class="font-medium text-gray-800 dark:text-white">cada fila contenga los datos del cliente y de un producto</strong>. Se agruparán automáticamente los productos por cliente para generar múltiples DTEs. Sólo se admiten tipos 01 (Consumidor Final) y 03 (Crédito Fiscal).</p>
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <div>
+                            <x-select label="Tipo de DTE" id="bulk_dte_type" name="bulk_dte_type" :options="['01'=>'Consumidor Final','03'=>'Crédito Fiscal']" />
+                        </div>
+                        <div class="sm:col-span-2 flex flex-col sm:flex-row sm:items-end gap-4">
+                            <x-input type="file" label="Excel Clientes + Productos" id="file_customers_products" name="file_customers_products" accept=".xlsx,.xls,.csv" />
+                            <button id="parse-customers-products" type="button" class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-400 disabled:opacity-50 mt-2">Procesar</button>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                        Columnas adicionales esperadas: tipo de item, unidad de medida, cantidad, precio unitario (sin IVA), descripcion, tipo de venta (gravada|exenta|no sujeta).
+                    </div>
+                    <div id="bulk-dte-preview" class="mt-6 hidden">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-lg font-semibold text-primary-600 dark:text-primary-300">DTEs generados <span id="bulk-dte-count" class="text-sm font-normal text-gray-500"></span></h3>
+                            <button id="send-bulk-generated" type="button" class="inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-400 disabled:opacity-50">Enviar DTEs</button>
+                        </div>
+                        <div class="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-100 dark:bg-gray-700">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left">#</th>
+                                        <th class="px-3 py-2 text-left">Cliente</th>
+                                        <th class="px-3 py-2 text-left">Documento</th>
+                                        <th class="px-3 py-2 text-left">Items</th>
+                                        <th class="px-3 py-2 text-right">Total</th>
+                                        <th class="px-3 py-2 text-left">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bulk-dte-body"></tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3 text-sm text-gray-500 dark:text-gray-400" id="bulk-dte-progress"></div>
+                    </div>
+                </div>
             </div>
         </div>
+
     </section>
     @push('scripts')
         <script>
-            (function () {
+            (function() {
                 const $file = $("#file");
                 const $template = $("#template_id");
                 const $sendBtn = $("#masivos-dte");
@@ -77,8 +145,19 @@
 
                 const CSRF = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                 const http = window.axios || {
-                    post: (url, data, cfg={}) => $.ajax({ url, method: 'POST', data, processData: false, contentType: false, headers: cfg.headers }),
-                    get: (url, cfg={}) => $.ajax({ url, method: 'GET', headers: cfg.headers })
+                    post: (url, data, cfg = {}) => $.ajax({
+                        url,
+                        method: 'POST',
+                        data,
+                        processData: false,
+                        contentType: false,
+                        headers: cfg.headers
+                    }),
+                    get: (url, cfg = {}) => $.ajax({
+                        url,
+                        method: 'GET',
+                        headers: cfg.headers
+                    })
                 };
 
                 let customers = [];
@@ -87,10 +166,26 @@
 
                 function badge(status, extra) {
                     const map = {
-                        PROCESADO: { c: 'text-green-500', i: 'check', t: 'Procesado' },
-                        CONTINGENCIA: { c: 'text-yellow-600', i: 'alert-triangle', t: 'Contingencia' },
-                        RECHAZADO: { c: 'text-red-600', i: 'x', t: 'Rechazado' },
-                        PENDIENTE: { c: 'text-gray-500', i: 'loader', t: extra || 'Pendiente' }
+                        PROCESADO: {
+                            c: 'text-green-500',
+                            i: 'check',
+                            t: 'Procesado'
+                        },
+                        CONTINGENCIA: {
+                            c: 'text-yellow-600',
+                            i: 'alert-triangle',
+                            t: 'Contingencia'
+                        },
+                        RECHAZADO: {
+                            c: 'text-red-600',
+                            i: 'x',
+                            t: 'Rechazado'
+                        },
+                        PENDIENTE: {
+                            c: 'text-gray-500',
+                            i: 'loader',
+                            t: extra || 'Pendiente'
+                        }
                     };
                     const b = map[status] || map.PENDIENTE;
                     return `<span class="flex w-max items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold ${b.c}">
@@ -113,7 +208,11 @@
                     const fd = new FormData();
                     fd.append('file', file);
                     if (CSRF) fd.append('_token', CSRF);
-                    const res = await http.post('/business/dte/import-customers-excel', fd, { headers: { 'X-CSRF-TOKEN': CSRF } });
+                    const res = await http.post('/business/dte/import-customers-excel', fd, {
+                        headers: {
+                            'X-CSRF-TOKEN': CSRF
+                        }
+                    });
                     const data = res.data || res; // $.ajax returns JSON already parsed
                     if (!data.success) throw new Error(data.message || 'Error importando clientes');
                     return data.items || [];
@@ -126,22 +225,45 @@
                     return data;
                 }
 
-                function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+                function deepClone(obj) {
+                    return JSON.parse(JSON.stringify(obj));
+                }
 
                 function mergeDte(base, customer) {
                     const dte = deepClone(base);
-                    dte.customer = { ...dte.customer, ...customer };
+                    dte.customer = {
+                        ...dte.customer,
+                        ...customer
+                    };
                     // Garantizar type presente
                     dte.type = dte.type || dte.tipo || '01';
                     return dte;
                 }
 
                 async function sendOne(idx, customer) {
-                    const payload = { dte: mergeDte(templateDte, customer) };
+                    const payload = {
+                        dte: mergeDte(templateDte, customer)
+                    };
                     try {
-                        const res = await (window.axios ? window.axios.post('/business/dte/submit-from-json', payload, { headers: { 'X-CSRF-TOKEN': CSRF } })
-                            : $.ajax({ url: '/business/dte/submit-from-json', method: 'POST', data: JSON.stringify(payload), contentType: 'application/json', headers: { 'X-CSRF-TOKEN': CSRF } }));
-                        const data = res.data || res;
+                        let data;
+                        if (window.axios) {
+                            const res = await window.axios.post('/business/dte/submit-from-json', payload, {
+                                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+                            });
+                            data = res.data;
+                        } else {
+                            data = await $.ajax({
+                                url: '/business/dte/submit-from-json',
+                                method: 'POST',
+                                data: JSON.stringify(payload),
+                                contentType: 'application/json',
+                                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+                            });
+                        }
+                        if (!data || typeof data !== 'object' || (!data.estado && data.success === undefined)) {
+                            throw new Error('Respuesta inesperada (posible redirección)');
+                        }
+                        
                         const estado = data.estado || (data.success === false ? 'RECHAZADO' : 'PROCESADO');
                         const mensaje = data.observaciones || data.message || '';
                         $(`#state-${idx}`).html(badge(estado, mensaje));
@@ -154,14 +276,19 @@
                 }
 
                 async function runQueue(items, concurrency = 3) {
-                    let ok = 0, fail = 0, done = 0;
+                    let ok = 0,
+                        fail = 0,
+                        done = 0;
                     $countTotal.text(items.length);
                     const pool = new Array(Math.min(concurrency, items.length)).fill(null);
                     async function next(i) {
                         if (i >= items.length) return;
                         const success = await sendOne(i, items[i]);
-                        ok += success ? 1 : 0; fail += success ? 0 : 1; done += 1;
-                        $countOk.text(ok); $countFail.text(fail);
+                        ok += success ? 1 : 0;
+                        fail += success ? 0 : 1;
+                        done += 1;
+                        $countOk.text(ok);
+                        $countFail.text(fail);
                         $progress.css('width', `${Math.round((done / items.length) * 100)}%`);
                         return next(i + pool.length);
                     }
@@ -169,7 +296,7 @@
                 }
 
                 // Eventos
-                $file.on('change', async function () {
+                $file.on('change', async function() {
                     const file = this.files?.[0];
                     if (!file) return;
                     $("#loader").removeClass('hidden');
@@ -177,8 +304,12 @@
                         customers = await uploadCustomers(file);
                         // Pre-render tabla
                         $tbody.empty();
-                        customers.forEach((c, idx) => { $tbody.append(renderRow(idx, c)); });
-                        if (customers.length > 0) { $results.removeClass('hidden'); }
+                        customers.forEach((c, idx) => {
+                            $tbody.append(renderRow(idx, c));
+                        });
+                        if (customers.length > 0) {
+                            $results.removeClass('hidden');
+                        }
                     } catch (e) {
                         window.alert(e.message || 'Error al importar clientes');
                     } finally {
@@ -186,13 +317,18 @@
                     }
                 });
 
-                $template.on('Changed', async function () {
+                $template.on('Changed', async function() {
                     const id = $(this).val();
-                    if (!id) { templateDte = null; templateName = ''; return; }
+                    if (!id) {
+                        templateDte = null;
+                        templateName = '';
+                        return;
+                    }
                     $("#loader").removeClass('hidden');
                     try {
                         const data = await fetchTemplate(id);
-                        templateDte = data.dte; templateName = data.name || '';
+                        templateDte = data.dte;
+                        templateName = data.name || '';
                     } catch (e) {
                         window.alert(e.message || 'Error al obtener la plantilla');
                     } finally {
@@ -200,13 +336,19 @@
                     }
                 });
 
-                $sendBtn.on('click', async function () {
-                    if (!customers.length) { return window.alert('Primero importe el archivo de clientes'); }
-                    if (!templateDte) { return window.alert('Seleccione una plantilla de DTE'); }
+                $sendBtn.on('click', async function() {
+                    if (!customers.length) {
+                        return window.alert('Primero importe el archivo de clientes');
+                    }
+                    if (!templateDte) {
+                        return window.alert('Seleccione una plantilla de DTE');
+                    }
                     $("#loader").removeClass('hidden');
                     try {
                         // Reset contadores y estados
-                        $countOk.text('0'); $countFail.text('0'); $countTotal.text(customers.length);
+                        $countOk.text('0');
+                        $countFail.text('0');
+                        $countTotal.text(customers.length);
                         $progress.css('width', '0%');
                         // Enviar en cola
                         await runQueue(customers, 1);
@@ -214,6 +356,107 @@
                         $("#loader").addClass('hidden');
                         $results.removeClass('hidden');
                     }
+                });
+
+                /* ================== NUEVO FLUJO: Excel Clientes + Productos ================== */
+                const $fileCP = $('#file_customers_products');
+                const $btnParseCP = $('#parse-customers-products');
+                const $typeCP = $('#bulk_dte_type');
+                const $previewCP = $('#bulk-dte-preview');
+                const $bodyCP = $('#bulk-dte-body');
+                const $countCP = $('#bulk-dte-count');
+                const $progressCP = $('#bulk-dte-progress');
+                const $sendCP = $('#send-bulk-generated');
+                let generatedDtes = [];
+
+                function renderCPRow(idx, item) {
+                    const c = item.customer || {}; const name = c.nombre || c.nombreComercial || 'Cliente';
+                    const doc = `${c.tipoDocumento || ''} ${c.numDocumento || ''}`.trim();
+                    const total = (item.total_pagar ?? item.total ?? 0).toFixed(2);
+                    return `<tr id="cp-row-${idx}" class="border-b border-gray-100 dark:border-gray-700">
+                        <td class="px-3 py-1">${idx + 1}</td>
+                        <td class="px-3 py-1">${name}</td>
+                        <td class="px-3 py-1">${doc}</td>
+                        <td class="px-3 py-1">${item.products.length}</td>
+                        <td class="px-3 py-1 text-right">${total}</td>
+                        <td class="px-3 py-1"><span class="inline-flex rounded bg-gray-300 dark:bg-gray-600 px-2 py-0.5 text-xs font-semibold text-gray-800 dark:text-gray-100" data-status>LISTO</span></td>
+                    </tr>`;
+                }
+
+                async function importCustomersProductsExcel(file, dteType) {
+                    const fd = new FormData(); fd.append('file', file); fd.append('dte_type', dteType); if (CSRF) fd.append('_token', CSRF);
+                    const res = await http.post('/business/dte/import-customers-products-excel', fd, {
+                        headers: { 'X-CSRF-TOKEN': CSRF }
+                    });
+                    return res.data || res;
+                }
+
+                async function sendOneCP(idx, dte) {
+                    const $row = $(`#cp-row-${idx}`); const $st = $row.find('[data-status]');
+                    $st.text('ENVIANDO').removeClass().addClass('inline-flex rounded bg-blue-500 px-2 py-0.5 text-xs font-semibold text-white');
+                    try {
+                        let data;
+                        if (window.axios) {
+                            const res = await window.axios.post('/business/dte/submit-from-json', { dte }, {
+                                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+                            });
+                            data = res.data;
+                        } else {
+                            const res = await $.ajax({
+                                url: '/business/dte/submit-from-json',
+                                method: 'POST',
+                                data: JSON.stringify({ dte }),
+                                contentType: 'application/json',
+                                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+                            });
+                            data = res;
+                        }
+                        if (!data || typeof data !== 'object' || (!data.estado && data.success === undefined)) {
+                            throw new Error('Respuesta inesperada (posible redirección)');
+                        }
+                        const estado = data.estado || (data.success === false ? 'RECHAZADO' : 'PROCESADO');
+                        if (estado === 'PROCESADO' || estado === 'CONTINGENCIA') {
+                            $st.text('PROCESADO').removeClass().addClass('inline-flex rounded bg-green-600 px-2 py-0.5 text-xs font-semibold text-white');
+                            return true;
+                        }
+                        $st.text(estado).removeClass().addClass('inline-flex rounded bg-red-600 px-2 py-0.5 text-xs font-semibold text-white');
+                        return false;
+                    } catch (e) {
+                        $st.text('ERROR').removeClass().addClass('inline-flex rounded bg-red-600 px-2 py-0.5 text-xs font-semibold text-white');
+                        return false;
+                    }
+                }
+
+                async function runCPQueue(concurrency = 2) {
+                    let done = 0, ok = 0; const total = generatedDtes.length; $progressCP.text(`0/${total}`);
+                    const pool = new Array(Math.min(concurrency, total)).fill(null);
+                    async function next() {
+                        const idx = done; if (idx >= total) return; done++;
+                        const success = await sendOneCP(idx, generatedDtes[idx]); if (success) ok++;
+                        $progressCP.text(`${done}/${total} procesados (Exitosos: ${ok})`);
+                        await next();
+                    }
+                    await Promise.all(pool.map(() => next()));
+                }
+
+                $btnParseCP.on('click', async function() {
+                    const file = $fileCP[0].files?.[0]; const dteType = $typeCP.val();
+                    if (!file) return alert('Seleccione un archivo'); if (!dteType) return alert('Seleccione el tipo de DTE');
+                    $('#loader').removeClass('hidden');
+                    try {
+                        const data = await importCustomersProductsExcel(file, dteType);
+                        if (!data.success) throw new Error(data.message || 'Error');
+                        generatedDtes = data.items || [];
+                        $bodyCP.empty(); generatedDtes.forEach((d,i)=> $bodyCP.append(renderCPRow(i,d)));
+                        $countCP.text(`(${generatedDtes.length})`); $previewCP.removeClass('hidden');
+                    } catch (e) { alert(e.message || 'Error al procesar el Excel'); } finally { $('#loader').addClass('hidden'); }
+                });
+
+                $sendCP.on('click', async function() {
+                    if (!generatedDtes.length) return alert('No hay DTEs generados');
+                    if (!confirm('¿Enviar todos los DTEs generados?')) return;
+                    $('#loader').removeClass('hidden'); $sendCP.prop('disabled', true);
+                    try { await runCPQueue(2); } finally { $('#loader').addClass('hidden'); $sendCP.prop('disabled', false); }
                 });
             })();
         </script>
