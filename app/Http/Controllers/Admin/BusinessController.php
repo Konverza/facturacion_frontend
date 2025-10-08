@@ -153,7 +153,7 @@ class BusinessController extends Controller
                 ]);
 
                 $token = $token_response->json()['access_token'] ?? null;
-                if($token){
+                if ($token) {
                     $registro_fe_resp = Http::withToken($token)
                         ->get(env("REGISTRO_FE_API_URL") . "empresa/" . $id_registro);
                     if ($registro_fe_resp->ok()) {
@@ -305,7 +305,7 @@ class BusinessController extends Controller
                                 ->where('email', $user->email)
                                 ->first();
 
-                            $user_dui = str_replace("-", "", $request->dui_emisor) ?? str_replace("-", "", $request->nit) ?? "";
+                            $user_dui = !empty($request->dui) ? str_replace("-", "", $request->dui) : (!empty($request->nit) ? str_replace("-", "", $request->nit) : "");
                             $servicio_id = 1; // ID del servicio que deseas asignar
 
                             if ($usuario) {

@@ -71,7 +71,7 @@
                                         <div class="flex-1">
                                             <x-input type="text" id="nombre_customer" name="nombre_customer"
                                                 value="{{ old('nombre_customer', isset($dte['customer']) ? $dte['customer']['nombre'] : '') }}"
-                                                label="Nombre, denominacióm o razón socvial del contribuyente"
+                                                label="Nombre, denominación o razón social del contribuyente"
                                                 placeholder="Ingresa el nombre completo del receptor" />
                                         </div>
                                     </div>
