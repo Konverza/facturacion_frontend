@@ -57,6 +57,8 @@ class BusinessController extends Controller
         $tipo_establecimiento = $this->octopus_service->getCatalog("CAT-009");
         $departamentos = $this->octopus_service->getCatalog("CAT-012");
         $actividades_economicas = $this->octopus_service->getCatalog("CAT-019", null, true, true);
+        // Catálogo simple (code => descripcion) para búsqueda inversa por texto
+        $actividades_economicas_simple = $this->octopus_service->getCatalog("CAT-019");
         $plans = Plan::all();
 
         $prefill = [];
@@ -158,16 +160,57 @@ class BusinessController extends Controller
                         ->get(env("REGISTRO_FE_API_URL") . "empresa/" . $id_registro);
                     if ($registro_fe_resp->ok()) {
                         $data = $registro_fe_resp->json();
+                        // Textos recibidos
+                        $actividad_texto = $data["datos_empresa"]["actividad_economica"] ?? "";
+                        $tipo_establecimiento_texto = $data["datos_empresa"]["tipo_establecimiento"] ?? "";
+                        $departamento_texto = $data["datos_empresa"]["departamento"] ?? "";
+                        $distrito_texto = $data["datos_empresa"]["distrito"] ?? ""; // municipio legado
+
+                        // Búsqueda de códigos a partir del texto
+                        $actividad_codigo = $this->findCatalogCodeByText($actividades_economicas_simple, $actividad_texto);
+                        $tipo_establecimiento_codigo = $this->findCatalogCodeByText($tipo_establecimiento, $tipo_establecimiento_texto);
+                        $departamento_codigo = $this->findCatalogCodeByText($departamentos, $departamento_texto);
+
+                        // Si encontramos el depto, cargamos municipios actuales para que el usuario seleccione.
+                        if ($departamento_codigo) {
+                            $municipios = $this->octopus_service->getCatalog("CAT-012", $departamento_codigo);
+                        }
+
                         $prefill = [
                             "nit" => strlen($data["datos_empresa"]["dui_nit"]) > 10 ? str_replace("-", "", $data["datos_empresa"]["dui_nit"]) : "",
                             "dui_emisor" => strlen($data["datos_empresa"]["dui_nit"]) <= 10 ? str_replace("-", "", $data["datos_empresa"]["dui_nit"]) : "",
-                            "nrc" => $data["datos_empresa"]["nrc"] ?? "",
+                            "nrc" => str_replace("-", "", $data["datos_empresa"]["nrc"]) ?? "",
                             "razon_social" => $data["datos_empresa"]["razon_social"] ?? "",
                             "nombre_comercial" => $data["datos_empresa"]["nombre_comercial"] ?? "",
-                            "actividad_economica" => $data["datos_empresa"]["actividad_economica"] ?? "",
-                            "tipo_establecimiento" => $data["datos_empresa"]["tipo_establecimiento"] ?? "",
-                            "codigo_establecimiento" => ""
+                            // Códigos mapeados (si no se pudo mapear se deja vacío para forzar selección manual)
+                            "actividad_economica" => $actividad_codigo ?? "",
+                            "tipo_establecimiento" => $tipo_establecimiento_codigo ?? "",
+                            // Reglas de negocio solicitadas
+                            "codigo_establecimiento" => "0001",
+                            "codigo_establecimiento_mh" => "",
+                            "codigo_punto_venta" => "01",
+                            "codigo_punto_venta_mh" => "",
+                            // Departamento mapeado a código; municipio se deja vacío para selección
+                            "departamento" => $departamento_codigo ?? "",
+                            "municipio" => "",
+                            "municipio_legacy_text" => $distrito_texto,
+                            // Dirección completa
+                            "complemento" => $data["datos_empresa"]["complemento"] ?? "",
+                            // Contacto representante legal
+                            "correo" => $data["representante_legal"]["correo"] ?? "",
+                            "telefono" => $data["representante_legal"]["telefono"] ?? "",
+                            // Datos del responsable (representante legal)
+                            "nombre_responsable" => $data["representante_legal"]["nombre"] ?? "",
+                            "telefono_responsable" => $data["representante_legal"]["telefono"] ?? "",
+                            "correo_responsable" => $data["representante_legal"]["correo"] ?? "",
+                            "dui" => $data["representante_legal"]["dui"] ?? "",
+                            // Plan solo texto (no existe plan_id en esta API)
+                            "plan_name" => $data["plan"] ?? ($data["plan_id"] ?? null),
+                            "dtes" => $data["documentos_emitidos"] ?? []
                         ];
+
+                        // NOTA: En este flujo no tenemos aún credenciales (api_password / certificate_password)
+                        // Se dejan en blanco para que el usuario los complete luego.
                     }
                 }
 
@@ -185,6 +228,26 @@ class BusinessController extends Controller
             'municipios' => $municipios,
             'municipio_prefill' => $municipio_prefill,
         ]);
+    }
+
+    /**
+     * Busca el código en un catálogo (code => texto) por coincidencia de texto (case-insensitive, normalizada)
+     */
+    private function findCatalogCodeByText(array $catalog, string $text): ?string
+    {
+        if (empty($text)) return null;
+        $normalize = function ($s) {
+            $s = iconv('UTF-8', 'ASCII//TRANSLIT', $s); // eliminar acentos
+            $s = strtolower(trim(preg_replace('/\s+/', ' ', $s)));
+            return $s;
+        };
+        $needle = $normalize($text);
+        foreach ($catalog as $code => $value) {
+            if ($normalize($value) === $needle) {
+                return $code;
+            }
+        }
+        return null;
     }
 
     public function store(Request $request)
