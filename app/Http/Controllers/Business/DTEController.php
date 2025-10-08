@@ -1167,8 +1167,10 @@ class DTEController extends Controller
             $precioBase = (float) ($product['precio_sin_tributos'] ?? $product['precio'] ?? 0); // siempre sin IVA
             $descuento = (float) ($product['descuento'] ?? 0);
             $lineaBruta = $cantidad * $precioBase; // base total antes de descuento
-            // Si tenemos ventas_exentas úsala como base de referencia (puede venir ya redondeada), de lo contrario usamos cálculo directo
-            $baseDeclarada = isset($product['ventas_exentas']) ? (float)$product['ventas_exentas'] : $lineaBruta;
+            // Si tenemos ventas_exentas y es > 0 úsala; de lo contrario, derivar de linea bruta (caso formulario que no setea ventas_exentas explícitamente aún)
+            $baseDeclarada = (isset($product['ventas_exentas']) && (float)$product['ventas_exentas'] > 0)
+                ? (float)$product['ventas_exentas']
+                : $lineaBruta;
             // Ajuste final de compra = base - descuento (no debe ser negativa)
             $compra = max(0, $baseDeclarada - $descuento);
             // Redondeos: precioUni a 8 decimales para consistencia API; compra y montoDescu también a 8 para evitar holgura
