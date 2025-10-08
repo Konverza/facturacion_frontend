@@ -63,6 +63,7 @@ class BusinessController extends Controller
         $municipios = null;
         $municipio_prefill = null;
 
+        // Obtener datos con NIT si se proporciona en la URL
         $nit = trim((string) $request->query('nit', ''));
         if (!empty($nit)) {
             try {
@@ -135,6 +136,36 @@ class BusinessController extends Controller
                 }
             } catch (\Throwable $e) {
                 // No hacer nada, no se pudo obtener datos de la empresa
+            }
+        }
+
+        // Obtener datos con ID de Registro FE si se proporciona en la URL
+        $id_registro = trim((string) $request->query('id_registro', ''));
+        if (!empty($id_registro)) {
+            try {
+                // Autenticarse en registro FE
+                $user = env("REGISTRO_FE_API_USER");
+                $pass = env("REGISTRO_FE_API_PASS");
+
+                $token_response = Http::post(env("REGISTRO_FE_API_URL") . "login", [
+                    "email" => $user,
+                    "password" => $pass
+                ]);
+
+                $token = $token_response->json()['access_token'] ?? null;
+                if($token){
+                    $registro_fe_resp = Http::withToken($token)
+                        ->get(env("REGISTRO_FE_API_URL") . "empresa/" . $id_registro);
+                    if ($registro_fe_resp->ok()) {
+                        $data = $registro_fe_resp->json();
+                        dd($data);
+                    }
+                } else {
+                    dd("No se pudo obtener token de autenticación en Registro FE");
+                }
+
+            } catch (\Throwable $e) {
+                dd($e->getMessage());
             }
         }
 
