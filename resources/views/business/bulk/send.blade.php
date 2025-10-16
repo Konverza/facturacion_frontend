@@ -159,6 +159,9 @@
     @push('scripts')
         <script>
             (function() {
+                // Flag global local para detectar si hay envíos en curso
+                let isSending = false;
+
                 const $file = $("#file");
                 const $template = $("#template_id");
                 const $sendBtn = $("#masivos-dte");
@@ -376,6 +379,8 @@
                         return window.alert('Seleccione una plantilla de DTE');
                     }
                     $("#loader").removeClass('hidden');
+                    isSending = true;
+                    $sendBtn.prop('disabled', true);
                     try {
                         // Reset contadores y estados
                         $countOk.text('0');
@@ -387,6 +392,8 @@
                     } finally {
                         $("#loader").addClass('hidden');
                         $results.removeClass('hidden');
+                        $sendBtn.prop('disabled', false);
+                        isSending = false;
                     }
                 });
 
@@ -659,7 +666,7 @@
                     }
                 }
 
-                async function runCPQueue(concurrency = 2) {
+                async function runCPQueue(concurrency = 1) {
                     let done = 0,
                         ok = 0;
                     const total = generatedDtes.length;
@@ -717,11 +724,13 @@
                     if (!confirm('¿Enviar todos los DTEs generados?')) return;
                     $('#loader').removeClass('hidden');
                     $sendCP.prop('disabled', true);
+                    isSending = true;
                     try {
-                        await runCPQueue(2);
+                        await runCPQueue(1);
                     } finally {
                         $('#loader').addClass('hidden');
                         $sendCP.prop('disabled', false);
+                        isSending = false;
                     }
                     // Limpiar sesión DTE para nuevo inicio
                     try {
@@ -769,6 +778,36 @@
                         document.documentElement.classList.remove('overflow-y-hidden');
                     }
                 });
+
+                // Confirmación al abandonar si hay envíos en curso
+                window.addEventListener('beforeunload', function(e) {
+                    if (isSending) {
+                        e.preventDefault();
+                        e.returnValue = '';
+                        // Si el usuario cancela la navegación, ocultar el loader (otro beforeunload global lo muestra)
+                        setTimeout(() => {
+                            const loader = document.getElementById('loader');
+                            if (loader) loader.classList.add('hidden');
+                        }, 0);
+                    }
+                });
+
+                // Interceptar navegación interna por enlaces mientras haya envíos en curso
+                document.addEventListener('click', function(e) {
+                    const a = e.target.closest('a[href]');
+                    if (!a) return;
+                    const href = a.getAttribute('href') || '';
+                    const target = a.getAttribute('target');
+                    // Ignorar anclas, enlaces vacíos o que abren nueva pestaña
+                    if (href.startsWith('#') || target === '_blank') return;
+                    if (isSending) {
+                        const confirmLeave = window.confirm('Hay DTEs enviándose. Si abandona, se detendrá el envío. ¿Desea salir?');
+                        if (!confirmLeave) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    }
+                }, true);
             })();
         </script>
     @endpush
