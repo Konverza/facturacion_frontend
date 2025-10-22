@@ -36,16 +36,24 @@ class BusinessController extends Controller
         $business = Business::with('plan')->get();
         $inicio_mes = date('Y-m-01');
         $fin_mes = date('Y-m-t');
+        $params = [
+            'all_companies' => true,
+            'fechaInicio' => "{$inicio_mes}T00:00:00",
+            'fechaFin' => "{$fin_mes}T23:59:59"
+        ];
+        $statistics = Http::timeout(30)->get($this->octopus_url . '/dtes/statistics/?' . http_build_query($params))
+            ->json();
 
         foreach ($business as $value) {
-            $params = [
-                'nit' => $value->nit,
-                'fechaInicio' => "{$inicio_mes}T00:00:00",
-                'fechaFin' => "{$fin_mes}T23:59:59"
+            $value->statistics = $statistics[$value->nit] ?? [
+                "total" => 0,
+                "approved" => 0,
+                "rejected" => 0,
+                "anulado" => 0,
+                "contingencia" => 0,
+                "facturable" => 0,
+                "total_facturado" => 0.0
             ];
-            $statistics = Http::timeout(30)->get($this->octopus_url . '/dtes/statistics/?' . http_build_query($params))
-                ->json();
-            $value->statistics = $statistics;
         }
         $business = $business->sortByDesc('id');
 
@@ -235,7 +243,8 @@ class BusinessController extends Controller
      */
     private function findCatalogCodeByText(array $catalog, string $text): ?string
     {
-        if (empty($text)) return null;
+        if (empty($text))
+            return null;
         $normalize = function ($s) {
             $s = iconv('UTF-8', 'ASCII//TRANSLIT', $s); // eliminar acentos
             $s = strtolower(trim(preg_replace('/\s+/', ' ', $s)));
