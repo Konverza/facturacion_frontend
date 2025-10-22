@@ -3,7 +3,9 @@
 namespace App\Imports;
 
 use App\Models\BusinessProduct;
+use App\Models\BranchProductStock;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithUpserts;
@@ -23,17 +25,20 @@ class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts, Wit
 
     private $business_id;
     private $unidades_medidas;
+    private $sucursal_id;
 
     /**
      * BusinessProductImport constructor.
      *
      * @param int $business_id
      * @param array $unidades_medidas
+     * @param int $sucursal_id
      */
-    public function __construct(int $business_id, array $unidades_medidas)
+    public function __construct(int $business_id, array $unidades_medidas, int $sucursal_id)
     {
         $this->business_id = $business_id;
         $this->unidades_medidas = $unidades_medidas;
+        $this->sucursal_id = $sucursal_id;
     }
 
     /**
@@ -88,7 +93,12 @@ class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts, Wit
         $uniMedida = array_search($uniMedida, array_map('mb_strtolower', $this->unidades_medidas), true); 
         $uniMedida = ($uniMedida === false) ? '59' : $uniMedida;
 
-        return new BusinessProduct([
+        $hasStock = $row["¿Guardar Inventario?"] == "Sí" && $tipoItem != 2 ? 1 : 0;
+        $stockInicial = $row["Stock"] ?? 0;
+
+        // Crear el producto con is_global = false
+        // Los productos sin inventario (has_stock = false) se marcarán como globales automáticamente
+        $product = new BusinessProduct([
             'business_id' => $this->business_id,
             'tipoItem' => $tipoItem,
             'codigo' => $row["Código"],
@@ -116,13 +126,52 @@ class BusinessProductImport implements ToModel, WithHeadingRow, WithUpserts, Wit
                     : 0),
             'cost' => $row["Costo de Compra"] ?? 0,
             'tributos' => '["20"]',
-            'stockInicial' => $row["Stock"] ?? 0,
-            'stockActual' => $row["Stock"] ?? 0,
+            'stockInicial' => 0, // Ya no se usa, se maneja por sucursal
+            'stockActual' => 0, // Ya no se usa, se maneja por sucursal
             'stockMinimo' => 1,
-            'has_stock' => $row["¿Guardar Inventario?"] == "Sí" && $tipoItem != 2 ? 1 : 0,
+            'has_stock' => $hasStock,
+            'is_global' => !$hasStock, // Si no maneja stock, es global automáticamente
             'image_url' => null,
             'category_id' => null
         ]);
+
+        // Después de que el producto se guarde o actualice (por WithUpserts),
+        // necesitamos crear/actualizar el registro en BranchProductStock
+        // Pero como estamos usando ToModel, necesitamos hacerlo en un hook posterior
+        // Por ahora, guardamos esta información para procesarla después
+        DB::afterCommit(function () use ($product, $stockInicial, $hasStock) {
+            // Buscar el producto guardado
+            $savedProduct = BusinessProduct::where('business_id', $this->business_id)
+                ->where('codigo', $product->codigo)
+                ->where('descripcion', $product->descripcion)
+                ->first();
+
+            if ($savedProduct) {
+                if ($hasStock) {
+                    // Si maneja stock, crear/actualizar registro en BranchProductStock
+                    BranchProductStock::updateOrCreate(
+                        [
+                            'business_product_id' => $savedProduct->id,
+                            'sucursal_id' => $this->sucursal_id,
+                        ],
+                        [
+                            'stockActual' => $stockInicial,
+                            'stockMinimo' => $savedProduct->stockMinimo,
+                            'estado_stock' => $stockInicial > $savedProduct->stockMinimo ? 'disponible' : 
+                                            ($stockInicial > 0 ? 'por_agotarse' : 'agotado'),
+                        ]
+                    );
+                } else {
+                    // Si no maneja stock, asegurarse de que el producto sea global
+                    if (!$savedProduct->is_global) {
+                        $savedProduct->is_global = true;
+                        $savedProduct->save();
+                    }
+                }
+            }
+        });
+
+        return $product;
     }
     /**
      * Method to define the heading row for the import.

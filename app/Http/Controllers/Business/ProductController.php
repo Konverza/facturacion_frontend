@@ -462,19 +462,22 @@ class ProductController extends Controller
     {
         try {
             $request->validate([
-                'file' => 'required|file|mimes:xlsx,xls,csv'
+                'file' => 'required|file|mimes:xlsx,xls,csv',
+                'sucursal_id' => 'required|exists:sucursals,id'
             ]);
 
             $business_id = session("business");
+            $sucursal_id = $request->input('sucursal_id');
             $unidades_medidas = $this->unidades_medidas;
-            Excel::import(new BusinessProductImport($business_id, $unidades_medidas), $request->file('file'));
+            
+            Excel::import(new BusinessProductImport($business_id, $unidades_medidas, $sucursal_id), $request->file('file'));
 
             return redirect()->route('business.products.index')
                 ->with('success', 'Productos importados')
-                ->with("success_message", "Los productos han sido importados correctamente");
+                ->with("success_message", "Los productos han sido importados correctamente a la sucursal seleccionada");
         } catch (\Exception $e) {
             Log::error('Error al importar productos: ' . $e->getMessage());
-            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al importar los productos");
+            return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al importar los productos: " . $e->getMessage());
         }
     }
 

@@ -209,13 +209,29 @@ class Products extends Component
     {
         $fileName = 'productos_' . now()->format('Ymd_His') . '.xlsx';
 
+        // Obtener unidades de medida para la exportación
+        $octopusService = new \App\Services\OctopusService();
+        $unidadesMedidas = $octopusService->getCatalog("CAT-014");
+
+        // Obtener información del negocio
+        $business = \App\Models\Business::find(session("business"));
+
+        // Determinar la sucursal a exportar
+        $sucursalId = null;
+        if (!$this->viewAllBranches && $this->selectedSucursalId) {
+            $sucursalId = $this->selectedSucursalId;
+        }
+
         return Excel::download(
             new ProductsExport(
                 $this->search,
                 $this->searchName,
                 $this->searchCode,
                 $this->exactSearch,
-                $this->stockState
+                $this->stockState,
+                $sucursalId,
+                $unidadesMedidas,
+                $business
             ),
             $fileName
         );

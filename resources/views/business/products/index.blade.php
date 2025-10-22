@@ -235,6 +235,64 @@
                                     class="mb-2 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-yellow-500 dark:bg-yellow-950/30">
                                     <b>Advertencia: </b> Tome en cuenta que al importar productos, si coincide el código y la descripcion de un producto ya existente, se actualizará el producto con los nuevos datos. Si no existe, se creará un nuevo producto.
                                 </div>
+                                <div
+                                    class="mb-2 rounded-lg border border-dashed border-amber-500 bg-amber-100 p-4 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                                    <x-icon icon="alert-circle" class="inline h-5 w-5" />
+                                    <b>Importante: </b> No se pueden importar productos globales. Los productos globales solo pueden ser creados manualmente desde el formulario de creación de productos.
+                                </div>
+
+                                @php
+                                    // Obtener información del usuario para determinar si puede seleccionar sucursal
+                                    $businessUser = \App\Models\BusinessUser::where('business_id', session('business'))
+                                        ->where('user_id', auth()->id())
+                                        ->first();
+                                    $canSelectBranch = $businessUser ? (bool) $businessUser->branch_selector : false;
+                                    $defaultSucursalId = null;
+                                    
+                                    if (!$canSelectBranch && $businessUser && $businessUser->default_pos_id) {
+                                        $pos = $businessUser->defaultPos;
+                                        if ($pos && $pos->sucursal_id) {
+                                            $defaultSucursalId = $pos->sucursal_id;
+                                        }
+                                    }
+                                    
+                                    $sucursalesImport = \App\Models\Sucursal::where('business_id', session('business'))
+                                        ->orderBy('nombre')
+                                        ->get();
+                                @endphp
+
+                                <!-- Selector de sucursal -->
+                                @if ($canSelectBranch)
+                                    <div class="mb-2">
+                                        <label for="import_sucursal_id" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                                            Sucursal de destino <span class="text-red-500">*</span>
+                                        </label>
+                                        <select name="sucursal_id" id="import_sucursal_id" required
+                                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500">
+                                            <option value="">Seleccione una sucursal</option>
+                                            @foreach ($sucursalesImport as $sucursal)
+                                                <option value="{{ $sucursal->id }}">{{ $sucursal->nombre }}</option>
+                                            @endforeach
+                                        </select>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Los productos se importarán y estarán disponibles en esta sucursal
+                                        </p>
+                                    </div>
+                                @else
+                                    @if ($defaultSucursalId)
+                                        <input type="hidden" name="sucursal_id" value="{{ $defaultSucursalId }}">
+                                        <div class="mb-2 rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                                            <x-icon icon="info-circle" class="inline h-5 w-5" />
+                                            Los productos se importarán a la sucursal: <b>{{ $sucursalesImport->firstWhere('id', $defaultSucursalId)->nombre ?? 'Sucursal por defecto' }}</b>
+                                        </div>
+                                    @else
+                                        <div class="mb-2 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-400">
+                                            <x-icon icon="alert-triangle" class="inline h-5 w-5" />
+                                            No tiene una sucursal por defecto configurada. Contacte al administrador.
+                                        </div>
+                                    @endif
+                                @endif
+
                                 <x-input type="file" label="Archivo de Productos" name="file" id="file"
                                     accept=".xlsx" maxSize="3072" />
                             </div>
