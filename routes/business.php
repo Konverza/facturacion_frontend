@@ -37,6 +37,9 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::resource("/categories", CategoryController::class);
     Route::post("/products/add-stock", [ProductController::class, "add_stock"])->name('products.add-stock');
     Route::post("/products/remove-stock", [ProductController::class, "remove_stock"])->name('products.remove-stock');
+    Route::post("/products/transfer-stock", [ProductController::class, "transferStock"])->name('products.transfer-stock');
+    Route::get("/products/{id}/branch-info", [ProductController::class, "getBranchInfo"])->name('products.branch-info');
+    Route::get("/products/{id}/branch-stock", [ProductController::class, "getBranchStock"])->name('products.branch-stock');
     Route::post("/products/import", [ProductController::class, "import"])->name('products.import');
     Route::resource("/customers", CustomerContoller::class);
     Route::post("/customers/import", [CustomerContoller::class, "import"])->name('customers.import');

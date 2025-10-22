@@ -110,6 +110,65 @@
                             placeholder="0" value="{{ old('stock_minimo', 0) }}" min="1" />
                     </div>
                 </div>
+                
+                <!-- Selector de Disponibilidad por Sucursales -->
+                <h2 class="mt-4 flex items-center gap-1 text-xl font-semibold text-primary-500 dark:text-primary-300">
+                    <x-icon icon="building-store" class="w-5 h-5" />
+                    Disponibilidad en Sucursales
+                </h2>
+                <div class="mt-4 flex flex-col gap-4">
+                    @if ($canSelectBranch)
+                        <x-input type="toggle" label="Producto disponible globalmente (en todas las sucursales)" 
+                            name="is_global" id="is_global" value="1" checked />
+                        
+                        <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <p class="text-sm text-amber-700 dark:text-amber-300">
+                                <x-icon icon="alert-triangle" class="inline w-4 h-4" />
+                                <strong>Importante:</strong> Los productos globales no pueden tener control de inventario por sucursal. 
+                                Si necesita manejar stock específico por sucursal, desactive esta opción y seleccione las sucursales correspondientes.
+                            </p>
+                        </div>
+                        
+                        <div id="sucursales-selector" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Seleccione las sucursales donde estará disponible este producto
+                            </label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 p-4 border border-gray-300 dark:border-gray-600 rounded-lg">
+                                @foreach ($sucursales as $sucursal)
+                                    <label class="flex items-center gap-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded cursor-pointer">
+                                        <input type="checkbox" name="sucursales[]" value="{{ $sucursal->id }}" 
+                                            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">{{ $sucursal->nombre }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">
+                                <x-icon icon="info-circle" class="inline w-4 h-4" />
+                                Debe seleccionar al menos una sucursal si el producto no es global
+                            </p>
+                        </div>
+                    @else
+                        <!-- Usuario sin branch_selector: auto-asignar sucursal por defecto -->
+                        <input type="hidden" name="is_global" value="0">
+                        @if ($defaultSucursalId)
+                            <input type="hidden" name="sucursales[]" value="{{ $defaultSucursalId }}">
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                <p class="text-sm text-blue-700 dark:text-blue-300">
+                                    <x-icon icon="map-pin" class="inline w-4 h-4" />
+                                    Este producto se creará para la sucursal: 
+                                    <strong>{{ $sucursales->firstWhere('id', $defaultSucursalId)?->nombre ?? 'Sucursal por defecto' }}</strong>
+                                </p>
+                            </div>
+                        @else
+                            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                <p class="text-sm text-amber-700 dark:text-amber-300">
+                                    <x-icon icon="alert-triangle" class="inline w-4 h-4" />
+                                    No se ha configurado una sucursal por defecto. Contacte al administrador.
+                                </p>
+                            </div>
+                        @endif
+                    @endif
+                </div>
                 @if ($business->posmode)
                     <div class="mt-4">
                         <div class="flex-1">
@@ -145,12 +204,31 @@
         </div>
     </section>
 
-    {{-- @push('scripts')
+    @push('scripts')
         <script>
             $(document).ready(function() {
+                // Toggle stock fields
+                $("#has_stock").on("change", function() {
+                    if ($(this).is(":checked")) {
+                        $("#stocks").removeClass("hidden");
+                        $("#stock_inicial, #stock_minimo").prop("disabled", false);
+                    } else {
+                        $("#stocks").addClass("hidden");
+                        $("#stock_inicial, #stock_minimo").prop("disabled", true).val(0);
+                    }
+                });
                 
-
+                // Toggle sucursales selector
+                $("#is_global").on("change", function() {
+                    if ($(this).is(":checked")) {
+                        $("#sucursales-selector").addClass("hidden");
+                        // Desmarcar todos los checkboxes de sucursales
+                        $("input[name='sucursales[]']").prop("checked", false);
+                    } else {
+                        $("#sucursales-selector").removeClass("hidden");
+                    }
+                });
             });
         </script>
-    @endpush --}}
+    @endpush
 @endsection

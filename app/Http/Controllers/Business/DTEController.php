@@ -771,7 +771,13 @@ class DTEController extends Controller
         if (isset($data["estado"])) {
             if ($data["estado"] === "PROCESADO" || $data["estado"] === "CONTINGENCIA") {
                 if ($this->dte["type"] !== "07" && $this->dte["type"] !== "14" && $this->dte["type"] !== "04" && $this->dte["type"] !== "15") {
-                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida");
+                    // Obtener sucursal del PuntoVenta usado
+                    $sucursalId = null;
+                    if ($request->pos_id) {
+                        $pos = PuntoVenta::find($request->pos_id);
+                        $sucursalId = $pos?->sucursal_id;
+                    }
+                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida", $sucursalId);
                     if ($request->condicion_operacion === 2) {
                         $this->createCXC($data, $request);
                     }
@@ -1504,8 +1510,28 @@ class DTEController extends Controller
         return $tributos_dte != [] ? $tributos_dte : null;
     }
 
-    public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida")
+    /**
+     * Actualiza stocks de productos usando el sistema de inventario por sucursales
+     * 
+     * @param string $codGeneracion Código del DTE
+     * @param array $productsDTE Lista de productos del DTE
+     * @param int $business_id ID del negocio
+     * @param string $tipo 'salida' o 'entrada'
+     * @param int|null $sucursalId ID de la sucursal (si no se provee, busca la primera)
+     */
+    public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida", $sucursalId = null)
     {
+        // Si no se provee sucursal, usar la primera del negocio
+        if (!$sucursalId) {
+            $sucursal = Sucursal::where('business_id', $business_id)->first();
+            $sucursalId = $sucursal?->id;
+        }
+
+        if (!$sucursalId) {
+            Log::warning("No se encontró sucursal para actualizar stocks. Business ID: {$business_id}");
+            return;
+        }
+
         foreach ($productsDTE as $product) {
             $searchProduct = null;
             if (is_array($product)) {
@@ -1517,36 +1543,19 @@ class DTEController extends Controller
             }
 
             if ($searchProduct) {
-                if ($searchProduct->has_stock) {
-                    $stockAnterior = $searchProduct->stockActual;
+                $cantidad = is_array($product) ? $product["cantidad"] : $product->cantidad;
+                $descripcion = $tipo === "salida" ? "Venta de producto" : "Anulación de documento";
+
+                try {
                     if ($tipo === "salida") {
-                        $searchProduct->stockActual -= is_array($product) ? $product["cantidad"] : $product->cantidad;
+                        $searchProduct->reduceStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
                     } elseif ($tipo === "entrada") {
-                        $searchProduct->stockActual += is_array($product) ? $product["cantidad"] : $product->cantidad;
+                        $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
                     }
-
-                    $stockActual = $searchProduct->stockActual;
-                    if ($stockActual <= $searchProduct->stockMinimo) {
-                        $searchProduct->estado_stock = "agotado";
-                    } elseif (($stockActual - $searchProduct->stockMinimo) <= 2) {
-                        $searchProduct->estado_stock = "por_agotarse";
-                    } else {
-                        $searchProduct->estado_stock = "disponible";
-                    }
-
-                    $diferencia = abs($stockAnterior - $stockActual);
-                    if ($diferencia >= 1) {
-                        BusinessProductMovement::create([
-                            "business_product_id" => $searchProduct->id,
-                            "numero_factura" => $codGeneracion,
-                            "tipo" => $tipo,
-                            "cantidad" => is_array($product) ? $product["cantidad"] : $product->cantidad,
-                            "precio_unitario" => $searchProduct->precioUni,
-                            "producto" => $searchProduct->descripcion,
-                            "descripcion" => $tipo === "salida" ? "Venta de producto" : "Anulación de documento",
-                        ]);
-                    }
-                    $searchProduct->save();
+                } catch (\Exception $e) {
+                    Log::error("Error actualizando stock para producto {$searchProduct->id} en sucursal {$sucursalId}: " . $e->getMessage());
+                    // Continuar con el siguiente producto si hay error en uno
+                    continue;
                 }
             }
         }
@@ -1641,7 +1650,16 @@ class DTEController extends Controller
             if ($response->status() == 201) {
                 if (!in_array($dte["tipo_dte"], ["04", "07", "14"])) {
                     $products_dte = $documento->cuerpoDocumento;
-                    $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada");
+                    // Para anulación, extraer sucursal del documento original
+                    $sucursalCode = $documento->emisor->codEstablecimiento ?? $documento->sucursal->codSucursal ?? null;
+                    $sucursalId = null;
+                    if ($sucursalCode) {
+                        $sucursal = Sucursal::where('business_id', $business_id)
+                            ->where('codSucursal', $sucursalCode)
+                            ->first();
+                        $sucursalId = $sucursal?->id;
+                    }
+                    $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada", $sucursalId);
                 }
                 return redirect()->route('business.documents.index')
                     ->with('success', "Documento anulado correctamente")

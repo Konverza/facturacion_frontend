@@ -236,6 +236,8 @@
             '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler icon-tabler-ad icons-tabler-outline icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M10.5 8.5l3.5 7.5l3.5 -7.5h-7z" /></svg>',
         'arrow-up' =>
             '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler icon-tabler-arrow-up icons-tabler-outline icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 4v16m-8-8l8-8l8 8" /></svg>',
+        'transfer' =>
+            '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler icon-tabler-arrows-left-right-2 icons-tabler-outline icon"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 7h14" /><path d="M14 4l3 3l-3 3" /><path d="M21 17h-14" /><path d="M10 14l-3 3l3 3" /></svg>',
     ];
 
     $iconSvg = $icons[$icon] ?? null;

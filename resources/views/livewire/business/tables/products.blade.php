@@ -1,4 +1,30 @@
 <div class="mt-4 pb-4">
+    <!-- Selector de sucursal (si aplica) -->
+    @if ($canSelectBranch && !empty($availableSucursales))
+        <div class="mb-4">
+            <label for="sucursal-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <x-icon icon="building-store" class="inline w-4 h-4" /> Seleccionar Sucursal
+            </label>
+            <select wire:model.live="selectedSucursalId" id="sucursal-selector"
+                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                <option value="">Seleccione una sucursal</option>
+                <option value="all">📊 Ver todas las sucursales (Inventario Global)</option>
+                <option disabled>──────────</option>
+                @foreach ($availableSucursales as $id => $nombre)
+                    <option value="{{ $id }}">{{ $nombre }}</option>
+                @endforeach
+            </select>
+        </div>
+    @elseif ($defaultSucursalId)
+        <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800" 
+             data-sucursal-id="{{ $selectedSucursalId }}" 
+             data-sucursal-nombre="{{ $availableSucursales[$defaultSucursalId] ?? 'Sucursal por defecto' }}">
+            <p class="text-sm text-blue-700 dark:text-blue-300">
+                <x-icon icon="map-pin" class="inline w-4 h-4" /> Mostrando productos de: <strong>{{ $availableSucursales[$defaultSucursalId] ?? 'Sucursal por defecto' }}</strong>
+            </p>
+        </div>
+    @endif
+
     <!-- Barra de búsqueda rápida (opcional) -->
     <div class="mb-4 flex w-full flex-col gap-4 sm:flex-row">
         <div class="flex-[6] relative">
@@ -200,27 +226,95 @@
                             @endif
                         </div>
                     </x-td>
-                    @if ($product->has_stock)
-                        <x-td>{{ $product->stockActual ?? 0 }}</x-td>
+                    @if ($product->is_global)
                         <x-td>
-                            @if ($product->estado_stock === 'disponible')
-                                <span
-                                    class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-green-200 px-2 py-1 text-xs font-bold text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                                    <x-icon icon="circle-check" class="size-4" />
-                                    Disponible
-                                </span>
-                            @elseif($product->estado_stock === 'por_agotarse')
-                                <span
-                                    class="flex items-center gap-1 text-nowrap rounded-lg bg-yellow-200 px-2 py-1 text-xs font-bold text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 w-max">
-                                    <x-icon icon="alert-circle" class="size-4" />
-                                    Por agotarse
-                                </span>
+                            <span class="text-blue-600 dark:text-blue-400 text-xs font-semibold flex items-center gap-1">
+                                <x-icon icon="world" class="w-4 h-4" />
+                                GLOBAL
+                            </span>
+                        </x-td>
+                        <x-td>
+                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                Sin control de stock
+                            </span>
+                        </x-td>
+                    @elseif ($product->has_stock)
+                        <x-td>
+                            @if ($viewAllBranches && isset($product->stockPorSucursales))
+                                <!-- Modo: Ver todas las sucursales -->
+                                <div class="flex flex-col gap-1 text-xs">
+                                    @php
+                                        $totalStock = 0;
+                                    @endphp
+                                    @forelse ($product->stockPorSucursales as $stockInfo)
+                                        @php
+                                            $totalStock += $stockInfo['stock'];
+                                        @endphp
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-gray-600 dark:text-gray-400">{{ $stockInfo['sucursal_nombre'] }}:</span>
+                                            <span class="font-medium ml-2">{{ $stockInfo['stock'] }}</span>
+                                        </div>
+                                    @empty
+                                        <span class="text-gray-500">Sin stock en sucursales</span>
+                                    @endforelse
+                                    @if ($product->stockPorSucursales->count() > 0)
+                                        <div class="flex justify-between items-center pt-1 mt-1 border-t border-gray-300 dark:border-gray-600">
+                                            <span class="text-gray-900 dark:text-gray-100 font-semibold">Total:</span>
+                                            <span class="font-bold ml-2 text-gray-900 dark:text-gray-100">{{ $totalStock }}</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @elseif ($selectedSucursalId && !$viewAllBranches)
+                                <span class="font-medium">{{ $product->stockPorSucursal ?? 0 }}</span>
+                                <span class="text-xs text-gray-500 block">en sucursal</span>
                             @else
-                                <span
-                                    class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-red-200 px-2 py-1 text-xs font-bold text-red-800 dark:bg-red-900/50 dark:text-red-300">
-                                    <x-icon icon="circle-x" class="size-4" />
-                                    Agotado
-                                </span>
+                                <span class="font-medium">{{ $product->stockActual ?? 0 }}</span>
+                                <span class="text-xs text-gray-500 block">total</span>
+                            @endif
+                        </x-td>
+                        <x-td>
+                            @if ($viewAllBranches && isset($product->stockPorSucursales))
+                                <!-- Modo: Ver todas las sucursales - mostrar estados múltiples -->
+                                <div class="flex flex-col gap-1">
+                                    @foreach ($product->stockPorSucursales as $stockInfo)
+                                        @if ($stockInfo['estado'] === 'disponible')
+                                            <span class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-green-200 px-2 py-1 text-xs font-bold text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                                                <x-icon icon="circle-check" class="size-3" />
+                                                {{ $stockInfo['sucursal_nombre'] }}
+                                            </span>
+                                        @elseif($stockInfo['estado'] === 'por_agotarse')
+                                            <span class="flex items-center gap-1 text-nowrap rounded-lg bg-yellow-200 px-2 py-1 text-xs font-bold text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 w-max">
+                                                <x-icon icon="alert-circle" class="size-3" />
+                                                {{ $stockInfo['sucursal_nombre'] }}
+                                            </span>
+                                        @else
+                                            <span class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-red-200 px-2 py-1 text-xs font-bold text-red-800 dark:bg-red-900/50 dark:text-red-300">
+                                                <x-icon icon="circle-x" class="size-3" />
+                                                {{ $stockInfo['sucursal_nombre'] }}
+                                            </span>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @else
+                                @php
+                                    $estado = $selectedSucursalId && !$viewAllBranches ? $product->estadoStockSucursal : $product->estado_stock;
+                                @endphp
+                                @if ($estado === 'disponible')
+                                    <span class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-green-200 px-2 py-1 text-xs font-bold text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                                        <x-icon icon="circle-check" class="size-4" />
+                                        Disponible
+                                    </span>
+                                @elseif($estado === 'por_agotarse')
+                                    <span class="flex items-center gap-1 text-nowrap rounded-lg bg-yellow-200 px-2 py-1 text-xs font-bold text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300 w-max">
+                                        <x-icon icon="alert-circle" class="size-4" />
+                                        Por agotarse
+                                    </span>
+                                @else
+                                    <span class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-red-200 px-2 py-1 text-xs font-bold text-red-800 dark:bg-red-900/50 dark:text-red-300">
+                                        <x-icon icon="circle-x" class="size-4" />
+                                        Agotado
+                                    </span>
+                                @endif
                             @endif
                         </x-td>
                     @else
@@ -243,7 +337,7 @@
                                             Editar
                                         </a>
                                     </li>
-                                    @if ($product->has_stock)
+                                    @if ($product->has_stock && !$product->is_global && $selectedSucursalId && !$viewAllBranches)
                                         <li>
                                             <button data-id="{{ $product->id }}" data-target="#modal-add-stock"
                                                 class="show-modal btn-add-stock flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
@@ -256,6 +350,15 @@
                                                 class="show-modal btn-remove-stock flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
                                                 <x-icon icon="minus" class="h-4 w-4" />
                                                 Disminuir stock
+                                            </button>
+                                        </li>
+                                    @endif
+                                    @if ($product->has_stock && !$product->is_global && $canSelectBranch && $selectedSucursalId && !$viewAllBranches)
+                                        <li>
+                                            <button data-id="{{ $product->id }}" data-target="#modal-transfer-stock"
+                                                class="show-modal btn-transfer-stock flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                                                <x-icon icon="transfer" class="h-4 w-4" />
+                                                Trasladar stock
                                             </button>
                                         </li>
                                     @endif
