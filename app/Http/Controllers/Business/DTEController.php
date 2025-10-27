@@ -628,6 +628,13 @@ class DTEController extends Controller
 
             // Validación de stock: sólo para tipos que impactan inventario
             if (!in_array($this->dte['type'], ["07", "14", "04", "15"])) {
+                // Obtener sucursal del PuntoVenta
+                $sucursalId = null;
+                if ($request->pos_id) {
+                    $pos = PuntoVenta::find($request->pos_id);
+                    $sucursalId = $pos?->sucursal_id;
+                }
+
                 // Agrupar cantidad solicitada por producto de base de datos con stock habilitado
                 $cantidadesPorProducto = [];
                 $productosCargados = [];
@@ -651,9 +658,24 @@ class DTEController extends Controller
                 foreach ($cantidadesPorProducto as $productId => $cantidadSolicitada) {
                     $bp = $productosCargados[$productId] ?? BusinessProduct::find($productId);
                     if ($bp && $bp->has_stock) {
-                        $disponible = (float) $bp->stockActual;
+                        // Determinar stock disponible según sucursal
+                        $disponible = 0;
+                        
+                        if ($bp->is_global) {
+                            // Producto global usa stock general
+                            $disponible = (float) $bp->stockActual;
+                        } elseif ($sucursalId) {
+                            // Producto por sucursal: obtener stock específico
+                            $branchStock = $bp->getStockForBranch($sucursalId);
+                            $disponible = $branchStock ? (float) $branchStock->stockActual : 0;
+                        } else {
+                            // Sin sucursal seleccionada para producto no global
+                            $disponible = 0;
+                        }
+                        
                         if ($cantidadSolicitada > $disponible) {
-                            $faltantes[] = $bp->descripcion . " (solicitado: " . $cantidadSolicitada . ", disponible: " . $disponible . ")";
+                            $sucursalInfo = $sucursalId ? " en la sucursal seleccionada" : "";
+                            $faltantes[] = $bp->descripcion . " (solicitado: " . $cantidadSolicitada . ", disponible{$sucursalInfo}: " . $disponible . ")";
                         }
                     }
                 }

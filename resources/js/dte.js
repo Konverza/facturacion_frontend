@@ -267,8 +267,16 @@ $(document).ready(function () {
 
                 $("#product_id").val(data.product.id);
                 $("#product_description").val(data.product.descripcion);
+                
+                // Usar stockDisponible según la sucursal seleccionada
                 if (data.product.has_stock) {
-                    $("#count").prop("max", data.product.stockActual);
+                    const stockDisponible = data.product.stockDisponible ?? 0;
+                    $("#count").prop("max", stockDisponible);
+                    
+                    // Validar si hay stock disponible
+                    if (stockDisponible <= 0 && !data.product.is_global) {
+                        showAlert("warning", "Advertencia", "Este producto no tiene stock disponible en la sucursal seleccionada");
+                    }
                 } else {
                     $("#count").removeAttr("max");
                 }

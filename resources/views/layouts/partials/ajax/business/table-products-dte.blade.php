@@ -230,7 +230,7 @@
             @endif
 
             @if ($dte['type'] !== '04')
-            <x-tr>
+            {{-- <x-tr>
                 <x-td colspan="9" :last="true">
                     <div class="flex items-center justify-end">
                         <div class="me-10">
@@ -250,7 +250,7 @@
                         </div>
                     </div>
                 </x-td>
-            </x-tr>
+            </x-tr> --}}
             @endif
 
             <x-tr>

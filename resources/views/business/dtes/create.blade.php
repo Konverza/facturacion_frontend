@@ -619,7 +619,7 @@
                                                 </div>
                                             </x-td>
                                         </x-tr>
-                                        <x-tr>
+                                        {{-- <x-tr>
                                             <x-td colspan="9" :last="true">
                                                 <div class="flex items-center justify-end">
                                                     <div class="me-10">
@@ -641,7 +641,7 @@
                                                     </div>
                                                 </div>
                                             </x-td>
-                                        </x-tr>
+                                        </x-tr> --}}
                                         <x-tr>
                                             <x-td colspan="9" :last="true">
                                                 <div class="flex items-center justify-end gap-4 text-end">

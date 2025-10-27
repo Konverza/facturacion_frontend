@@ -41,7 +41,7 @@ class BusinessController extends Controller
             'fechaInicio' => "{$inicio_mes}T00:00:00",
             'fechaFin' => "{$fin_mes}T23:59:59"
         ];
-        $statistics = Http::timeout(30)->get($this->octopus_url . '/dtes/statistics/?' . http_build_query($params))
+        $statistics = Http::timeout(180)->get($this->octopus_url . '/dtes/statistics/?' . http_build_query($params))
             ->json();
 
         foreach ($business as $value) {

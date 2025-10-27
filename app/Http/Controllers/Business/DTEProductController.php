@@ -22,6 +22,7 @@ class DTEProductController extends Controller
         $product = BusinessProduct::find($request->product_id);
         $dte = session("dte")["type"];
         $customer = session("dte")["customer"] ?? null;
+        $sucursalId = $request->sucursal_id;
 
         if (!$product) {
             return response()->json([
@@ -30,9 +31,41 @@ class DTEProductController extends Controller
             ]);
         }
 
+        // Determinar stock según sucursal
+        $stockDisponible = null;
+        $estadoStock = null;
+        
+        if ($product->has_stock) {
+            if ($product->is_global) {
+                // Producto global usa stock general
+                $stockDisponible = $product->stockActual;
+                $estadoStock = $product->estado_stock;
+            } elseif ($sucursalId) {
+                // Producto por sucursal: obtener stock específico
+                $branchStock = $product->getStockForBranch($sucursalId);
+                if ($branchStock) {
+                    $stockDisponible = $branchStock->stockActual;
+                    $estadoStock = $branchStock->estado_stock;
+                } else {
+                    $stockDisponible = 0;
+                    $estadoStock = 'agotado';
+                }
+            } else {
+                // Sin sucursal seleccionada para producto no global
+                $stockDisponible = 0;
+                $estadoStock = 'agotado';
+            }
+        }
+
+        // Agregar datos de stock al producto
+        $productData = $product->toArray();
+        $productData['stockDisponible'] = $stockDisponible;
+        $productData['estadoStock'] = $estadoStock;
+        $productData['sucursal_id'] = $sucursalId;
+
         return response()->json([
             "success" => true,
-            "product" => $product,
+            "product" => $productData,
             "dte" => $dte,
             "customer" => $customer
         ]);
