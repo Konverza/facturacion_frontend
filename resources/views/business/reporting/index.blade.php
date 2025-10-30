@@ -29,7 +29,7 @@
                             <x-input type="date" name="end_date" label="Fecha de fin" />
                         </div>
                     </div>
-                    < class="flex flex-col gap-2">
+                    <div class="flex flex-col gap-2">
                         <div id="selected-documents" class="hidden">
                             <div class="flex flex-col gap-2">
                                 <x-input type="toggle" name="only_selected"
