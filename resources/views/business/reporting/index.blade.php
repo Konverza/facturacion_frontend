@@ -29,7 +29,7 @@
                             <x-input type="date" name="end_date" label="Fecha de fin" />
                         </div>
                     </div>
-                    <div class="flex flex-col gap-2">
+                    < class="flex flex-col gap-2">
                         <div id="selected-documents" class="hidden">
                             <div class="flex flex-col gap-2">
                                 <x-input type="toggle" name="only_selected"
@@ -41,7 +41,7 @@
                                     id="only-mix" value="1" />
                             </div>
                         </div>
-                        <x-input type="toggle" name="format_csv" label="Generar en formato .CSV" />
+                        {{-- <x-input type="toggle" name="format_csv" label="Generar en formato .CSV" /> --}}
                     </div>
 
                     <div class="flex flex-col gap-2 overflow-hidden rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-4 text-center dark:border-blue-800 dark:bg-blue-950/40"
