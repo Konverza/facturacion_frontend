@@ -69,6 +69,7 @@ class DteExport extends DefaultValueBinder implements FromCollection, WithHeadin
             $processed_dtes[] = [
                 "tipo_dte" =>  $this->types[$dte['tipo_dte']],
                 "fhProcesamiento" => \Carbon\Carbon::parse($dte['fhProcesamiento'])->format('d/m/Y h:i:s A'),
+                "fhEmision" => $dte['documento']->identificacion->fecEmi . ' ' . $dte['documento']->identificacion->horEmi,
                 "estado" => $dte['estado'],
                 "codigo_generacion" => $dte['codGeneracion'],
                 "numero_control" => $dte['documento']->identificacion->numeroControl,
@@ -105,6 +106,7 @@ class DteExport extends DefaultValueBinder implements FromCollection, WithHeadin
         return [
             'Tipo DTE',
             'Fecha de Procesamiento',
+            'Fecha de Emisión',
             'Estado',
             'Código de Generación',
             'Número de Control',
@@ -124,16 +126,18 @@ class DteExport extends DefaultValueBinder implements FromCollection, WithHeadin
         return [
             'A' => '@', // Tipo DTE
             'B' => 'dd/mm/yyyy hh:mm:ss AM/PM', // Fecha de Procesamiento
-            'C' => '@', // Estado
-            'D' => '@', // Código de Generación
-            'E' => '@', // Número de Control
-            'F' => '@', // Sello Recibido
-            'G' => '@', // Nombre del Receptor
-            'I' => '_-$* #,##0.00_-;-$* #,##0.00_-;_-$* "-"??_-;_-@_-', // Monto de Operación
-            'J' => '@', // Formas de Pago
-            'K' => '@', // Código de Sucursal
-            'L' => '@', // Código de Punto de Venta
-            'M' => '@', // Observaciones
+            'C' => 'dd/mm/yyyy hh:mm:ss AM/PM', // Fecha de Emisión
+            'D' => '@', // Estado
+            'E' => '@', // Código de Generación
+            'F' => '@', // Número de Control
+            'G' => '@', // Sello Recibido
+            'H' => '@', // Nombre del Receptor
+            'I' => '@', // Documento del Receptor
+            'J' => '_-$* #,##0.00_-;-$* #,##0.00_-;_-$* "-"??_-;_-@_-', // Monto de Operación
+            'K' => '@', // Formas de Pago
+            'L' => '@', // Código de Sucursal
+            'M' => '@', // Código de Punto de Venta
+            'N' => '@', // Observaciones
         ];
     }
 
@@ -148,7 +152,7 @@ class DteExport extends DefaultValueBinder implements FromCollection, WithHeadin
                 $sheet = $event->sheet->getDelegate();
 
                 // Aplicar autofiltros a todas las columnas con datos (A:L)
-                $sheet->setAutoFilter('A1:M1');
+                $sheet->setAutoFilter('A1:N1');
 
                 // Estilo adicional para la fila de encabezados
                 $headerStyle = [
@@ -166,7 +170,7 @@ class DteExport extends DefaultValueBinder implements FromCollection, WithHeadin
                 ];
 
                 // Aplicar estilo a la fila de encabezados
-                $event->sheet->getStyle('A1:M1')->applyFromArray($headerStyle);
+                $event->sheet->getStyle('A1:N1')->applyFromArray($headerStyle);
 
                 // Congelar la fila de encabezados
                 $sheet->freezePane('A2');
@@ -182,8 +186,8 @@ class DteExport extends DefaultValueBinder implements FromCollection, WithHeadin
                 ];
 
                 $lastRow = $sheet->getHighestRow();
-                $event->sheet->getStyle("A1:M{$lastRow}")->applyFromArray($tableStyle);
-                $sheet->getStyle('M:M')->getAlignment()->setWrapText(true);
+                $event->sheet->getStyle("A1:N{$lastRow}")->applyFromArray($tableStyle);
+                $sheet->getStyle('N:N')->getAlignment()->setWrapText(true);
             },
         ];
     }
@@ -191,13 +195,13 @@ class DteExport extends DefaultValueBinder implements FromCollection, WithHeadin
     public function columnWidths(): array
     {
         return [
-            'M' => 55, // Observaciones
+            'N' => 55, // Observaciones
         ];
     }
 
     public function bindValue(\PhpOffice\PhpSpreadsheet\Cell\Cell $cell, $value)
     {
-        if (in_array($cell->getColumn(), ["H"])) {
+        if (in_array($cell->getColumn(), ["I"])) {
             $cell->setValueExplicit($value, DataType::TYPE_STRING);
             return true;
         }
