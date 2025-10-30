@@ -1707,7 +1707,7 @@ class DTEController extends Controller
         $desde = "{$request->desde}T00:00:00";
         $hasta = "{$request->hasta}T23:59:59";
 
-        $dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes/?nit=" . $business->nit . "&fechaInicio=" . $desde . "&fechaFin=" . $hasta)->json();
+        $dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes/?nit=" . $business->nit . "&emisionInicio=" . $desde . "&emisionFin=" . $hasta)->json();
         $dtes = $dtes["items"] ?? [];
         $dte_collection = null;
 
