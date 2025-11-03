@@ -1638,17 +1638,6 @@ class DTEController extends Controller
             $documento = json_decode($dte["documento"]);
             $business = Business::find($business_id);
 
-            $receptor = ($dte['tipo_dte'] === '14') ? $documento->sujetoExcluido : $documento->receptor ?? "";
-
-            $nombre = $receptor->nombre ?? "";
-            if (in_array($dte['tipo_dte'], ['03', '05', '06'])) {
-                $tipoDoc = "36";
-                $numDocumento = $receptor->nit;
-            } else {
-                $tipoDoc = $receptor->tipoDocumento;
-                $numDocumento = $receptor->numDocumento;
-            }
-
             $response = Http::post(env("OCTOPUS_API_URL") . '/anulacion/', [
                 "nit" => $business->nit,
                 "documento" => [
@@ -1663,9 +1652,9 @@ class DTEController extends Controller
                     "nombreResponsable" => auth()->user()->name,
                     "tipoDocResponsable" => "36",
                     "numDocResponsable" => $business->nit,
-                    "nombreSolicita" => $nombre ?? auth()->user()->name,
-                    "tipoDocSolicita" => $tipoDoc ?? "36",
-                    "numDocSolicita" => $numDocumento ?? $business->nit,
+                    "nombreSolicita" => auth()->user()->name,
+                    "tipoDocSolicita" => "36",
+                    "numDocSolicita" => $business->nit,
                 ]
             ]);
             $data = $response->json();
