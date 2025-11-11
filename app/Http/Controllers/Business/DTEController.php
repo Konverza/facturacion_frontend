@@ -2070,10 +2070,13 @@ class DTEController extends Controller
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:20480',
-            'dte_type' => 'required|in:01,03,14'
+            'dte_type' => 'required|in:01,03,14',
+            // modo de agrupación: group (por cliente) | row (cada fila un DTE)
+            'group_mode' => 'sometimes|in:group,row'
         ]);
 
         $type = $request->input('dte_type');
+        $groupMode = $request->input('group_mode', 'group'); // default comportamiento anterior
         $business_id = Session::get('business');
         if (!$business_id) {
             return response()->json(['success' => false, 'message' => 'Sesión de empresa no encontrada'], 401);
@@ -2120,13 +2123,17 @@ class DTEController extends Controller
                 };
             };
 
-            // Agrupar por cliente (clave compuesta doc|nombre si no hay doc)
+            // Colección de grupos (cada grupo = un DTE a generar). En modo 'group' agrupamos por receptor,
+            // en modo 'row' cada línea constituye su propio grupo con un único producto.
             $groups = [];
-            foreach ($rows as $r) {
+            foreach ($rows as $idx => $r) {
                 $doc = $this->onlyDigits($r['numDocumento'] ?? null) ?? '';
                 $docType = $this->normalizeDocType($r['tipoDocumento'] ?? null);
                 $nombre = trim($r['nombre'] ?? $r['nombreComercial'] ?? '');
-                $groupKey = ($docType ?: 'XX') . '|' . ($doc ?: $nombre);
+                // Clave de agrupación según modo
+                $groupKey = $groupMode === 'group'
+                    ? (($docType ?: 'XX') . '|' . ($doc ?: $nombre))
+                    : ('ROW_' . $idx); // fuerza cada fila a ser independiente
 
                 $cantidad = (float) ($r['cantidad'] ?? 0);
                 $precioSinIVA = (float) ($r['precio_unitario_sin_iva'] ?? 0);
@@ -2256,7 +2263,7 @@ class DTEController extends Controller
                 } else {
                     $g['total_pagar'] = round($g['total'] - $g['total_descuentos'], 8);
                 }
-                // Retención 10% sólo en tipo 14 para líneas servicio o ambos
+                // Retención 10% sólo en tipo 14 para líneas servicio o ambos (aplica igual en modo row)
                 if ($g['type'] === '14') {
                     $retencionBase = 0;
                     foreach ($g['products'] as $p) {
@@ -2343,6 +2350,7 @@ class DTEController extends Controller
                 'count' => count($result),
                 'items' => $result,
                 'discarded' => $discarded,
+                'group_mode' => $groupMode,
             ]);
         } catch (\Throwable $e) {
             Log::error('importCustomersProductsExcel error: '.$e->getMessage());

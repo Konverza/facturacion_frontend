@@ -92,8 +92,7 @@
                 <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
                     <p class="text-md text-gray-500 dark:text-gray-400 mb-4">Suba un Excel donde <strong
                             class="font-medium text-gray-800 dark:text-white">cada fila contenga los datos del cliente y de
-                            un producto</strong>. Se agruparán automáticamente los productos por cliente para generar
-                        múltiples DTEs. Sólo se admiten Consumidor Final y Crédito Fiscal.</p>
+                            un producto</strong>. Puede elegir <strong class="font-medium text-gray-800 dark:text-white">agrupar por cliente</strong> o <strong class="font-medium text-gray-800 dark:text-white">generar un DTE por cada fila</strong>. Sólo se admiten Consumidor Final, Crédito Fiscal y Sujeto Excluido.</p>
                 </div>
                 <div
                         class="my-2 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30">
@@ -104,6 +103,8 @@
                     </div>
                 <div class="mt-4 flex flex-col gap-2 px-4">
                     <x-select label="Tipo de DTE" id="bulk_dte_type" name="bulk_dte_type" :options="['01' => 'Consumidor Final', '03' => 'Crédito Fiscal', '14' => 'Sujeto Excluido']"
+                        class="w-full mb-2" />
+                    <x-select label="Modo de agrupación" id="bulk_group_mode" name="bulk_group_mode" :options="['group' => 'Agrupar por cliente', 'row' => 'Un DTE por fila']"
                         class="w-full mb-2" />
                     <x-input type="file" label="Excel Clientes + Productos" id="file_customers_products"
                         name="file_customers_products" accept=".xlsx,.xls,.csv" class="w-full mb-2" />
@@ -406,6 +407,7 @@
                 const $countCP = $('#bulk-dte-count');
                 const $progressCP = $('#bulk-dte-progress');
                 const $sendCP = $('#send-bulk-generated');
+                const $groupModeCP = $('#bulk_group_mode');
                 let generatedDtes = [];
 
                 function currency(v) {
@@ -602,10 +604,11 @@
                     </tr>`;
                 }
 
-                async function importCustomersProductsExcel(file, dteType) {
+                async function importCustomersProductsExcel(file, dteType, groupMode) {
                     const fd = new FormData();
                     fd.append('file', file);
                     fd.append('dte_type', dteType);
+                    if (groupMode) fd.append('group_mode', groupMode);
                     if (CSRF) fd.append('_token', CSRF);
                     const res = await http.post('/business/dte/import-customers-products-excel', fd, {
                         headers: {
@@ -687,11 +690,12 @@
                 $btnParseCP.on('click', async function() {
                     const file = $fileCP[0].files?.[0];
                     const dteType = $typeCP.val();
+                    const groupMode = $groupModeCP.val() || 'group';
                     if (!file) return alert('Seleccione un archivo');
                     if (!dteType) return alert('Seleccione el tipo de DTE');
                     $('#loader').removeClass('hidden');
                     try {
-                        const data = await importCustomersProductsExcel(file, dteType);
+                        const data = await importCustomersProductsExcel(file, dteType, groupMode);
                         if (!data.success) throw new Error(data.message || 'Error');
                         generatedDtes = data.items || [];
                         $bodyCP.empty();
