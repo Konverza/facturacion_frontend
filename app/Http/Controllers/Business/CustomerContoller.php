@@ -286,7 +286,7 @@ class CustomerContoller extends Controller
     public function show(string $id)
     {
         try {
-            $business_customer = BusinessCustomer::where("id", $id)->first();
+            $business_customer = BusinessCustomer::where("id", $id)->with('branches')->first();
             session()->put("dte", array_merge(session("dte", []), [
                 "customer" => $business_customer
             ]));
@@ -295,7 +295,7 @@ class CustomerContoller extends Controller
                 $business_customer->numDocumento = str_replace("-", "", $business_customer->numDocumento);
             }
 
-            return response()->json([
+            $response = [
                 "customer" => $business_customer,
                 "select_tipos_documentos" => view("layouts.partials.ajax.business.select-tipos-documentos", [
                     "tipo_documento" => $business_customer->tipoDocumento,
@@ -320,7 +320,15 @@ class CustomerContoller extends Controller
                 "select_tipo_persona" => view("layouts.partials.ajax.business.select-tipos-personas", [
                     "tipo_persona" => $business_customer->tipoPersona
                 ])->render()
-            ]);
+            ];
+
+            // Si el cliente tiene sucursales habilitadas y tiene sucursales
+            if ($business_customer->use_branches && $business_customer->branches->isNotEmpty()) {
+                $response['has_branches'] = true;
+                $response['branches'] = $business_customer->branches;
+            }
+
+            return response()->json($response);
         } catch (\Exception $e) {
             return response()->json([
                 "error" => "Error",

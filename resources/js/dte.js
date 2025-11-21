@@ -230,6 +230,31 @@ $(document).ready(function () {
                 $("#select-municipio").html(data.select_municipios);
                 $("#select-pais").html(data.select_countries);
                 $("#select-tipo-persona").html(data.select_tipo_persona);
+
+                // Manejar sucursales si existen
+                if (data.has_branches && data.branches && data.branches.length > 0) {
+                    const branchSelect = $("#customer_branch_select");
+                    branchSelect.empty();
+                    branchSelect.append('<option value="">Seleccione una sucursal</option>');
+                    
+                    data.branches.forEach(branch => {
+                        branchSelect.append(
+                            `<option value="${branch.id}" 
+                                data-codigo="${branch.branch_code}" 
+                                data-nombre="${branch.nombre}"
+                                data-departamento="${branch.departamento}"
+                                data-municipio="${branch.municipio}"
+                                data-complemento="${branch.complemento || ''}">
+                                ${branch.branch_code} - ${branch.nombre}
+                            </option>`
+                        );
+                    });
+                    
+                    $("#customer-branches-section").removeClass("hidden");
+                } else {
+                    $("#customer-branches-section").addClass("hidden");
+                    $("#customer_branch_select").empty().append('<option value="">Seleccione una sucursal</option>');
+                }
             })
             .catch((error) => {
                 console.error("Error al obtener el cliente:", error);

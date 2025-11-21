@@ -19,7 +19,8 @@
                     @if (!$default_pos)
                         <div
                             class="my-4 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-yellow-500 dark:bg-yellow-950/30">
-                            <b>Nota: </b> No tiene un punto de venta predeterminado, por favor seleccione uno en la pestaña "Emisor" antes de enviar el DTE
+                            <b>Nota: </b> No tiene un punto de venta predeterminado, por favor seleccione uno en la pestaña
+                            "Emisor" antes de enviar el DTE
                         </div>
                     @endif
                     <div>
@@ -48,16 +49,18 @@
                         </div>
                         <div id="default-styled-tab-content">
                             <div class="hidden" id="styled-receptor" role="tabpanel" aria-labelledby="receptor-tab">
-                                <div class="flex flex-col items-center justify-end gap-y-4 sm:flex-row {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}}" id="omitir-datos-receptor-container">
+                                <div class="flex flex-col items-center justify-end gap-y-4 sm:flex-row {{ ($dte['status'] ?? null) === 'template' ? 'hidden' : '' }}"
+                                    id="omitir-datos-receptor-container">
                                     <x-button type="button" text="Seleccionar cliente existente" typeButton="success"
                                         data-target="#selected-customer" class="show-modal w-full sm:w-auto"
                                         icon="user" />
                                 </div>
-                                <div class="mt-4 {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}}" id="datos-receptor">
+                                <div class="mt-4 {{ ($dte['status'] ?? null) === 'template' ? 'hidden' : '' }}"
+                                    id="datos-receptor">
                                     <div class="flex flex-col gap-4 sm:flex-row">
                                         <div class="flex-1">
-                                            <x-input type="text" label="NIT" id="numero_documento_customer" :required="(($dte['status'] ?? null) !== 'template')"
-                                                name="numero_documento"
+                                            <x-input type="text" label="NIT" id="numero_documento_customer"
+                                                :required="(($dte['status'] ?? null) !== 'template')" name="numero_documento"
                                                 value="{{ old('numero_documento', isset($dte['customer']) ? $dte['customer']['numDocumento'] : '') }}"
                                                 placeholder="Número de documento" />
                                         </div>
@@ -96,8 +99,8 @@
                                                 data-action="{{ Route('business.get-municipios') }}" />
                                         </div>
                                         <div class="flex-1" id="select-municipio">
-                                            <x-select name="municipio" label="Municipio" id="municipality" :required="(($dte['status'] ?? null) !== 'template')"
-                                                :options="$municipios ?? [
+                                            <x-select name="municipio" label="Municipio" id="municipality"
+                                                :required="(($dte['status'] ?? null) !== 'template')" :options="$municipios ?? [
                                                     'Seleccione un departamento' => 'Seleccione un departamento',
                                                 ]"
                                                 selected="{{ old('municipio', isset($dte['customer']) ? $dte['customer']['municipio'] : '') }}"
@@ -123,6 +126,15 @@
                                                 :required="(($dte['status'] ?? null) !== 'template')" placeholder="XXXX XXXX" id="telefono_customer" />
                                         </div>
                                     </div>
+                                    @if ($business->has_customer_branches)
+                                        <div class="mt-4">
+                                            <x-input type="text" label="Número de Orden de Compra (Opcional)"
+                                                name="orden_compra" id="orden_compra_customer"
+                                                value="{{ old('orden_compra', isset($dte['orden_compra']) ? $dte['orden_compra'] : '') }}"
+                                                placeholder="Ingrese el número de orden de compra" />
+                                        </div>
+                                    @endif
+                                    @include('layouts.partials.business.dte.sections.section-customer-branch')
                                 </div>
                             </div>
                             <div class="hidden" id="styled-emisor" role="tabpanel" aria-labelledby="emisor-tab">
@@ -141,7 +153,9 @@
                 @include('layouts.partials.business.dte.sections.section-observaciones')
                 @include('layouts.partials.business.dte.sections.section-condicion-operacion')
                 @include('layouts.partials.business.dte.sections.section-forma-pago')
-                @include('layouts.partials.business.dte.sections.section-recepcion-entrega-documento', ["monto" => "$11,428.58"])
+                @include('layouts.partials.business.dte.sections.section-recepcion-entrega-documento', [
+                    'monto' => "$11,428.58",
+                ])
             </div>
             @include('layouts.partials.business.dte.button-actions')
         </form>
@@ -161,4 +175,45 @@
 
 @push('scripts')
     @vite('resources/js/dte.js')
+
+    @if (isset($dte['customer']) && isset($dte['customer']['id']))
+        <script>
+            // Pre-cargar sucursales cuando hay un cliente seleccionado (edición de borrador/plantilla)
+            document.addEventListener('DOMContentLoaded', function() {
+                const customerId = {{ $dte['customer']['id'] ?? 'null' }};
+                if (customerId) {
+                    axios.get(`/business/customers/${customerId}`)
+                        .then((response) => {
+                            const data = response.data;
+
+                            if (data.has_branches && data.branches && data.branches.length > 0) {
+                                const branchSelect = $("#customer_branch_select");
+                                branchSelect.empty();
+                                branchSelect.append('<option value="">Seleccione una sucursal</option>');
+
+                                data.branches.forEach(branch => {
+                                    const selected = @json($dte['customer_branch']['id'] ?? null) == branch.id ?
+                                        'selected' : '';
+                                    branchSelect.append(
+                                        `<option value="${branch.id}" ${selected}
+                                        data-codigo="${branch.branch_code}" 
+                                        data-nombre="${branch.nombre}"
+                                        data-departamento="${branch.departamento}"
+                                        data-municipio="${branch.municipio}"
+                                        data-complemento="${branch.complemento || ''}">
+                                        ${branch.branch_code} - ${branch.nombre}
+                                    </option>`
+                                    );
+                                });
+
+                                $("#customer-branches-section").removeClass("hidden");
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Error al cargar sucursales:", error);
+                        });
+                }
+            });
+        </script>
+    @endif
 @endpush

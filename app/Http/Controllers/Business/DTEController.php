@@ -611,12 +611,94 @@ class DTEController extends Controller
             }
         }
 
+        // Construir apéndice si hay datos de sucursal del cliente o tiene la característica habilitada
+        $apendice = [];
+        
+        // Agregar indicador de que tiene sucursales habilitadas
+        if ($business->has_customer_branches) {
+            $apendice[] = [
+                "campo" => "hasBranches",
+                "etiqueta" => "Tiene Sucursal",
+                "valor" => "1"
+            ];
+        }
+
+        // Si hay sucursal seleccionada, agregar sus datos
+        if (isset($this->dte['customer_branch'])) {
+            $branch = $this->dte['customer_branch'];
+            
+            $apendice[] = [
+                "campo" => "codigoSucursal",
+                "etiqueta" => "Sucursal Código",
+                "valor" => $branch['branch_code'] ?? ''
+            ];
+            
+            $apendice[] = [
+                "campo" => "nombreSucursal",
+                "etiqueta" => "Sucursal Cliente",
+                "valor" => $branch['nombre'] ?? ''
+            ];
+            
+            $apendice[] = [
+                "campo" => "departamentoSucursal",
+                "etiqueta" => "Departamento Sucursal",
+                "valor" => $branch['departamento'] ?? ''
+            ];
+            
+            $apendice[] = [
+                "campo" => "municipioSucursal",
+                "etiqueta" => "Municipio Sucursal",
+                "valor" => $branch['municipio'] ?? ''
+            ];
+            
+            $apendice[] = [
+                "campo" => "complementoSucursal",
+                "etiqueta" => "Dirección Sucursal",
+                "valor" => $branch['complemento'] ?? ''
+            ];
+        }
+
+        // Agregar número de orden de compra si existe
+        if (isset($this->dte['orden_compra']) && !empty($this->dte['orden_compra'])) {
+            $apendice[] = [
+                "campo" => "OrdenCompra",
+                "etiqueta" => "Número de Orden de Compra",
+                "valor" => $this->dte['orden_compra']
+            ];
+        }
+
+        // Asignar apéndice al DTE solo si hay elementos
+        $dte["apendice"] = !empty($apendice) ? $apendice : null;
+
         return $dte;
     }
 
     public function processDTE(Request $request, $type, $endpoint)
     {
         try {
+            // Guardar orden de compra si existe
+            if ($request->has('orden_compra') && $request->orden_compra) {
+                $this->dte['orden_compra'] = $request->orden_compra;
+            }
+
+            // Guardar información de sucursal del cliente si fue seleccionada
+            if ($request->has('customer_branch_id') && $request->customer_branch_id) {
+                $branch = \App\Models\BusinessCustomersBranch::find($request->customer_branch_id);
+                if ($branch) {
+                    $this->dte['customer_branch'] = [
+                        'id' => $branch->id,
+                        'branch_code' => $branch->branch_code,
+                        'nombre' => $branch->nombre,
+                        'departamento' => $branch->departamento,
+                        'municipio' => $branch->municipio,
+                        'complemento' => $branch->complemento,
+                    ];
+                }
+            }
+
+            // Guardar en sesión
+            session(['dte' => $this->dte]);
+
             if ($this->dte["type"] !== "07") {
                 if (!isset($this->dte["products"]) || count($this->dte["products"]) === 0) {
                     if ($request->boolean('json_mode')) {
