@@ -83,6 +83,12 @@
                             id="special_price" />
                     </div>
                 @endif
+                @if ($business->has_customer_branches)
+                    <div class="mt-4">
+                        <x-input type="checkbox" label="Este cliente tiene sucursales" name="use_branches"
+                            id="use-branches" />
+                    </div>
+                @endif
                 <div class="mt-4">
                     <x-input type="checkbox" label="Rellenar datos de exportación" name="export_data" id="export-data" />
                 </div>
@@ -99,6 +105,21 @@
                         </div>
                     </div>
                 </div>
+                
+                {{-- Sección de sucursales --}}
+                <div class="hidden mt-4" id="branches-container">
+                    <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sucursales del Cliente</h3>
+                            <x-button type="button" typeButton="secondary" text="Agregar Sucursal" 
+                                class="text-sm" icon="add" id="add-branch-btn" />
+                        </div>
+                        <div id="branches-list" class="space-y-3">
+                            {{-- Las sucursales se agregarán aquí --}}
+                        </div>
+                    </div>
+                </div>
+
                 <div class="mt-6 flex items-center justify-center">
                     <x-button type="submit" typeButton="primary" text="Guardar cliente" class="w-full sm:w-auto"
                         icon="save" />
@@ -106,4 +127,112 @@
             </form>
         </div>
     </section>
+
+    @push('scripts')
+    <script>
+        let branchCounter = 0;
+
+        document.getElementById('use-branches')?.addEventListener('change', function(e) {
+            const branchesContainer = document.getElementById('branches-container');
+            if (e.target.checked) {
+                branchesContainer.classList.remove('hidden');
+            } else {
+                branchesContainer.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('add-branch-btn')?.addEventListener('click', function() {
+            addBranchRow();
+        });
+
+        function addBranchRow(data = null) {
+            const branchesList = document.getElementById('branches-list');
+            const branchIndex = branchCounter++;
+            
+            const branchHtml = `
+                <div class="branch-item border border-gray-300 dark:border-gray-600 rounded-lg p-4 relative" data-index="${branchIndex}">
+                    <button type="button" class="absolute top-2 right-2 text-red-500 hover:text-red-700 remove-branch-btn">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Código de Sucursal <span class="text-red-500">*</span></label>
+                            <input type="text" name="branches[${branchIndex}][branch_code]" 
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-2.5" 
+                                placeholder="Ej: SUC001" value="${data?.branch_code || ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre de Sucursal <span class="text-red-500">*</span></label>
+                            <input type="text" name="branches[${branchIndex}][nombre]" 
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-2.5" 
+                                placeholder="Nombre de la sucursal" value="${data?.nombre || ''}" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Departamento <span class="text-red-500">*</span></label>
+                            <select name="branches[${branchIndex}][departamento]" 
+                                class="branch-departamento w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-2.5" 
+                                data-branch-index="${branchIndex}" required>
+                                <option value="">Seleccione un departamento</option>
+                                @foreach($departamentos as $codigo => $nombre)
+                                    <option value="{{ $codigo }}">{{ $nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Municipio <span class="text-red-500">*</span></label>
+                            <select name="branches[${branchIndex}][municipio]" 
+                                class="branch-municipio-${branchIndex} w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-2.5" 
+                                required>
+                                <option value="">Primero seleccione un departamento</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dirección <span class="text-red-500">*</span></label>
+                            <textarea name="branches[${branchIndex}][complemento]" 
+                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white px-4 py-2.5" 
+                                rows="2" placeholder="Dirección completa de la sucursal" required>${data?.complemento || ''}</textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            branchesList.insertAdjacentHTML('beforeend', branchHtml);
+            attachBranchEventListeners(branchIndex);
+        }
+
+        function attachBranchEventListeners(branchIndex) {
+            const departamentoSelect = document.querySelector(`[data-branch-index="${branchIndex}"]`);
+            departamentoSelect?.addEventListener('change', async function(e) {
+                const departamento = e.target.value;
+                const municipioSelect = document.querySelector(`.branch-municipio-${branchIndex}`);
+                
+                if (departamento) {
+                    municipioSelect.innerHTML = '<option value="">Cargando...</option>';
+                    try {
+                        const response = await fetch(`{{ route('business.get-municipios') }}?codigo=${departamento}`);
+                        const municipios = await response.json();
+                        
+                        municipioSelect.innerHTML = '<option value="">Seleccione un municipio</option>';
+                        Object.entries(municipios.municipios).forEach(([codigo, nombre]) => {
+                            municipioSelect.innerHTML += `<option value="${codigo}">${nombre}</option>`;
+                        });
+                    } catch (error) {
+                        console.error('Error cargando municipios:', error);
+                        municipioSelect.innerHTML = '<option value="">Error al cargar municipios</option>';
+                    }
+                } else {
+                    municipioSelect.innerHTML = '<option value="">Primero seleccione un departamento</option>';
+                }
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-branch-btn')) {
+                e.target.closest('.branch-item').remove();
+            }
+        });
+    </script>
+    @endpush
 @endsection

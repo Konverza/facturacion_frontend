@@ -25,9 +25,16 @@ class BusinessCustomer extends Model
         'codPais',
         'tipoPersona',
         'special_price',
+        'use_branches',
     ];
 
     protected $casts = [
         'special_price' => 'boolean',
+        'use_branches' => 'boolean',
     ];
+
+    public function branches()
+    {
+        return $this->hasMany(BusinessCustomersBranch::class, 'business_customers_id');
+    }
 }

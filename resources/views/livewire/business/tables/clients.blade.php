@@ -128,6 +128,9 @@
                         @endif
                     @endif
                 </x-th>
+                @if($business && $business->has_customer_branches)
+                    <x-th>Sucursales</x-th>
+                @endif
                 <x-th :last="true">Acciones</x-th>
             </x-tr>
         </x-slot>
@@ -148,6 +151,18 @@
                             <span class="text-xs">({{ $customer->nombreComercial }})</span>
                         @endif
                     </x-td>
+                    @if($business && $business->has_customer_branches)
+                        <x-td>
+                            @if($customer->use_branches)
+                                <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                    <x-icon icon="building" class="mr-1 h-3 w-3" />
+                                    {{ $customer->branches_count }}
+                                </span>
+                            @else
+                                <span class="text-xs text-gray-400 dark:text-gray-500">-</span>
+                            @endif
+                        </x-td>
+                    @endif
                     <x-td :last="true">
                         <div class="relative">
                             <x-button type="button" icon="arrow-down" typeButton="primary" text="Acciones"

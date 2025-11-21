@@ -4,6 +4,7 @@ namespace App\Livewire\Business\Tables;
 
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Models\Business;
 use App\Models\BusinessCustomer;
 use App\Exports\Business\CustomerExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -15,6 +16,7 @@ class Clients extends Component
     use WithPagination;
     
     protected $octopusService;
+    public $business;
     public $perPage = 10;
     public $search = '';
     public $searchNombre = '';
@@ -35,6 +37,11 @@ class Clients extends Component
     {
         $this->octopusService = new OctopusService();
         $this->departamentos = $this->octopusService->simpleDepartamentos();
+    }
+
+    public function mount()
+    {
+        $this->business = Business::find(session('business'));
     }
 
     public function updating($name, $value)
@@ -63,6 +70,7 @@ class Clients extends Component
     public function render()
     {
         $customers = BusinessCustomer::where("business_id", session("business"))
+            ->withCount('branches')
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('numDocumento', 'like', "%{$this->search}%")
@@ -85,6 +93,7 @@ class Clients extends Component
         return view('livewire.business.tables.clients', [
             'customers' => $customers,
             'departamentos' => $this->departamentos,
+            'business' => $this->business,
         ]);
     }
 

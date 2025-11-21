@@ -21,12 +21,14 @@ class Business extends Model
         'nombre_responsable',
         'posmode',
         'show_special_prices',
+        'has_customer_branches',
         'active',
     ];
 
     protected $casts = [
         'posmode' => 'boolean',
         'show_special_prices' => 'boolean',
+        'has_customer_branches' => 'boolean',
         'active' => 'boolean',
     ];
 

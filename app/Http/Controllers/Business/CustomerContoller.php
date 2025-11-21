@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Imports\BusinessCustomerImport;
 use App\Models\Business;
 use App\Models\BusinessCustomer;
+use App\Models\BusinessCustomersBranch;
 use App\Models\BusinessUser;
 use App\Services\OctopusService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -107,10 +108,25 @@ class CustomerContoller extends Controller
                 "correo" => $request->correo,
                 "codPais" => $request->codigo_pais,
                 "tipoPersona" => $request->tipo_persona,
-                "special_price" => $request->has('special_price') ? true : false
+                "special_price" => $request->has('special_price') ? true : false,
+                "use_branches" => $request->has('use_branches') ? true : false
             ]);
 
             $business_customer->save();
+
+            // Guardar sucursales si existen
+            if ($request->has('branches') && $request->has('use_branches')) {
+                foreach ($request->branches as $branchData) {
+                    $business_customer->branches()->create([
+                        'branch_code' => $branchData['branch_code'],
+                        'nombre' => $branchData['nombre'],
+                        'departamento' => $branchData['departamento'],
+                        'municipio' => $branchData['municipio'],
+                        'complemento' => $branchData['complemento'],
+                    ]);
+                }
+            }
+
             DB::commit();
             return redirect()->route('business.customers.index')
                 ->with("success", "Cliente guardado")
@@ -146,15 +162,23 @@ class CustomerContoller extends Controller
     public function edit(string $id)
     {
         try {
-            $business_customer = BusinessCustomer::where("id", $id)->first();
+            $business_customer = BusinessCustomer::with('branches')->where("id", $id)->first();
             $municipios = $this->getMunicipios($business_customer->departamento);
+            
+            // Preparar municipios para cada sucursal
+            $branchesMunicipios = [];
+            foreach ($business_customer->branches as $branch) {
+                $branchesMunicipios[$branch->id] = $this->getMunicipios($branch->departamento);
+            }
+            
             return view('business.customers.edit', [
                 'customer' => $business_customer,
                 'departamentos' => $this->octopus_service->getCatalog("CAT-012"),
                 'tipos_documentos' => $this->octopus_service->getCatalog("CAT-022"),
                 'actividades_economicas' => $this->octopus_service->getCatalog("CAT-019"),
                 'countries' => $this->octopus_service->getCatalog("CAT-020"),
-                'municipios' => $municipios
+                'municipios' => $municipios,
+                'branchesMunicipios' => $branchesMunicipios
             ]);
         } catch (\Exception $e) {
             return redirect()->route('business.customers.index')
@@ -196,8 +220,49 @@ class CustomerContoller extends Controller
                 "correo" => $request->correo,
                 "codPais" => $request->codigo_pais,
                 "tipoPersona" => $request->tipo_persona,
-                "special_price" => $request->has('special_price') ? true : false
+                "special_price" => $request->has('special_price') ? true : false,
+                "use_branches" => $request->has('use_branches') ? true : false
             ]);
+
+            // Manejar sucursales eliminadas
+            if ($request->has('deleted_branches') && is_array($request->deleted_branches)) {
+                $deletedCount = BusinessCustomersBranch::whereIn('id', $request->deleted_branches)
+                    ->where('business_customers_id', $business_customer->id)
+                    ->delete();
+                Log::info("Sucursales eliminadas: {$deletedCount}", ['ids' => $request->deleted_branches]);
+            }
+
+            // Actualizar sucursales existentes
+            if ($request->has('existing_branches')) {
+                foreach ($request->existing_branches as $branchData) {
+                    if (isset($branchData['id'])) {
+                        $branch = \App\Models\BusinessCustomersBranch::find($branchData['id']);
+                        if ($branch) {
+                            $branch->update([
+                                'branch_code' => $branchData['branch_code'],
+                                'nombre' => $branchData['nombre'],
+                                'departamento' => $branchData['departamento'],
+                                'municipio' => $branchData['municipio'],
+                                'complemento' => $branchData['complemento'],
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // Crear nuevas sucursales
+            if ($request->has('branches') && $request->has('use_branches')) {
+                foreach ($request->branches as $branchData) {
+                    $business_customer->branches()->create([
+                        'branch_code' => $branchData['branch_code'],
+                        'nombre' => $branchData['nombre'],
+                        'departamento' => $branchData['departamento'],
+                        'municipio' => $branchData['municipio'],
+                        'complemento' => $branchData['complemento'],
+                    ]);
+                }
+            }
+
             DB::commit();
 
             return redirect()->route('business.customers.index')->with([
