@@ -121,6 +121,13 @@
                                                 required placeholder="XXXX XXXX" id="telefono_customer" />
                                         </div>
                                     </div>
+                                    <div class="mt-4">
+                                        <x-input type="text" label="Número de Orden de Compra (Opcional)" 
+                                            name="orden_compra" id="orden_compra_customer"
+                                            value="{{ old('orden_compra', isset($dte['orden_compra']) ? $dte['orden_compra'] : '') }}"
+                                            placeholder="Ingrese el número de orden de compra" />
+                                    </div>
+                                    @include('layouts.partials.business.dte.sections.section-customer-branch')
                                 </div>
                             </div>
                             <div class="hidden" id="styled-emisor" role="tabpanel" aria-labelledby="emisor-tab">
@@ -304,4 +311,44 @@
 
 @push('scripts')
     @vite('resources/js/dte.js')
+    
+    @if(isset($dte['customer']) && isset($dte['customer']['id']))
+    <script>
+        // Pre-cargar sucursales cuando hay un cliente seleccionado (edición de borrador/plantilla)
+        document.addEventListener('DOMContentLoaded', function() {
+            const customerId = {{ $dte['customer']['id'] ?? 'null' }};
+            if (customerId) {
+                axios.get(`/business/customers/${customerId}`)
+                    .then((response) => {
+                        const data = response.data;
+                        
+                        if (data.has_branches && data.branches && data.branches.length > 0) {
+                            const branchSelect = $("#customer_branch_select");
+                            branchSelect.empty();
+                            branchSelect.append('<option value="">Seleccione una sucursal</option>');
+                            
+                            data.branches.forEach(branch => {
+                                const selected = @json($dte['customer_branch']['id'] ?? null) == branch.id ? 'selected' : '';
+                                branchSelect.append(
+                                    `<option value="${branch.id}" ${selected}
+                                        data-codigo="${branch.branch_code}" 
+                                        data-nombre="${branch.nombre}"
+                                        data-departamento="${branch.departamento}"
+                                        data-municipio="${branch.municipio}"
+                                        data-complemento="${branch.complemento || ''}">
+                                        ${branch.branch_code} - ${branch.nombre}
+                                    </option>`
+                                );
+                            });
+                            
+                            $("#customer-branches-section").removeClass("hidden");
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error al cargar sucursales:", error);
+                    });
+            }
+        });
+    </script>
+    @endif
 @endpush
