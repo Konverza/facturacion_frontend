@@ -121,12 +121,14 @@
                                                 required placeholder="XXXX XXXX" id="telefono_customer" />
                                         </div>
                                     </div>
+                                    @if($business->has_customer_branches)
                                     <div class="mt-4">
                                         <x-input type="text" label="Número de Orden de Compra (Opcional)" 
                                             name="orden_compra" id="orden_compra_customer"
                                             value="{{ old('orden_compra', isset($dte['orden_compra']) ? $dte['orden_compra'] : '') }}"
                                             placeholder="Ingrese el número de orden de compra" />
                                     </div>
+                                    @endif
                                     @include('layouts.partials.business.dte.sections.section-customer-branch')
                                 </div>
                             </div>
