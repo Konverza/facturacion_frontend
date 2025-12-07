@@ -90,6 +90,19 @@ Breadcrumbs::for("admin.ads.edit", function (BreadcrumbTrail $trail, string $id)
     $trail->push($icon . "Editar Anuncio", route("admin.ads.edit", $id));
 });
 
+// Notifications
+Breadcrumbs::for("admin.notifications.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='bell' class='w-4 h-4'/>");
+    $trail->parent("admin");
+    $trail->push($icon . "Notificaciones", route("admin.notifications.index"));
+});
+
+Breadcrumbs::for("admin.notifications.create", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='mail-star' class='w-4 h-4'/>");
+    $trail->parent("admin.notifications.index");
+    $trail->push($icon . "Nueva Notificación", route("admin.notifications.create"));
+});
+
 
 //BUSINESS
 

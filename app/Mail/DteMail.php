@@ -61,6 +61,7 @@ class DteMail extends Mailable
         }
 
         return $this->subject('Facturación Electrónica Konverza')
+            ->from(config('mail.from.address'), $this->dte["documento"]["emisor"]["nombre"])
             ->view('mail.dte')
             ->with([
                 'emisor' => $this->dte["documento"]["emisor"]["nombre"],

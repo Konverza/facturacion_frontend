@@ -18,6 +18,7 @@
     <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"></script>
     <script>
         // Configura CSRF para axios y jQuery usando la meta tag
         (function() {

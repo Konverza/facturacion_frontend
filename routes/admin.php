@@ -45,4 +45,11 @@ Route::middleware(['auth', 'role:admin'])->prefix("admin")->name("admin.")->grou
 
     // Anuncios
     Route::resource("/ads", AdController::class);
+
+    // Notificaciones
+    Route::get("/notifications", [\App\Http\Controllers\Admin\NotificationController::class, "index"])->name("notifications.index");
+    Route::get("/notifications/create", [\App\Http\Controllers\Admin\NotificationController::class, "create"])->name("notifications.create");
+    Route::post("/notifications", [\App\Http\Controllers\Admin\NotificationController::class, "store"])->name("notifications.store");
+    Route::get("/notifications/progress/{jobId}", [\App\Http\Controllers\Admin\NotificationController::class, "progress"])->name("notifications.progress");
+    Route::post("/notifications/recipients", [\App\Http\Controllers\Admin\NotificationController::class, "getRecipients"])->name("notifications.recipients");
 });
