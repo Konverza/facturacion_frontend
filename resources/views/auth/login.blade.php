@@ -12,6 +12,10 @@
                 </h1>
                 <p class="mb-4 text-base text-gray-600 dark:text-gray-300">Ingresa tus datos para continuar</p>
             </div>
+            <div
+                class="my-2 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30 text-center">
+                Está en el ambiente: <b>{{ env('AMBIENTE') == 2 ? 'PRUEBAS' : 'PRODUCTIVO' }}</b>
+            </div>
             <form action="{{ Route('validate') }}" method="POST" class="flex flex-col gap-4">
                 @csrf
                 <x-input type="email" name="email" icon="email" placeholder="Ingresar tu correo electrónico"
