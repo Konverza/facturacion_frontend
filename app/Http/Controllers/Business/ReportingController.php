@@ -104,6 +104,13 @@ class ReportingController extends Controller
                         "error_message" => "No se encontraron dtes en el rango de fechas",
                     ]);
                 }
+
+                // Ordenar los DTEs por fecha de emisión ascendente
+                usort($dtes_filter, function ($a, $b) {
+                    $dateA = Carbon::parse($a["documento"]["identificacion"]["fecEmi"] ?? '');
+                    $dateB = Carbon::parse($b["documento"]["identificacion"]["fecEmi"] ?? '');
+                    return $dateA->greaterThan($dateB) ? 1 : -1;
+                });
             }
 
             switch ($book) {

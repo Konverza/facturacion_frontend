@@ -640,6 +640,30 @@
                                 required />
                             <x-input type="date" icon="calendar" name="desde" label="Desde" required />
                             <x-input type="date" icon="calendar" name="hasta" label="Hasta" required />
+                            <x-select id="tipo_operacion" :options="[
+                                '1' => 'Gravada',
+                                '2' => 'No Gravada o Exento',
+                                '3' => 'Excluido o no Constituye Renta',
+                                '4' => 'Mixta',
+                                '12' => 'Ingresos que ya fueron sujetos de retención informados',
+                                '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
+                            ]" label="Tipo de Operación" name="tipo_operacion"
+                                required />
+                            <x-select id="tipo_ingreso" :options="[
+                                '1' => 'Profesiones, Artes y Oficios',
+                                '2' => 'Actividades de Servicios',
+                                '3' => 'Actividades Comerciales',
+                                '4' => 'Actividades Industriales',
+                                '5' => 'Actividades Agropecuarias',
+                                '6' => 'Utilidades y Dividendos',
+                                '7' => 'Exportaciones de bienes',
+                                '8' => 'Servicios Realizados en el Exterior y Utilizados en El Salvador',
+                                '9' => 'Exportaciones de servicios',
+                                '10' => 'Otras Rentas Gravables',
+                                '12' => 'Ingresos que ya fueron sujetos de retención informados',
+                                '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
+                            ]" label="Tipo de Ingreso" name="tipo_ingreso"
+                                required />
                         </div>
                         <!-- Modal footer -->
                         <div

@@ -11,10 +11,14 @@ class Contribuyente implements FromCollection, WithColumnFormatting, WithStrictN
 {
     
     protected $dtes;
+    protected $tipoOperacion;
+    protected $tipoIngreso;
 
-    public function __construct($dtes)
+    public function __construct($dtes, $tipoOperacion, $tipoIngreso)
     {
         $this->dtes = $dtes;
+        $this->tipoOperacion = $tipoOperacion;
+        $this->tipoIngreso = $tipoIngreso;
     }
 
     /**
@@ -35,44 +39,33 @@ class Contribuyente implements FromCollection, WithColumnFormatting, WithStrictN
                 }
             }
 
-            $tipoOperacion = "";
             $totalNoGravado = $dte["documento"]->resumen->totalNoGravado ?? 0;
             $totalGravado = $dte["documento"]->resumen->totalGravada ?? 0;
             $totalExento = $dte["documento"]->resumen->totalExenta ?? 0;
             $totalNoSuj = $dte["documento"]->resumen->totalNoSuj ?? 0;
             $totalPagar = $dte["documento"]->resumen->totalPagar ?? 0;
-            
-            if($totalExento > 0 || $totalNoGravado > 0){
-                $tipoOperacion = "02";
-            } elseif ($totalGravado > 0 && $totalExento == 0 && $totalNoSuj == 0) {
-                $tipoOperacion = "01";
-            } elseif ($totalNoSuj > 0 && $totalGravado == 0 && $totalExento == 0) {
-                $tipoOperacion = "03";
-            } else {
-                $tipoOperacion = "04"; 
-            }
 
             $data[] = [
-                \Carbon\Carbon::parse($dte["fhEmision"])->format('d/m/Y'),
-                "4",
-                $dte["tipo_dte"],
-                str_replace('-', '', $dte["codGeneracion"]),
-                $dte["selloRecibido"],
-                str_replace('-', '', $dte["documento"]->identificacion->numeroControl),
-                null,
-                $dte["documento"]->receptor->nit,
-                $dte["documento"]->receptor->nombre,
-                round($totalExento, 2),
-                round($totalNoSuj, 2),
-                round($totalGravado, 2),
-                round($totalIva, 2),
-                0.00,
-                0.00,
-                $totalPagar,
-                null,
-                $tipoOperacion,
-                "03",
-                "1"  
+                \Carbon\Carbon::parse($dte["fhEmision"])->format('d/m/Y'), // Fecha de emisión (A)
+                "4", // clase de documento (B)
+                $dte["tipo_dte"], // tipo de documento (C)
+                str_replace('-', '', $dte["documento"]->identificacion->numeroControl), // número de documento (D)
+                $dte["selloRecibido"], // número de serie de documento (E)
+                str_replace('-', '', $dte["codGeneracion"]), // número de resolución (F)
+                null, // Número de control interno (G)
+                $dte["documento"]->receptor->nit, // NIT o NRC receptor (H)
+                $dte["documento"]->receptor->nombre, // Nombre o razón social del receptor (I)
+                round($totalExento, 2), // Ventas Exentas (J)
+                round($totalNoSuj, 2), // Ventas No sujetas (K)
+                round($totalGravado, 2), // Ventas Gravadas (L)
+                round($totalIva, 2), // Débito fiscal (M)
+                0.00, // Ventas a cuentas de terceros no domiciliados (N)
+                0.00, // Débito fiscal por ventas a cuentas de terceros no domiciliados (O)
+                $totalPagar, // Total ventas (P)
+                null, // DUI del cliente (Q)
+                $this->tipoOperacion, // Tipo de operación (Renta) (R)
+                $this->tipoIngreso, // Tipo de Ingreso (Renta) (S)
+                "1"  // Número de Anexo, siempre "1" (T)
             ];
         }
 
