@@ -874,14 +874,25 @@ class DTEController extends Controller
         $business_id = Session::get('business') ?? null;
         if (isset($data["estado"])) {
             if ($data["estado"] === "PROCESADO" || $data["estado"] === "CONTINGENCIA") {
-                if ($this->dte["type"] !== "07" && $this->dte["type"] !== "14" && $this->dte["type"] !== "04" && $this->dte["type"] !== "15") {
+                // Para tipo 14 (Sujeto Excluido), actualizar stocks como entrada (compra)
+                if ($this->dte["type"] === "14") {
+                    $sucursalId = null;
+                    if ($request->pos_id) {
+                        $pos = PuntoVenta::find($request->pos_id);
+                        $sucursalId = $pos?->sucursal_id;
+                    }
+                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "entrada", $sucursalId, "14");
+                    if ($request->condicion_operacion === 2) {
+                        $this->createCXC($data, $request);
+                    }
+                } elseif ($this->dte["type"] !== "07" && $this->dte["type"] !== "04" && $this->dte["type"] !== "15") {
                     // Obtener sucursal del PuntoVenta usado
                     $sucursalId = null;
                     if ($request->pos_id) {
                         $pos = PuntoVenta::find($request->pos_id);
                         $sucursalId = $pos?->sucursal_id;
                     }
-                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida", $sucursalId);
+                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida", $sucursalId, $this->dte["type"]);
                     if ($request->condicion_operacion === 2) {
                         $this->createCXC($data, $request);
                     }
@@ -1622,8 +1633,9 @@ class DTEController extends Controller
      * @param int $business_id ID del negocio
      * @param string $tipo 'salida' o 'entrada'
      * @param int|null $sucursalId ID de la sucursal (si no se provee, busca la primera)
+     * @param string|null $tipoDte Tipo de DTE para manejos especiales (ej: '14' para sujeto excluido)
      */
-    public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida", $sucursalId = null)
+    public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida", $sucursalId = null, $tipoDte = null)
     {
         // Si no se provee sucursal, usar la primera del negocio
         if (!$sucursalId) {
@@ -1648,18 +1660,29 @@ class DTEController extends Controller
 
             if ($searchProduct) {
                 $cantidad = is_array($product) ? $product["cantidad"] : $product->cantidad;
-                $descripcion = $tipo === "salida" ? "Venta de producto" : "Anulación de documento";
-
-                try {
-                    if ($tipo === "salida") {
-                        $searchProduct->reduceStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
-                    } elseif ($tipo === "entrada") {
+                
+                // Para facturas de sujeto excluido (compras), siempre incrementar inventario
+                if ($tipoDte === "14") {
+                    $descripcion = "Compra de producto (Factura Sujeto Excluido)";
+                    try {
                         $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                    } catch (\Exception $e) {
+                        Log::error("Error incrementando stock para producto {$searchProduct->id} en sucursal {$sucursalId}: " . $e->getMessage());
+                        continue;
                     }
-                } catch (\Exception $e) {
-                    Log::error("Error actualizando stock para producto {$searchProduct->id} en sucursal {$sucursalId}: " . $e->getMessage());
-                    // Continuar con el siguiente producto si hay error en uno
-                    continue;
+                } else {
+                    // Lógica normal para otros tipos de DTE
+                    $descripcion = $tipo === "salida" ? "Venta de producto" : "Anulación de documento";
+                    try {
+                        if ($tipo === "salida") {
+                            $searchProduct->reduceStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                        } elseif ($tipo === "entrada") {
+                            $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("Error actualizando stock para producto {$searchProduct->id} en sucursal {$sucursalId}: " . $e->getMessage());
+                        continue;
+                    }
                 }
             }
         }
@@ -1752,7 +1775,7 @@ class DTEController extends Controller
                             ->first();
                         $sucursalId = $sucursal?->id;
                     }
-                    $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada", $sucursalId);
+                    $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada", $sucursalId, $dte["tipo_dte"]);
                 }
                 return redirect()->route('business.documents.index')
                     ->with('success', "Documento anulado correctamente")

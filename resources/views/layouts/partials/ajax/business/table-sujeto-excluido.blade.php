@@ -17,11 +17,7 @@
                         <x-td>{{ $product['descripcion'] }}</x-td>
                         <x-td>{{ $product['cantidad'] }}</x-td>
                         <x-td>
-                            @if ($dte['type'] === '03')
-                                ${{ number_format($product['precio_sin_tributos'], 2) }}
-                            @else
-                                ${{ number_format($product['precio'], 2) }}
-                            @endif
+                            ${{ number_format($product['precio_sin_tributos'], 2) }}
                         </x-td>
                         <x-td>${{ number_format($product['descuento'], 2) }}</x-td>
                         <x-td>${{ number_format($product['total'], 2) }}</x-td>

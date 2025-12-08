@@ -115,7 +115,8 @@ class DTEProductController extends Controller
                     $cantidadActual = (float) $product["cantidad"];
                     $cantidadNueva = (float) $request->cantidad;
 
-                    if ($business_product->has_stock) {
+                    // No validar stock en facturas de sujeto excluido (tipo 14) ya que son compras
+                    if ($business_product->has_stock && $this->dte["type"] !== "14") {
                         $stock = (float) $business_product->stockActual;
                         if ($cantidadActual + $cantidadNueva > $stock) {
                             return response()->json([
@@ -182,7 +183,7 @@ class DTEProductController extends Controller
                     "descripcion" => $business_product->descripcion,
                     "cantidad" => $cantidad,
                     "tipo" => $request->tipo,
-                    "precio" => $request->tipo == "Gravada" ? $precio : $precio_sin_tributos,
+                    "precio" => ($this->dte["type"] === "14") ? $precio_sin_tributos : ($request->tipo == "Gravada" ? $precio : $precio_sin_tributos),
                     "precio_sin_tributos" => $precio_sin_tributos,
                     "descuento" => $descuento,
                     "ventas_gravadas" => $request->tipo === "Gravada" ? $total : 0,
@@ -196,6 +197,7 @@ class DTEProductController extends Controller
                     "bebidas_alcoholicas" => in_array("C5", $product_tributes) ? "active" : "inactive",
                     "tabaco_cigarillos" => in_array("C6", $product_tributes) ? "active" : "inactive",
                     "tabaco_cigarros" => in_array("C7", $product_tributes) ? "active" : "inactive",
+                    "tipo_item" => $business_product->tipoItem,
                     "iva" => $iva,
                     "documento_relacionado" => $request->documento_relacionado ?? null
                 ];
@@ -218,6 +220,9 @@ class DTEProductController extends Controller
                 "monto_pendiente" => $this->dte["monto_pendiente"],
                 // "table_exportacion" => "",
                 "table_exportacion" => $this->dte["type"] == "11" ? view("layouts.partials.ajax.business.table-exportacion", [
+                    "dte" => $this->dte
+                ])->render() : null,
+                "table_sujeto_excluido" => $this->dte["type"] == "14" ? view("layouts.partials.ajax.business.table-sujeto-excluido", [
                     "dte" => $this->dte
                 ])->render() : null,
             ]);
@@ -622,6 +627,9 @@ class DTEProductController extends Controller
                 "table_products" => view("layouts.partials.ajax.business.table-products-dte", [
                     "dte" => $this->dte
                 ])->render(),
+                "table_sujeto_excluido" => $this->dte["type"] == "14" ? view("layouts.partials.ajax.business.table-sujeto-excluido", [
+                    "dte" => $this->dte
+                ])->render() : null,
                 "total_pagar" => $this->dte["total_pagar"],
                 "monto_pendiente" => $this->dte["monto_pendiente"]
             ]);

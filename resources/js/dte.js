@@ -294,7 +294,8 @@ $(document).ready(function () {
                 $("#product_description").val(data.product.descripcion);
                 
                 // Usar stockDisponible según la sucursal seleccionada
-                if (data.product.has_stock) {
+                // No validar stock en facturas de sujeto excluido (tipo 14) ya que son compras
+                if (data.product.has_stock && data.dte !== "14") {
                     const stockDisponible = data.product.stockDisponible ?? 0;
                     $("#count").prop("max", stockDisponible);
                     
@@ -341,7 +342,8 @@ $(document).ready(function () {
             parseFloat(count) * parseFloat(price) -
             descuento
             , 8);
-        if (count > max) {
+        // Solo validar stock si existe max (no aplica para tipo 14 - Sujeto Excluido)
+        if (max && !isNaN(max) && count > max) {
             showAlert(
                 "error",
                 "Error",
@@ -472,6 +474,9 @@ $(document).ready(function () {
                 if (data.success) {
                     $("#table-products-dte").html(data.table_products);
                     $("#table-exportacion").html(data.table_exportacion);
+                    if (data.table_sujeto_excluido !== undefined) {
+                        $("#table-sujeto-excluido").html(data.table_sujeto_excluido);
+                    }
                     $("#container-data-product").addClass("hidden");
                     form.trigger("reset");
 
@@ -515,6 +520,9 @@ $(document).ready(function () {
             })
             .then(function (response) {
                 $("#table-products-dte").html(response.data.table_products);
+                if (response.data.table_sujeto_excluido !== undefined) {
+                    $("#table-sujeto-excluido").html(response.data.table_sujeto_excluido);
+                }
                 if (response.data.monto_pendiente !== undefined) {
                     $("#monto_total").val(
                         redondear(response.data.monto_pendiente, 2)

@@ -135,7 +135,11 @@
                     </h2>
                     <div class="mt-4 flex flex-col items-center justify-start gap-4 sm:flex-row">
                         <div class="relative w-full sm:w-auto">
-                            <x-button type="button" icon="plus" typeButton="info" text="Agregar producto"
+                            <x-button type="button" icon="plus" typeButton="success" text="Seleccionar producto existente"
+                                class="show-modal w-full sm:w-auto" size="normal" data-target="#selected-product" />
+                        </div>
+                        <div class="relative w-full sm:w-auto">
+                            <x-button type="button" icon="plus" typeButton="info" text="Agregar producto nuevo"
                                 class="show-drawer w-full sm:w-auto" size="normal" data-target="#drawer-new-product"
                                 aria-controls="drawer-new-product" />
                         </div>

@@ -90,7 +90,7 @@
                                     <x-input type="number" label="Cantidad" name="cantidad" id="count" required
                                         label="Cantidad" placeholder="#" min="1" />
                                 </div>
-                                @if ($number !== '11')
+                                @if ($number !== '11' && $number !== '14')
                                     <div class="flex-1">
                                         <x-select label="Tipo de venta" name="tipo" id="type-sale" required
                                             :options="[
@@ -100,7 +100,7 @@
                                             ]" value="Gravada" selected="Gravada" :search="false" />
                                     </div>
                                 @endif
-                                @if ($number === '11')
+                                @if ($number === '11' || $number === '14')
                                     <x-input type="hidden" name="tipo" value="Gravada" />
                                 @endif
                                 <div class="flex-1">
@@ -113,7 +113,7 @@
                                 <x-input type="number" name="descuento" id="descuento_total" label="Descuento"
                                     icon="currency-dollar" placeholder=0.00 step="0.01" min="0" />
                             </div>
-                            @if ($number !== '11' || $number !== '14')
+                            @if ($number !== '11' && $number !== '14')
                                 <div class="select-documento-relacionado mt-4">
                                     <x-select label="Documento relacionado" name="documento_relacionado" id="document"
                                         :required="isset($dte['documentos_relacionados']) &&
