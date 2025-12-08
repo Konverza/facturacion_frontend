@@ -118,18 +118,6 @@
                         <li id="cotrans-list" class="hidden">
                             COTRANS ($0.10 por galón de combustible): <span class="font-semibold">$0.10</span>
                         </li>
-                        <li id="add-valorem-bebidas-alcoholicas-list" class="hidden">
-                            Impuesto ad-valorem por diferencial de precio de bebidas alcohólicas (8%):
-                            <span class="font-semibold" id="add-valorem-bebidas-alcoholicas">$0.00</span>
-                        </li>
-                        <li id="add-valorem-tabaco-cigarrillos-list" class="hidden">
-                            Impuesto ad-valorem por diferencial de precio al tabaco cigarrillos (39%):
-                            <span class="font-semibold" id="add-valorem-tabaco-cigarrillos">$0.00</span>
-                        </li>
-                        <li id="add-valorem-tabaco-cigarros-list" class="hidden">
-                            Impuesto ad-valorem por diferencial de precio al tabaco cigarros (100%):
-                            <span class="font-semibold" id="add-valorem-tabaco-cigarros">$0.00</span>
-                        </li>
                     </ul>
                 </div>
             @endif
