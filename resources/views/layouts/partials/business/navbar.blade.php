@@ -243,7 +243,7 @@
                     @endif
                 </ul>
             </li>
-            <li>
+            {{-- <li>
                 <button type="button"
                     class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
                     aria-controls="dropdown-compras" data-collapse-toggle="dropdown-compras">
@@ -281,7 +281,7 @@
                         </a>
                     </li>
                 </ul>
-            </li>
+            </li> --}}
             <li>
                 <a href="{{ Route('business.reporting.index') }}"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">

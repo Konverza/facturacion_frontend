@@ -17,8 +17,8 @@
                         'contribuyentes' => 'Libro de ventas a contribuyentes',
                         'consumidores' => 'Libro de ventas a consumidores',
                         'retencion_iva' => 'Retención de IVA 1% (emitidos)',
-                        'compras' => 'Libro de compras',
-                        'percepcion_iva' => 'Percepción de IVA (recibidos)',
+                        // 'compras' => 'Libro de compras',
+                        // 'percepcion_iva' => 'Percepción de IVA (recibidos)',
                     ]" name="book_type" id="book-type" label="Tipo de Reporte" :search="false"
                         required />
                     <div class="flex w-full gap-4 sm:flex-row flex-col">
