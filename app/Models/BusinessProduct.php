@@ -37,7 +37,6 @@ class BusinessProduct extends Model
     protected $casts = [
         'has_stock' => 'boolean',
         'is_global' => 'boolean',
-        'tributos' => 'array',
     ];
 
     public function business()
