@@ -193,6 +193,8 @@ class ReportingController extends Controller
             $sheet->setCellValue("F{$row}", "N/A");
             $sheet->setCellValue("G{$row}", $docFirst["identificacion"]["codigoGeneracion"] ?? "");
             $sheet->setCellValue("H{$row}", $docLast["identificacion"]["codigoGeneracion"] ?? "");
+            $sheet->setCellValue("I{$row}", $docFirst["identificacion"]["numeroControl"] ?? "");
+            $sheet->setCellValue("J{$row}", $docLast["identificacion"]["numeroControl"] ?? "");
 
             $total_exportaciones = 0;
             $total_no_sujetas = 0;
@@ -215,22 +217,21 @@ class ReportingController extends Controller
                 }
             }
 
-            $sheet->setCellValue("I{$row}", $total_no_sujetas);
-            $sheet->setCellValue("J{$row}", $total_exentas);
-            $sheet->setCellValue("K{$row}", $total_gravadas);
-            $sheet->setCellValue("L{$row}", $total_exportaciones);
-            $sheet->setCellValue("M{$row}", "=SUM(I{$row}:L{$row})");
+            $sheet->setCellValue("K{$row}", $total_no_sujetas);
+            $sheet->setCellValue("L{$row}", $total_exentas);
+            $sheet->setCellValue("M{$row}", $total_gravadas);
+            $sheet->setCellValue("N{$row}", $total_exportaciones);
+            $sheet->setCellValue("O{$row}", "=SUM(K{$row}:N{$row})");
 
             $row++;
         }
 
         // Set totals 
-        $sheet->setCellValue("I$row", $totalDocNoSujetas);
-        $sheet->setCellValue("J$row", $totalDocExentas);
-        $sheet->setCellValue("K$row", $totalDocGravadas);
-        $sheet->setCellValue("L$row", $totalDocExportacion);
-        $sheet->setCellValue("M$row", "=SUM(I$row:L$row)");
-
+        $sheet->setCellValue("K{$row}", $totalDocNoSujetas);
+        $sheet->setCellValue("L{$row}", $totalDocExentas);
+        $sheet->setCellValue("M{$row}", $totalDocGravadas);
+        $sheet->setCellValue("N{$row}", $totalDocExportacion);
+        $sheet->setCellValue("O{$row}", "=SUM(K{$row}:N{$row})");
         return $this->saveSpreadsheet($spreadsheet, "libro_consumidores_", $request);
     }
 
