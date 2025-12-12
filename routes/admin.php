@@ -24,6 +24,7 @@ Route::middleware(['auth', 'role:admin'])->prefix("admin")->name("admin.")->grou
     Route::get("/users/{id}/businesses", [UserController::class, "userBusinesses"])->name("users.businesses");
     Route::post("/users/{id}/businesses", [UserController::class, "storeBusinessUser"])->name("users.store_business");
     Route::get("/users/{id}/businesses/{business_id}/edit", [UserController::class, "editBusinessUser"])->name("users.edit_business");
+    Route::get("/users/{id}/businesses/{business_id}/json", [UserController::class, "getBusinessUserJson"])->name("users.get_business_json");
     Route::put("/users/{id}/businesses/{business_id}", [UserController::class, "updateBusinessUser"])->name("users.update_business");
     Route::delete("/users/{id}/businesses/{business_id}", [UserController::class, "destroyBusinessUser"])->name("users.delete_business");
 

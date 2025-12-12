@@ -874,25 +874,28 @@ class DTEController extends Controller
         $business_id = Session::get('business') ?? null;
         if (isset($data["estado"])) {
             if ($data["estado"] === "PROCESADO" || $data["estado"] === "CONTINGENCIA") {
+                // Obtener sucursal y POS usado
+                $sucursalId = null;
+                $posId = $request->pos_id;
+                if ($posId) {
+                    $pos = PuntoVenta::find($posId);
+                    $sucursalId = $pos?->sucursal_id;
+                }
+                
                 // Para tipo 14 (Sujeto Excluido), actualizar stocks como entrada (compra)
                 if ($this->dte["type"] === "14") {
-                    $sucursalId = null;
-                    if ($request->pos_id) {
-                        $pos = PuntoVenta::find($request->pos_id);
-                        $sucursalId = $pos?->sucursal_id;
-                    }
-                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "entrada", $sucursalId, "14");
+                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "entrada", $sucursalId, "14", $posId);
                     if ($request->condicion_operacion === 2) {
                         $this->createCXC($data, $request);
                     }
-                } elseif ($this->dte["type"] !== "07" && $this->dte["type"] !== "04" && $this->dte["type"] !== "15") {
-                    // Obtener sucursal del PuntoVenta usado
-                    $sucursalId = null;
-                    if ($request->pos_id) {
-                        $pos = PuntoVenta::find($request->pos_id);
-                        $sucursalId = $pos?->sucursal_id;
-                    }
-                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida", $sucursalId, $this->dte["type"]);
+                }
+                // Para tipo 05 (Nota de Crédito), devolver stocks (entrada)
+                elseif ($this->dte["type"] === "05") {
+                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "entrada", $sucursalId, $this->dte["type"], $posId);
+                }
+                // Para ventas normales (tipos: 01, 03, 11, etc.), descontar stocks (salida)
+                elseif ($this->dte["type"] !== "07" && $this->dte["type"] !== "04" && $this->dte["type"] !== "06" && $this->dte["type"] !== "15") {
+                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida", $sucursalId, $this->dte["type"], $posId);
                     if ($request->condicion_operacion === 2) {
                         $this->createCXC($data, $request);
                     }
@@ -1635,39 +1638,104 @@ class DTEController extends Controller
      * @param int|null $sucursalId ID de la sucursal (si no se provee, busca la primera)
      * @param string|null $tipoDte Tipo de DTE para manejos especiales (ej: '14' para sujeto excluido)
      */
-    public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida", $sucursalId = null, $tipoDte = null)
+    public function updateStocks($codGeneracion, $productsDTE, $business_id, $tipo = "salida", $sucursalId = null, $tipoDte = null, $posId = null)
     {
-        // Si no se provee sucursal, usar la primera del negocio
-        if (!$sucursalId) {
-            $sucursal = Sucursal::where('business_id', $business_id)->first();
-            $sucursalId = $sucursal?->id;
+        Log::info("=== INICIO updateStocks ===", [
+            'codGeneracion' => $codGeneracion,
+            'tipo' => $tipo,
+            'tipoDte' => $tipoDte,
+            'sucursalId' => $sucursalId,
+            'posId' => $posId,
+            'productos_count' => count($productsDTE)
+        ]);
+        
+        // Determinar si debemos actualizar stock en POS independiente
+        $usePosInventory = false;
+        $pos = null;
+        
+        if ($posId) {
+            $pos = PuntoVenta::find($posId);
+            if ($pos && $pos->has_independent_inventory && $pos->sucursal->business->pos_inventory_enabled) {
+                $usePosInventory = true;
+                Log::info("Usando inventario de POS independiente", ['pos_id' => $posId, 'pos_nombre' => $pos->nombre]);
+            }
         }
+        
+        // Si no usamos POS, necesitamos sucursal
+        if (!$usePosInventory) {
+            // Si no se provee sucursal, usar la primera del negocio
+            if (!$sucursalId) {
+                $sucursal = Sucursal::where('business_id', $business_id)->first();
+                $sucursalId = $sucursal?->id;
+            }
 
-        if (!$sucursalId) {
-            Log::warning("No se encontró sucursal para actualizar stocks. Business ID: {$business_id}");
-            return;
+            if (!$sucursalId) {
+                Log::warning("No se encontró sucursal para actualizar stocks. Business ID: {$business_id}");
+                return;
+            }
+            Log::info("Usando inventario de sucursal", ['sucursal_id' => $sucursalId]);
         }
 
         foreach ($productsDTE as $product) {
             $searchProduct = null;
+            $cantidad = 0;
+            
             if (is_array($product)) {
-                if (is_array($product["product"])) {
+                // Caso 1: Producto viene del formato interno (al generar DTE)
+                if (isset($product["product"]) && is_array($product["product"])) {
                     $searchProduct = BusinessProduct::find($product["product"]["id"]);
+                    $cantidad = $product["cantidad"];
                 }
             } else {
-                $searchProduct = BusinessProduct::find($product->codigo);
+                // Caso 2: Producto viene del JSON de Hacienda (al anular)
+                // Buscar por business_id + código + descripción para mayor precisión
+                $codigo = $product->codigo ?? null;
+                $descripcion = $product->descripcion ?? null;
+                
+                if ($codigo && $descripcion) {
+                    // Búsqueda exacta: mismo negocio, mismo código y misma descripción
+                    $searchProduct = BusinessProduct::where('business_id', $business_id)
+                        ->where('codigo', $codigo)
+                        ->where('descripcion', $descripcion)
+                        ->first();
+                } elseif ($codigo) {
+                    // Fallback: solo por código si no hay descripción
+                    $searchProduct = BusinessProduct::where('business_id', $business_id)
+                        ->where('codigo', $codigo)
+                        ->first();
+                } elseif ($descripcion) {
+                    // Último recurso: solo por descripción
+                    $searchProduct = BusinessProduct::where('business_id', $business_id)
+                        ->where('descripcion', $descripcion)
+                        ->first();
+                }
+                
+                $cantidad = $product->cantidad ?? 0;
             }
 
-            if ($searchProduct) {
-                $cantidad = is_array($product) ? $product["cantidad"] : $product->cantidad;
+            if ($searchProduct && $cantidad > 0) {
+                Log::info("Procesando producto", [
+                    'producto_id' => $searchProduct->id,
+                    'codigo' => $searchProduct->codigo,
+                    'descripcion' => $searchProduct->descripcion,
+                    'cantidad' => $cantidad,
+                    'tipo_movimiento' => $tipo
+                ]);
                 
                 // Para facturas de sujeto excluido (compras), siempre incrementar inventario
                 if ($tipoDte === "14") {
                     $descripcion = "Compra de producto (Factura Sujeto Excluido)";
                     try {
-                        $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                        if ($usePosInventory) {
+                            $searchProduct->increaseStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion);
+                            Log::info("Stock incrementado en POS", ['pos_id' => $posId]);
+                        } else {
+                            $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                            Log::info("Stock incrementado en sucursal", ['sucursal_id' => $sucursalId]);
+                        }
                     } catch (\Exception $e) {
-                        Log::error("Error incrementando stock para producto {$searchProduct->id} en sucursal {$sucursalId}: " . $e->getMessage());
+                        $location = $usePosInventory ? "punto de venta {$posId}" : "sucursal {$sucursalId}";
+                        Log::error("Error incrementando stock para producto {$searchProduct->id} en {$location}: " . $e->getMessage());
                         continue;
                     }
                 } else {
@@ -1675,17 +1743,45 @@ class DTEController extends Controller
                     $descripcion = $tipo === "salida" ? "Venta de producto" : "Anulación de documento";
                     try {
                         if ($tipo === "salida") {
-                            $searchProduct->reduceStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                            if ($usePosInventory) {
+                                $searchProduct->reduceStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion);
+                                Log::info("Stock reducido en POS", ['pos_id' => $posId]);
+                            } else {
+                                $searchProduct->reduceStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                                Log::info("Stock reducido en sucursal", ['sucursal_id' => $sucursalId]);
+                            }
                         } elseif ($tipo === "entrada") {
-                            $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                            if ($usePosInventory) {
+                                $searchProduct->increaseStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion);
+                                Log::info("Stock devuelto a POS (anulación)", ['pos_id' => $posId]);
+                            } else {
+                                $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                                Log::info("Stock devuelto a sucursal (anulación)", ['sucursal_id' => $sucursalId]);
+                            }
                         }
                     } catch (\Exception $e) {
-                        Log::error("Error actualizando stock para producto {$searchProduct->id} en sucursal {$sucursalId}: " . $e->getMessage());
+                        $location = $usePosInventory ? "punto de venta {$posId}" : "sucursal {$sucursalId}";
+                        Log::error("Error actualizando stock para producto {$searchProduct->id} en {$location}: " . $e->getMessage());
                         continue;
                     }
                 }
+            } else {
+                if (!$searchProduct) {
+                    $codigo = is_object($product) ? ($product->codigo ?? 'N/A') : ($product['product']['codigo'] ?? 'N/A');
+                    $descripcion = is_object($product) ? ($product->descripcion ?? 'N/A') : ($product['descripcion'] ?? 'N/A');
+                    Log::warning("Producto no encontrado en BD", [
+                        'business_id' => $business_id,
+                        'codigo' => $codigo,
+                        'descripcion' => $descripcion,
+                        'criterio' => 'business_id + codigo + descripcion'
+                    ]);
+                } elseif ($cantidad <= 0) {
+                    Log::warning("Cantidad inválida para producto", ['producto_id' => $searchProduct->id, 'cantidad' => $cantidad]);
+                }
             }
         }
+        
+        Log::info("=== FIN updateStocks ===");
     }
 
     public function getMunicipios($departamento)
@@ -1766,16 +1862,73 @@ class DTEController extends Controller
             if ($response->status() == 201) {
                 if (!in_array($dte["tipo_dte"], ["04", "07", "14"])) {
                     $products_dte = $documento->cuerpoDocumento;
-                    // Para anulación, extraer sucursal del documento original
-                    $sucursalCode = $documento->emisor->codEstablecimiento ?? $documento->sucursal->codSucursal ?? null;
+                    
+                    // Para anulación, extraer sucursal y POS del documento original
+                    // Probar diferentes variantes del campo de sucursal en el JSON
+                    $sucursalCode = $documento->emisor->codEstable 
+                                 ?? $documento->emisor->codEstablecimiento 
+                                 ?? $documento->emisor->codEstableMH
+                                 ?? $dte["codSucursal"] // Del JSON externo
+                                 ?? null;
+                    
                     $sucursalId = null;
+                    $posId = null;
+                    
+                    Log::info("Extrayendo datos para anulación", [
+                        'sucursalCode' => $sucursalCode,
+                        'posCode_emisor' => $documento->emisor->codPuntoVenta ?? null,
+                        'posCode_externo' => $dte["codPuntoVenta"] ?? null
+                    ]);
+                    
                     if ($sucursalCode) {
                         $sucursal = Sucursal::where('business_id', $business_id)
                             ->where('codSucursal', $sucursalCode)
                             ->first();
                         $sucursalId = $sucursal?->id;
                     }
-                    $this->updateStocks($codGeneracion, $products_dte, $business_id, "entrada", $sucursalId, $dte["tipo_dte"]);
+                    
+                    // Intentar obtener el punto de venta del documento original
+                    // Probar diferentes variantes del campo de POS
+                    $posCode = $documento->emisor->codPuntoVenta 
+                            ?? $documento->emisor->codPuntoVentaMH
+                            ?? $dte["codPuntoVenta"] // Del JSON externo
+                            ?? null;
+                    
+                    if ($posCode && $sucursalId) {
+                        // El campo en la tabla se llama 'codPuntoVenta', no 'codigo'
+                        $pos = PuntoVenta::where('sucursal_id', $sucursalId)
+                            ->where('codPuntoVenta', $posCode)
+                            ->first();
+                        $posId = $pos?->id;
+                        
+                        if ($pos) {
+                            Log::info("Punto de venta encontrado para anulación", [
+                                'posCode' => $posCode,
+                                'posId' => $posId,
+                                'pos_nombre' => $pos->nombre,
+                                'has_independent_inventory' => $pos->has_independent_inventory
+                            ]);
+                        } else {
+                            Log::warning("Punto de venta NO encontrado en BD", [
+                                'posCode' => $posCode,
+                                'sucursalId' => $sucursalId,
+                                'query' => "SELECT * FROM punto_ventas WHERE sucursal_id = {$sucursalId} AND codPuntoVenta = '{$posCode}'"
+                            ]);
+                        }
+                    } else {
+                        Log::warning("No se pudo determinar el punto de venta para anulación", [
+                            'posCode' => $posCode,
+                            'sucursalId' => $sucursalId,
+                            'motivo' => !$posCode ? 'posCode es null' : 'sucursalId es null'
+                        ]);
+                    }
+                    
+                    // Determinar el tipo de movimiento según el documento anulado
+                    // Si se anula una Nota de Crédito (tipo 05), el inventario debe salir nuevamente (revertir la devolución)
+                    // Si se anula una venta (tipos 01, 03, 11), el inventario debe regresar (entrada)
+                    $tipoMovimiento = ($dte["tipo_dte"] === "05") ? "salida" : "entrada";
+                    
+                    $this->updateStocks($codGeneracion, $products_dte, $business_id, $tipoMovimiento, $sucursalId, $dte["tipo_dte"], $posId);
                 }
                 return redirect()->route('business.documents.index')
                     ->with('success', "Documento anulado correctamente")

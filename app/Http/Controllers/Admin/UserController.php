@@ -204,25 +204,50 @@ class UserController extends Controller
         ]);
     }
 
+    public function getBusinessUserJson(string $user_id, string $business_id)
+    {
+        $businessUser = BusinessUser::with(['business', 'defaultPos.sucursal'])
+            ->where('user_id', $user_id)
+            ->where('id', $business_id)
+            ->first();
+        
+        if (!$businessUser) {
+            return response()->json(['error' => 'Asociación no encontrada'], 404);
+        }
 
-    public function updateBusinessUser(Request $request, string $id)
+        return response()->json([
+            'id' => $businessUser->id,
+            'business_id' => $businessUser->business_id,
+            'default_pos_id' => $businessUser->default_pos_id,
+            'sucursal_id' => $businessUser->defaultPos ? $businessUser->defaultPos->sucursal_id : null,
+            'only_default_pos' => $businessUser->only_default_pos,
+            'branch_selector' => $businessUser->branch_selector,
+        ]);
+    }
+
+    public function updateBusinessUser(Request $request, string $user_id, string $business_id)
     {
         $request->validate([
             'business_id' => 'required|exists:business,id',
-            'default_pos_id' => 'nullable|exists:punto_ventas,id',
-            'only_default_pos' => 'nullable|boolean',
+            'pos' => 'nullable|exists:punto_ventas,id',
+            'only_default_pos' => 'nullable',
+            'branch_selector' => 'nullable',
         ]);
 
         DB::beginTransaction();
         try {
-            $businessUser = BusinessUser::find($id);
+            $businessUser = BusinessUser::where('user_id', $user_id)
+                ->where('id', $business_id)
+                ->first();
+                
             if (!$businessUser) {
                 return redirect()->back()->with('error', 'Asociación de negocio no encontrada');
             }
 
             $businessUser->business_id = $request->business_id;
-            $businessUser->default_pos_id = $request->default_pos_id;
-            $businessUser->only_default_pos = $request->only_default_pos ?? false;
+            $businessUser->default_pos_id = $request->pos;
+            $businessUser->only_default_pos = $request->has('only_default_pos') ? 1 : 0;
+            $businessUser->branch_selector = $request->has('branch_selector') ? 1 : 0;
             $businessUser->save();
 
             DB::commit();

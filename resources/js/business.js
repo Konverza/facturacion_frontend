@@ -78,6 +78,12 @@ $(document).ready(function () {
                     $("#form-edit-punto-venta #codPuntoVenta").val(
                         response.codPuntoVenta
                     );
+                    // Manejar el checkbox de inventario independiente
+                    if (response.has_independent_inventory) {
+                        $("#form-edit-punto-venta #has_independent_inventory").prop("checked", true);
+                    } else {
+                        $("#form-edit-punto-venta #has_independent_inventory").prop("checked", false);
+                    }
                 }
             },
         });

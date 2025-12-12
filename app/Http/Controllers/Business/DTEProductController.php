@@ -23,6 +23,7 @@ class DTEProductController extends Controller
         $dte = session("dte")["type"];
         $customer = session("dte")["customer"] ?? null;
         $sucursalId = $request->sucursal_id;
+        $posId = $request->pos_id;
 
         if (!$product) {
             return response()->json([
@@ -31,29 +32,108 @@ class DTEProductController extends Controller
             ]);
         }
 
-        // Determinar stock según sucursal
+        // Obtener usuario actual para determinar restricciones de inventario
+        $business_user = \App\Models\BusinessUser::where('business_id', session('business'))
+            ->where('user_id', auth()->id())
+            ->first();
+
+        // Determinar stock según configuración del usuario y tipo de inventario
         $stockDisponible = null;
         $estadoStock = null;
+        $inventorySource = null; // 'global', 'branch', 'pos'
         
         if ($product->has_stock) {
-            if ($product->is_global) {
-                // Producto global usa stock general
+            // Caso 1: Usuario con only_default_pos y default_pos_id donde el POS tiene inventario independiente
+            if ($business_user && $business_user->only_default_pos && $business_user->default_pos_id) {
+                $defaultPos = $business_user->defaultPos;
+                if ($defaultPos && $defaultPos->has_independent_inventory) {
+                    // Stock del POS únicamente
+                    $posStock = $product->getStockForPos($defaultPos->id);
+                    if ($posStock) {
+                        $stockDisponible = $posStock->stockActual;
+                        $estadoStock = $posStock->estado_stock;
+                        $inventorySource = 'pos';
+                        $posId = $defaultPos->id;
+                    } else {
+                        $stockDisponible = 0;
+                        $estadoStock = 'agotado';
+                        $inventorySource = 'pos';
+                    }
+                } else {
+                    // POS sin inventario independiente, usar sucursal del POS
+                    if ($defaultPos && $defaultPos->sucursal_id) {
+                        $branchStock = $product->getStockForBranch($defaultPos->sucursal_id);
+                        if ($branchStock) {
+                            $stockDisponible = $branchStock->stockActual;
+                            $estadoStock = $branchStock->estado_stock;
+                            $inventorySource = 'branch';
+                            $sucursalId = $defaultPos->sucursal_id;
+                        } else {
+                            $stockDisponible = 0;
+                            $estadoStock = 'agotado';
+                            $inventorySource = 'branch';
+                        }
+                    }
+                }
+            }
+            // Caso 2: Usuarios sin default_pos_id o con branch_selector - selección manual
+            elseif ($posId || $sucursalId) {
+                // Si se proporciona POS ID, verificar si tiene inventario independiente
+                if ($posId) {
+                    $pos = \App\Models\PuntoVenta::find($posId);
+                    if ($pos && $pos->has_independent_inventory) {
+                        $posStock = $product->getStockForPos($posId);
+                        if ($posStock) {
+                            $stockDisponible = $posStock->stockActual;
+                            $estadoStock = $posStock->estado_stock;
+                            $inventorySource = 'pos';
+                        } else {
+                            $stockDisponible = 0;
+                            $estadoStock = 'agotado';
+                            $inventorySource = 'pos';
+                        }
+                    } else {
+                        // POS sin inventario independiente, usar sucursal
+                        $sucursalId = $pos ? $pos->sucursal_id : $sucursalId;
+                        if ($sucursalId) {
+                            $branchStock = $product->getStockForBranch($sucursalId);
+                            if ($branchStock) {
+                                $stockDisponible = $branchStock->stockActual;
+                                $estadoStock = $branchStock->estado_stock;
+                                $inventorySource = 'branch';
+                            } else {
+                                $stockDisponible = 0;
+                                $estadoStock = 'agotado';
+                                $inventorySource = 'branch';
+                            }
+                        }
+                    }
+                }
+                // Solo sucursal seleccionada
+                elseif ($sucursalId) {
+                    $branchStock = $product->getStockForBranch($sucursalId);
+                    if ($branchStock) {
+                        $stockDisponible = $branchStock->stockActual;
+                        $estadoStock = $branchStock->estado_stock;
+                        $inventorySource = 'branch';
+                    } else {
+                        $stockDisponible = 0;
+                        $estadoStock = 'agotado';
+                        $inventorySource = 'branch';
+                    }
+                }
+            }
+            // Producto global (fallback para casos especiales)
+            elseif ($product->is_global) {
                 $stockDisponible = $product->stockActual;
                 $estadoStock = $product->estado_stock;
-            } elseif ($sucursalId) {
-                // Producto por sucursal: obtener stock específico
-                $branchStock = $product->getStockForBranch($sucursalId);
-                if ($branchStock) {
-                    $stockDisponible = $branchStock->stockActual;
-                    $estadoStock = $branchStock->estado_stock;
-                } else {
-                    $stockDisponible = 0;
-                    $estadoStock = 'agotado';
-                }
-            } else {
-                // Sin sucursal seleccionada para producto no global
+                $inventorySource = 'global';
+            }
+            // Sin contexto de inventario
+            else {
                 $stockDisponible = 0;
                 $estadoStock = 'agotado';
+                $inventorySource = 'none';
             }
         }
 
@@ -62,6 +142,8 @@ class DTEProductController extends Controller
         $productData['stockDisponible'] = $stockDisponible;
         $productData['estadoStock'] = $estadoStock;
         $productData['sucursal_id'] = $sucursalId;
+        $productData['pos_id'] = $posId;
+        $productData['inventory_source'] = $inventorySource;
 
         return response()->json([
             "success" => true,
@@ -98,7 +180,51 @@ class DTEProductController extends Controller
                 ]);
             }
 
-            $stock = (float) $business_product->stockActual;
+            // Obtener usuario para determinar origen de stock
+            $business_user = \App\Models\BusinessUser::where('business_id', session('business'))
+                ->where('user_id', auth()->id())
+                ->first();
+
+            // Determinar stock disponible según contexto del usuario
+            $stock = 0;
+            $sucursalId = $request->sucursal_id;
+            $posId = $request->pos_id;
+
+            if ($business_product->has_stock) {
+                // Caso 1: Usuario con only_default_pos y POS con inventario independiente
+                if ($business_user && $business_user->only_default_pos && $business_user->default_pos_id) {
+                    $defaultPos = $business_user->defaultPos;
+                    if ($defaultPos && $defaultPos->has_independent_inventory) {
+                        $posStock = $business_product->getStockForPos($defaultPos->id);
+                        $stock = $posStock ? (float) $posStock->stockActual : 0;
+                        $posId = $defaultPos->id;
+                    } else if ($defaultPos && $defaultPos->sucursal_id) {
+                        $branchStock = $business_product->getStockForBranch($defaultPos->sucursal_id);
+                        $stock = $branchStock ? (float) $branchStock->stockActual : 0;
+                        $sucursalId = $defaultPos->sucursal_id;
+                    }
+                }
+                // Caso 2: Usuario con selección manual
+                elseif ($posId) {
+                    $pos = \App\Models\PuntoVenta::find($posId);
+                    if ($pos && $pos->has_independent_inventory) {
+                        $posStock = $business_product->getStockForPos($posId);
+                        $stock = $posStock ? (float) $posStock->stockActual : 0;
+                    } else if ($pos && $pos->sucursal_id) {
+                        $branchStock = $business_product->getStockForBranch($pos->sucursal_id);
+                        $stock = $branchStock ? (float) $branchStock->stockActual : 0;
+                        $sucursalId = $pos->sucursal_id;
+                    }
+                } elseif ($sucursalId) {
+                    $branchStock = $business_product->getStockForBranch($sucursalId);
+                    $stock = $branchStock ? (float) $branchStock->stockActual : 0;
+                } elseif ($business_product->is_global) {
+                    $stock = (float) $business_product->stockActual;
+                } else {
+                    $stock = 0;
+                }
+            }
+
             $found = false;
             $incoming_doc = $request->documento_relacionado ?? '';
 
@@ -117,7 +243,6 @@ class DTEProductController extends Controller
 
                     // No validar stock en facturas de sujeto excluido (tipo 14) ya que son compras
                     if ($business_product->has_stock && $this->dte["type"] !== "14") {
-                        $stock = (float) $business_product->stockActual;
                         if ($cantidadActual + $cantidadNueva > $stock) {
                             return response()->json([
                                 "success" => false,
@@ -161,6 +286,17 @@ class DTEProductController extends Controller
             $product_tributes = json_decode($business_product->tributos, true) ?? [];
 
             if (!$found) {
+                // Validar stock antes de agregar producto nuevo (no es sujeto excluido)
+                if ($business_product->has_stock && $this->dte["type"] !== "14") {
+                    $cantidad = (float) $request->cantidad;
+                    if ($cantidad > $stock) {
+                        return response()->json([
+                            "success" => false,
+                            "message" => "No hay suficiente stock disponible. Stock actual: " . $stock
+                        ]);
+                    }
+                }
+
                 if ($customer && isset($customer["special_price"]) && $customer["special_price"]) {
                     $precio = (float) $business_product->special_price_with_iva;
                     $precio_sin_tributos = (float) $business_product->special_price;

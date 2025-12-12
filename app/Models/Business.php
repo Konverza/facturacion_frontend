@@ -22,6 +22,7 @@ class Business extends Model
         'posmode',
         'show_special_prices',
         'has_customer_branches',
+        'pos_inventory_enabled',
         'active',
     ];
 
@@ -29,6 +30,7 @@ class Business extends Model
         'posmode' => 'boolean',
         'show_special_prices' => 'boolean',
         'has_customer_branches' => 'boolean',
+        'pos_inventory_enabled' => 'boolean',
         'active' => 'boolean',
     ];
 

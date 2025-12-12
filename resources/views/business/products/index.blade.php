@@ -157,6 +157,27 @@
                                 <input type="hidden" name="id" id="product-transfer-id">
                                 <input type="hidden" name="sucursal_origen_id" id="sucursal-origen-id">
                                 
+                                <!-- Aviso de traslados POS (solo para negocios con inventario POS habilitado) -->
+                                @if($business->pos_inventory_enabled)
+                                    <div class="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                                        <div class="flex items-start gap-2">
+                                            <x-icon icon="info-circle" class="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+                                            <div class="text-sm text-primary-700 dark:text-primary-300">
+                                                <p class="font-semibold mb-1">Traslados entre Sucursales</p>
+                                                <p>Este formulario es para trasladar stock <strong>entre sucursales únicamente</strong>.</p>
+                                                <p class="mt-2">
+                                                    Para traslados con <strong>Puntos de Venta</strong>, utilice la opción:
+                                                    <a href="{{ route('business.inventory.transfers.create') }}" 
+                                                       class="inline-flex items-center gap-1 font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline">
+                                                        <x-icon icon="arrow-right" class="w-3 h-3" />
+                                                        Inventario → Traslados
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                                
                                 <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                                     <p class="text-sm text-blue-700 dark:text-blue-300">
                                         <x-icon icon="map-pin-filled" class="inline w-4 h-4" /> 

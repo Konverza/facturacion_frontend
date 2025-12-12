@@ -15,6 +15,14 @@
                 @endforeach
             </select>
         </div>
+    @elseif ($userOnlyDefaultPos && $defaultPosId && $posHasIndependentInventory)
+        <div class="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800" 
+             data-sucursal-id="{{ $selectedSucursalId }}" 
+             data-sucursal-nombre="{{ $availableSucursales[$defaultSucursalId] ?? 'Sucursal por defecto' }}">
+            <p class="text-sm text-purple-700 dark:text-purple-300">
+                <x-icon icon="cash-register" class="inline w-4 h-4" /> Mostrando solo productos del punto de venta: <strong>{{ \App\Models\PuntoVenta::find($defaultPosId)?->nombre ?? 'POS por defecto' }}</strong>
+            </p>
+        </div>
     @elseif ($defaultSucursalId)
         <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800" 
              data-sucursal-id="{{ $selectedSucursalId }}" 
@@ -245,28 +253,73 @@
                                 <div class="flex flex-col gap-1 text-xs">
                                     @php
                                         $totalStock = 0;
+                                        $totalStockPOS = 0;
                                     @endphp
+                                    
+                                    <!-- Stock por Sucursales -->
                                     @forelse ($product->stockPorSucursales as $stockInfo)
                                         @php
                                             $totalStock += $stockInfo['stock'];
                                         @endphp
                                         <div class="flex justify-between items-center">
-                                            <span class="text-gray-600 dark:text-gray-400">{{ $stockInfo['sucursal_nombre'] }}:</span>
+                                            <span class="text-gray-600 dark:text-gray-400">
+                                                <x-icon icon="building-store" class="inline w-3 h-3" />
+                                                {{ $stockInfo['sucursal_nombre'] }}:
+                                            </span>
                                             <span class="font-medium ml-2">{{ $stockInfo['stock'] }}</span>
                                         </div>
                                     @empty
                                         <span class="text-gray-500">Sin stock en sucursales</span>
                                     @endforelse
-                                    @if ($product->stockPorSucursales->count() > 0)
+                                    
+                                    <!-- Stock por Puntos de Venta -->
+                                    @if (isset($product->stockPorPOS) && $product->stockPorPOS->count() > 0)
+                                        <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                                            <div class="text-xs font-semibold text-primary-600 dark:text-primary-400 mb-1">
+                                                Puntos de Venta:
+                                            </div>
+                                            @foreach ($product->stockPorPOS as $posStock)
+                                                @php
+                                                    $totalStockPOS += $posStock['stock'];
+                                                @endphp
+                                                <div class="flex justify-between items-center pl-2">
+                                                    <span class="text-gray-600 dark:text-gray-400">
+                                                        <x-icon icon="device-pos" class="inline w-3 h-3" />
+                                                        {{ $posStock['pos_nombre'] }}:
+                                                    </span>
+                                                    <span class="font-medium ml-2">{{ $posStock['stock'] }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                    
+                                    @if ($product->stockPorSucursales->count() > 0 || (isset($product->stockPorPOS) && $product->stockPorPOS->count() > 0))
                                         <div class="flex justify-between items-center pt-1 mt-1 border-t border-gray-300 dark:border-gray-600">
                                             <span class="text-gray-900 dark:text-gray-100 font-semibold">Total:</span>
-                                            <span class="font-bold ml-2 text-gray-900 dark:text-gray-100">{{ $totalStock }}</span>
+                                            <span class="font-bold ml-2 text-gray-900 dark:text-gray-100">{{ $totalStock + $totalStockPOS }}</span>
                                         </div>
                                     @endif
                                 </div>
                             @elseif ($selectedSucursalId && !$viewAllBranches)
-                                <span class="font-medium">{{ $product->stockPorSucursal ?? 0 }}</span>
-                                <span class="text-xs text-gray-500 block">en sucursal</span>
+                                <div class="flex flex-col gap-1">
+                                    <div>
+                                        <span class="font-medium">{{ $product->stockPorSucursal ?? 0 }}</span>
+                                        <span class="text-xs text-gray-500 block">en sucursal</span>
+                                    </div>
+                                    @if (isset($product->stockPorPOS) && $product->stockPorPOS->count() > 0)
+                                        <div class="mt-1 pt-1 border-t border-gray-200 dark:border-gray-700">
+                                            <div class="text-xs font-semibold text-primary-600 dark:text-primary-400 mb-0.5">
+                                                En POS:
+                                            </div>
+                                            @foreach ($product->stockPorPOS as $posStock)
+                                                <div class="text-xs flex justify-between items-center">
+                                                    <span class="text-gray-600 dark:text-gray-400">{{ $posStock['pos_nombre'] }}:</span>
+                                                    <span class="font-medium">{{ $posStock['stock'] }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
                             @else
                                 <span class="font-medium">{{ $product->stockActual ?? 0 }}</span>
                                 <span class="text-xs text-gray-500 block">total</span>
@@ -276,6 +329,7 @@
                             @if ($viewAllBranches && isset($product->stockPorSucursales))
                                 <!-- Modo: Ver todas las sucursales - mostrar estados múltiples -->
                                 <div class="flex flex-col gap-1">
+                                    <!-- Estados de sucursales -->
                                     @foreach ($product->stockPorSucursales as $stockInfo)
                                         @if ($stockInfo['estado'] === 'disponible')
                                             <span class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-green-200 px-2 py-1 text-xs font-bold text-green-800 dark:bg-green-900/50 dark:text-green-300">
@@ -294,6 +348,30 @@
                                             </span>
                                         @endif
                                     @endforeach
+                                    
+                                    <!-- Estados de puntos de venta -->
+                                    @if (isset($product->stockPorPOS) && $product->stockPorPOS->count() > 0)
+                                        <div class="mt-1 pt-1 border-t border-gray-200 dark:border-gray-700">
+                                            @foreach ($product->stockPorPOS as $posStock)
+                                                @if ($posStock['estado'] === 'disponible')
+                                                    <span class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400 mb-1">
+                                                        <x-icon icon="device-pos" class="size-3" />
+                                                        {{ $posStock['pos_nombre'] }}
+                                                    </span>
+                                                @elseif($posStock['estado'] === 'por_agotarse')
+                                                    <span class="flex items-center gap-1 text-nowrap rounded-lg bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 w-max mb-1">
+                                                        <x-icon icon="device-pos" class="size-3" />
+                                                        {{ $posStock['pos_nombre'] }}
+                                                    </span>
+                                                @else
+                                                    <span class="flex w-max items-center gap-1 text-nowrap rounded-lg bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400 mb-1">
+                                                        <x-icon icon="device-pos" class="size-3" />
+                                                        {{ $posStock['pos_nombre'] }}
+                                                    </span>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                             @else
                                 @php

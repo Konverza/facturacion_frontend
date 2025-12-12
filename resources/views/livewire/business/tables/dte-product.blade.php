@@ -13,6 +13,12 @@
                 @endforeach
             </select>
         </div>
+    @elseif ($userOnlyDefaultPos && $defaultPosId && $posHasIndependentInventory)
+        <div class="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <p class="text-sm text-purple-700 dark:text-purple-300">
+                💼 Mostrando solo productos del punto de venta: <strong>{{ \App\Models\PuntoVenta::find($defaultPosId)?->nombre ?? 'POS por defecto' }}</strong>
+            </p>
+        </div>
     @elseif ($defaultSucursalId)
         <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
             <p class="text-sm text-blue-700 dark:text-blue-300">
@@ -109,6 +115,7 @@
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
                             <input type="hidden" name="sucursal_id" value="{{ $selectedSucursalId }}">
+                            <input type="hidden" name="pos_id" value="{{ $selectedPosId ?? '' }}">
                             <x-button type="button" icon="arrow-next" size="small" class="btn-selected-product"
                                 typeButton="secondary" text="Seleccionar" />
                         </form>

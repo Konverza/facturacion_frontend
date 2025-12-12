@@ -126,10 +126,12 @@ class BusinessSucursalController extends Controller
 
         $puntos_venta = PuntoVenta::where('sucursal_id', $sucursal_id)->get();
         $sucursal = Sucursal::findOrFail($sucursal_id);
+        $business = Business::findOrFail($business_id);
 
         return view('business.sucursales.puntos_venta.index', [
             'puntos_venta' => $puntos_venta,
             'sucursal' => $sucursal,
+            'business' => $business,
             'business_id' => $business_id,
         ]);
     }
@@ -141,6 +143,7 @@ class BusinessSucursalController extends Controller
         $validator = validator(request()->all(), [
             'nombre' => 'required|string|max:255',
             'codPuntoVenta' => 'required|string|max:4',
+            'has_independent_inventory' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -151,6 +154,7 @@ class BusinessSucursalController extends Controller
 
         $data = $validator->validated();
         $data['sucursal_id'] = $sucursal_id;
+        $data['has_independent_inventory'] = request()->has('has_independent_inventory');
 
         PuntoVenta::create($data);
 
@@ -174,6 +178,7 @@ class BusinessSucursalController extends Controller
         $validator = validator(request()->all(), [
             'nombre' => 'required|string|max:255',
             'codPuntoVenta' => 'required|string|max:4',
+            'has_independent_inventory' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -183,6 +188,8 @@ class BusinessSucursalController extends Controller
         }
 
         $data = $validator->validated();
+        $data['has_independent_inventory'] = request()->has('has_independent_inventory');
+        
         $punto_venta = PuntoVenta::findOrFail($id);
         $punto_venta->update($data);
 

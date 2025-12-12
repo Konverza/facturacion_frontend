@@ -17,6 +17,8 @@ use App\Http\Controllers\Business\MailController;
 use App\Http\Controllers\Business\MovementController;
 use App\Http\Controllers\Business\PaymentMethodController;
 use App\Http\Controllers\Business\PosController;
+use App\Http\Controllers\Business\PosInventoryController;
+use App\Http\Controllers\Business\PosTransferController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\ProfileController;
 use App\Http\Controllers\Business\RelatedDocumentsController;
@@ -164,5 +166,27 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::get("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "edit_punto_venta"])->name("puntos-venta.edit");
     Route::put("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "update_punto_venta"])->name("puntos-venta.update_punto_venta");
     Route::delete("/{business_id}/sucursales/{sucursal_id}/puntos-venta/{id}", [BusinessSucursalController::class, "delete_punto_venta"])->name("puntos-venta.delete_punto_venta");
+    
+    // Inventario por Punto de Venta
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        // Dashboard de inventario por POS
+        Route::get('/pos', [PosInventoryController::class, 'index'])->name('pos.index');
+        Route::get('/pos/{puntoVentaId}', [PosInventoryController::class, 'show'])->name('pos.show');
+        Route::get('/pos/{puntoVentaId}/assign', [PosInventoryController::class, 'assignForm'])->name('pos.assign');
+        Route::post('/pos/{puntoVentaId}/toggle', [PosInventoryController::class, 'toggleInventory'])->name('pos.toggle');
+        Route::get('/stock/get', [PosInventoryController::class, 'getStock'])->name('stock.get');
+        Route::get('/compare/{sucursalId}', [PosInventoryController::class, 'compareStock'])->name('compare');
+
+        // Traslados entre POS y sucursales
+        Route::get('/transfers', [PosTransferController::class, 'index'])->name('transfers.index');
+        Route::get('/transfers/create', [PosTransferController::class, 'create'])->name('transfers.create');
+        Route::post('/transfers', [PosTransferController::class, 'store'])->name('transfers.store');
+        Route::get('/transfers/{id}', [PosTransferController::class, 'show'])->name('transfers.show');
+        Route::post('/transfers/{id}/cancel', [PosTransferController::class, 'cancel'])->name('transfers.cancel');
+        
+        // AJAX endpoints
+        Route::get('/transfers/products/available', [PosTransferController::class, 'getAvailableProducts'])->name('transfers.products.available');
+        Route::get('/transfers/products/stock', [PosTransferController::class, 'getProductStock'])->name('transfers.products.stock');
+    });
     
 });

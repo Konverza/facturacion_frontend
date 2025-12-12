@@ -238,6 +238,61 @@ Breadcrumbs::for("business.puntos-venta.index", function (BreadcrumbTrail $trail
     $trail->push($icon . "Puntos de Venta", route("business.puntos-venta.index", [$business_id, $sucursal_id]));
 });
 
+// Inventario POS
+Breadcrumbs::for("business.inventory.pos.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='box' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Inventario por POS", route("business.inventory.pos.index"));
+});
+
+Breadcrumbs::for("business.inventory.pos.show", function (BreadcrumbTrail $trail, string $puntoVentaId) {
+    $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
+    $trail->parent("business.inventory.pos.index");
+    $trail->push($icon . "Stock de POS", route("business.inventory.pos.show", $puntoVentaId));
+});
+
+Breadcrumbs::for("business.inventory.pos.assign", function (BreadcrumbTrail $trail, string $puntoVentaId) {
+    $icon = Blade::render("<x-icon icon='plus' class='w-4 h-4'/>");
+    $trail->parent("business.inventory.pos.index");
+    $trail->push($icon . "Asignar Productos", route("business.inventory.pos.assign", $puntoVentaId));
+});
+
+Breadcrumbs::for("business.inventory.pos-transfers.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='transfer' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Traslados", route("business.inventory.pos-transfers.index"));
+});
+
+Breadcrumbs::for("business.inventory.transfers.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='transfer' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Traslados", route("business.inventory.transfers.index"));
+});
+
+Breadcrumbs::for("business.inventory.pos-transfers.create", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='plus' class='w-4 h-4'/>");
+    $trail->parent("business.inventory.pos-transfers.index");
+    $trail->push($icon . "Nuevo Traslado", route("business.inventory.pos-transfers.create"));
+});
+
+Breadcrumbs::for("business.inventory.transfers.create", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='plus' class='w-4 h-4'/>");
+    $trail->parent("business.inventory.transfers.index");
+    $trail->push($icon . "Nuevo Traslado", route("business.inventory.transfers.create"));
+});
+
+Breadcrumbs::for("business.inventory.pos-transfers.show", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='document' class='w-4 h-4'/>");
+    $trail->parent("business.inventory.pos-transfers.index");
+    $trail->push($icon . "Detalle de Traslado", route("business.inventory.pos-transfers.show", $id));
+});
+
+Breadcrumbs::for("business.inventory.transfers.show", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='document' class='w-4 h-4'/>");
+    $trail->parent("business.inventory.transfers.index");
+    $trail->push($icon . "Detalle de Traslado", route("business.inventory.transfers.show", $id));
+});
+
 // Reportería
 Breadcrumbs::for("business.reporting.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='file-report' class='w-4 h-4'/>");

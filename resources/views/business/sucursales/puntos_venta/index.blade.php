@@ -40,6 +40,9 @@
                                         <x-th class="w-10">#</x-th>
                                         <x-th>Código</x-th>
                                         <x-th>Nombre</x-th>
+                                        @if ($business->pos_inventory_enabled)
+                                            <x-th>Inventario</x-th>
+                                        @endif
                                         <x-th :last="true">Accciones</x-th>
                                     </x-tr>
                                 </x-slot>
@@ -49,6 +52,21 @@
                                             <x-td class="text-center">{{ $loop->iteration }}</x-td>
                                             <x-td>{{ $punto_venta->codPuntoVenta }}</x-td>
                                             <x-td>{{ $punto_venta->nombre }}</x-td>
+                                            @if ($business->pos_inventory_enabled)
+                                                <x-td>
+                                                    @if ($punto_venta->has_independent_inventory)
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                            <x-icon icon="check" class="w-3 h-3 mr-1" />
+                                                            Independiente
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400">
+                                                            <x-icon icon="building" class="w-3 h-3 mr-1" />
+                                                            Sucursal
+                                                        </span>
+                                                    @endif
+                                                </x-td>
+                                            @endif
                                             <x-td :last="true">
                                                 <div class="relative">
                                                     <x-button type="button" icon="arrow-down" typeButton="primary"
@@ -128,6 +146,21 @@
                                 <x-input type="text" label="Código" placeholder="P001" name="codPuntoVenta"
                                     value="{{ old('codPuntoVenta') }}" maxlength="4" />
                             </div>
+                            @if ($business->pos_inventory_enabled)
+                                <div class="flex-1 mb-3">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="checkbox" name="has_independent_inventory" value="1" 
+                                            class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                            {{ old('has_independent_inventory') ? 'checked' : '' }}>
+                                        <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                            Habilitar inventario independiente
+                                        </span>
+                                    </label>
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Al habilitar esta opción, este punto de venta podrá manejar su propio inventario de productos.
+                                    </p>
+                                </div>
+                            @endif
                         </div>
                         <!-- Modal footer -->
                         <div
@@ -173,6 +206,21 @@
                                 <x-input type="text" label="Código" placeholder="P001" name="codPuntoVenta"
                                     id="codPuntoVenta" maxlength="4" />
                             </div>
+                            @if ($business->pos_inventory_enabled)
+                                <div class="flex-1 mb-3">
+                                    <label class="flex items-center cursor-pointer">
+                                        <input type="checkbox" name="has_independent_inventory" value="1" 
+                                            id="has_independent_inventory"
+                                            class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                                        <span class="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                            Habilitar inventario independiente
+                                        </span>
+                                    </label>
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Al habilitar esta opción, este punto de venta podrá manejar su propio inventario de productos.
+                                    </p>
+                                </div>
+                            @endif
                         </div>
                         <!-- Modal footer -->
                         <div
@@ -189,4 +237,53 @@
         <x-delete-modal modalId="deleteModal" title="¿Estás seguro de eliminar este punto de venta?"
             message="No podrás recuperar este registro" />
     </section>
+@endsection
+
+@section('scripts')
+    <script>
+        $(document).ready(function() {
+            // Manejar clic en botón de editar
+            $(document).on('click', '.btn-edit', function() {
+                const url = $(this).data('url');
+                const action = $(this).data('action');
+                
+                console.log('URL:', url);
+                console.log('Action:', action);
+                
+                // Hacer petición AJAX para obtener los datos del punto de venta
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    success: function(response) {
+                        console.log('Respuesta del servidor:', response);
+                        
+                        // Llenar los campos del formulario
+                        $('#nombre').val(response.nombre);
+                        $('#codPuntoVenta').val(response.codPuntoVenta);
+                        
+                        // Manejar el checkbox de inventario independiente
+                        if ($('#has_independent_inventory').length) {
+                            $('#has_independent_inventory').prop('checked', response.has_independent_inventory == 1);
+                        }
+                        
+                        // Actualizar la acción del formulario
+                        $('#form-edit-punto-venta').attr('action', action);
+                        
+                        // Mostrar el modal usando display flex para mantener el centrado
+                        $('#edit-punto-venta').removeClass('hidden').css('display', 'flex');
+                    },
+                    error: function(xhr) {
+                        console.error('Error al cargar los datos:', xhr);
+                        alert('Error al cargar los datos del punto de venta');
+                    }
+                });
+            });
+
+            // Cerrar modal con botón de cerrar
+            $(document).on('click', '.hide-modal', function() {
+                const target = $(this).data('target');
+                $(target).addClass('hidden').css('display', 'none');
+            });
+        });
+    </script>
 @endsection
