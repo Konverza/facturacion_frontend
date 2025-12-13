@@ -228,8 +228,9 @@ class DTEProductController extends Controller
 
             // Determinar stock disponible según contexto del usuario
             $stock = 0;
-            $sucursalId = $request->sucursal_id;
-            $posId = $request->pos_id;
+            // Normalizar: convertir strings vacíos en null
+            $sucursalId = $request->sucursal_id && $request->sucursal_id !== '' ? $request->sucursal_id : null;
+            $posId = $request->pos_id && $request->pos_id !== '' ? $request->pos_id : null;
 
             if ($business_product->has_stock) {
                 // Caso 1: Usuario con only_default_pos y POS con inventario independiente
@@ -261,10 +262,38 @@ class DTEProductController extends Controller
                     $stock = $branchStock ? (float) $branchStock->stockActual : 0;
                 } elseif ($business_product->is_global) {
                     $stock = (float) $business_product->stockActual;
-                } else {
+                }
+                // Fallback: Si no hay POS/sucursal proporcionados pero hay default_pos_id, usar su sucursal
+                elseif ($business_user && $business_user->default_pos_id) {
+                    $defaultPos = $business_user->defaultPos;
+                    if ($defaultPos && $defaultPos->sucursal_id) {
+                        $branchStock = $business_product->getStockForBranch($defaultPos->sucursal_id);
+                        $stock = $branchStock ? (float) $branchStock->stockActual : 0;
+                        $sucursalId = $defaultPos->sucursal_id;
+                        $posId = $defaultPos->id;
+                    }
+                }
+                // Sin contexto de inventario
+                else {
                     $stock = 0;
                 }
             }
+
+            // Log temporal para debugging
+            \Log::info('DTEProductController::store - Stock Debug', [
+                'product_id' => $business_product->id,
+                'has_stock' => $business_product->has_stock,
+                'is_global' => $business_product->is_global,
+                'request_sucursal_id' => $request->sucursal_id,
+                'request_pos_id' => $request->pos_id,
+                'normalized_sucursal_id' => $sucursalId,
+                'normalized_pos_id' => $posId,
+                'business_user_id' => $business_user?->id,
+                'default_pos_id' => $business_user?->default_pos_id,
+                'only_default_pos' => $business_user?->only_default_pos,
+                'calculated_stock' => $stock,
+                'dte_type' => $this->dte["type"]
+            ]);
 
             $found = false;
             $incoming_doc = $request->documento_relacionado ?? '';
