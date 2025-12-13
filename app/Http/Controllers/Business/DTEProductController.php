@@ -129,6 +129,29 @@ class DTEProductController extends Controller
                 $estadoStock = $product->estado_stock;
                 $inventorySource = 'global';
             }
+            // Fallback: Si no hay POS/sucursal proporcionados pero hay default_pos_id, usar su sucursal
+            elseif ($business_user && $business_user->default_pos_id) {
+                $defaultPos = $business_user->defaultPos;
+                if ($defaultPos && $defaultPos->sucursal_id) {
+                    $branchStock = $product->getStockForBranch($defaultPos->sucursal_id);
+                    if ($branchStock) {
+                        $stockDisponible = $branchStock->stockActual;
+                        $estadoStock = $branchStock->estado_stock;
+                        $inventorySource = 'branch';
+                        $sucursalId = $defaultPos->sucursal_id;
+                        $posId = $defaultPos->id;
+                    } else {
+                        $stockDisponible = 0;
+                        $estadoStock = 'agotado';
+                        $inventorySource = 'branch';
+                        $sucursalId = $defaultPos->sucursal_id;
+                    }
+                } else {
+                    $stockDisponible = 0;
+                    $estadoStock = 'agotado';
+                    $inventorySource = 'none';
+                }
+            }
             // Sin contexto de inventario
             else {
                 $stockDisponible = 0;
