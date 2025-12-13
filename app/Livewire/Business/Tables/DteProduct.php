@@ -69,9 +69,21 @@ class DteProduct extends Component
                     ->toArray();
             }
 
-            // Si no tiene POS por defecto, seleccionar la primera sucursal
-            if (!$this->selectedSucursalId && !empty($this->availableSucursales)) {
-                $this->selectedSucursalId = array_key_first($this->availableSucursales);
+            // Si no tiene POS por defecto ni sucursal seleccionada, asegurar que haya una sucursal
+            if (!$this->selectedSucursalId) {
+                // Si no hay sucursales disponibles cargadas, cargar todas
+                if (empty($this->availableSucursales)) {
+                    $this->availableSucursales = Sucursal::where('business_id', session('business'))
+                        ->orderBy('nombre')
+                        ->get()
+                        ->pluck('nombre', 'id')
+                        ->toArray();
+                }
+                
+                // Seleccionar la primera sucursal disponible
+                if (!empty($this->availableSucursales)) {
+                    $this->selectedSucursalId = array_key_first($this->availableSucursales);
+                }
             }
         }
     }

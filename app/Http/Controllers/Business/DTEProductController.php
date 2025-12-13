@@ -22,8 +22,9 @@ class DTEProductController extends Controller
         $product = BusinessProduct::find($request->product_id);
         $dte = session("dte")["type"];
         $customer = session("dte")["customer"] ?? null;
-        $sucursalId = $request->sucursal_id;
-        $posId = $request->pos_id;
+        // Normalizar: convertir strings vacíos en null
+        $sucursalId = $request->sucursal_id && $request->sucursal_id !== '' ? $request->sucursal_id : null;
+        $posId = $request->pos_id && $request->pos_id !== '' ? $request->pos_id : null;
 
         if (!$product) {
             return response()->json([
@@ -167,6 +168,23 @@ class DTEProductController extends Controller
         $productData['sucursal_id'] = $sucursalId;
         $productData['pos_id'] = $posId;
         $productData['inventory_source'] = $inventorySource;
+
+        // Log temporal para debugging
+        \Log::info('DTEProductController::select - Stock Debug', [
+            'product_id' => $product->id,
+            'has_stock' => $product->has_stock,
+            'is_global' => $product->is_global,
+            'request_sucursal_id' => $request->sucursal_id,
+            'request_pos_id' => $request->pos_id,
+            'normalized_sucursal_id' => $sucursalId,
+            'normalized_pos_id' => $posId,
+            'business_user_id' => $business_user?->id,
+            'default_pos_id' => $business_user?->default_pos_id,
+            'only_default_pos' => $business_user?->only_default_pos,
+            'stockDisponible' => $stockDisponible,
+            'estadoStock' => $estadoStock,
+            'inventory_source' => $inventorySource
+        ]);
 
         return response()->json([
             "success" => true,
