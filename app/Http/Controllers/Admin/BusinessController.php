@@ -559,4 +559,45 @@ class BusinessController extends Controller
         }
     }
 
+    public function rebuildStock(Business $business)
+    {
+        return view('admin.business.rebuild-stock', compact('business'));
+    }
+
+    public function executeRebuildStock(Request $request, Business $business)
+    {
+        $validated = $request->validate([
+            'target_stock' => 'required|numeric|min:0',
+            'dry_run' => 'boolean',
+        ]);
+
+        $targetStock = $validated['target_stock'];
+        $dryRun = $validated['dry_run'] ?? false;
+
+        try {
+            // Ejecutar el comando de reconstrucción
+            \Artisan::call('products:rebuild-stock', [
+                '--business_id' => $business->id,
+                '--target-stock' => $targetStock,
+                '--dry-run' => $dryRun,
+            ]);
+
+            $output = \Artisan::output();
+
+            return response()->json([
+                'success' => true,
+                'message' => $dryRun 
+                    ? 'Simulación completada. Revisa los resultados a continuación.' 
+                    : 'Stock reconstruido exitosamente.',
+                'output' => $output,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al reconstruir el stock',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
 }

@@ -95,6 +95,13 @@
                                                 </a>
                                             </li>
                                             <li>
+                                                <a href="{{ Route('admin.business.rebuild-stock', $busines->id) }}"
+                                                    class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                                                    <x-icon icon="refresh" class="h-4 w-4" />
+                                                    Reconstruir Stock
+                                                </a>
+                                            </li>
+                                            <li>
                                                 <button type="button"
                                                     class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
                                                     <x-icon icon="user-off" class="h-4 w-4" />

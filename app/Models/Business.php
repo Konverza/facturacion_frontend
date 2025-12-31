@@ -43,4 +43,14 @@ class Business extends Model
     {
         return $this->hasMany(BusinessUser::class);
     }
+
+    public function sucursales()
+    {
+        return $this->hasMany(Sucursal::class, 'business_id');
+    }
+
+    public function products()
+    {
+        return $this->hasMany(BusinessProduct::class, 'business_id');
+    }
 }

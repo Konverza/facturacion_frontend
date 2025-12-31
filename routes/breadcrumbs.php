@@ -41,6 +41,12 @@ Breadcrumbs::for("admin.business.edit", function (BreadcrumbTrail $trail, string
     $trail->push($icon . "Editar", route("admin.business.edit", $id));
 });
 
+Breadcrumbs::for("admin.business.rebuild-stock", function (BreadcrumbTrail $trail, $business) {
+    $icon = Blade::render("<x-icon icon='refresh' class='w-4 h-4'/>");
+    $trail->parent("admin.business.index");
+    $trail->push($icon . "Reconstruir Stock", route("admin.business.rebuild-stock", $business));
+});
+
 Breadcrumbs::for("admin.sucursales.index", function (BreadcrumbTrail $trail, string $id) {
     $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
     $trail->parent("admin.business.index");
