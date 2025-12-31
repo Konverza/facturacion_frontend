@@ -11,7 +11,7 @@
             <div class="mb-4 flex w-full flex-col gap-4 sm:flex-row">
                 <div class="flex-[4]">
                     <x-input type="text" placeholder="Buscar negocio" class="w-full" icon="search"
-                        id="input-search-business" />
+                        id="input-search-data" />
                 </div>
                 <div class="flex-1">
                     <x-button type="a" href="{{ route('admin.business.create') }}" icon="plus" typeButton="primary"
@@ -31,7 +31,19 @@
                 </x-slot>
                 <x-slot name="tbody">
                     @foreach ($business as $busines)
-                        <x-tr>
+                        @php
+                            $percentage = ($busines->statistics["approved"] / $busines->plan->limite) * 100;
+                            $class = '';
+                            $progress_class = 'bg-blue-600';
+                            if ($percentage > 75 && $percentage <= 90) {
+                                $class = 'bg-yellow-100';
+                                $progress_class = 'bg-yellow-400';
+                            } elseif ($percentage > 90) {
+                                $class = 'bg-red-200';
+                                $progress_class = 'bg-red-600';
+                            }
+                        @endphp
+                        <x-tr class="{{ $class }}">
                             <x-td>{{ $loop->iteration }}</x-td>
                             <x-td>{{ $busines->nombre }}</x-td>
                             <x-td>
@@ -53,7 +65,7 @@
                                     {{ \Carbon\Carbon::parse($inicio_mes)->format("d/m/Y") }} - {{ \Carbon\Carbon::parse($fin_mes)->format("d/m/Y") }}
                                 </div>
                                 <div class="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-900">
-                                    <div class="h-2.5 rounded-full bg-blue-600" style="width: {{ number_format(($busines->statistics["approved"] / $busines->plan->limite) * 100, 2) }}%"></div>
+                                    <div class="h-2.5 rounded-full {{ $progress_class }}" style="width: {{ number_format(min(100, $percentage), 2) }}%"></div>
                                 </div>
                             </x-td>
                             <x-td>
