@@ -600,4 +600,41 @@ class BusinessController extends Controller
         }
     }
 
+    public function stockReport(Business $business)
+    {
+        // Obtener todos los productos del negocio con control de stock
+        $productos = \App\Models\BusinessProduct::where('business_id', $business->id)
+            ->where('has_stock', true)
+            ->with(['movements' => function($query) {
+                $query->orderBy('created_at', 'asc');
+            }])
+            ->get();
+
+        // Calcular el reporte para cada producto
+        $reporte = $productos->map(function($producto) {
+            $stockInicial = $producto->stockInicial ?? 0;
+            $entradas = $producto->movements->where('tipo', 'entrada')->sum('cantidad');
+            $salidas = $producto->movements->where('tipo', 'salida')->sum('cantidad');
+            $totalCalculado = $stockInicial + $entradas - $salidas;
+            $stockActualDB = $producto->stockActual ?? 0;
+            $diferencia = $stockActualDB - $totalCalculado;
+
+            return [
+                'id' => $producto->id,
+                'codigo' => $producto->codigo,
+                'descripcion' => $producto->descripcion,
+                'stock_inicial' => $stockInicial,
+                'entradas' => $entradas,
+                'salidas' => $salidas,
+                'total_calculado' => $totalCalculado,
+                'stock_actual_db' => $stockActualDB,
+                'diferencia' => $diferencia,
+                'tiene_diferencia' => abs($diferencia) > 0.01,
+                'total_movimientos' => $producto->movements->count(),
+            ];
+        });
+
+        return view('admin.business.stock-report', compact('business', 'reporte'));
+    }
+
 }

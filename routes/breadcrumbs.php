@@ -47,6 +47,12 @@ Breadcrumbs::for("admin.business.rebuild-stock", function (BreadcrumbTrail $trai
     $trail->push($icon . "Reconstruir Stock", route("admin.business.rebuild-stock", $business));
 });
 
+Breadcrumbs::for("admin.business.stock-report", function (BreadcrumbTrail $trail, $business) {
+    $icon = Blade::render("<x-icon icon='report' class='w-4 h-4'/>");
+    $trail->parent("admin.business.index");
+    $trail->push($icon . "Reporte de Movimientos", route("admin.business.stock-report", $business));
+});
+
 Breadcrumbs::for("admin.sucursales.index", function (BreadcrumbTrail $trail, string $id) {
     $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
     $trail->parent("admin.business.index");
