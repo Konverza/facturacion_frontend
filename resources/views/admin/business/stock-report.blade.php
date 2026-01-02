@@ -90,6 +90,7 @@
                         <x-tr>
                             <x-th class="w-20">Código</x-th>
                             <x-th>Producto</x-th>
+                            <x-th>Sucursal</x-th>
                             <x-th class="text-right">Stock Inicial</x-th>
                             <x-th class="text-right">Entradas</x-th>
                             <x-th class="text-right">Salidas</x-th>
@@ -105,6 +106,12 @@
                             <x-tr class="{{ $item['tiene_diferencia'] ? 'bg-red-50 dark:bg-red-900/10' : '' }}">
                                 <x-td>{{ $item['codigo'] }}</x-td>
                                 <x-td>{{ $item['descripcion'] }}</x-td>
+                                <x-td>
+                                    <span class="text-xs text-gray-600 dark:text-gray-400">
+                                        {{ $item['sucursal'] }}
+                                        <span class="text-gray-400">({{ $item['sucursal_codigo'] }})</span>
+                                    </span>
+                                </x-td>
                                 <x-td class="text-right">{{ number_format($item['stock_inicial'], 2) }}</x-td>
                                 <x-td class="text-right">
                                     <span class="font-medium text-green-600 dark:text-green-400">
@@ -159,11 +166,12 @@
                 <div class="ml-3 text-sm text-blue-700 dark:text-blue-300">
                     <p class="font-medium">Información del reporte</p>
                     <ul class="mt-2 list-inside list-disc space-y-1 text-xs">
+                        <li><strong>Sucursal:</strong> Sucursal a la que pertenece el stock</li>
                         <li><strong>Stock Inicial:</strong> Valor registrado en stockInicial del producto</li>
                         <li><strong>Entradas:</strong> Suma de todos los movimientos de tipo "entrada"</li>
                         <li><strong>Salidas:</strong> Suma de todos los movimientos de tipo "salida"</li>
                         <li><strong>Total Calculado:</strong> Stock Inicial + Entradas - Salidas</li>
-                        <li><strong>Stock Actual (BD):</strong> Valor actual en la base de datos</li>
+                        <li><strong>Stock Actual (BD):</strong> Valor actual en business_product_stock para esa sucursal</li>
                         <li><strong>Diferencia:</strong> Stock Actual (BD) - Total Calculado</li>
                         <li class="text-red-700 dark:text-red-300"><strong>Productos con diferencias necesitan reconstrucción de stock</strong></li>
                     </ul>
@@ -183,8 +191,9 @@
                         const $row = $(this);
                         const codigo = $row.find('td:eq(0)').text().toLowerCase();
                         const producto = $row.find('td:eq(1)').text().toLowerCase();
+                        const sucursal = $row.find('td:eq(2)').text().toLowerCase();
                         
-                        if (codigo.includes(searchTerm) || producto.includes(searchTerm)) {
+                        if (codigo.includes(searchTerm) || producto.includes(searchTerm) || sucursal.includes(searchTerm)) {
                             $row.show();
                         } else {
                             $row.hide();

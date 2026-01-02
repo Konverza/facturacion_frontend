@@ -602,27 +602,34 @@ class BusinessController extends Controller
 
     public function stockReport(Business $business)
     {
-        // Obtener todos los productos del negocio con control de stock
-        $productos = \App\Models\BusinessProduct::where('business_id', $business->id)
-            ->where('has_stock', true)
-            ->with(['movements' => function($query) {
-                $query->orderBy('created_at', 'asc');
-            }])
-            ->get();
+        // Obtener todos los stocks por sucursal del negocio
+        $stocksSucursales = \App\Models\BranchProductStock::whereHas('businessProduct', function($query) use ($business) {
+            $query->where('business_id', $business->id)
+                  ->where('has_stock', true)
+                  ->where('is_global', false);
+        })
+        ->with(['businessProduct.movements' => function($query) {
+            $query->orderBy('created_at', 'asc');
+        }, 'sucursal'])
+        ->get();
 
-        // Calcular el reporte para cada producto
-        $reporte = $productos->map(function($producto) {
+        // Calcular el reporte para cada producto en cada sucursal
+        $reporte = $stocksSucursales->map(function($stock) {
+            $producto = $stock->businessProduct;
             $stockInicial = $producto->stockInicial ?? 0;
             $entradas = $producto->movements->where('tipo', 'entrada')->sum('cantidad');
             $salidas = $producto->movements->where('tipo', 'salida')->sum('cantidad');
             $totalCalculado = $stockInicial + $entradas - $salidas;
-            $stockActualDB = $producto->stockActual ?? 0;
+            $stockActualDB = $stock->stockActual ?? 0;
             $diferencia = $stockActualDB - $totalCalculado;
 
             return [
                 'id' => $producto->id,
+                'stock_id' => $stock->id,
                 'codigo' => $producto->codigo,
                 'descripcion' => $producto->descripcion,
+                'sucursal' => $stock->sucursal->nombre ?? 'Sin sucursal',
+                'sucursal_codigo' => $stock->sucursal->codSucursal ?? 'N/A',
                 'stock_inicial' => $stockInicial,
                 'entradas' => $entradas,
                 'salidas' => $salidas,
