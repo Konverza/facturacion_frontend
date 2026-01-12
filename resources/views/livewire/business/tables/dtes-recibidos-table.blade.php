@@ -271,69 +271,73 @@
                                 </span>
                             </x-td>
                             <x-td class="text-xs">
-                                @switch($invoice['tipo_dte'])
-                                    @case('01')
-                                        <strong>Total:
-                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar, 2, '.', ',') }}
-                                    @break
+                                @if(property_exists($invoice['documento'], 'resumen'))
+                                    @switch($invoice['tipo_dte'])
+                                        @case('01')
+                                            <strong>Total:
+                                            </strong>${{ number_format($invoice['documento']->resumen->totalPagar ?? 0, 2, '.', ',') }}
+                                        @break
 
-                                    @case('03')
-                                        <strong>Neto:
-                                        </strong>${{ number_format($invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
-                                        <strong>IVA:
-                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar - $invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
-                                        <strong>Total:
-                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar, 2, '.', ',') }}
-                                    @break
+                                        @case('03')
+                                            <strong>Neto:
+                                            </strong>${{ number_format($invoice['documento']->resumen->subTotalVentas ?? 0, 2, '.', ',') }}<br>
+                                            <strong>IVA:
+                                            </strong>${{ number_format(($invoice['documento']->resumen->totalPagar ?? 0) - ($invoice['documento']->resumen->subTotalVentas ?? 0), 2, '.', ',') }}<br>
+                                            <strong>Total:
+                                            </strong>${{ number_format($invoice['documento']->resumen->totalPagar ?? 0, 2, '.', ',') }}
+                                        @break
 
-                                    @case('05')
-                                        <strong>Neto:
-                                        </strong>${{ number_format($invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
-                                        <strong>IVA:
-                                        </strong>${{ number_format($invoice['documento']->resumen->montoTotalOperacion - $invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
-                                        <strong>Total:
-                                        </strong>${{ number_format($invoice['documento']->resumen->montoTotalOperacion, 2, '.', ',') }}
-                                    @break
+                                        @case('05')
+                                            <strong>Neto:
+                                            </strong>${{ number_format($invoice['documento']->resumen->subTotalVentas ?? 0, 2, '.', ',') }}<br>
+                                            <strong>IVA:
+                                            </strong>${{ number_format(($invoice['documento']->resumen->montoTotalOperacion ?? 0) - ($invoice['documento']->resumen->subTotalVentas ?? 0), 2, '.', ',') }}<br>
+                                            <strong>Total:
+                                            </strong>${{ number_format($invoice['documento']->resumen->montoTotalOperacion ?? 0, 2, '.', ',') }}
+                                        @break
 
-                                    @case('07')
-                                        <strong>Sujeto a Retención:
-                                        </strong>${{ number_format($invoice['documento']->resumen->totalSujetoRetencion, 2, '.', ',') }}<br>
-                                        <strong>IVA Retenido:
-                                        </strong>${{ number_format($invoice['documento']->resumen->totalIVAretenido, 2, '.', ',') }}
-                                    @break
+                                        @case('07')
+                                            <strong>Sujeto a Retención:
+                                            </strong>${{ number_format($invoice['documento']->resumen->totalSujetoRetencion ?? 0, 2, '.', ',') }}<br>
+                                            <strong>IVA Retenido:
+                                            </strong>${{ number_format($invoice['documento']->resumen->totalIVAretenido ?? 0, 2, '.', ',') }}
+                                        @break
 
-                                    @case('11')
-                                        <strong>Total:
-                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar, 2, '.', ',') }}
-                                    @break
+                                        @case('11')
+                                            <strong>Total:
+                                            </strong>${{ number_format($invoice['documento']->resumen->totalPagar ?? 0, 2, '.', ',') }}
+                                        @break
 
-                                    @case('14')
-                                        <strong>Total:
-                                        </strong>${{ number_format($invoice['documento']->resumen->totalCompra, 2, '.', ',') }}
-                                    @break
+                                        @case('14')
+                                            <strong>Total:
+                                            </strong>${{ number_format($invoice['documento']->resumen->totalCompra ?? 0, 2, '.', ',') }}
+                                        @break
 
-                                    @case('15')
-                                        <strong>Total:
-                                        </strong>${{ number_format($invoice['documento']->resumen->valorTotal, 2, '.', ',') }}
-                                    @break
+                                        @case('15')
+                                            <strong>Total:
+                                            </strong>${{ number_format($invoice['documento']->resumen->valorTotal ?? 0, 2, '.', ',') }}
+                                        @break
 
-                                    @default
-                                        <strong>Total: $0.00</strong>
-                                    @break
-                                @endswitch
-                                <hr class="my-3">
-                                <strong>Forma(s) de Pago</strong><br>
-                                @if (property_exists($invoice['documento']->resumen, 'pagos'))
-                                    @forelse ($invoice['documento']->resumen->pagos ?? [] as $pago)
-                                        <span class="text-xs">
-                                            {{ $formas_pago[$pago->codigo] }}:
-                                            ${{ number_format($pago->montoPago, 2, '.', ',') }}
-                                        </span><br>
-                                    @empty
-                                        <span class="text-xs">Desconocido</span><br>
-                                    @endforelse
+                                        @default
+                                            <strong>Total: $0.00</strong>
+                                        @break
+                                    @endswitch
+                                    <hr class="my-3">
+                                    <strong>Forma(s) de Pago</strong><br>
+                                    @if (property_exists($invoice['documento']->resumen, 'pagos'))
+                                        @forelse ($invoice['documento']->resumen->pagos ?? [] as $pago)
+                                            <span class="text-xs">
+                                                {{ $formas_pago[$pago->codigo] ?? 'Desconocido' }}:
+                                                ${{ number_format($pago->montoPago ?? 0, 2, '.', ',') }}
+                                            </span><br>
+                                        @empty
+                                            <span class="text-xs">Desconocido</span><br>
+                                        @endforelse
+                                    @else
+                                        <span class="text-xs">Desconocido</span>
+                                    @endif
                                 @else
-                                    <span class="text-xs">Desconocido</span>
+                                    <span class="text-xs text-gray-500">Sin información de montos</span>
                                 @endif
                             </x-td>
                             <x-td th :last="true">
