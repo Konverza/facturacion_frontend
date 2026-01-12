@@ -160,6 +160,7 @@ class ReportingController extends Controller
         $business_id = Session::get('business') ?? null;
         $business = Business::find($business_id);
         $tipoOperacion = $request->tipo_operacion ?? null;
+        $tipoOperacionSe = $request->tipo_operacion_se ?? null;
         $tipoIngreso = $request->tipo_ingreso ?? null;
         $clasificacion = $request->clasificacion ?? null;
         $sector = $request->sector ?? null;
@@ -173,7 +174,7 @@ class ReportingController extends Controller
                 return $this->exportAnexoConsumidores($dtes, $tipoOperacion, $tipoIngreso);
             case "compras_se":
                 // Implementar exportación de anexo de compras SE si es necesario
-                return $this->exportAnexoComprasSE($dtes, $tipoOperacion, $clasificacion, $sector, $tipo_costo);
+                return $this->exportAnexoComprasSE($dtes, $tipoOperacionSe, $clasificacion, $sector, $tipo_costo);
             default:
                 throw new \Exception('Tipo de anexo no válido');
         }

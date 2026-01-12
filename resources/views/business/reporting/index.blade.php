@@ -97,12 +97,12 @@
                             required />
                     </div>
                     <div class="flex w-full gap-4 flex-col container-anexos hidden" id="container-tipo-operacion-egreso">
-                        <x-select id="tipo_operacion" :options="[
+                        <x-select id="tipo_operacion_se" :options="[
                             '1' => 'Gravada',
                             '2' => 'No Gravada o Exenta',
                             '3' => 'Excluido o no Constituye Renta',
                             '4' => 'Mixta',
-                        ]" label="Tipo de Operación" name="tipo_operacion"
+                        ]" label="Tipo de Operación" name="tipo_operacion_se"
                             required />
                         <p class="text-xs -mt-2 text-gray-500 dark:text-gray-200">Para el Anexo "Compras a Sujetos
                             Excluidos" siempre se asignará "No Gravada o Exenta"</p>
