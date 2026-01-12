@@ -1,26 +1,67 @@
 @extends('layouts.auth-template')
-@section('title', 'Reportería')
+@section('title', 'Reportería Contable')
 @section('content')
     <section class="my-4 px-4">
         <div class="flex w-full justify-between">
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
-                Reportería
+                Reportería Contable
             </h1>
         </div>
         <div class="mt-4 pb-4">
+            <div class="my-2 flex flex-col gap-2 overflow-hidden rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-4 text-center dark:border-blue-800 dark:bg-blue-950/40"
+                role="alert">
+                <div class="flex justify-start gap-2 text-sm font-semibold text-blue-800 dark:text-blue-200">
+                    <x-icon icon="info-circle" class="h-5 w-5" />
+                    Nota:
+                </div>
+                <p class="text-left text-sm text-blue-700 dark:text-blue-300">
+                    Para descargar los Anexos para el F07 en formato CSV, seleccionar en <b>"Tipo de Reporte"</b> la opción
+                    <b>"Anexos F07"</b>.<br>
+                    Para los libros en Excel, seleccionar el tipo de libro que se desea generar.
+                </p>
+            </div>
+            <div class="flex flex-col gap-2 overflow-hidden rounded-lg border-2 border-dashed border-yellow-300 bg-yellow-50 p-4 text-center dark:border-yellow-800 dark:bg-yellow-950/40"
+                role="alert">
+                <div class="flex justify-start gap-2 text-sm font-semibold text-yellow-800 dark:text-yellow-200">
+                    <x-icon icon="warning" class="h-5 w-5" />
+                    Importante
+                </div>
+                <p class="text-left text-sm text-yellow-700 dark:text-yellow-300">
+                    Aunque el sistema de Konverza realiza inferencias automáticas para facilitar el llenado de los
+                    anexos, <b class="underline">la revisión y validación final de todos los valores es
+                        responsabilidad exclusiva del contador encargado de la declaración</b>. Una clasificación
+                    incorrecta o un valor mal asignado puede afectar la base imponible, generar inconsistencias en
+                    la información reportada o provocar rechazos automáticos por parte del Ministerio de Hacienda.
+                    Por ello, <b>es fundamental que cada dato sea verificado cuidadosamente</b>, especialmente
+                    aquellos relacionados con la naturaleza tributaria de la operación o la clasificación del
+                    ingreso/gasto, antes de proceder con el envío del anexo.
+                </p>
+            </div>
             <form action="{{ Route('business.reporting.store') }}"
-                class="flex items-start gap-4 md:flex-row flex-col-reverse" method="POST" enctype="multipart/form-data"
+                class="flex mt-3 items-start gap-4 md:flex-row flex-col-reverse" method="POST" enctype="multipart/form-data"
                 id="form-generate-book">
                 @csrf
                 <div class="flex flex-[2] flex-col gap-4">
                     <x-select :options="[
+                        'anexos_f07' => 'Anexos F07',
                         'contribuyentes' => 'Libro de ventas a contribuyentes',
                         'consumidores' => 'Libro de ventas a consumidores',
-                        'retencion_iva' => 'Retención de IVA 1% (emitidos)',
                         // 'compras' => 'Libro de compras',
+                        // 'venta_tercero' => 'Libro de Ventas Gravadas por cuenta de terceros domiciliados',
+                        // 'compras_se' => 'Libro de Compras a Sujetos Excluidos',
+                        // 'retencion_iva' => 'Retención de IVA 1% (emitidos)',
                         // 'percepcion_iva' => 'Percepción de IVA (recibidos)',
                     ]" name="book_type" id="book-type" label="Tipo de Reporte" :search="false"
                         required />
+                    <div class="container-books hidden" id="container-tipo-anexo">
+                        <x-select :options="[
+                            'contribuyentes' => 'Detalle de Ventas al Contribuyente',
+                            'consumidores' => 'Detalle de Ventas al Consumidor Final',
+                            // 'compras' => 'Detalle de Compras',
+                            'compras_se' => 'Detalle de Compras a Sujetos Excluidos (Casilla 66)',
+                            // 'venta_tercero' => 'Detalle de Ventas por cuenta de terceros domiciliados (Casilla 108)',
+                        ]" name="tipo_anexo" id="anexo-type" label="Tipo de Anexo" />
+                    </div>
                     <div class="flex w-full gap-4 sm:flex-row flex-col">
                         <div class="flex-1">
                             <x-input type="date" name="start_date" label="Fecha de inicio" />
@@ -28,6 +69,64 @@
                         <div class="flex-1">
                             <x-input type="date" name="end_date" label="Fecha de fin" />
                         </div>
+                    </div>
+                    <div class="flex w-full gap-4 flex-col container-anexos hidden" id="container-tipo-operacion-ingreso">
+                        <x-select id="tipo_operacion" :options="[
+                            '1' => 'Gravada',
+                            '2' => 'No Gravada o Exento',
+                            '3' => 'Excluido o no Constituye Renta',
+                            '4' => 'Mixta',
+                            '12' => 'Ingresos que ya fueron sujetos de retención informados',
+                            '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
+                        ]" label="Tipo de Operación" name="tipo_operacion"
+                            required />
+                        <x-select id="tipo_ingreso" :options="[
+                            '1' => 'Profesiones, Artes y Oficios',
+                            '2' => 'Actividades de Servicios',
+                            '3' => 'Actividades Comerciales',
+                            '4' => 'Actividades Industriales',
+                            '5' => 'Actividades Agropecuarias',
+                            '6' => 'Utilidades y Dividendos',
+                            '7' => 'Exportaciones de bienes',
+                            '8' => 'Servicios Realizados en el Exterior y Utilizados en El Salvador',
+                            '9' => 'Exportaciones de servicios',
+                            '10' => 'Otras Rentas Gravables',
+                            '12' => 'Ingresos que ya fueron sujetos de retención informados',
+                            '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
+                        ]" label="Tipo de Ingreso" name="tipo_ingreso"
+                            required />
+                    </div>
+                    <div class="flex w-full gap-4 flex-col container-anexos hidden" id="container-tipo-operacion-egreso">
+                        <x-select id="tipo_operacion" :options="[
+                            '1' => 'Gravada',
+                            '2' => 'No Gravada o Exenta',
+                            '3' => 'Excluido o no Constituye Renta',
+                            '4' => 'Mixta',
+                        ]" label="Tipo de Operación" name="tipo_operacion"
+                            required />
+                        <p class="text-xs -mt-2 text-gray-500 dark:text-gray-200">Para el Anexo "Compras a Sujetos
+                            Excluidos" siempre se asignará "No Gravada o Exenta"</p>
+                        <x-select id="clasificacion" :options="[
+                            '1' => 'Costo',
+                            '2' => 'Gasto',
+                        ]" label="Clasificación" name="clasificacion"
+                            required />
+                        <x-select id="sector" :options="[
+                            '1' => 'Industrial',
+                            '2' => 'Comercial',
+                            '3' => 'Agropecuario',
+                            '4' => 'Servicios/Otros',
+                        ]" label="Sector" name="sector" required />
+                        <x-select id="tipo_costo" :options="[
+                            '1' => 'Gastos de Venta sin Donación',
+                            '2' => 'Gastos de Administración sin Donación',
+                            '3' => 'Gastos Financieros sin Donación',
+                            '4' => 'Costo Artículos Importados/Internaciones',
+                            '5' => 'Costo Artículos Internos',
+                            '6' => 'Costos Indirectos de Fabricación',
+                            '7' => 'Mano de Obra',
+                        ]" label="Tipo de Costo / Gasto" name="tipo_costo"
+                            required />
                     </div>
                     <div class="flex flex-col gap-2">
                         <div id="selected-documents" class="hidden">
@@ -42,19 +141,6 @@
                             </div>
                         </div>
                         {{-- <x-input type="toggle" name="format_csv" label="Generar en formato .CSV" /> --}}
-                    </div>
-
-                    <div class="flex flex-col gap-2 overflow-hidden rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-4 text-center dark:border-blue-800 dark:bg-blue-950/40"
-                        role="alert">
-                        <div class="flex justify-start gap-2 text-sm font-semibold text-blue-800 dark:text-blue-200">
-                            <x-icon icon="info-circle" class="h-5 w-5" />
-                            Importante
-                        </div>
-                        <p class="text-left text-sm text-blue-700 dark:text-blue-300">
-                            El libro de ventas a contribuyentes, compras de consumidor final y el de retención de IVA (1%)
-                            son para los <b>documentos emitidos</b>, el libro de compras y percepción de IVA (1%) son para
-                            los <b>documentos recibidos</b>. Puedes adjuntar más archivos.
-                        </p>
                     </div>
 
                     <div id="container-ventas-contribuyentes" class="container-books hidden">
@@ -132,7 +218,8 @@
                     </div>
 
                     <div class="mt-4 flex items-center justify-center gap-4">
-                        <x-button type="submit" text="Generar documento" typeButton="primary" class="w-full sm:w-auto" />
+                        <x-button type="submit" text="Generar documento" typeButton="primary"
+                            class="w-full sm:w-auto" />
                     </div>
                 </div>
                 <div class="flex-1">

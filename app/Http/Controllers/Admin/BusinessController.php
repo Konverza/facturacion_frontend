@@ -134,15 +134,10 @@ class BusinessController extends Controller
                     ]);
                     $token = $token_response->json()['access_token'] ?? null;
                     $credentials_response = Http::withToken($token)
-                        ->get(env("PRUEBAS_URL") . "/credenciales/");
-                    $credentials = $credentials_response->json();
-                    foreach ($credentials as $credential) {
-                        if ($credential['nit'] == $data['nit']) {
-                            $prefill['api_password'] = $credential['api_password'] ?? '';
-                            $prefill['certificate_password'] = $credential['certificate_password'] ?? '';
-                            break;
-                        }
-                    }
+                        ->get(env("PRUEBAS_URL") . "/credenciales/nit/" . $data['nit']);
+                    $credential = $credentials_response->json();
+                    $prefill['api_password'] = $credential['api_password'] ?? '';
+                    $prefill['certificate_password'] = $credential['certificate_password'] ?? '';
                 }
             } catch (\Throwable $e) {
                 // No hacer nada, no se pudo obtener datos de la empresa

@@ -162,7 +162,8 @@
                         aria-controls="dropdown-lotes" data-collapse-toggle="dropdown-lotes">
                         <x-icon icon="files"
                             class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                        <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Facturación por lotes</span>
+                        <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Facturación por
+                            lotes</span>
                         <x-icon icon="arrow-down"
                             class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                     </button>
@@ -243,7 +244,7 @@
                     @endif
                 </ul>
             </li>
-            {{-- <li>
+            <li>
                 <button type="button"
                     class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
                     aria-controls="dropdown-compras" data-collapse-toggle="dropdown-compras">
@@ -255,19 +256,15 @@
                 </button>
                 <ul id="dropdown-compras" class="hidden space-y-2 py-2">
                     <li>
-                        <a href="#"
-                            class="group pointer-events-none flex cursor-not-allowed items-center rounded-lg p-2 text-secondary-400 opacity-50 dark:text-secondary-600 dark:opacity-50"
+                        <a href="{{ Route('business.received-documents.index') }}"
+                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
                             tabindex="-1" aria-disabled="true">
                             <span class="ms-3 flex-1 whitespace-nowrap">
                                 Documentos Recibidos
                             </span>
-                            <span
-                                class="ml-2 inline-block rounded-full bg-secondary-300 px-2 py-0.5 text-xs font-semibold text-secondary-700 dark:bg-secondary-700 dark:text-secondary-300">
-                                Próximamente
-                            </span>
                         </a>
                     </li>
-                    <li>
+                    {{-- <li>
                         <a href="#"
                             class="group pointer-events-none flex cursor-not-allowed items-center rounded-lg p-2 text-secondary-400 opacity-50 dark:text-secondary-600 dark:opacity-50"
                             tabindex="-1" aria-disabled="true">
@@ -279,15 +276,29 @@
                                 Próximamente
                             </span>
                         </a>
-                    </li>
+                    </li> --}}
                 </ul>
-            </li> --}}
+            </li>
             <li>
                 <a href="{{ Route('business.reporting.index') }}"
                     class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
-                    <x-icon icon="file-report"
+                    <x-icon icon="report-accounting"
                         class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3">Reportería</span>
+                    <span class="ms-3">Reportería Contable</span>
+                </a>
+            </li>
+            <li>
+                <a href="#"
+                    class="group pointer-events-none flex cursor-not-allowed items-center rounded-lg p-2 text-secondary-400 opacity-50 dark:text-secondary-600 dark:opacity-50">
+                    <x-icon icon="report-general"
+                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap">
+                        Reportería General
+                    </span>
+                    <span
+                        class="ml-2 inline-block rounded-full bg-secondary-300 px-2 py-0.5 text-xs font-semibold text-secondary-700 dark:bg-secondary-700 dark:text-secondary-300">
+                        Próximamente
+                    </span>
                 </a>
             </li>
             @if ($business->pos_inventory_enabled)

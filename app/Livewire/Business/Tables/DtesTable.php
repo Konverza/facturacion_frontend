@@ -73,7 +73,7 @@ class DtesTable extends Component
 
     public function updating($property)
     {
-        if (in_array($property, ['fechaInicio', 'fechaFin', 'codSucursal', 'codPuntoVenta', 'tipo_dte', 'estado', 'sort', 'perPage', 'documento_receptor', 'q'])) {
+        if (in_array($property, ['fechaInicio', 'fechaFin', 'emisionInicio', 'emisionFin', 'codSucursal', 'codPuntoVenta', 'tipo_dte', 'estado', 'sort', 'perPage', 'documento_receptor', 'q'])) {
             $this->page = 1; // Reset page when any of these properties change
         }
     }

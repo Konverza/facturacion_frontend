@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Business;
 
+use App\Exports\ComprasSe;
+use App\Exports\ConsumidorFinal;
+use App\Exports\Contribuyente;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Services\OctopusService;
@@ -10,8 +13,10 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Session;
+use Storage;
 
 class ReportingController extends Controller
 {
@@ -48,7 +53,7 @@ class ReportingController extends Controller
                 if ($onlySelected) {
                     $dtes = $uploadedDtes;
                 } else {
-                    $dtes = $this->fetchDtes($business->nit, $request->start_date, $request->end_date);
+                    $dtes = $this->fetchSentDtes($business->nit, $request->start_date, $request->end_date);
                     if ($onlyMix && !empty($uploadedDtes)) {
                         $dtes = array_merge($dtes, $uploadedDtes);
                     }
@@ -120,6 +125,9 @@ class ReportingController extends Controller
                 case 'consumidores':
                     $file_path = $this->exportConsumidores($dtes_filter, $datos_empresa, $months_string, $years_string, $request);
                     break;
+                case 'anexos_f07':
+                    $file_path = $this->anexos($request);
+                    break;
                 // case 'retencion_iva':
                 //     $file_path = $this->exportRetencionIva($dtes_filter, $datos_empresa, $months_string, $request);
                 //     break;
@@ -144,6 +152,30 @@ class ReportingController extends Controller
                 "error" => "Error",
                 "error_message" => "Ha ocurrido un error al generar el libro. Vuelve a intentarlo.",
             ]);
+        }
+    }
+
+    public function anexos(Request $request): string
+    {
+        $business_id = Session::get('business') ?? null;
+        $business = Business::find($business_id);
+        $tipoOperacion = $request->tipo_operacion ?? null;
+        $tipoIngreso = $request->tipo_ingreso ?? null;
+        $clasificacion = $request->clasificacion ?? null;
+        $sector = $request->sector ?? null;
+        $tipo_costo = $request->tipo_costo ?? null;
+        $dtes = $this->fetchSentDtes($business->nit, $request->start_date, $request->end_date, false);
+
+        switch ($request->tipo_anexo) {
+            case "contribuyentes":
+                return $this->exportAnexoContribuyentes($dtes, $tipoOperacion, $tipoIngreso);
+            case "consumidores":
+                return $this->exportAnexoConsumidores($dtes, $tipoOperacion, $tipoIngreso);
+            case "compras_se":
+                // Implementar exportación de anexo de compras SE si es necesario
+                return $this->exportAnexoComprasSE($dtes, $tipoOperacion, $clasificacion, $sector, $tipo_costo);
+            default:
+                throw new \Exception('Tipo de anexo no válido');
         }
     }
 
@@ -308,7 +340,7 @@ class ReportingController extends Controller
             $sheet->setCellValue("J{$row}", $resumen["totalNoSuj"] ?? 0);
             $sheet->setCellValue("K{$row}", $resumen["totalGravada"] ?? 0);
             $sheet->setCellValue("L{$row}", $iva);
-            $sheet->setCellValue("M{$row}","=SUM(I$row:L$row)");
+            $sheet->setCellValue("M{$row}", "=SUM(I$row:L$row)");
             $row++;
         }
 
@@ -317,9 +349,157 @@ class ReportingController extends Controller
         $sheet->setCellValue("J{$row}", $totalDocNoSujetas);
         $sheet->setCellValue("K{$row}", $totalDocGravadas);
         $sheet->setCellValue("L{$row}", $totalIva);
-        $sheet->setCellValue("M{$row}","=SUM(I$row:L$row)");
+        $sheet->setCellValue("M{$row}", "=SUM(I$row:L$row)");
 
-        return $this->saveSpreadsheet($spreadsheet, "libro_contribuyentes_", $request); 
+        return $this->saveSpreadsheet($spreadsheet, "libro_contribuyentes_", $request);
+    }
+
+    private function exportAnexoContribuyentes($dtes, $tipoOperacion, $tipoIngreso)
+    {
+        $dte_collection = collect();
+        foreach ($dtes as $dte) {
+            if ($dte["estado"] == "PROCESADO" && in_array($dte["tipo_dte"], ["03", "05", "06"])) {
+                $dte_collection->push($dte);
+            }
+        }
+        $fileName = 'anexo-f07-contribuyentes_' . date("YmdHis") . '.csv';
+        $filePath = "exports/{$fileName}";
+        Excel::store(new Contribuyente($dte_collection, $tipoOperacion, $tipoIngreso), $filePath, 'public');
+        if (!Storage::disk('public')->exists($filePath)) {
+            throw new \Exception('Error al generar el archivo de contribuyentes');
+        }
+        return storage_path("app/public/{$filePath}");
+    }
+
+    private function exportAnexoConsumidores($dtes, $tipoOperacion, $tipoIngreso)
+    {
+        $dte_collection = collect();
+        foreach ($dtes as $dte) {
+            if ($dte["estado"] === "PROCESADO" && in_array($dte["tipo_dte"], ["01", "11"])) {
+                $dte_collection->push($dte);
+            }
+        }
+
+        // Agrupar por fecha y ordenar dentro de cada grupo por fecha y hora
+        $grouped_dtes = $dte_collection
+            ->sortBy('fhEmision') // Ordenar globalmente antes de agrupar
+            ->groupBy(fn($dte) => Carbon::parse($dte["fhEmision"])->toDateString())
+            ->map(fn($dtes) => $dtes->groupBy('tipo_dte'));
+
+        $result = [];
+
+        foreach ($grouped_dtes as $fecha => $tipos) {
+            foreach ($tipos as $tipo => $dtes) {
+                // Obtener el primer y último codGeneracion del grupo por fecha
+                $primer_cod = $dtes->first()["codGeneracion"];
+                $ultimo_cod = $dtes->last()["codGeneracion"];
+
+                // Países del área centroamericana
+                $paisesCentroamerica = ['GT', '9483', 'HN', '9501', 'SV', '9300', 'NI', '9615', 'CR', '9411'];
+
+                // Sumar valores de los DTEs
+                $totalExento = $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalExenta ?? 0);
+                $totalNoSuj = $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalNoSuj ?? 0);
+                $totalGravado = $tipo == "01" ? $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalGravada ?? 0) : 0;
+
+                // Cálculos de exportación solo para tipo "11"
+                $totalExportacionDentro = 0;
+                $totalExportacionFuera = 0;
+                $totalExportacionServicios = 0;
+
+                if ($tipo == "11") {
+                    foreach ($dtes as $dte) {
+                        $codPais = $dte["documento"]->receptor->codPais ?? null;
+                        $tipoItemExpor = $dte["documento"]->emisor->tipoItemExpor ?? null;
+                        $totalGravadaDTE = $dte["documento"]->resumen->totalGravada ?? 0;
+
+                        // Exportación de servicios (tipoItemExpor = 2)
+                        if ($tipoItemExpor == 2) {
+                            $totalExportacionServicios += $totalGravadaDTE;
+                            continue; // Ya contabilizado, pasar al siguiente DTE
+                        }
+
+                        // Exportación dentro o fuera de Centroamérica
+                        if ($codPais) {
+                            if (in_array($codPais, $paisesCentroamerica)) {
+                                $totalExportacionDentro += $totalGravadaDTE;
+                            } else {
+                                $totalExportacionFuera += $totalGravadaDTE;
+                            }
+                        }
+                    }
+                }
+
+                $totalZonasFrancas = 0;
+                $totalCuentaTerceros = 0;
+
+                $totalPagar = $totalExento + $totalNoSuj + $totalGravado + $totalExportacionDentro + $totalExportacionFuera + $totalExportacionServicios + $totalZonasFrancas + $totalCuentaTerceros;
+
+                // Formatear la fecha
+                $fecha_formateada = Carbon::parse($fecha)->format('d/m/Y');
+
+                // Generar el array con la estructura solicitada
+                $result[] = [
+                    $fecha_formateada, // Fecha de emisión en dd/mm/YYYY (A)
+                    "4", // Clase de documento (B)
+                    $tipo, // Tipo de DTE (C)
+                    "N/A", // Número de resolución "N/A" (D)
+                    "N/A", // Serie de Documento "N/A" (E)
+                    "N/A", // Número de Control interno (Del) (F)
+                    "N/A", // Número de Control interno (Al) (G)
+                    $primer_cod, // Número de documento (del) (H)
+                    $ultimo_cod, // Número de documento (al) (I)
+                    null, // Número de máquina registradora (J)
+                    $totalExento, // Ventas exentas (K)
+                    0, // Ventas internas exentas no sujetas a proporcionalidad (L)
+                    $totalNoSuj, // Ventas no sujetas (M)
+                    $totalGravado, // ventas gravadas locales (N) si tipo es "01", si no, 0
+                    $totalExportacionDentro, // Exportaciones dentro del área centroamericana (O)
+                    $totalExportacionFuera, // Exportaciones fuera del área centroamericana (P)
+                    $totalExportacionServicios, // Exportaciones de Servicios (Q)
+                    $totalZonasFrancas, // Ventas a Zonas Francas y DPA (R)
+                    $totalCuentaTerceros, // Ventas a Cuenta de Terceros No domiciliados (S)
+                    $totalPagar, // Suma totalExenta + totalNoSuj + totalGravada (T)
+                    $tipoOperacion, // Tipo de operación (Renta) (U)
+                    $tipoIngreso, // "03" // Tipo de Ingreso (Renta) (V)
+                    "2", // "2" // Número de Anexo, siempre "2" (W)
+                ];
+            }
+        }
+
+        $fileName = 'anexo-f07-consumidor-final_' . date("YmdHis") . '.csv';
+        $filePath = "exports/{$fileName}";
+
+        // Guardar el archivo temporalmente
+        Excel::store(new ConsumidorFinal($result), $filePath, 'public');
+
+        // Verificar si el archivo se generó
+        if (!Storage::disk('public')->exists($filePath)) {
+            throw new \Exception('Error al generar el archivo de consumidores');
+        }
+
+        return storage_path("app/public/{$filePath}");
+    }
+
+
+    private function exportAnexoComprasSE($dtes, $tipoOperacion , $clasificacion, $sector, $tipo_costo)
+    {
+        $dte_collection = collect();
+        foreach ($dtes as $dte) {
+            if ($dte["estado"] == "PROCESADO" && in_array($dte["tipo_dte"], ["14"])) {
+                $dte_collection->push($dte);
+            }
+        }
+
+        // Sort DTE by emission date and time
+        $dte_collection = $dte_collection->sortBy('fhEmision');
+        $fileName = 'anexo-f07-compras-se_' . date("YmdHis") . '.csv';
+        $filePath = "exports/{$fileName}";
+        Excel::store(new ComprasSe($dte_collection, $tipoOperacion, $clasificacion, $sector, $tipo_costo), $filePath, 'public');
+        if (!Storage::disk('public')->exists($filePath)) {
+            throw new \Exception('Error al generar el archivo de Compras Sujeto Excluido');
+        }
+        return storage_path("app/public/{$filePath}");
     }
 
 
@@ -454,7 +634,7 @@ class ReportingController extends Controller
         };
     }
 
-    private function fetchDtes(string $nit, string $start_date, string $end_date): array
+    private function fetchSentDtes(string $nit, string $start_date, string $end_date, bool $associative = true): array
     {
         if (auth()->user()->only_fcf) {
             $this->tipo_dte = '01'; // Default to Factura Electrónica if the user only wants FCF
@@ -465,18 +645,14 @@ class ReportingController extends Controller
             'nit' => $nit,
             'emisionInicio' => $start_date ? "{$start_date}T00:00:00" : null,
             'emisionFin' => $end_date ? "{$end_date}T23:59:59" : null,
-            // 'codSucursal' => $this->codSucursal,
-            // 'codPuntoVenta' => $this->codPuntoVenta,
-            // 'tipo_dte' => $this->tipo_dte,
             'estado' => "PROCESADO",
-            // 'documento_receptor' => $this->documento_receptor,
         ];
 
         // Realizar la solicitud a la API de Octopus para obtener los DTEs
         $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes/", $parameters);
         $data = $response_dtes->json();
-        $dtes = array_map(function ($dte) {
-            $dte["documento"] = json_decode($dte["documento"], true);
+        $dtes = array_map(function ($dte) use ($associative) {
+            $dte["documento"] = json_decode($dte["documento"], $associative);
             return $dte;
         }, $data['items'] ?? []);
 

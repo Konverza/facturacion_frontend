@@ -13,6 +13,7 @@ use App\Http\Controllers\Business\DTEController;
 use App\Http\Controllers\Business\DTEDocumentsController;
 use App\Http\Controllers\Business\DTEDonationController;
 use App\Http\Controllers\Business\DTEProductController;
+use App\Http\Controllers\Business\DTERecibidoController;
 use App\Http\Controllers\Business\MailController;
 use App\Http\Controllers\Business\MovementController;
 use App\Http\Controllers\Business\PaymentMethodController;
@@ -189,5 +190,12 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         Route::get('/transfers/products/available', [PosTransferController::class, 'getAvailableProducts'])->name('transfers.products.available');
         Route::get('/transfers/products/stock', [PosTransferController::class, 'getProductStock'])->name('transfers.products.stock');
     });
-    
+
+    // Documentos Recibidos
+    Route::prefix("received-documents")->name("received-documents.")->group(function () {
+        Route::get("/", [DTERecibidoController::class, "index"])->name('index');
+        Route::get("/import", [DTERecibidoController::class, "importIndex"])->name('import.index');
+        Route::post("/import/start", [DTERecibidoController::class, "startImport"])->name('import.start');
+        Route::get("/import/progress/{id}", [DTERecibidoController::class, "getProgress"])->name('import.progress');
+    });
 });

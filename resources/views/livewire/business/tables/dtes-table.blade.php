@@ -24,12 +24,14 @@
                     </button>
                 </div>
                 <div class="flex-1">
-                    <button type="button"
+                    {{-- <button type="button"
                         class="show-modal bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
                         data-target="#download-anexos">
                         <x-icon icon="download" class="h-4 w-4" />
                         <span class="text-sm">Descargar Anexos</span>
-                    </button>
+                    </button> --}}
+                    <x-button type="a" typeButton="info" icon="download"
+                        href="{{ Route('business.reporting.index') }}" text="Descargar Anexos" />
                 </div>
             @endif
         </div>
@@ -647,8 +649,8 @@
                                 '4' => 'Mixta',
                                 '12' => 'Ingresos que ya fueron sujetos de retención informados',
                                 '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
-                            ]" label="Tipo de Operación" name="tipo_operacion"
-                                required />
+                            ]" label="Tipo de Operación"
+                                name="tipo_operacion" required />
                             <x-select id="tipo_ingreso" :options="[
                                 '1' => 'Profesiones, Artes y Oficios',
                                 '2' => 'Actividades de Servicios',
@@ -662,8 +664,8 @@
                                 '10' => 'Otras Rentas Gravables',
                                 '12' => 'Ingresos que ya fueron sujetos de retención informados',
                                 '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
-                            ]" label="Tipo de Ingreso" name="tipo_ingreso"
-                                required />
+                            ]" label="Tipo de Ingreso"
+                                name="tipo_ingreso" required />
                         </div>
                         <!-- Modal footer -->
                         <div

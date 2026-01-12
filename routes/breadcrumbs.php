@@ -141,6 +141,19 @@ Breadcrumbs::for("business.documents.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Documentos", route("business.documents.index"));
 });
 
+//Received Documents
+Breadcrumbs::for("business.received-documents.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='inbox' class='w-4 h-4'/>");
+    $trail->parent("business");
+    $trail->push($icon . "Documentos Recibidos", route("business.received-documents.index"));
+});
+
+Breadcrumbs::for("business.received-documents.import.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='cloud-download' class='w-4 h-4'/>");
+    $trail->parent("business.received-documents.index");
+    $trail->push($icon . "Importar desde Hacienda", route("business.received-documents.import.index"));
+});
+
 //Products
 Breadcrumbs::for("business.products.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='box' class='w-4 h-4'/>");
