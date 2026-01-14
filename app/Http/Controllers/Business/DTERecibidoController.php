@@ -10,6 +10,7 @@ use App\Services\OctopusService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Session;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DTERecibidoController extends Controller
 {
@@ -43,6 +44,31 @@ class DTERecibidoController extends Controller
             'bienTitulo' => $this->octopus_service->getCatalog("CAT-025"),
         ];
         return view("business.received_documents.show", compact('dte', 'codGeneracion', 'catalogos'));
+    }
+
+    public function downloadPdf(string $codGeneracion)
+    {
+        $dte = Http::get(env('OCTOPUS_API_URL') . "/dtes_recibidos/{$codGeneracion}")->json();
+        $catalogos = [
+            'unidades_medidas' => $this->octopus_service->getCatalog("CAT-014"),
+            'departamentos' => $this->octopus_service->simpleDepartamentos(),
+            'tipos_documentos' => $this->octopus_service->getCatalog("CAT-022"),
+            'actividades_economicas' => $this->octopus_service->getCatalog("CAT-019", null, true, true),
+            'countries' => $this->octopus_service->getCatalog("CAT-020"),
+            'recinto_fiscal' => $this->octopus_service->getCatalog("CAT-027", null, true, true),
+            'regimen_exportacion' => $this->octopus_service->getCatalog("CAT-028", null, true, true),
+            'tipos_establecimientos' => $this->octopus_service->getCatalog("CAT-009"),
+            'formas_pago' => $this->octopus_service->getCatalog("CAT-017"),
+            'tipo_servicio' => $this->octopus_service->getCatalog("CAT-010"),
+            'modo_transporte' => $this->octopus_service->getCatalog("CAT-030"),
+            'incoterms' => $this->octopus_service->getCatalog("CAT-031", null, true, true),
+            'bienTitulo' => $this->octopus_service->getCatalog("CAT-025"),
+        ];
+        
+        $pdf = Pdf::loadView('business.received_documents.pdf', compact('dte', 'codGeneracion', 'catalogos'))
+            ->setPaper('letter', 'portrait');
+        
+        return $pdf->download("DTE_{$codGeneracion}.pdf");
     }
 
     public function importIndex()
