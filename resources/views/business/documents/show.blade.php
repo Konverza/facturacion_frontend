@@ -2,7 +2,7 @@
 @section('title', 'Detalle DTE Emitido')
 @section('content')
     @php
-        $documento = json_decode($dte['documento']);
+        $documento = json_decode($dte['documento'] ?? '{}');
         $types = [
             '01' => 'Factura Consumidor Final',
             '03' => 'Comprobante de crédito fiscal',
@@ -75,7 +75,7 @@
                         Sello de Recepción
                     </div>
                     <div class="break-all font-mono text-sm text-slate-900 dark:text-white">
-                        {{ $dte['selloRecibido'] }}
+                        {{ $dte['selloRecibido'] ?? '' }}
                     </div>
                 </div>
                 <div>
@@ -93,7 +93,7 @@
                     </div>
                     <div class="break-all font-mono text-sm text-slate-900 dark:text-white">
                         @php
-                            $status = $dte['estado'];
+                            $status = $dte['estado'] ?? '';
                             $style = '';
                             if ($status == 'RECHAZADO') {
                                 $style = 'bg-red-100 dark:bg-red-950/30';
@@ -103,25 +103,25 @@
                                 $style = 'bg-yellow-100 dark:bg-yellow-950/30';
                             }
                         @endphp
-                        @if ($dte['estado'] === 'PROCESADO' || $dte['estado'] === 'VALIDADO' || $dte['estado'] === 'OBSERVADO')
+                        @if (($dte['estado'] ?? '') === 'PROCESADO' || ($dte['estado'] ?? '') === 'VALIDADO' || ($dte['estado'] ?? '') === 'OBSERVADO')
                             <span
                                 class="flex items-center gap-1 bg-green-200 dark:bg-green-900/50 px-2 py-1 rounded-lg w-max font-bold text-green-800 dark:text-green-300 text-xs uppercase text-nowrap">
                                 <x-icon icon="circle-check" class="size-4" />
                                 Procesado
                             </span>
-                        @elseif($dte['estado'] === 'RECHAZADO')
+                        @elseif(($dte['estado'] ?? '') === 'RECHAZADO')
                             <span
                                 class="flex items-center gap-1 bg-red-200 dark:bg-red-900/50 px-2 py-1 rounded-lg w-max font-bold text-red-800 dark:text-red-300 text-xs uppercase text-nowrap">
                                 <x-icon icon="circle-x" class="size-4" />
                                 Rechazado
                             </span>
-                        @elseif($dte['estado'] === 'CONTINGENCIA')
+                        @elseif(($dte['estado'] ?? '') === 'CONTINGENCIA')
                             <span
                                 class="flex items-center gap-1 bg-yellow-200 dark:bg-yellow-900/50 px-2 py-1 rounded-lg w-max font-bold text-yellow-800 dark:text-yellow-300 text-xs uppercase text-nowrap">
                                 <x-icon icon="warning" class="size-4" />
                                 Contingencia
                             </span>
-                        @elseif($dte['estado'] === 'ANULADO')
+                        @elseif(($dte['estado'] ?? '') === 'ANULADO')
                             <span
                                 class="flex items-center gap-1 bg-yellow-200 dark:bg-yellow-900/50 px-2 py-1 rounded-lg w-max font-bold text-yellow-800 dark:text-yellow-300 text-xs uppercase text-nowrap">
                                 <x-icon icon="circle-minus" class="size-4" />
@@ -135,7 +135,7 @@
                         Tipo de DTE
                     </div>
                     <div class="break-all font-mono text-sm text-slate-900 dark:text-white">
-                        {{ $types[$dte['tipo_dte']] }}
+                        {{ $types[$dte['tipo_dte'] ?? ''] ?? 'Documento Tributario Electrónico' }}
                     </div>
                 </div>
             </div>
@@ -215,8 +215,8 @@
                             </div>
                             <div class="break-all text-sm text-slate-900 dark:text-white">
                                 {{ $emisor->direccion->complemento }},
-                                {{ ucwords(Str::lower($catalogos['departamentos'][$emisor->direccion->departamento]['municipios'][$emisor->direccion->municipio]['nombre'])) }},
-                                {{ $catalogos['departamentos'][$emisor->direccion->departamento]['nombre'] }}
+                                {{ ucwords(Str::lower($catalogos['departamentos'][$emisor->direccion->departamento]['municipios'][$emisor->direccion->municipio]['nombre'] ?? '')) }},
+                                {{ $catalogos['departamentos'][$emisor->direccion->departamento]['nombre'] ?? '' }}
                             </div>
                         </div>
                     @endif
@@ -297,8 +297,8 @@
                                 </div>
                                 <div class="break-all text-sm text-slate-900 dark:text-white">
                                     {{ $receptor->direccion->complemento }},
-                                    {{ ucwords(Str::lower($catalogos['departamentos'][$receptor->direccion->departamento]['municipios'][$receptor->direccion->municipio]['nombre'])) }},
-                                    {{ $catalogos['departamentos'][$receptor->direccion->departamento]['nombre'] }}
+                                    {{ ucwords(Str::lower($catalogos['departamentos'][$receptor->direccion->departamento]['municipios'][$receptor->direccion->municipio]['nombre'] ?? '')) }},
+                                    {{ $catalogos['departamentos'][$receptor->direccion->departamento]['nombre'] ?? '' }}
                                 </div>
                             </div>
                         @endif
