@@ -54,7 +54,7 @@ class Contribuyente implements FromCollection, WithColumnFormatting, WithStrictN
                 str_replace('-', '', $dte["codGeneracion"]), // número de resolución (F)
                 null, // Número de control interno (G)
                 $dte["documento"]->receptor->nit, // NIT o NRC receptor (H)
-                $dte["documento"]->receptor->nombre, // Nombre o razón social del receptor (I)
+                html_entity_decode($dte["documento"]->receptor->nombre, ENT_QUOTES | ENT_HTML5, 'UTF-8'), // Nombre o razón social del receptor (I)
                 round($totalExento, 2), // Ventas Exentas (J)
                 round($totalNoSuj, 2), // Ventas No sujetas (K)
                 round($totalGravado, 2), // Ventas Gravadas (L)

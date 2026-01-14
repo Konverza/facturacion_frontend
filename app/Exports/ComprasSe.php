@@ -45,7 +45,7 @@ class ComprasSe implements FromCollection, WithColumnFormatting, WithStrictNullC
             $data[] = [
                 $tipoDocumento[$dte["documento"]->sujetoExcluido->tipoDocumento] ?? null, // Tipo de documento (A)
                 str_replace('-', '', $dte["documento"]->sujetoExcluido->numDocumento), // Número de documento (B)
-                $dte["documento"]->sujetoExcluido->nombre ?? null, // Nombre o razón social (C)
+                html_entity_decode($dte["documento"]->sujetoExcluido->nombre ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8') ?: null, // Nombre o razón social (C)
                 \Carbon\Carbon::parse($dte["fhEmision"])->format('d/m/Y'), // Fecha de emisión (D)
                 $dte["selloRecibido"], // número de serie de documento (E)
                 str_replace('-', '', $dte["codGeneracion"]), // número de resolución (F)

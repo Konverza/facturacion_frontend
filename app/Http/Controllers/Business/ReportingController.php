@@ -336,7 +336,7 @@ class ReportingController extends Controller
             $sheet->setCellValue("E{$row}", $sello_recibido);
             $sheet->setCellValue("F{$row}", $doc["identificacion"]["codigoGeneracion"] ?? "");
             $sheet->setCellValue("G{$row}", $doc["receptor"]["nrc"] ?? "");
-            $sheet->setCellValue("H{$row}", $doc["receptor"]["nombre"] ?? "");
+            $sheet->setCellValue("H{$row}", html_entity_decode($doc["receptor"]["nombre"] ?? "", ENT_QUOTES | ENT_HTML5, 'UTF-8'));
             $sheet->setCellValue("I{$row}", $resumen["totalExenta"] ?? 0);
             $sheet->setCellValue("J{$row}", $resumen["totalNoSuj"] ?? 0);
             $sheet->setCellValue("K{$row}", $resumen["totalGravada"] ?? 0);
