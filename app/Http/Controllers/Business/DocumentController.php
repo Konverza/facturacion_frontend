@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers\Business;
 
+use App\Services\OctopusService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
@@ -13,9 +14,34 @@ use Illuminate\Support\Facades\Session;
 
 class DocumentController extends Controller
 {
+
+    private $octopus_service;
+
     public function index()
     {
         return view("business.documents.index");
+    }
+
+    public function show(string $codGeneracion)
+    {
+        $this->octopus_service = new OctopusService();
+        $dte = Http::get(env('OCTOPUS_API_URL') . "/dtes/{$codGeneracion}")->json();
+        $catalogos = [
+            'unidades_medidas' => $this->octopus_service->getCatalog("CAT-014"),
+            'departamentos' => $this->octopus_service->simpleDepartamentos(),
+            'tipos_documentos' => $this->octopus_service->getCatalog("CAT-022"),
+            'actividades_economicas' => $this->octopus_service->getCatalog("CAT-019", null, true, true),
+            'countries' => $this->octopus_service->getCatalog("CAT-020"),
+            'recinto_fiscal' => $this->octopus_service->getCatalog("CAT-027", null, true, true),
+            'regimen_exportacion' => $this->octopus_service->getCatalog("CAT-028", null, true, true),
+            'tipos_establecimientos' => $this->octopus_service->getCatalog("CAT-009"),
+            'formas_pago' => $this->octopus_service->getCatalog("CAT-017"),
+            'tipo_servicio' => $this->octopus_service->getCatalog("CAT-010"),
+            'modo_transporte' => $this->octopus_service->getCatalog("CAT-030"),
+            'incoterms' => $this->octopus_service->getCatalog("CAT-031", null, true, true),
+            'bienTitulo' => $this->octopus_service->getCatalog("CAT-025"),
+        ];
+        return view("business.documents.show", compact('dte', 'codGeneracion', 'catalogos'));
     }
 
     public function zipAndDownload(Request $request)

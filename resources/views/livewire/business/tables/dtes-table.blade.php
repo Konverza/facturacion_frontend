@@ -403,11 +403,20 @@
                                                         Ver JSON
                                                     </a>
                                                 </li>
+                                                @if ($invoice['enlace_rtf'] != '')
+                                                    <li>
+                                                        <a href="{{ $invoice['enlace_rtf'] }}" target="_blank"
+                                                            class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                                                            <x-icon icon="file-barcode" class="h-4 w-4" />
+                                                            Ver tiquete
+                                                        </a>
+                                                    </li>
+                                                @endif
                                                 <li>
-                                                    <a href="{{ $invoice['enlace_rtf'] }}" target="_blank"
+                                                    <a href="{{ Route('business.documents.show', $invoice['codGeneracion']) }}"
                                                         class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
-                                                        <x-icon icon="file-barcode" class="h-4 w-4" />
-                                                        Ver tiquete
+                                                        <x-icon icon="eye" class="h-4 w-4" />
+                                                        Ver detalles del DTE
                                                     </a>
                                                 </li>
                                                 @if ($invoice['estado'] !== 'ANULADO')

@@ -141,6 +141,13 @@ Breadcrumbs::for("business.documents.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Documentos", route("business.documents.index"));
 });
 
+// Documents > Show
+Breadcrumbs::for("business.documents.show", function (BreadcrumbTrail $trail, string $codGeneracion) {
+    $icon = Blade::render("<x-icon icon='eye' class='w-4 h-4'/>");
+    $trail->parent("business.documents.index");
+    $trail->push($icon . "Detalle DTE", route("business.documents.show", $codGeneracion));
+});
+
 //Received Documents
 Breadcrumbs::for("business.received-documents.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='inbox' class='w-4 h-4'/>");

@@ -36,6 +36,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::get("/", [DashboardController::class, "index"])->name('index');
     Route::get("/dashboard", [DashboardController::class, "index"])->name('dashboard');
     Route::resource("/documents", DocumentController::class);
+    Route::get("/documents/{codGeneracion}", [DocumentController::class, "show"])->name('documents.show');
     Route::resource("/products", ProductController::class);
     Route::resource("/categories", CategoryController::class);
     Route::post("/products/add-stock", [ProductController::class, "add_stock"])->name('products.add-stock');
