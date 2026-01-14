@@ -208,8 +208,11 @@ class ReportingController extends Controller
         $totalDocExportacion = 0;
 
         foreach ($dtesGroupedByDate as $date => $dtesGroup) {
-            $docFirst = $dtesGroup->first()["documento"] ?: [];
-            $docLast = $dtesGroup->last()["documento"] ?: [];
+            // Ordenar DTEs por número de control antes de obtener el primero y último
+            $dtesGroupOrdenados = $dtesGroup->sortBy(fn($dte) => $dte["documento"]["identificacion"]["numeroControl"])->values();
+            
+            $docFirst = $dtesGroupOrdenados->first()["documento"] ?: [];
+            $docLast = $dtesGroupOrdenados->last()["documento"] ?: [];
 
             $tipo_documento = "";
             if ($docFirst["identificacion"]["tipoDte"] === "01") {
