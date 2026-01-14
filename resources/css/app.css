@@ -333,3 +333,66 @@ div[drawer-backdrop] {
 .business {
     @apply lg:ml-72;
 }
+
+/* JSON Viewer Styles */
+.json-viewer {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.json-key {
+    color: #881391;
+    font-weight: bold;
+}
+
+.dark .json-key {
+    color: #c678dd;
+}
+
+.json-string {
+    color: #008000;
+}
+
+.dark .json-string {
+    color: #98c379;
+}
+
+.json-number {
+    color: #0000ff;
+}
+
+.dark .json-number {
+    color: #d19a66;
+}
+
+.json-boolean {
+    color: #0000ff;
+    font-weight: bold;
+}
+
+.dark .json-boolean {
+    color: #56b6c2;
+}
+
+.json-null {
+    color: #808080;
+    font-style: italic;
+}
+
+.dark .json-null {
+    color: #5c6370;
+}
+
+.json-bracket {
+    color: #000000;
+    font-weight: bold;
+}
+
+.dark .json-bracket {
+    color: #abb2bf;
+}
+
+.json-line {
+    margin: 2px 0;
+}

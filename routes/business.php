@@ -194,6 +194,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     // Documentos Recibidos
     Route::prefix("received-documents")->name("received-documents.")->group(function () {
         Route::get("/", [DTERecibidoController::class, "index"])->name('index');
+        Route::get("/show/{codGeneracion}", [DTERecibidoController::class, "show"])->name('show');
         Route::get("/import", [DTERecibidoController::class, "importIndex"])->name('import.index');
         Route::post("/import/start", [DTERecibidoController::class, "startImport"])->name('import.start');
         Route::get("/import/progress/{id}", [DTERecibidoController::class, "getProgress"])->name('import.progress');

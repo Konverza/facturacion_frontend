@@ -341,7 +341,9 @@
                                 @endif
                             </x-td>
                             <x-td th :last="true">
-                                {{-- Acciones --}}
+                                <x-button type="a" typeButton="primary" icon="eye"
+                                    href="{{ Route('business.received-documents.show', ['codGeneracion' => $invoice['codGeneracion']]) }}"
+                                    text="Ver detalles" />
                             </x-td>
                         </x-tr>
                     @empty

@@ -148,6 +148,14 @@ Breadcrumbs::for("business.received-documents.index", function (BreadcrumbTrail 
     $trail->push($icon . "Documentos Recibidos", route("business.received-documents.index"));
 });
 
+// Received Documents > Show
+Breadcrumbs::for("business.received-documents.show", function (BreadcrumbTrail $trail, string $codGeneracion) {
+    $icon = Blade::render("<x-icon icon='eye' class='w-4 h-4'/>");
+    $trail->parent("business.received-documents.index");
+    $trail->push($icon . "Detalle DTE", route("business.received-documents.show", $codGeneracion));
+});
+
+//Received Documents > Import
 Breadcrumbs::for("business.received-documents.import.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='cloud-download' class='w-4 h-4'/>");
     $trail->parent("business.received-documents.index");
