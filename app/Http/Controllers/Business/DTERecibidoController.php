@@ -68,7 +68,7 @@ class DTERecibidoController extends Controller
         $pdf = Pdf::loadView('business.received_documents.pdf', compact('dte', 'codGeneracion', 'catalogos'))
             ->setPaper('letter', 'portrait');
         
-        return $pdf->download("DTE_{$codGeneracion}.pdf");
+        return $pdf->stream("DTE_{$codGeneracion}.pdf");
     }
 
     public function importIndex()

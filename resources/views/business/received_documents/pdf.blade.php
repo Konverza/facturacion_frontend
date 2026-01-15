@@ -161,6 +161,8 @@
             '05' => 'Nota de crédito',
             '06' => 'Nota de débito',
             '07' => 'Comprobante de retención',
+            '08' => 'Comprobante de Liquidación',
+            '09' => 'Documento Contable de Liquidación',
             '11' => 'Factura de exportación',
             '14' => 'Factura de sujeto excluido',
             '15' => 'Comprobante de Donación',
@@ -305,7 +307,115 @@
         $cuerpoDocumento = $documento->cuerpoDocumento ?? [];
     @endphp
 
-    @if ($tipoDte !== '09' && !empty($cuerpoDocumento))
+    @if ($tipoDte === '09')
+        {{-- Documento Contable de Liquidación - Mostrar como campos compactos --}}
+        <div class="section" style="margin-bottom: 10px;">
+            <div class="section-title" style="margin-bottom: 6px; padding: 5px 0;">CUERPO DEL DOCUMENTO</div>
+            <div style="display: table; width: 100%; border-collapse: collapse;">
+                {{-- Fila 1: Periodo, Código, Cantidad (si existen) --}}
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 3px 6px; width: 33.33%; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">Periodo de Liquidación</div>
+                        <div class="field-value" style="font-size: 8px;">
+                            {{ \Carbon\Carbon::parse($cuerpoDocumento->periodoLiquidacionFechaInicio ?? '')->format('d/m/Y') }}
+                            - {{ \Carbon\Carbon::parse($cuerpoDocumento->periodoLiquidacionFechaFin ?? '')->format('d/m/Y') }}
+                        </div>
+                    </div>
+                    @if ($cuerpoDocumento->codLiquidacion ?? null)
+                        <div style="display: table-cell; padding: 3px 6px; width: 33.33%; border-bottom: 1px solid #e5e5e5;">
+                            <div class="field-label" style="margin-bottom: 2px;">Código</div>
+                            <div class="field-value" style="font-size: 8px;">{{ $cuerpoDocumento->codLiquidacion }}</div>
+                        </div>
+                    @endif
+                    @if ($cuerpoDocumento->cantidadDoc ?? null)
+                        <div style="display: table-cell; padding: 3px 6px; width: 33.33%; border-bottom: 1px solid #e5e5e5;">
+                            <div class="field-label" style="margin-bottom: 2px;">Cant. Docs</div>
+                            <div class="field-value" style="font-size: 8px;">{{ number_format($cuerpoDocumento->cantidadDoc, 0) }}</div>
+                        </div>
+                    @endif
+                </div>
+                {{-- Fila 2: Valor Operaciones, Monto sin Percepción, Subtotal --}}
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">Valor Operaciones</div>
+                        <div class="field-value" style="font-size: 8px;">${{ number_format($cuerpoDocumento->valorOperaciones ?? 0, 2) }}</div>
+                    </div>
+                    <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">Monto sin Percepción</div>
+                        <div class="field-value" style="font-size: 8px;">${{ number_format($cuerpoDocumento->montoSinPercepcion ?? 0, 2) }}</div>
+                    </div>
+                    <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">Subtotal</div>
+                        <div class="field-value" style="font-size: 8px;">${{ number_format($cuerpoDocumento->subTotal ?? 0, 2) }}</div>
+                    </div>
+                </div>
+                {{-- Fila 3: IVA, Monto Sujeto Percepción, IVA Percibido --}}
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">IVA</div>
+                        <div class="field-value" style="font-size: 8px;">${{ number_format($cuerpoDocumento->iva ?? 0, 2) }}</div>
+                    </div>
+                    <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">Monto Sujeto Percepción</div>
+                        <div class="field-value" style="font-size: 8px;">${{ number_format($cuerpoDocumento->montoSujetoPercepcion ?? 0, 2) }}</div>
+                    </div>
+                    <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">IVA Percibido (1%)</div>
+                        <div class="field-value" style="font-size: 8px;">${{ number_format($cuerpoDocumento->ivaPercibido ?? 0, 2) }}</div>
+                    </div>
+                </div>
+                {{-- Fila 4: Comisión, % Comisión, IVA Comisión --}}
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">Comisión</div>
+                        <div class="field-value" style="font-size: 8px;">${{ number_format($cuerpoDocumento->comision ?? 0, 2) }}</div>
+                    </div>
+                    <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                        <div class="field-label" style="margin-bottom: 2px;">{{ ($cuerpoDocumento->porcentComision ?? null) ? '% Comisión' : 'IVA Comisión' }}</div>
+                        <div class="field-value" style="font-size: 8px;">{{ ($cuerpoDocumento->porcentComision ?? null) ? $cuerpoDocumento->porcentComision : '$' . number_format($cuerpoDocumento->ivaComision ?? 0, 2) }}</div>
+                    </div>
+                    @if ($cuerpoDocumento->porcentComision ?? null)
+                        <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;">
+                            <div class="field-label" style="margin-bottom: 2px;">IVA Comisión</div>
+                            <div class="field-value" style="font-size: 8px;">${{ number_format($cuerpoDocumento->ivaComision ?? 0, 2) }}</div>
+                        </div>
+                    @else
+                        <div style="display: table-cell; padding: 3px 6px; border-bottom: 1px solid #e5e5e5;"></div>
+                    @endif
+                </div>
+                {{-- Fila 5: Líquido a Pagar y Total en Letras --}}
+                <div style="display: table-row;">
+                    <div style="display: table-cell; padding: 4px 6px; background-color: #f5f5f5;">
+                        <div class="field-label" style="margin-bottom: 2px;">Líquido a Pagar</div>
+                        <div class="field-value" style="font-weight: bold; font-size: 10px;">
+                            ${{ number_format($cuerpoDocumento->liquidoApagar ?? 0, 2) }}
+                        </div>
+                    </div>
+                    <div style="display: table-cell; padding: 4px 6px; colspan: 2;">
+                        <div class="field-label" style="margin-bottom: 2px;">Total en Letras</div>
+                        <div class="field-value" style="font-size: 8px;">{{ $cuerpoDocumento->totalLetras ?? '' }}</div>
+                    </div>
+                </div>
+                {{-- Observaciones si existen --}}
+                @if ($cuerpoDocumento->descripSinPercepcion ?? null)
+                    <div style="display: table-row;">
+                        <div style="display: table-cell; padding: 3px 6px; colspan: 3;">
+                            <div class="field-label" style="margin-bottom: 2px;">Descripción sin Percepción</div>
+                            <div class="field-value" style="font-size: 8px;">{{ $cuerpoDocumento->descripSinPercepcion }}</div>
+                        </div>
+                    </div>
+                @endif
+                @if ($cuerpoDocumento->observaciones ?? null)
+                    <div style="display: table-row;">
+                        <div style="display: table-cell; padding: 3px 6px; colspan: 3;">
+                            <div class="field-label" style="margin-bottom: 2px;">Observaciones</div>
+                            <div class="field-value" style="font-size: 8px;">{{ $cuerpoDocumento->observaciones }}</div>
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    @elseif (!empty($cuerpoDocumento))
         <div class="section">
             <div class="section-title">CUERPO DEL DOCUMENTO</div>
             <table>

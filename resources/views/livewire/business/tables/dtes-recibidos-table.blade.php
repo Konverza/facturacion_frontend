@@ -6,7 +6,7 @@
     </div>
     <div class="mt-4 pb-8">
         <!-- Indicador de última importación -->
-        @if($lastImport)
+        @if ($lastImport)
             <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
                 <div class="flex items-center gap-3">
                     <span class="bg-blue-100 dark:bg-blue-900/50 p-2 rounded-full">
@@ -17,14 +17,15 @@
                             Última importación de DTEs desde Hacienda
                         </p>
                         <p class="text-xs text-blue-700 dark:text-blue-300">
-                            {{ $lastImport->updated_at->diffForHumans() }} 
-                            <span class="text-blue-600 dark:text-blue-400">({{ $lastImport->updated_at->format('d/m/Y h:i A') }})</span>
+                            {{ $lastImport->updated_at->diffForHumans() }}
+                            <span
+                                class="text-blue-600 dark:text-blue-400">({{ $lastImport->updated_at->format('d/m/Y h:i A') }})</span>
                         </p>
                         <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                            @if($lastImport->total_dtes > 0)
-                                <strong>{{ $lastImport->total_dtes }}</strong> documentos descargados, 
+                            @if ($lastImport->total_dtes > 0)
+                                <strong>{{ $lastImport->total_dtes }}</strong> documentos descargados,
                                 <strong>{{ $lastImport->processed_dtes }}</strong> procesados exitosamente
-                                @if($lastImport->failed_dtes > 0)
+                                @if ($lastImport->failed_dtes > 0)
                                     <span class="text-red-600 dark:text-red-400">
                                         , <strong>{{ $lastImport->failed_dtes }}</strong> fallidos
                                     </span>
@@ -39,7 +40,8 @@
                 </div>
             </div>
         @else
-            <div class="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+            <div
+                class="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
                 <div class="flex items-center gap-3">
                     <span class="bg-yellow-100 dark:bg-yellow-900/50 p-2 rounded-full">
                         <x-icon icon="warning" class="size-5 text-yellow-600 dark:text-yellow-400" />
@@ -271,7 +273,7 @@
                                 </span>
                             </x-td>
                             <x-td class="text-xs">
-                                @if(property_exists($invoice['documento'], 'resumen'))
+                                @if (property_exists($invoice['documento'], 'resumen'))
                                     @switch($invoice['tipo_dte'])
                                         @case('01')
                                             <strong>Total:
@@ -337,7 +339,12 @@
                                         <span class="text-xs">Desconocido</span>
                                     @endif
                                 @else
-                                    <span class="text-xs text-gray-500">Sin información de montos</span>
+                                    @if ($invoice['tipo_dte'] == '09')
+                                        <strong>Líquido a Pagar:
+                                        </strong>${{ number_format($invoice['documento']->cuerpoDocumento->liquidoApagar ?? 0, 2, '.', ',') }}
+                                    @else
+                                        <span class="text-xs text-gray-500">Sin información de montos</span>
+                                    @endif
                                 @endif
                             </x-td>
                             <x-td th :last="true">
