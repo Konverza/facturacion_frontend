@@ -16,20 +16,11 @@
             </div>
             @if (!$only_fcf)
                 <div class="flex-1">
-                    <button type="button"
-                        class="show-modal bg-green-500 text-white hover:bg-green-600 dark:bg-green-500 dark:text-white dark:hover:bg-green-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
-                        data-target="#download-dtes">
-                        <x-icon icon="file" class="h-4 w-4" />
-                        <span class="text-sm">Descargar DTEs</span>
-                    </button>
+                    <x-button type="a" typeButton="success" icon="download"
+                        href="{{ route('business.documents.zip') }}"
+                        text="Descargar DTEs" class="w-full" />
                 </div>
                 <div class="flex-1">
-                    {{-- <button type="button"
-                        class="show-modal bg-blue-500 text-white hover:bg-blue-600 dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600 font-medium rounded-lg flex items-center justify-center gap-1 transition-colors duration-300 text-nowrap  px-4 py-2.5 w-full"
-                        data-target="#download-anexos">
-                        <x-icon icon="download" class="h-4 w-4" />
-                        <span class="text-sm">Descargar Anexos</span>
-                    </button> --}}
                     <x-button type="a" typeButton="info" icon="download"
                         href="{{ Route('business.reporting.index') }}" text="Descargar Anexos" />
                 </div>

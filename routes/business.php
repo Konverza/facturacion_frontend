@@ -37,6 +37,14 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::get("/dashboard", [DashboardController::class, "index"])->name('dashboard');
     Route::resource("/documents", DocumentController::class);
     Route::get("/documents/{codGeneracion}", [DocumentController::class, "show"])->name('documents.show');
+    
+    // Gestión de descargas ZIP
+    Route::get("/documents-zip", [DocumentController::class, "zipDownloads"])->name('documents.zip');
+    Route::post("/documents/zip/create", [DocumentController::class, "createZipDownload"])->name('documents.zip.create');
+    Route::get("/documents/zip/status/{id}", [DocumentController::class, "getZipStatus"])->name('documents.zip.status');
+    Route::get("/documents/zip/download/{id}", [DocumentController::class, "downloadZip"])->name('documents.zip.download');
+    Route::delete("/documents/zip/{id}", [DocumentController::class, "deleteZipJob"])->name('documents.zip.delete');
+    
     Route::resource("/products", ProductController::class);
     Route::resource("/categories", CategoryController::class);
     Route::post("/products/add-stock", [ProductController::class, "add_stock"])->name('products.add-stock');

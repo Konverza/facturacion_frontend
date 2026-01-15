@@ -9,8 +9,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessUser;
 use App\Models\User;
+use App\Models\ZipDownloadJob;
+use App\Jobs\GenerateZipDownload;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 
 class DocumentController extends Controller
 {
@@ -87,7 +90,7 @@ class DocumentController extends Controller
             $zip->close();
             // Descargar el archivo zip
             return response()->download($zipFilePath, $zipFileName, [
-                'Content-Type' => 'text/csv',
+                'Content-Type' => 'application/zip',
                 'X-Download-Started' => 'true',
                 "X-File-Name" => $zipFileName,
             ])->deleteFileAfterSend(true);
@@ -97,5 +100,139 @@ class DocumentController extends Controller
                 'error_message' => 'Error al crear el archivo ZIP'
             ]);
         }
+    }
+
+    /**
+     * Vista de gestión de descargas ZIP
+     */
+    public function zipDownloads()
+    {
+        $business_id = Session::get('business');
+        $activeJob = ZipDownloadJob::getActiveJobForBusiness($business_id);
+        
+        // Obtener trabajos recientes (excluyendo el activo si existe)
+        $query = ZipDownloadJob::where('business_id', $business_id)
+            ->orderBy('created_at', 'desc');
+        
+        if ($activeJob) {
+            $query->where('id', '!=', $activeJob->id);
+        }
+        
+        $recentJobs = $query->take(10)->get();
+        
+        // Si hay trabajo activo, agregarlo al inicio de la colección
+        if ($activeJob) {
+            $recentJobs = collect([$activeJob])->concat($recentJobs);
+        }
+
+        return view('business.documents.zip-downloads', compact('activeJob', 'recentJobs'));
+    }
+
+    /**
+     * Crear solicitud de descarga ZIP
+     */
+    public function createZipDownload(Request $request)
+    {
+        $request->validate([
+            'desde' => 'required|date',
+            'hasta' => 'required|date|after_or_equal:desde',
+        ]);
+
+        $business_id = Session::get('business');
+
+        // Verificar si ya hay un trabajo activo
+        if (ZipDownloadJob::hasActiveJobForBusiness($business_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ya existe una solicitud de descarga en proceso. Por favor espere a que finalice.'
+            ], 422);
+        }
+
+        // Crear el registro del trabajo
+        $zipJob = ZipDownloadJob::create([
+            'business_id' => $business_id,
+            'fecha_inicio' => $request->desde,
+            'fecha_fin' => $request->hasta,
+            'status' => 'pending',
+        ]);
+
+        // Despachar el Job
+        GenerateZipDownload::dispatch($zipJob);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Solicitud de descarga creada. El proceso comenzará en breve.',
+            'job_id' => $zipJob->id,
+        ]);
+    }
+
+    /**
+     * Obtener el estado de un trabajo ZIP
+     */
+    public function getZipStatus($id)
+    {
+        $business_id = Session::get('business');
+        $zipJob = ZipDownloadJob::where('id', $id)
+            ->where('business_id', $business_id)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'job' => [
+                'id' => $zipJob->id,
+                'status' => $zipJob->status,
+                'progress' => $zipJob->getProgressPercentage(),
+                'processed_dtes' => $zipJob->processed_dtes,
+                'total_dtes' => $zipJob->total_dtes,
+                'file_name' => $zipJob->file_name,
+                'error_message' => $zipJob->error_message,
+                'created_at' => $zipJob->created_at->format('d/m/Y H:i'),
+                'can_download' => $zipJob->status === 'completed' && $zipJob->fileExists(),
+            ]
+        ]);
+    }
+
+    /**
+     * Descargar archivo ZIP generado desde S3
+     */
+    public function downloadZip($id)
+    {
+        $business_id = Session::get('business');
+        $zipJob = ZipDownloadJob::where('id', $id)
+            ->where('business_id', $business_id)
+            ->where('status', 'completed')
+            ->firstOrFail();
+
+        if (!$zipJob->fileExists()) {
+            return redirect()->back()->with([
+                'error' => 'Error',
+                'error_message' => 'El archivo no está disponible.'
+            ]);
+        }
+
+        // Descargar desde S3 y hacer streaming al usuario
+        return Storage::disk('s3')->download($zipJob->file_path, $zipJob->file_name);
+    }
+
+    /**
+     * Cancelar/eliminar un trabajo ZIP
+     */
+    public function deleteZipJob($id)
+    {
+        $business_id = Session::get('business');
+        $zipJob = ZipDownloadJob::where('id', $id)
+            ->where('business_id', $business_id)
+            ->firstOrFail();
+
+        // Eliminar archivo si existe
+        $zipJob->deleteFile();
+
+        // Eliminar registro
+        $zipJob->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trabajo eliminado correctamente.'
+        ]);
     }
 }

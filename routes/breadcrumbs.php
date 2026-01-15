@@ -148,6 +148,13 @@ Breadcrumbs::for("business.documents.show", function (BreadcrumbTrail $trail, st
     $trail->push($icon . "Detalle DTE", route("business.documents.show", $codGeneracion));
 });
 
+// Documents > ZIP Downloads
+Breadcrumbs::for("business.documents.zip", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='download' class='w-4 h-4'/>");
+    $trail->parent("business.documents.index");
+    $trail->push($icon . "Descargas ZIP", route("business.documents.zip"));
+});
+
 //Received Documents
 Breadcrumbs::for("business.received-documents.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='inbox' class='w-4 h-4'/>");
