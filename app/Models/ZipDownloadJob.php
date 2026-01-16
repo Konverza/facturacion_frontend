@@ -14,6 +14,14 @@ class ZipDownloadJob extends Model
         'business_id',
         'fecha_inicio',
         'fecha_fin',
+        'procesamiento_inicio',
+        'procesamiento_fin',
+        'cod_sucursal',
+        'cod_punto_venta',
+        'tipo_dte',
+        'estado',
+        'documento_receptor',
+        'busqueda',
         'status',
         'total_dtes',
         'processed_dtes',
@@ -27,6 +35,8 @@ class ZipDownloadJob extends Model
     protected $casts = [
         'fecha_inicio' => 'date',
         'fecha_fin' => 'date',
+        'procesamiento_inicio' => 'date',
+        'procesamiento_fin' => 'date',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
@@ -107,5 +117,58 @@ class ZipDownloadJob extends Model
         if ($this->file_path && Storage::disk('s3')->exists($this->file_path)) {
             Storage::disk('s3')->delete($this->file_path);
         }
+    }
+
+    /**
+     * Obtiene los filtros aplicados en formato legible
+     */
+    public function getFiltersDescription(): string
+    {
+        $filters = [];
+        
+        $filters[] = "Fecha de Emisión: " . $this->fecha_inicio->format('d/m/Y') . " - " . $this->fecha_fin->format('d/m/Y');
+        
+        if ($this->procesamiento_inicio && $this->procesamiento_fin) {
+            $filters[] = "Fecha de Procesamiento: " . $this->procesamiento_inicio->format('d/m/Y') . " - " . $this->procesamiento_fin->format('d/m/Y');
+        }
+        
+        if ($this->cod_sucursal) {
+            $filters[] = "Sucursal: " . $this->cod_sucursal;
+        }
+        
+        if ($this->cod_punto_venta) {
+            $filters[] = "Punto de Venta: " . $this->cod_punto_venta;
+        }
+        
+        if ($this->tipo_dte) {
+            $tipos = [
+                '01' => 'Factura Consumidor Final',
+                '03' => 'Comprobante de crédito fiscal',
+                '04' => 'Nota de Remisión',
+                '05' => 'Nota de crédito',
+                '06' => 'Nota de débito',
+                '07' => 'Comprobante de retención',
+                '08' => 'Comprobante de liquidación',
+                '09' => 'Documento Contable de Liquidación',
+                '11' => 'Factura de exportación',
+                '14' => 'Factura de sujeto excluido',
+                '15' => 'Comprobante de Donación'
+            ];
+            $filters[] = "Tipo de DTE: " . ($tipos[$this->tipo_dte] ?? $this->tipo_dte);
+        }
+        
+        if ($this->estado) {
+            $filters[] = "Estado: " . strtoupper($this->estado);
+        }
+        
+        if ($this->documento_receptor) {
+            $filters[] = "Documento Receptor: " . $this->documento_receptor;
+        }
+        
+        if ($this->busqueda) {
+            $filters[] = "Búsqueda: " . $this->busqueda;
+        }
+        
+        return implode("\n", $filters);
     }
 }

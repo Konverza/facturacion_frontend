@@ -4,7 +4,7 @@
     <section class="my-4 px-4">
         <div class="flex w-full justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
-                Descargas de DTEs
+                Descarga de DTEs
             </h1>
         </div>
 
@@ -24,21 +24,49 @@
                     </p>
                 </div>
             @else
-                <form id="form-create-zip" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                            Fecha Inicio
-                        </label>
-                        <x-input type="date" name="desde" id="desde" required />
+                <form id="form-create-zip" class="space-y-4">
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                            <x-icon icon="filter" class="inline mr-1" />
+                            Filtros
+                        </h3>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <div>
+                                <x-input type="date" name="emision_inicio" id="emision_inicio"
+                                    label="Fecha Emisión Desde" required />
+                            </div>
+                            <div>
+                                <x-input type="date" name="emision_fin" id="emision_fin" label="Fecha Emisión Hasta"
+                                    required />
+                            </div>
+                            <div>
+                                <x-input type="date" name="procesamiento_inicio" id="procesamiento_inicio" label="Fecha Procesamiento Desde" />
+                            </div>
+                            <div>
+                                <x-input type="date" name="procesamiento_fin" id="procesamiento_fin" label="Fecha Procesamiento Hasta" />
+                            </div>
+                            <div class="flex-1">
+                                <x-select id="tipo_dte" :options="$dtes_disponibles" name="tipo_dte"
+                                    placeholder="Seleccione un tipo de DTE" :search="false"
+                                    label="Buscar por tipo de DTE" />
+                            </div>
+                            <div>
+                                <x-select id="codSucursal" :options="$sucursal_options" name="codSucursal"
+                                    placeholder="Seleccione una sucursal" label="Buscar por sucursal" />
+                            </div>
+                            <div>
+                                <x-select id="codPuntoVenta" :options="$puntos_venta_options" name="codPuntoVenta"
+                                    placeholder="Seleccione un punto de venta" label="Buscar por punto de venta" />
+                            </div>
+                            <div>
+                                <x-select id="documento_receptor" :options="$receptores_unicos" name="documento_receptor"
+                                    placeholder="Seleccione un receptor" label="Buscar por receptor" :search="false" />
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-                            Fecha Fin
-                        </label>
-                        <x-input type="date" name="hasta" id="hasta" required />
-                    </div>
-                    <div class="flex items-end">
-                        <x-button type="button" typeButton="success" icon="download" id="btn-create-zip" class="w-full"
+
+                    <div class="flex justify-center">
+                        <x-button type="button" typeButton="success" icon="download" id="btn-create-zip"
                             text="Generar ZIP" />
                     </div>
                 </form>
@@ -63,6 +91,17 @@
                             <p class="text-sm text-gray-600 dark:text-gray-300">
                                 <strong>Creado:</strong> {{ $activeJob->created_at->format('d/m/Y H:i') }}
                             </p>
+                            @if (
+                                $activeJob->tipo_dte ||
+                                    $activeJob->estado ||
+                                    $activeJob->cod_sucursal ||
+                                    $activeJob->documento_receptor ||
+                                    $activeJob->busqueda)
+                                <p class="text-sm text-blue-600 dark:text-blue-400 mt-2">
+                                    <x-icon icon="filter" class="inline mr-1" />
+                                    <strong>Con filtros aplicados</strong>
+                                </p>
+                            @endif
                         </div>
                         <div>
                             <p class="text-sm text-gray-600 dark:text-gray-300">
@@ -125,6 +164,7 @@
                             <tr>
                                 <th scope="col" class="px-6 py-3">Período</th>
                                 <th scope="col" class="px-6 py-3">Creado</th>
+                                <th scope="col" class="px-6 py-3">Filtros</th>
                                 <th scope="col" class="px-6 py-3">Estado</th>
                                 <th scope="col" class="px-6 py-3">DTEs</th>
                                 <th scope="col" class="px-6 py-3">Acciones</th>
@@ -138,6 +178,17 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         {{ $job->created_at->format('d/m/Y H:i') }}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        @if ($job->tipo_dte || $job->estado || $job->cod_sucursal || $job->documento_receptor || $job->busqueda)
+                                            <span class="text-blue-600 dark:text-blue-400"
+                                                title="{{ $job->getFiltersDescription() }}">
+                                                <x-icon icon="filter" class="inline" />
+                                                Sí
+                                            </span>
+                                        @else
+                                            <span class="text-gray-400">-</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4">
                                         @if ($job->status === 'completed')
@@ -198,11 +249,12 @@
 
         // Crear nueva solicitud de ZIP
         document.getElementById('btn-create-zip')?.addEventListener('click', async function() {
-            const desde = document.getElementById('desde').value;
-            const hasta = document.getElementById('hasta').value;
+            const form = document.getElementById('form-create-zip');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
 
-            if (!desde || !hasta) {
-                alert('Por favor complete todos los campos');
+            if (!data.emision_inicio || !data.emision_fin) {
+                alert('Por favor complete las fechas de emisión');
                 return;
             }
 
@@ -218,18 +270,15 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({
-                        desde,
-                        hasta
-                    })
+                    body: JSON.stringify(data)
                 });
 
-                const data = await response.json();
+                const responseData = await response.json();
 
-                if (data.success) {
+                if (responseData.success) {
                     window.location.reload();
                 } else {
-                    alert(data.message || 'Error al crear la solicitud');
+                    alert(responseData.message || 'Error al crear la solicitud');
                     this.disabled = false;
                     this.innerHTML = originalHTML;
                 }

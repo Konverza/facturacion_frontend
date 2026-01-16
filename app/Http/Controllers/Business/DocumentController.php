@@ -3,6 +3,9 @@
 
 namespace App\Http\Controllers\Business;
 
+use App\Models\BusinessPlan;
+use App\Models\PuntoVenta;
+use App\Models\Sucursal;
 use App\Services\OctopusService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -108,24 +111,101 @@ class DocumentController extends Controller
     public function zipDownloads()
     {
         $business_id = Session::get('business');
+        $business = Business::find($business_id);
+
         $activeJob = ZipDownloadJob::getActiveJobForBusiness($business_id);
-        
+
         // Obtener trabajos recientes (excluyendo el activo si existe)
         $query = ZipDownloadJob::where('business_id', $business_id)
             ->orderBy('created_at', 'desc');
-        
+
         if ($activeJob) {
             $query->where('id', '!=', $activeJob->id);
         }
-        
+
         $recentJobs = $query->take(10)->get();
-        
+
         // Si hay trabajo activo, agregarlo al inicio de la colección
         if ($activeJob) {
             $recentJobs = collect([$activeJob])->concat($recentJobs);
         }
 
-        return view('business.documents.zip-downloads', compact('activeJob', 'recentJobs'));
+        // Obtener opciones para los filtros
+        $this->octopus_service = new OctopusService();
+
+        $tipos_dte = [
+            '' => 'Todos',
+            '01' => 'Factura Consumidor Final',
+            '03' => 'Comprobante de crédito fiscal',
+            '04' => 'Nota de Remisión',
+            '05' => 'Nota de crédito',
+            '06' => 'Nota de débito',
+            '07' => 'Comprobante de retención',
+            '08' => 'Comprobante de liquidación',
+            '09' => 'Documento Contable de Liquidación',
+            '11' => 'Factura de exportación',
+            '14' => 'Factura de sujeto excluido',
+            '15' => 'Comprobante de Donación'
+        ];
+
+        $sucursal_options = [];
+        $puntos_venta_options = [];
+        $dtes_disponibles = [];
+        $receptores_unicos = [];
+
+        $business_user = $business_user = BusinessUser::where("user_id", auth()->user()->id)->first();
+        $nit = $business->nit ?? null;
+
+        // Sucursales y puntos de venta
+        if ($business_user->only_default_pos) {
+            $puntoVenta = PuntoVenta::find($business_user->default_pos_id);
+            $sucursal_options = [$puntoVenta->sucursal->codSucursal => $puntoVenta->sucursal->nombre] ?? [];
+            $puntos_venta_options = [$puntoVenta->codPuntoVenta => $puntoVenta->nombre] ?? [];
+        } else {
+            $sucursales = Sucursal::where('business_id', $business_id)
+                ->with('puntosVentas')
+                ->get();
+            $sucursal_options = $sucursales->pluck('nombre', 'codSucursal')->toArray();
+            $sucursal_options = array_merge(['' => 'Todas'], $sucursal_options);
+            foreach ($sucursales as $sucursal) {
+                foreach ($sucursal->puntosVentas as $puntoVenta) {
+                    $puntos_venta_options[$puntoVenta->codPuntoVenta] = "{$sucursal->nombre} - {$puntoVenta->nombre}";
+                }
+            }
+            $puntos_venta_options = array_merge(['' => 'Todos'], $puntos_venta_options);
+        }
+
+        // Obtener la lista de receptores únicos
+        $response_receptores = Http::get(env("OCTOPUS_API_URL") . "/dtes/receptor-list/{$nit}");
+        $receptores = $response_receptores->json() ?? [];
+        foreach ($receptores as $receptor) {
+            if (isset($receptor['documento_receptor'], $receptor['nombre_receptor'])) {
+                $receptores_unicos[$receptor['documento_receptor']] = $receptor['nombre_receptor'];
+            }
+        }
+        $receptores_unicos = array_merge(['' => 'Todos'], $receptores_unicos);
+
+        // DTEs disponibles
+        if (auth()->user()->only_fcf) {
+            $dtes_disponibles = ['01' => 'Factura Consumidor Final'];
+        } else {
+            $business_plan = BusinessPlan::where("nit", $business->nit)->first();
+            $plan_dtes = json_decode($business_plan->dtes);
+            foreach ($plan_dtes as $tipo) {
+                $dtes_disponibles[$tipo] = $tipos_dte[$tipo];
+            }
+            $dtes_disponibles = array_merge(['' => 'Todos'], $dtes_disponibles);
+        }
+
+        return view('business.documents.zip-downloads', compact(
+            'activeJob',
+            'recentJobs',
+            'tipos_dte',
+            'sucursal_options',
+            'puntos_venta_options',
+            'dtes_disponibles',
+            'receptores_unicos'
+        ));
     }
 
     /**
@@ -134,8 +214,14 @@ class DocumentController extends Controller
     public function createZipDownload(Request $request)
     {
         $request->validate([
-            'desde' => 'required|date',
-            'hasta' => 'required|date|after_or_equal:desde',
+            'emision_inicio' => 'required|date',
+            'emision_fin' => 'required|date|after_or_equal:emision_inicio',
+            'procesamiento_inicio' => 'nullable|date',
+            'procesamiento_fin' => 'nullable|date|after_or_equal:procesamiento_inicio',
+            'codSucursal' => 'nullable|string',
+            'codPuntoVenta' => 'nullable|string',
+            'tipo_dte' => 'nullable|string',
+            'documento_receptor' => 'nullable|string',
         ]);
 
         $business_id = Session::get('business');
@@ -148,11 +234,17 @@ class DocumentController extends Controller
             ], 422);
         }
 
-        // Crear el registro del trabajo
+        // Crear el registro del trabajo con todos los filtros
         $zipJob = ZipDownloadJob::create([
             'business_id' => $business_id,
-            'fecha_inicio' => $request->desde,
-            'fecha_fin' => $request->hasta,
+            'fecha_inicio' => $request->emision_inicio,
+            'fecha_fin' => $request->emision_fin,
+            'procesamiento_inicio' => $request->procesamiento_inicio,
+            'procesamiento_fin' => $request->procesamiento_fin,
+            'cod_sucursal' => $request->codSucursal,
+            'cod_punto_venta' => $request->codPuntoVenta,
+            'tipo_dte' => $request->tipo_dte,
+            'documento_receptor' => $request->documento_receptor,
             'status' => 'pending',
         ]);
 

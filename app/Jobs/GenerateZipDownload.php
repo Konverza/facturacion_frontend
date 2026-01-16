@@ -46,37 +46,74 @@ class GenerateZipDownload implements ShouldQueue
             ]);
 
             $this->business = Business::find($this->zipDownloadJob->business_id);
-            
+
             if (!$this->business) {
                 throw new \Exception('Empresa no encontrada');
             }
 
-            $desde = $this->zipDownloadJob->fecha_inicio->format('Y-m-d') . 'T00:00:00';
-            $hasta = $this->zipDownloadJob->fecha_fin->format('Y-m-d') . 'T23:59:59';
-
-            $response = Http::get(env("OCTOPUS_API_URL") . "/dtes/", [
+            // Construir parámetros de consulta con todos los filtros
+            $params = [
                 'nit' => $this->business->nit,
-                'fechaInicio' => $desde,
-                'fechaFin' => $hasta,
-            ]);
+                'emisionInicio' => $this->zipDownloadJob->fecha_inicio ? $this->zipDownloadJob->fecha_inicio->format('Y-m-d') . 'T00:00:00' : null,
+                'emisionFin' => $this->zipDownloadJob->fecha_fin ? $this->zipDownloadJob->fecha_fin->format('Y-m-d') . 'T23:59:59' : null,
+            ];
+
+            // Agregar filtros opcionales si están presentes
+            if ($this->zipDownloadJob->procesamiento_inicio) {
+                $params['fechaInicio'] = $this->zipDownloadJob->procesamiento_inicio->format('Y-m-d') . 'T00:00:00';
+            }
+            if ($this->zipDownloadJob->procesamiento_fin) {
+                $params['fechaFin'] = $this->zipDownloadJob->procesamiento_fin->format('Y-m-d') . 'T23:59:59';
+            }
+            if ($this->zipDownloadJob->codSucursal) {
+                $params['codSucursal'] = $this->zipDownloadJob->codSucursal;
+            }
+            if ($this->zipDownloadJob->codPuntoVenta) {
+                $params['codPuntoVenta'] = $this->zipDownloadJob->codPuntoVenta;
+            }
+            if ($this->zipDownloadJob->tipo_dte) {
+                $params['tipo_dte'] = $this->zipDownloadJob->tipo_dte;
+            }
+            if ($this->zipDownloadJob->estado) {
+                $params['estado'] = $this->zipDownloadJob->estado;
+            }
+            if ($this->zipDownloadJob->documento_receptor) {
+                $params['documento_receptor'] = $this->zipDownloadJob->documento_receptor;
+            }
+            if ($this->zipDownloadJob->busqueda) {
+                $params['q'] = $this->zipDownloadJob->busqueda;
+            }
+
+            $response = Http::get(env("OCTOPUS_API_URL") . "/dtes/", $params);
 
             if (!$response->successful()) {
                 throw new \Exception('Error al obtener DTEs desde la API');
             }
 
             $dtes = $response->json()["items"] ?? [];
-            $dtesProcessable = array_filter($dtes, fn($dte) => $dte["estado"] == "PROCESADO");
+
+            // Si no se filtró por estado en la consulta, filtrar por PROCESADO aquí
+            if (!$this->zipDownloadJob->estado) {
+                $dtesProcessable = array_filter($dtes, fn($dte) => $dte["estado"] == "PROCESADO");
+            } else {
+                $dtesProcessable = $dtes;
+            }
+
             $totalDtes = count($dtesProcessable);
 
             $this->zipDownloadJob->update(['total_dtes' => $totalDtes]);
 
             if ($totalDtes === 0) {
-                throw new \Exception('No se encontraron DTEs procesados en el rango de fechas');
+                throw new \Exception('No se encontraron DTEs con los filtros aplicados');
             }
 
+            // Crear nombre del archivo (agregar indicador de filtros si existen)
             $fechaInicioFormateada = $this->zipDownloadJob->fecha_inicio->format('dmY');
             $fechaFinFormateada = $this->zipDownloadJob->fecha_fin->format('dmY');
-            $zipFileName = "dtes_{$fechaInicioFormateada}_{$fechaFinFormateada}.zip";
+            $hasFilters = $this->zipDownloadJob->tipo_dte || $this->zipDownloadJob->estado ||
+                $this->zipDownloadJob->cod_sucursal || $this->zipDownloadJob->documento_receptor;
+            $zipFileName = "dtes_{$fechaInicioFormateada}_{$fechaFinFormateada}" .
+                ($hasFilters ? "_filtrado" : "") . ".zip";
 
             $s3Path = "zip_downloads/{$this->business->id}/{$zipFileName}";
 
@@ -86,6 +123,15 @@ class GenerateZipDownload implements ShouldQueue
             if ($zip->open($tempZipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== TRUE) {
                 throw new \Exception('No se pudo crear el archivo ZIP temporal');
             }
+
+            // Crear archivo de filtros aplicados
+            $filtrosTexto = "FILTROS APLICADOS EN ESTA DESCARGA\n";
+            $filtrosTexto .= "=====================================\n\n";
+            $filtrosTexto .= $this->zipDownloadJob->getFiltersDescription();
+            $filtrosTexto .= "\n\nTotal de DTEs: {$totalDtes}\n";
+            $filtrosTexto .= "Generado: " . now()->format('d/m/Y H:i:s') . "\n";
+
+            $zip->addFromString('filtros aplicados.txt', $filtrosTexto);
             $zip->close();
 
             $this->zipDownloadJob->update([
@@ -120,7 +166,7 @@ class GenerateZipDownload implements ShouldQueue
 
         } catch (\Exception $e) {
             Log::error("Error generando ZIP: " . $e->getMessage());
-            
+
             $this->zipDownloadJob->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
@@ -137,7 +183,7 @@ class GenerateZipDownload implements ShouldQueue
     public function failed(\Throwable $exception): void
     {
         Log::error("Job fallido para ZIP ID {$this->zipDownloadJob->id}: " . $exception->getMessage());
-        
+
         $this->zipDownloadJob->update([
             'status' => 'failed',
             'error_message' => $exception->getMessage(),
