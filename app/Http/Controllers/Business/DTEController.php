@@ -710,10 +710,14 @@ class DTEController extends Controller
 
             // Validación de stock: sólo para tipos que impactan inventario
             if (!in_array($this->dte['type'], ["07", "14", "04", "15"])) {
-                // Obtener sucursal del PuntoVenta
+                // Obtener sucursal y POS
                 $sucursalId = null;
+                $posId = null;
+                $pos = null;
+                
                 if ($request->pos_id) {
                     $pos = PuntoVenta::find($request->pos_id);
+                    $posId = $pos?->id;
                     $sucursalId = $pos?->sucursal_id;
                 }
 
@@ -740,24 +744,41 @@ class DTEController extends Controller
                 foreach ($cantidadesPorProducto as $productId => $cantidadSolicitada) {
                     $bp = $productosCargados[$productId] ?? BusinessProduct::find($productId);
                     if ($bp && $bp->has_stock) {
-                        // Determinar stock disponible según sucursal
+                        // Determinar stock disponible según orden: POS > Sucursal > Global
                         $disponible = 0;
+                        $inventorySource = 'none';
                         
-                        if ($bp->is_global) {
-                            // Producto global usa stock general
-                            $disponible = (float) $bp->stockActual;
-                        } elseif ($sucursalId) {
-                            // Producto por sucursal: obtener stock específico
+                        // Prioridad 1: POS con inventario independiente
+                        if ($posId && $pos && $pos->has_independent_inventory) {
+                            $posStock = $bp->getStockForPos($posId);
+                            $disponible = $posStock ? (float) $posStock->stockActual : 0;
+                            $inventorySource = 'pos';
+                        }
+                        // Prioridad 2: Sucursal (si POS no tiene inventario independiente o no existe POS)
+                        elseif ($sucursalId) {
                             $branchStock = $bp->getStockForBranch($sucursalId);
                             $disponible = $branchStock ? (float) $branchStock->stockActual : 0;
-                        } else {
-                            // Sin sucursal seleccionada para producto no global
+                            $inventorySource = 'branch';
+                        }
+                        // Prioridad 3: Global (si el producto es global)
+                        elseif ($bp->is_global) {
+                            $disponible = (float) $bp->stockActual;
+                            $inventorySource = 'global';
+                        }
+                        // Sin contexto de inventario
+                        else {
                             $disponible = 0;
+                            $inventorySource = 'none';
                         }
                         
                         if ($cantidadSolicitada > $disponible) {
-                            $sucursalInfo = $sucursalId ? " en la sucursal seleccionada" : "";
-                            $faltantes[] = $bp->descripcion . " (solicitado: " . $cantidadSolicitada . ", disponible{$sucursalInfo}: " . $disponible . ")";
+                            $locationInfo = match($inventorySource) {
+                                'pos' => " en el punto de venta seleccionado",
+                                'branch' => " en la sucursal seleccionada",
+                                'global' => " (inventario global)",
+                                default => ""
+                            };
+                            $faltantes[] = $bp->descripcion . " (solicitado: " . $cantidadSolicitada . ", disponible{$locationInfo}: " . $disponible . ")";
                         }
                     }
                 }
