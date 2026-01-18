@@ -340,6 +340,18 @@ Breadcrumbs::for("business.inventory.transfers.show", function (BreadcrumbTrail 
     $trail->push($icon . "Detalle de Traslado", route("business.inventory.transfers.show", $id));
 });
 
+Breadcrumbs::for("business.inventory.transfers.create-multiple", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='layers' class='w-4 h-4'/>");
+    $trail->parent("business.inventory.transfers.index");
+    $trail->push($icon . "Nuevo Traslado Múltiple", route("business.inventory.transfers.create-multiple"));
+});
+
+Breadcrumbs::for("business.inventory.transfers.liquidacion-form", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='clipboard-check' class='w-4 h-4'/>");
+    $trail->parent("business.inventory.transfers.show", $id);
+    $trail->push($icon . "Liquidación", route("business.inventory.transfers.liquidacion-form", $id));
+});
+
 // Reportería
 Breadcrumbs::for("business.reporting.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='file-report' class='w-4 h-4'/>");

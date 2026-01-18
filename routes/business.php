@@ -191,13 +191,24 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         // Traslados entre POS y sucursales
         Route::get('/transfers', [PosTransferController::class, 'index'])->name('transfers.index');
         Route::get('/transfers/create', [PosTransferController::class, 'create'])->name('transfers.create');
+        Route::get('/transfers/create-multiple', [PosTransferController::class, 'createMultiple'])->name('transfers.create-multiple');
         Route::post('/transfers', [PosTransferController::class, 'store'])->name('transfers.store');
         Route::get('/transfers/{id}', [PosTransferController::class, 'show'])->name('transfers.show');
         Route::post('/transfers/{id}/cancel', [PosTransferController::class, 'cancel'])->name('transfers.cancel');
         
+        // Devoluciones y liquidaciones
+        Route::post('/transfers/pos/{puntoVentaId}/devolucion', [PosTransferController::class, 'createDevolucion'])->name('transfers.create-devolucion');
+        Route::get('/transfers/{id}/liquidacion', [PosTransferController::class, 'liquidacionForm'])->name('transfers.liquidacion-form');
+        Route::post('/transfers/{id}/liquidacion', [PosTransferController::class, 'procesarLiquidacion'])->name('transfers.procesar-liquidacion');
+        
+        // Reportes PDF
+        Route::get('/transfers/{id}/pdf', [PosTransferController::class, 'generarReportePDF'])->name('transfers.pdf');
+        Route::get('/transfers/{id}/pdf-devolucion', [PosTransferController::class, 'generarReporteDevolucionPDF'])->name('transfers.pdf-devolucion');
+        Route::get('/transfers/{id}/pdf-liquidacion', [PosTransferController::class, 'generarReporteLiquidacionPDF'])->name('transfers.pdf-liquidacion');
+        
         // AJAX endpoints
-        Route::get('/transfers/products/available', [PosTransferController::class, 'getAvailableProducts'])->name('transfers.products.available');
-        Route::get('/transfers/products/stock', [PosTransferController::class, 'getProductStock'])->name('transfers.products.stock');
+        Route::post('/transfers/products/available', [PosTransferController::class, 'getAvailableProducts'])->name('transfers.products.available');
+        Route::post('/transfers/products/stock', [PosTransferController::class, 'getProductStock'])->name('transfers.products.stock');
     });
 
     // Documentos Recibidos
