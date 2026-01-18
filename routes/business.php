@@ -57,6 +57,13 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::post("/customers/import", [CustomerContoller::class, "import"])->name('customers.import');
     Route::get("/customers/qr/image", [CustomerContoller::class, "generateQRImage"])->name('customers.qr-image');
     Route::resource("/movements", MovementController::class);
+    
+    // Reportes
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/kardex', [\App\Http\Controllers\Business\KardexController::class, 'index'])->name('kardex.index');
+        Route::get('/kardex/pdf', [\App\Http\Controllers\Business\KardexController::class, 'generatePDF'])->name('kardex.pdf');
+    });
+    
     Route::resource("/cuentas-por-cobrar", CuentasCobrarController::class);
     Route::post("/cuentas-por-cobrar/movement", [CuentasCobrarController::class, "movement"])->name('cuentas-por-cobrar.movement');
 

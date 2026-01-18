@@ -8,6 +8,8 @@ class BusinessProductMovement extends Model
 {
     protected $fillable = [
         'business_product_id',
+        'sucursal_id',
+        'punto_venta_id',
         'numero_factura',
         'tipo',
         'cantidad',
@@ -19,5 +21,15 @@ class BusinessProductMovement extends Model
     public function businessProduct()
     {
         return $this->belongsTo(BusinessProduct::class);
+    }
+
+    public function sucursal()
+    {
+        return $this->belongsTo(Sucursal::class, 'sucursal_id');
+    }
+
+    public function puntoVenta()
+    {
+        return $this->belongsTo(PuntoVenta::class, 'punto_venta_id');
     }
 }

@@ -109,7 +109,7 @@ class BusinessProduct extends Model
         }
 
         $stock = $this->getStockForBranch($sucursalId);
-        
+
         if (!$stock) {
             throw new \Exception("El producto no tiene stock registrado en esta sucursal.");
         }
@@ -121,6 +121,7 @@ class BusinessProduct extends Model
         // Registrar movimiento
         BusinessProductMovement::create([
             'business_product_id' => $this->id,
+            'sucursal_id' => $sucursalId,
             'numero_factura' => $numeroFactura,
             'tipo' => 'salida',
             'cantidad' => $cantidad,
@@ -158,6 +159,7 @@ class BusinessProduct extends Model
         // Registrar movimiento
         BusinessProductMovement::create([
             'business_product_id' => $this->id,
+            'sucursal_id' => $sucursalId,
             'numero_factura' => $numeroFactura,
             'tipo' => 'entrada',
             'cantidad' => $cantidad,
@@ -220,7 +222,7 @@ class BusinessProduct extends Model
         }
 
         $stock = $this->getStockForPos($puntoVentaId);
-        
+
         if (!$stock) {
             throw new \Exception("El producto no tiene stock registrado en este punto de venta.");
         }
@@ -229,9 +231,15 @@ class BusinessProduct extends Model
             return false;
         }
 
+        // Obtener sucursal del punto de venta
+        $puntoVenta = \App\Models\PuntoVenta::find($puntoVentaId);
+        $sucursalId = $puntoVenta ? $puntoVenta->sucursal_id : null;
+
         // Registrar movimiento
         BusinessProductMovement::create([
             'business_product_id' => $this->id,
+            'sucursal_id' => $sucursalId,
+            'punto_venta_id' => $puntoVentaId,
             'numero_factura' => $numeroFactura,
             'tipo' => 'salida',
             'cantidad' => $cantidad,
@@ -266,9 +274,15 @@ class BusinessProduct extends Model
 
         $stock->aumentarStock($cantidad);
 
+        // Obtener sucursal del punto de venta
+        $puntoVenta = \App\Models\PuntoVenta::find($puntoVentaId);
+        $sucursalId = $puntoVenta ? $puntoVenta->sucursal_id : null;
+
         // Registrar movimiento
         BusinessProductMovement::create([
             'business_product_id' => $this->id,
+            'sucursal_id' => $sucursalId,
+            'punto_venta_id' => $puntoVentaId,
             'numero_factura' => $numeroFactura,
             'tipo' => 'entrada',
             'cantidad' => $cantidad,
@@ -288,13 +302,13 @@ class BusinessProduct extends Model
         return $query->where(function ($q) use ($sucursalId) {
             // Productos globales (siempre disponibles)
             $q->where('is_global', true)
-              // O productos con stock disponible en la sucursal
-              ->orWhereHas('branchStocks', function ($stockQuery) use ($sucursalId) {
-                  $stockQuery->where('sucursal_id', $sucursalId)
-                             ->whereIn('estado_stock', ['disponible', 'por_agotarse']);
-              })
-              // O productos sin control de stock
-              ->orWhere('has_stock', false);
+                // O productos con stock disponible en la sucursal
+                ->orWhereHas('branchStocks', function ($stockQuery) use ($sucursalId) {
+                    $stockQuery->where('sucursal_id', $sucursalId)
+                        ->whereIn('estado_stock', ['disponible', 'por_agotarse']);
+                })
+                // O productos sin control de stock
+                ->orWhere('has_stock', false);
         });
     }
 
@@ -306,13 +320,13 @@ class BusinessProduct extends Model
         return $query->where(function ($q) use ($puntoVentaId) {
             // Productos globales (siempre disponibles)
             $q->where('is_global', true)
-              // O productos con stock disponible en el punto de venta
-              ->orWhereHas('posStocks', function ($stockQuery) use ($puntoVentaId) {
-                  $stockQuery->where('punto_venta_id', $puntoVentaId)
-                             ->whereIn('estado_stock', ['disponible', 'por_agotarse']);
-              })
-              // O productos sin control de stock
-              ->orWhere('has_stock', false);
+                // O productos con stock disponible en el punto de venta
+                ->orWhereHas('posStocks', function ($stockQuery) use ($puntoVentaId) {
+                    $stockQuery->where('punto_venta_id', $puntoVentaId)
+                        ->whereIn('estado_stock', ['disponible', 'por_agotarse']);
+                })
+                // O productos sin control de stock
+                ->orWhere('has_stock', false);
         });
     }
 }

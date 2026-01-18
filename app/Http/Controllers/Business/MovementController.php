@@ -18,11 +18,22 @@ class MovementController extends Controller
     {
         try {
             $business_id = Session::get('business') ?? null;
-            $business = Business::find($business_id ?? $business_id);
-            $movements = $movements = BusinessProductMovement::with('businessProduct')
+            $business = Business::find($business_id);
+            
+            if (!$business) {
+                return redirect()->route('business.dashboard')->with([
+                    'error' => 'Error',
+                    'error_message' => 'Business no encontrado'
+                ]);
+            }
+            
+            $movements = BusinessProductMovement::with(['businessProduct', 'sucursal', 'puntoVenta'])
                 ->whereHas('businessProduct', function ($query) use ($business_id) {
                     $query->where('business_id', $business_id);
-                })->get();
+                })
+                ->orderBy('created_at', 'desc')
+                ->paginate(50); // 50 registros por página
+            
             $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
             $dtes = $dtes["items"] ?? [];
 
@@ -33,6 +44,7 @@ class MovementController extends Controller
                 }
             }
 
+            // Solo asociar la información del DTE sin guardar cambios
             foreach ($movements as $movement) {
                 if (isset($dteByCodGeneracion[$movement->numero_factura])) {
                     $movement->invoice = $dteByCodGeneracion[$movement->numero_factura];
@@ -45,9 +57,14 @@ class MovementController extends Controller
                 "movimientos" => $movements
             ]);
         } catch (\Exception $e) {
-            return redirect()->route('business.movements.index')->with([
+            // Registrar el error en logs en lugar de redirect
+            \Log::error('Error en movements.index: ' . $e->getMessage());
+            
+            return view("business.movements.index", [
+                "movimientos" => collect([])
+            ])->with([
                 'error' => 'Error',
-                'error_message' => 'Error al cargar los movimientos'
+                'error_message' => 'Error al cargar los movimientos: ' . $e->getMessage()
             ]);
         }
     }

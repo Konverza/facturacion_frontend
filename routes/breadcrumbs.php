@@ -266,6 +266,13 @@ Breadcrumbs::for("business.movements.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Movimientos", route("business.movements.index"));
 });
 
+//Kardex Reports
+Breadcrumbs::for("business.reports.kardex.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='clipboard-list' class='w-4 h-4'/>");
+    $trail->parent("business.movements.index");
+    $trail->push($icon . "Reporte Kardex", route("business.reports.kardex.index"));
+});
+
 // POS
 Breadcrumbs::for("business.pos.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='cash-register' class='w-4 h-4'/>");

@@ -370,8 +370,27 @@ class PosTransfer extends Model
             default => 'salida'
         };
 
+        // Determinar sucursal y punto de venta según el tipo de traslado
+        $sucursalId = null;
+        $puntoVentaId = null;
+
+        switch($this->tipo_traslado) {
+            case 'branch_to_pos':
+                $sucursalId = $this->sucursal_origen_id; // Salida de sucursal
+                break;
+            case 'pos_to_branch':
+                $sucursalId = $this->sucursal_destino_id; // Entrada a sucursal
+                $puntoVentaId = $this->punto_venta_origen_id; // Origen del movimiento
+                break;
+            case 'pos_to_pos':
+                $puntoVentaId = $this->punto_venta_origen_id; // Salida del POS origen
+                break;
+        }
+
         BusinessProductMovement::create([
             'business_product_id' => $item->business_product_id,
+            'sucursal_id' => $sucursalId,
+            'punto_venta_id' => $puntoVentaId,
             'numero_factura' => $this->numero_transferencia,
             'tipo' => $tipo,
             'cantidad' => $item->cantidad_solicitada,
@@ -553,8 +572,27 @@ class PosTransfer extends Model
             default => 'salida'
         };
 
+        // Determinar sucursal y punto de venta según el tipo de traslado
+        $sucursalId = null;
+        $puntoVentaId = null;
+
+        switch($this->tipo_traslado) {
+            case 'branch_to_pos':
+                $sucursalId = $this->sucursal_origen_id; // Salida de sucursal
+                break;
+            case 'pos_to_branch':
+                $sucursalId = $this->sucursal_destino_id; // Entrada a sucursal
+                $puntoVentaId = $this->punto_venta_origen_id; // Origen del movimiento
+                break;
+            case 'pos_to_pos':
+                $puntoVentaId = $this->punto_venta_origen_id; // Salida del POS origen
+                break;
+        }
+
         BusinessProductMovement::create([
             'business_product_id' => $this->business_product_id,
+            'sucursal_id' => $sucursalId,
+            'punto_venta_id' => $puntoVentaId,
             'numero_factura' => 'TRASLADO-' . $this->id,
             'tipo' => $tipo,
             'cantidad' => $this->cantidad,

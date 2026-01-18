@@ -2,10 +2,13 @@
 @section('title', 'Movimientos')
 @section('content')
     <section class="my-4 px-4">
-        <div class="flex w-full justify-between">
+        <div class="flex w-full justify-between items-center">
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
                 Movimientos
             </h1>
+            <a href="{{ route('business.reports.kardex.index') }}">
+                <x-button type="button" text="Reporte Kardex" icon="clipboard-list" typeButton="success" size="small" />
+            </a>
         </div>
         <div class="mt-4 pb-4">
             <div class="mb-4 flex w-full flex-col gap-4 sm:flex-row">
@@ -17,6 +20,9 @@
                 <x-slot name="thead">
                     <x-tr>
                         <x-th class="w-10">#</x-th>
+                        <x-th>Fecha</x-th>
+                        <x-th>Sucursal</x-th>
+                        <x-th>Punto de Venta</x-th>
                         <x-th>Factura</x-th>
                         <x-th>Tipo</x-th>
                         <x-th>Cantidad</x-th>
@@ -30,6 +36,26 @@
                     @foreach ($movimientos as $movimiento)
                         <x-tr :last="$loop->last">
                             <x-td>{{ $loop->iteration }}</x-td>
+                            <x-td>
+                                <div class="text-xs">
+                                    <div class="font-semibold">{{ $movimiento->created_at->format('d/m/Y') }}</div>
+                                    <div class="text-gray-500 dark:text-gray-400">{{ $movimiento->created_at->format('h:i A') }}</div>
+                                </div>
+                            </x-td>
+                            <x-td>
+                                @if($movimiento->sucursal)
+                                    <span class="text-xs font-medium">{{ $movimiento->sucursal->nombre }}</span>
+                                @else
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">N/A</span>
+                                @endif
+                            </x-td>
+                            <x-td>
+                                @if($movimiento->puntoVenta)
+                                    <span class="text-xs font-medium">{{ $movimiento->puntoVenta->nombre }}</span>
+                                @else
+                                    <span class="text-xs text-gray-400 dark:text-gray-500">N/A</span>
+                                @endif
+                            </x-td>
                             <x-td>{{ $movimiento->numero_factura ?? "Ingreso de stock" }}</x-td>
                             <x-td>
                                 @if ($movimiento->tipo === 'salida')
@@ -89,6 +115,10 @@
                     @endforeach
                 </x-slot>
             </x-table>
+            
+            <div class="mt-4">
+                {{ $movimientos->links() }}
+            </div>
         </div>
 
         <x-delete-modal modalId="deleteModal" title="¿Estás seguro de eliminar el movimiento?"
