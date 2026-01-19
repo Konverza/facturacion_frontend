@@ -366,6 +366,18 @@ Breadcrumbs::for("business.reporting.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Reportería", route("business.reporting.index"));
 });
 
+Breadcrumbs::for("business.reporting.general", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='report-general' class='w-4 h-4'/>");
+    $trail->parent("business.reporting.index");
+    $trail->push($icon . "Reportería General", route("business.reporting.general"));
+});
+
+Breadcrumbs::for("business.reporting.general-reports", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='report-general' class='w-4 h-4'/>");
+    $trail->parent("business.reporting.general");
+    $trail->push($icon . "Reportes PDF/Excel", route("business.reporting.general-reports"));
+});
+
 // Bulk Emission
 Breadcrumbs::for("business.bulk.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='files' class='w-4 h-4'/>");

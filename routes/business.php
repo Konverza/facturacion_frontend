@@ -14,6 +14,7 @@ use App\Http\Controllers\Business\DTEDocumentsController;
 use App\Http\Controllers\Business\DTEDonationController;
 use App\Http\Controllers\Business\DTEProductController;
 use App\Http\Controllers\Business\DTERecibidoController;
+use App\Http\Controllers\Business\GeneralReportsController;
 use App\Http\Controllers\Business\MailController;
 use App\Http\Controllers\Business\MovementController;
 use App\Http\Controllers\Business\PaymentMethodController;
@@ -73,6 +74,11 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     // Reporting
     Route::get("/reporting", [ReportingController::class, "index"])->name('reporting.index');
     Route::post("/reporting", [ReportingController::class, "store"])->name('reporting.store');
+    Route::get("/reporting/general", function () {
+        return view('business.reporting.general-dashboard');
+    })->name('reporting.general');
+    Route::get("/reporting/general-reports", [GeneralReportsController::class, "index"])->name('reporting.general-reports');
+    Route::post("/reporting/general-reports", [GeneralReportsController::class, "generate"])->name('reporting.general-reports.generate');
 
     //Profile
     Route::get("/profile", [ProfileController::class, "index"])->name('profile.index');

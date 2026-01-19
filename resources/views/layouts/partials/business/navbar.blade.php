@@ -288,16 +288,12 @@
                 </a>
             </li>
             <li>
-                <a href="#"
-                    class="group pointer-events-none flex cursor-not-allowed items-center rounded-lg p-2 text-secondary-400 opacity-50 dark:text-secondary-600 dark:opacity-50">
+                <a href="{{ Route('business.reporting.general') }}"
+                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
                     <x-icon icon="report-general"
                         class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                     <span class="ms-3 flex-1 whitespace-nowrap">
                         Reportería General
-                    </span>
-                    <span
-                        class="ml-2 inline-block rounded-full bg-secondary-300 px-2 py-0.5 text-xs font-semibold text-secondary-700 dark:bg-secondary-700 dark:text-secondary-300">
-                        Próximamente
                     </span>
                 </a>
             </li>
