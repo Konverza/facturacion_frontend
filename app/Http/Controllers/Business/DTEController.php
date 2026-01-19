@@ -613,7 +613,7 @@ class DTEController extends Controller
 
         // Construir apéndice si hay datos de sucursal del cliente o tiene la característica habilitada
         $apendice = [];
-        
+
         // Agregar indicador de que tiene sucursales habilitadas
         if ($business->has_customer_branches) {
             $apendice[] = [
@@ -626,31 +626,31 @@ class DTEController extends Controller
         // Si hay sucursal seleccionada, agregar sus datos
         if (isset($this->dte['customer_branch'])) {
             $branch = $this->dte['customer_branch'];
-            
+
             $apendice[] = [
                 "campo" => "codigoSucursal",
                 "etiqueta" => "Sucursal Código",
                 "valor" => $branch['branch_code'] ?? ''
             ];
-            
+
             $apendice[] = [
                 "campo" => "nombreSucursal",
                 "etiqueta" => "Sucursal Cliente",
                 "valor" => $branch['nombre'] ?? ''
             ];
-            
+
             $apendice[] = [
                 "campo" => "departamentoSucursal",
                 "etiqueta" => "Departamento Sucursal",
                 "valor" => $branch['departamento'] ?? ''
             ];
-            
+
             $apendice[] = [
                 "campo" => "municipioSucursal",
                 "etiqueta" => "Municipio Sucursal",
                 "valor" => $branch['municipio'] ?? ''
             ];
-            
+
             $apendice[] = [
                 "campo" => "complementoSucursal",
                 "etiqueta" => "Dirección Sucursal",
@@ -702,7 +702,7 @@ class DTEController extends Controller
             if ($this->dte["type"] !== "07") {
                 if (!isset($this->dte["products"]) || count($this->dte["products"]) === 0) {
                     if ($request->boolean('json_mode')) {
-                        return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos un producto' ];
+                        return ['estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos un producto'];
                     }
                     return redirect()->back()->with(['error' => "Error", 'error_message' => "Debe agregar al menos un producto"])->send();
                 }
@@ -714,7 +714,7 @@ class DTEController extends Controller
                 $sucursalId = null;
                 $posId = null;
                 $pos = null;
-                
+
                 if ($request->pos_id) {
                     $pos = PuntoVenta::find($request->pos_id);
                     $posId = $pos?->id;
@@ -743,11 +743,13 @@ class DTEController extends Controller
                 $faltantes = [];
                 foreach ($cantidadesPorProducto as $productId => $cantidadSolicitada) {
                     $bp = $productosCargados[$productId] ?? BusinessProduct::find($productId);
-                    if ($bp && $bp->has_stock) {
+                    Log::info("Validando stock para producto ID {$productId}: solicitado {$cantidadSolicitada}");
+                    Log::info("Producto info: " . json_encode($bp));
+                    if ($bp && $bp->has_stock && !$bp->is_global) {
                         // Determinar stock disponible según orden: POS > Sucursal > Global
                         $disponible = 0;
                         $inventorySource = 'none';
-                        
+
                         // Prioridad 1: POS con inventario independiente
                         if ($posId && $pos && $pos->has_independent_inventory) {
                             $posStock = $bp->getStockForPos($posId);
@@ -770,9 +772,9 @@ class DTEController extends Controller
                             $disponible = 0;
                             $inventorySource = 'none';
                         }
-                        
+
                         if ($cantidadSolicitada > $disponible) {
-                            $locationInfo = match($inventorySource) {
+                            $locationInfo = match ($inventorySource) {
                                 'pos' => " en el punto de venta seleccionado",
                                 'branch' => " en la sucursal seleccionada",
                                 'global' => " (inventario global)",
@@ -784,9 +786,9 @@ class DTEController extends Controller
                 }
                 if (count($faltantes) > 0) {
                     if ($request->boolean('json_mode')) {
-                        return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Stock insuficiente para: ' . implode('; ', $faltantes) ];
+                        return ['estado' => 'RECHAZADO', 'observaciones' => 'Stock insuficiente para: ' . implode('; ', $faltantes)];
                     }
-                    return redirect()->back()->with(['error' => 'Error','error_message' => 'Stock insuficiente para: ' . implode('; ', $faltantes)])->send();
+                    return redirect()->back()->with(['error' => 'Error', 'error_message' => 'Stock insuficiente para: ' . implode('; ', $faltantes)])->send();
                 }
             }
 
@@ -794,9 +796,9 @@ class DTEController extends Controller
 
                 if (!$this->otrosDocumentos()) {
                     if ($request->boolean('json_mode')) {
-                        return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos un documento asociado a la donación' ];
+                        return ['estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos un documento asociado a la donación'];
                     }
-                    return redirect()->back()->with(['error' => "Error",'error_message' => "Debe agregar al menos un documento asociado a la donación"])->send();
+                    return redirect()->back()->with(['error' => "Error", 'error_message' => "Debe agregar al menos un documento asociado a la donación"])->send();
                 }
 
                 $total_pagar = array_sum(array_column(
@@ -807,7 +809,7 @@ class DTEController extends Controller
                 ));
                 if ($total_pagar > 0 && !$this->pagos()) {
                     if ($request->boolean('json_mode')) {
-                        return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos una forma de pago' ];
+                        return ['estado' => 'RECHAZADO', 'observaciones' => 'Debe agregar al menos una forma de pago'];
                     }
                     return redirect()->back()->with(['error' => "Error", 'error_message' => "Debe agregar al menos una forma de pago"])->send();
                 }
@@ -824,7 +826,7 @@ class DTEController extends Controller
                     }
                     if (!$related) {
                         if ($request->boolean('json_mode')) {
-                            return [ 'estado' => 'RECHAZADO', 'observaciones' => 'Cada documento relacionado debe estar asociado al menos a un producto ingresado.' ];
+                            return ['estado' => 'RECHAZADO', 'observaciones' => 'Cada documento relacionado debe estar asociado al menos a un producto ingresado.'];
                         }
                         return redirect()->back()->with(['error' => "Error", 'error_message' => "Cada documento relacionado debe estar asociado al menos a un producto ingresado."])->send();
                     }
@@ -836,7 +838,7 @@ class DTEController extends Controller
                     if (round($this->dte["monto_abonado"], 2) != round($this->dte["total_pagar"], 2)) {
                         $obs = "El monto total pagado no coincide con el total a pagar. Monto abonado: $" . round($this->dte["monto_abonado"], 2) . ", Total a pagar: $" . round($this->dte["total_pagar"], 2);
                         if ($request->boolean('json_mode')) {
-                            return [ 'estado' => 'RECHAZADO', 'observaciones' => $obs ];
+                            return ['estado' => 'RECHAZADO', 'observaciones' => $obs];
                         }
                         return redirect()->back()->with(['error' => "Error", 'error_message' => $obs])->send();
                     }
@@ -902,7 +904,7 @@ class DTEController extends Controller
                     $pos = PuntoVenta::find($posId);
                     $sucursalId = $pos?->sucursal_id;
                 }
-                
+
                 // Para tipo 14 (Sujeto Excluido), actualizar stocks como entrada (compra)
                 if ($this->dte["type"] === "14") {
                     $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "entrada", $sucursalId, "14", $posId);
@@ -1313,8 +1315,8 @@ class DTEController extends Controller
             $descuento = (float) ($product['descuento'] ?? 0);
             $lineaBruta = $cantidad * $precioBase; // base total antes de descuento
             // Si tenemos ventas_exentas y es > 0 úsala; de lo contrario, derivar de linea bruta (caso formulario que no setea ventas_exentas explícitamente aún)
-            $baseDeclarada = (isset($product['ventas_exentas']) && (float)$product['ventas_exentas'] > 0)
-                ? (float)$product['ventas_exentas']
+            $baseDeclarada = (isset($product['ventas_exentas']) && (float) $product['ventas_exentas'] > 0)
+                ? (float) $product['ventas_exentas']
                 : $lineaBruta;
             // Ajuste final de compra = base - descuento (no debe ser negativa)
             $compra = max(0, $baseDeclarada - $descuento);
@@ -1669,11 +1671,11 @@ class DTEController extends Controller
             'posId' => $posId,
             'productos_count' => count($productsDTE)
         ]);
-        
+
         // Determinar si debemos actualizar stock en POS independiente
         $usePosInventory = false;
         $pos = null;
-        
+
         if ($posId) {
             $pos = PuntoVenta::find($posId);
             if ($pos && $pos->has_independent_inventory && $pos->sucursal->business->pos_inventory_enabled) {
@@ -1681,7 +1683,7 @@ class DTEController extends Controller
                 Log::info("Usando inventario de POS independiente", ['pos_id' => $posId, 'pos_nombre' => $pos->nombre]);
             }
         }
-        
+
         // Si no usamos POS, necesitamos sucursal
         if (!$usePosInventory) {
             // Si no se provee sucursal, usar la primera del negocio
@@ -1700,7 +1702,7 @@ class DTEController extends Controller
         foreach ($productsDTE as $product) {
             $searchProduct = null;
             $cantidad = 0;
-            
+
             if (is_array($product)) {
                 // Caso 1: Producto viene del formato interno (al generar DTE)
                 if (isset($product["product"]) && is_array($product["product"])) {
@@ -1712,7 +1714,7 @@ class DTEController extends Controller
                 // Buscar por business_id + código + descripción para mayor precisión
                 $codigo = $product->codigo ?? null;
                 $descripcion = $product->descripcion ?? null;
-                
+
                 if ($codigo && $descripcion) {
                     // Búsqueda exacta: mismo negocio, mismo código y misma descripción
                     $searchProduct = BusinessProduct::where('business_id', $business_id)
@@ -1730,7 +1732,7 @@ class DTEController extends Controller
                         ->where('descripcion', $descripcion)
                         ->first();
                 }
-                
+
                 $cantidad = $product->cantidad ?? 0;
             }
 
@@ -1742,7 +1744,7 @@ class DTEController extends Controller
                     'cantidad' => $cantidad,
                     'tipo_movimiento' => $tipo
                 ]);
-                
+
                 // Para facturas de sujeto excluido (compras), siempre incrementar inventario
                 if ($tipoDte === "14") {
                     $descripcion = "Compra de producto (Factura Sujeto Excluido)";
@@ -1801,7 +1803,7 @@ class DTEController extends Controller
                 }
             }
         }
-        
+
         Log::info("=== FIN updateStocks ===");
     }
 
@@ -1883,45 +1885,45 @@ class DTEController extends Controller
             if ($response->status() == 201) {
                 if (!in_array($dte["tipo_dte"], ["04", "07", "14"])) {
                     $products_dte = $documento->cuerpoDocumento;
-                    
+
                     // Para anulación, extraer sucursal y POS del documento original
                     // Probar diferentes variantes del campo de sucursal en el JSON
-                    $sucursalCode = $documento->emisor->codEstable 
-                                 ?? $documento->emisor->codEstablecimiento 
-                                 ?? $documento->emisor->codEstableMH
-                                 ?? $dte["codSucursal"] // Del JSON externo
-                                 ?? null;
-                    
+                    $sucursalCode = $documento->emisor->codEstable
+                        ?? $documento->emisor->codEstablecimiento
+                        ?? $documento->emisor->codEstableMH
+                        ?? $dte["codSucursal"] // Del JSON externo
+                        ?? null;
+
                     $sucursalId = null;
                     $posId = null;
-                    
+
                     Log::info("Extrayendo datos para anulación", [
                         'sucursalCode' => $sucursalCode,
                         'posCode_emisor' => $documento->emisor->codPuntoVenta ?? null,
                         'posCode_externo' => $dte["codPuntoVenta"] ?? null
                     ]);
-                    
+
                     if ($sucursalCode) {
                         $sucursal = Sucursal::where('business_id', $business_id)
                             ->where('codSucursal', $sucursalCode)
                             ->first();
                         $sucursalId = $sucursal?->id;
                     }
-                    
+
                     // Intentar obtener el punto de venta del documento original
                     // Probar diferentes variantes del campo de POS
-                    $posCode = $documento->emisor->codPuntoVenta 
-                            ?? $documento->emisor->codPuntoVentaMH
-                            ?? $dte["codPuntoVenta"] // Del JSON externo
-                            ?? null;
-                    
+                    $posCode = $documento->emisor->codPuntoVenta
+                        ?? $documento->emisor->codPuntoVentaMH
+                        ?? $dte["codPuntoVenta"] // Del JSON externo
+                        ?? null;
+
                     if ($posCode && $sucursalId) {
                         // El campo en la tabla se llama 'codPuntoVenta', no 'codigo'
                         $pos = PuntoVenta::where('sucursal_id', $sucursalId)
                             ->where('codPuntoVenta', $posCode)
                             ->first();
                         $posId = $pos?->id;
-                        
+
                         if ($pos) {
                             Log::info("Punto de venta encontrado para anulación", [
                                 'posCode' => $posCode,
@@ -1943,12 +1945,12 @@ class DTEController extends Controller
                             'motivo' => !$posCode ? 'posCode es null' : 'sucursalId es null'
                         ]);
                     }
-                    
+
                     // Determinar el tipo de movimiento según el documento anulado
                     // Si se anula una Nota de Crédito (tipo 05), el inventario debe salir nuevamente (revertir la devolución)
                     // Si se anula una venta (tipos 01, 03, 11), el inventario debe regresar (entrada)
                     $tipoMovimiento = ($dte["tipo_dte"] === "05") ? "salida" : "entrada";
-                    
+
                     $this->updateStocks($codGeneracion, $products_dte, $business_id, $tipoMovimiento, $sucursalId, $dte["tipo_dte"], $posId);
                 }
                 return redirect()->route('business.documents.index')
@@ -2221,7 +2223,7 @@ class DTEController extends Controller
     /**
      * Importa Excel que contiene en cada fila datos de cliente + un producto.
      * Agrupa por cliente generando estructuras de DTE listas para ser enviadas luego
-    * mediante submitFromJson. Soporta tipos 01 (Factura Consumidor Final), 03 (Crédito Fiscal) y 14 (Factura Sujeto Excluido).
+     * mediante submitFromJson. Soporta tipos 01 (Factura Consumidor Final), 03 (Crédito Fiscal) y 14 (Factura Sujeto Excluido).
      * Request params:
      *  - file: archivo excel
      *  - dte_type: '01' | '03'
@@ -2254,17 +2256,18 @@ class DTEController extends Controller
 
             // Catálogo de unidades para mapear texto -> código índice
             $unidades = $this->unidades_medidas ?? [];
-            $mapUnidad = function($txt) use ($unidades) {
-                if ($txt === null) return '59'; // default
-                $lower = mb_strtolower(trim((string)$txt));
+            $mapUnidad = function ($txt) use ($unidades) {
+                if ($txt === null)
+                    return '59'; // default
+                $lower = mb_strtolower(trim((string) $txt));
                 $idx = array_search($lower, array_map(fn($v) => mb_strtolower($v), $unidades), true);
-                return $idx === false ? '59' : (string)$idx;
+                return $idx === false ? '59' : (string) $idx;
             };
 
             // Mapeo tipo item texto
-            $mapTipoItem = function($txt) {
-                $t = mb_strtolower(trim((string)($txt ?? '')));
-                return match($t) {
+            $mapTipoItem = function ($txt) {
+                $t = mb_strtolower(trim((string) ($txt ?? '')));
+                return match ($t) {
                     'bienes' => 1,
                     'servicios' => 2,
                     'ambos (bienes y servicios)', 'ambos' => 3,
@@ -2273,12 +2276,12 @@ class DTEController extends Controller
             };
 
             // Mapeo tipo venta -> claves internas (Gravada, Exenta, No sujeta) (ignorado para tipo 14: se tratará como Exenta)
-            $mapTipoVenta = function($txt) {
-                $t = mb_strtolower(trim((string)($txt ?? '')));
-                return match($t) {
-                    'gravada','gravado' => 'Gravada',
-                    'exenta','exento' => 'Exenta',
-                    'no sujeta','nosujeta','no_sujeta' => 'No sujeta',
+            $mapTipoVenta = function ($txt) {
+                $t = mb_strtolower(trim((string) ($txt ?? '')));
+                return match ($t) {
+                    'gravada', 'gravado' => 'Gravada',
+                    'exenta', 'exento' => 'Exenta',
+                    'no sujeta', 'nosujeta', 'no_sujeta' => 'No sujeta',
                     default => 'Gravada',
                 };
             };
@@ -2297,7 +2300,9 @@ class DTEController extends Controller
 
                 $cantidad = (float) ($r['cantidad'] ?? 0);
                 $precioSinIVA = (float) ($r['precio_unitario_sin_iva'] ?? 0);
-                if ($cantidad <= 0 || $precioSinIVA <= 0) { continue; }
+                if ($cantidad <= 0 || $precioSinIVA <= 0) {
+                    continue;
+                }
 
                 $tipoVenta = $mapTipoVenta($r['tipo_venta_txt'] ?? null);
                 if ($type === '14') { // sujeto excluido sin IVA
@@ -2320,12 +2325,12 @@ class DTEController extends Controller
 
                 // Retención de renta por línea (solo tipo 14 y servicios/ambos)
                 $retencionLinea = 0;
-                if ($type === '14' && in_array($tipoItem, [2,3], true)) {
+                if ($type === '14' && in_array($tipoItem, [2, 3], true)) {
                     $retencionLinea = round($totalBase * 0.10, 8);
                 }
 
                 $productArray = [
-                    'id' => rand(1,100000),
+                    'id' => rand(1, 100000),
                     'product' => null,
                     'product_id' => null,
                     'codigo' => null,
@@ -2385,7 +2390,7 @@ class DTEController extends Controller
                 $iva_calculado = 0;
                 if ($g['type'] === '03') {
                     // Reconstruir IVA a partir de productos gravados base
-                    $baseGravada = array_sum(array_map(fn($p)=> $p['tipo']==='Gravada' ? ($p['cantidad']*$p['precio_sin_tributos']) : 0, $g['products']));
+                    $baseGravada = array_sum(array_map(fn($p) => $p['tipo'] === 'Gravada' ? ($p['cantidad'] * $p['precio_sin_tributos']) : 0, $g['products']));
                     $iva_calculado = round($baseGravada * 0.13, 8);
                     $g['subtotal'] = $baseGravada + $exe + $nos; // base sin IVA
                 } else if ($g['type'] === '14') {
@@ -2427,8 +2432,8 @@ class DTEController extends Controller
                 if ($g['type'] === '14') {
                     $retencionBase = 0;
                     foreach ($g['products'] as $p) {
-                        if (isset($p['tipo_item']) && in_array((int)$p['tipo_item'], [2,3], true)) {
-                            $retencionBase += (float)($p['total'] ?? 0);
+                        if (isset($p['tipo_item']) && in_array((int) $p['tipo_item'], [2, 3], true)) {
+                            $retencionBase += (float) ($p['total'] ?? 0);
                         }
                     }
                     if ($retencionBase > 0) {
@@ -2440,19 +2445,21 @@ class DTEController extends Controller
                     }
                 }
                 // Método de pago por defecto (forma 99) cubre el total
-                $g['metodos_pago'] = [[
-                    'id' => rand(1,100000),
-                    'forma_pago' => '99', // Otros
-                    'monto' => (string) $g['total_pagar'], // debe reflejar total con IVA si CCF
-                    'numero_documento' => '0',
-                    'plazo' => null,
-                    'periodo' => null,
-                ]];
+                $g['metodos_pago'] = [
+                    [
+                        'id' => rand(1, 100000),
+                        'forma_pago' => '99', // Otros
+                        'monto' => (string) $g['total_pagar'], // debe reflejar total con IVA si CCF
+                        'numero_documento' => '0',
+                        'plazo' => null,
+                        'periodo' => null,
+                    ]
+                ];
                 $g['monto_abonado'] = $g['total_pagar'];
                 $g['monto_pendiente'] = 0;
 
                 // Etiqueta documento legible (sólo para vista previa)
-                $docMap = [ '36' => 'NIT', '13' => 'DUI', '02' => 'Pasaporte', '03' => 'Carnet Residente', '37' => 'Otros' ];
+                $docMap = ['36' => 'NIT', '13' => 'DUI', '02' => 'Pasaporte', '03' => 'Carnet Residente', '37' => 'Otros'];
                 $docCode = $g['customer']['tipoDocumento'] ?? '';
                 $g['customer']['tipoDocumentoLabel'] = $docMap[$docCode] ?? $docCode;
 
@@ -2477,15 +2484,15 @@ class DTEController extends Controller
                 }
 
                 // Resumen compacto de items para modal/desplegable (incluye desglose por tipo de venta e IVA)
-                $g['items_preview'] = array_map(function($p){
-                    $cantidad = (float)($p['cantidad'] ?? 0);
-                    $iva = (float)($p['iva'] ?? 0);
-                    $total = (float)($p['total'] ?? 0);
+                $g['items_preview'] = array_map(function ($p) {
+                    $cantidad = (float) ($p['cantidad'] ?? 0);
+                    $iva = (float) ($p['iva'] ?? 0);
+                    $total = (float) ($p['total'] ?? 0);
                     // Si existe precio_sin_tributos úsalo como base; sino calcula base a partir del total - iva
                     $baseTotal = $p['ventas_gravadas'] ?? ($p['tipo'] === 'Gravada' ? ($total - $iva) : ($total - $iva));
                     $precioUnitarioBase = $p['precio_sin_tributos'] ?? ($cantidad > 0 ? $baseTotal / $cantidad : ($p['precio'] ?? 0));
                     $subtotal = $cantidad * $precioUnitarioBase;
-                    $retencionLinea = (float)($p['retencion_renta'] ?? 0);
+                    $retencionLinea = (float) ($p['retencion_renta'] ?? 0);
                     return [
                         'descripcion' => $p['descripcion'] ?? '',
                         'cantidad' => $cantidad,
@@ -2513,7 +2520,7 @@ class DTEController extends Controller
                 'group_mode' => $groupMode,
             ]);
         } catch (\Throwable $e) {
-            Log::error('importCustomersProductsExcel error: '.$e->getMessage());
+            Log::error('importCustomersProductsExcel error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error al procesar el archivo combinado.'

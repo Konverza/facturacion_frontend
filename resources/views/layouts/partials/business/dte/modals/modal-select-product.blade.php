@@ -19,62 +19,7 @@
                 </div>
                 <!-- Modal body -->
                 <div class="p-4">
-                    <livewire:business.tables.dte-product :dte="$dte" :number="$number" />
-                    {{-- Uncomment the following section if you want to use the static product selection table --}}
-                    {{-- <div class="mb-4">
-                        <x-input type="text" label="Buscar producto" id="input-search-products" icon="search"
-                            placeholder="Buscar producto" />
-                    </div>
-                    <x-table id="table-products">
-                        <x-slot name="thead">
-                            <x-tr>
-                                <x-th class="w-10">#</x-th>
-                                <x-th>Código</x-th>
-                                <x-th>Precio</x-th>
-                                <x-th>Descripción</x-th>
-                                <x-th>Stock</x-th>
-                                <x-th :last="true"></x-th>
-                            </x-tr>
-                        </x-slot>
-                        <x-slot name="tbody" id="table-selected-product">
-                            @foreach ($business_products as $product)
-                                <x-tr>
-                                    <x-td>
-                                        {{ $loop->iteration }}
-                                    </x-td>
-                                    <x-td>
-                                        {{ $product->codigo }}
-                                    </x-td>
-                                    <x-td>
-                                        @if ($number !== '01')
-                                            ${{ $product->precioSinTributos }}
-                                        @else
-                                            ${{ $product->precioUni }}
-                                        @endif
-                                    </x-td>
-                                    <x-td>
-                                        {{ $product->descripcion }}
-                                    </x-td>
-                                    <x-td>
-                                        @if($product->has_stock)
-                                            {{ $product->stockActual }}
-                                        @else
-                                            N/A
-                                        @endif
-                                    </x-td>
-                                    <x-td :last="true">
-                                        <form method="POST" action="{{ Route('business.dte.product.select') }}">
-                                            @csrf
-                                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                            <x-button type="button" icon="arrow-next" size="small"
-                                                class="btn-selected-product" typeButton="secondary"
-                                                text="Seleccionar" />
-                                        </form>
-                                    </x-td>
-                                </x-tr>
-                            @endforeach
-                        </x-slot>
-                    </x-table> --}}
+                    <livewire:business.tables.dte-product :dte="$dte" :number="$number" />                    
                     <div class="mt-4 hidden" id="container-data-product">
                         <form action="{{ Route('business.dte.product.store') }}" method="POST" id="form-add-product">
                             @csrf
