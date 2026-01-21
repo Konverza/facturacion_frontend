@@ -28,7 +28,7 @@
             </div>
         @endif
 
-        <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+        {{-- <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Configuración</h2>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Al activar variantes de precio, los precios especiales se deshabilitan automáticamente.
@@ -41,7 +41,7 @@
                     <x-button type="submit" typeButton="primary" text="Guardar configuración" icon="save" />
                 </div>
             </form>
-        </div>
+        </div> --}}
 
         <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Crear variante</h2>
