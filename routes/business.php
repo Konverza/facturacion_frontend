@@ -23,6 +23,7 @@ use App\Http\Controllers\Business\PosInventoryController;
 use App\Http\Controllers\Business\PosTransferController;
 use App\Http\Controllers\Business\ProductController;
 use App\Http\Controllers\Business\ProfileController;
+use App\Http\Controllers\Business\PriceVariantController;
 use App\Http\Controllers\Business\RelatedDocumentsController;
 use App\Http\Controllers\Business\ReportingController;
 use App\Http\Controllers\Business\WhatsAppController;
@@ -48,6 +49,11 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     
     Route::resource("/products", ProductController::class);
     Route::resource("/categories", CategoryController::class);
+    Route::get("/price-variants", [PriceVariantController::class, "index"])->name('price-variants.index');
+    Route::post("/price-variants", [PriceVariantController::class, "store"])->name('price-variants.store');
+    Route::put("/price-variants/{id}", [PriceVariantController::class, "update"])->name('price-variants.update');
+    Route::delete("/price-variants/{id}", [PriceVariantController::class, "destroy"])->name('price-variants.destroy');
+    Route::post("/price-variants/settings", [PriceVariantController::class, "updateSettings"])->name('price-variants.settings');
     Route::post("/products/add-stock", [ProductController::class, "add_stock"])->name('products.add-stock');
     Route::post("/products/remove-stock", [ProductController::class, "remove_stock"])->name('products.remove-stock');
     Route::post("/products/transfer-stock", [ProductController::class, "transferStock"])->name('products.transfer-stock');

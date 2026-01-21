@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Business;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessProduct;
+use App\Models\Business;
+use App\Models\BusinessPriceVariant;
 use Illuminate\Support\Facades\DB;
 
 
@@ -22,6 +24,8 @@ class DTEProductController extends Controller
         $product = BusinessProduct::find($request->product_id);
         $dte = session("dte")["type"];
         $customer = session("dte")["customer"] ?? null;
+        $business = Business::find(session('business'));
+        $priceVariantsEnabled = (bool) ($business?->price_variants_enabled);
         // Normalizar: convertir strings vacíos en null
         $sucursalId = $request->sucursal_id && $request->sucursal_id !== '' ? $request->sucursal_id : null;
         $posId = $request->pos_id && $request->pos_id !== '' ? $request->pos_id : null;
@@ -169,6 +173,32 @@ class DTEProductController extends Controller
         $productData['pos_id'] = $posId;
         $productData['inventory_source'] = $inventorySource;
 
+        $customerVariantId = null;
+        if ($priceVariantsEnabled && $customer) {
+            $customerVariantId = is_array($customer)
+                ? ($customer['price_variant_id'] ?? null)
+                : ($customer->price_variant_id ?? null);
+        }
+
+        $priceVariants = [];
+        if ($priceVariantsEnabled && $business) {
+            $priceVariants = BusinessPriceVariant::where('business_id', $business->id)
+                ->orderBy('name')
+                ->get()
+                ->map(function ($variant) use ($product) {
+                    $resolved = $product->resolvePriceForVariant($variant->id);
+                    return [
+                        'id' => $variant->id,
+                        'name' => $variant->name,
+                        'price_without_iva' => $variant->price_without_iva,
+                        'price_with_iva' => $variant->price_with_iva,
+                        'effective_price_without_iva' => $resolved['without_iva'],
+                        'effective_price_with_iva' => $resolved['with_iva'],
+                    ];
+                })
+                ->values();
+        }
+
         // Log temporal para debugging
         \Log::info('DTEProductController::select - Stock Debug', [
             'product_id' => $product->id,
@@ -190,7 +220,10 @@ class DTEProductController extends Controller
             "success" => true,
             "product" => $productData,
             "dte" => $dte,
-            "customer" => $customer
+            "customer" => $customer,
+            "price_variants_enabled" => $priceVariantsEnabled,
+            "price_variants" => $priceVariants,
+            "customer_price_variant_id" => $customerVariantId,
         ]);
     }
 
@@ -199,6 +232,8 @@ class DTEProductController extends Controller
         try {
             $this->dte = session("dte", ["products" => []]);
             $customer = session("dte")["customer"] ?? null;
+            $business = Business::find(session('business'));
+            $priceVariantsEnabled = (bool) ($business?->price_variants_enabled);
 
             if (!isset($this->dte["products"]) || !is_array($this->dte["products"])) {
                 $this->dte["products"] = [];
@@ -295,16 +330,40 @@ class DTEProductController extends Controller
                 'dte_type' => $this->dte["type"]
             ]);
 
+            $selectedPriceVariantId = null;
+            $selectedPriceVariantName = null;
+
+            if ($priceVariantsEnabled) {
+                $customerVariantId = $customer
+                    ? (is_array($customer) ? ($customer['price_variant_id'] ?? null) : ($customer->price_variant_id ?? null))
+                    : null;
+                $requestVariantId = $request->input('price_variant_id');
+                $selectedPriceVariantId = $customerVariantId ?: $requestVariantId;
+
+                if ($selectedPriceVariantId && $business) {
+                    $variant = BusinessPriceVariant::where('business_id', $business->id)
+                        ->where('id', $selectedPriceVariantId)
+                        ->first();
+                    if ($variant) {
+                        $selectedPriceVariantName = $variant->name;
+                    } else {
+                        $selectedPriceVariantId = null;
+                    }
+                }
+            }
+
             $found = false;
             $incoming_doc = $request->documento_relacionado ?? '';
 
             foreach ($this->dte["products"] as &$product) {
                 $current_doc = $product["documento_relacionado"] ?? '';
+                $currentVariantId = $product["price_variant_id"] ?? null;
 
                 if (
                     $product["product_id"] == $business_product->id &&
                     $product["tipo"] === $request->tipo &&
-                    $current_doc === $incoming_doc
+                    $current_doc === $incoming_doc &&
+                    $currentVariantId == $selectedPriceVariantId
                 ) {
                     $found = true;
 
@@ -367,7 +426,11 @@ class DTEProductController extends Controller
                     }
                 }
 
-                if ($customer && isset($customer["special_price"]) && $customer["special_price"]) {
+                if ($priceVariantsEnabled) {
+                    $resolved = $business_product->resolvePriceForVariant($selectedPriceVariantId);
+                    $precio = (float) $resolved['with_iva'];
+                    $precio_sin_tributos = (float) $resolved['without_iva'];
+                } elseif ($customer && ((is_array($customer) && ($customer['special_price'] ?? false)) || (!is_array($customer) && ($customer->special_price ?? false)))) {
                     $precio = (float) $business_product->special_price_with_iva;
                     $precio_sin_tributos = (float) $business_product->special_price;
                 } else {
@@ -405,7 +468,10 @@ class DTEProductController extends Controller
                     "tabaco_cigarros" => in_array("C7", $product_tributes) ? "active" : "inactive",
                     "tipo_item" => $business_product->tipoItem,
                     "iva" => $iva,
-                    "documento_relacionado" => $request->documento_relacionado ?? null
+                    "documento_relacionado" => $request->documento_relacionado ?? null,
+                    "price_variant_id" => $selectedPriceVariantId,
+                    "price_variant_name" => $selectedPriceVariantName,
+                    "precio_unitario" => ($this->dte["type"] === "14") ? $precio_sin_tributos : ($request->tipo == "Gravada" ? $precio : $precio_sin_tributos),
                 ];
             }
 

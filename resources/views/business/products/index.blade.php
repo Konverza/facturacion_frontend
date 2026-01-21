@@ -248,7 +248,7 @@
                                 <div
                                     class="my-2 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-500 dark:bg-blue-950/30">
                                     <b>Nota: </b> Debe utilizar un archivo en formato <b>.xlsx</b> disponible en
-                                    <a href="{{ $business->show_special_prices == 1 ? url('templates/importacion_productos_completo.xlsx') : url('templates/importacion_productos.xlsx') }}" target="_blank"
+                                    <a href="{{ $business->show_special_prices == 1 && !$business->price_variants_enabled ? url('templates/importacion_productos_completo.xlsx') : url('templates/importacion_productos.xlsx') }}" target="_blank"
                                         class="text-blue-600 underline dark:text-blue-400">este enlace</a> para
                                     importar productos.
                                 </div>

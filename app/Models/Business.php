@@ -21,6 +21,7 @@ class Business extends Model
         'nombre_responsable',
         'posmode',
         'show_special_prices',
+        'price_variants_enabled',
         'has_customer_branches',
         'pos_inventory_enabled',
         'active',
@@ -29,10 +30,16 @@ class Business extends Model
     protected $casts = [
         'posmode' => 'boolean',
         'show_special_prices' => 'boolean',
+        'price_variants_enabled' => 'boolean',
         'has_customer_branches' => 'boolean',
         'pos_inventory_enabled' => 'boolean',
         'active' => 'boolean',
     ];
+
+    public function priceVariants()
+    {
+        return $this->hasMany(BusinessPriceVariant::class);
+    }
 
     public function plan()
     {

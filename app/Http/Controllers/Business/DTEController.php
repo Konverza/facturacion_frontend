@@ -1702,6 +1702,9 @@ class DTEController extends Controller
         foreach ($productsDTE as $product) {
             $searchProduct = null;
             $cantidad = 0;
+            $precioUnitario = null;
+            $priceVariantId = null;
+            $priceVariantName = null;
 
             if (is_array($product)) {
                 // Caso 1: Producto viene del formato interno (al generar DTE)
@@ -1709,6 +1712,9 @@ class DTEController extends Controller
                     $searchProduct = BusinessProduct::find($product["product"]["id"]);
                     $cantidad = $product["cantidad"];
                 }
+                $precioUnitario = $product['precio_unitario'] ?? $product['precio'] ?? null;
+                $priceVariantId = $product['price_variant_id'] ?? null;
+                $priceVariantName = $product['price_variant_name'] ?? null;
             } else {
                 // Caso 2: Producto viene del JSON de Hacienda (al anular)
                 // Buscar por business_id + código + descripción para mayor precisión
@@ -1750,10 +1756,10 @@ class DTEController extends Controller
                     $descripcion = "Compra de producto (Factura Sujeto Excluido)";
                     try {
                         if ($usePosInventory) {
-                            $searchProduct->increaseStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion);
+                            $searchProduct->increaseStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion, $precioUnitario, $priceVariantId, $priceVariantName);
                             Log::info("Stock incrementado en POS", ['pos_id' => $posId]);
                         } else {
-                            $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                            $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion, $precioUnitario, $priceVariantId, $priceVariantName);
                             Log::info("Stock incrementado en sucursal", ['sucursal_id' => $sucursalId]);
                         }
                     } catch (\Exception $e) {
@@ -1767,18 +1773,18 @@ class DTEController extends Controller
                     try {
                         if ($tipo === "salida") {
                             if ($usePosInventory) {
-                                $searchProduct->reduceStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion);
+                                $searchProduct->reduceStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion, $precioUnitario, $priceVariantId, $priceVariantName);
                                 Log::info("Stock reducido en POS", ['pos_id' => $posId]);
                             } else {
-                                $searchProduct->reduceStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                                $searchProduct->reduceStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion, $precioUnitario, $priceVariantId, $priceVariantName);
                                 Log::info("Stock reducido en sucursal", ['sucursal_id' => $sucursalId]);
                             }
                         } elseif ($tipo === "entrada") {
                             if ($usePosInventory) {
-                                $searchProduct->increaseStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion);
+                                $searchProduct->increaseStockInPos($posId, (float) $cantidad, $codGeneracion, $descripcion, $precioUnitario, $priceVariantId, $priceVariantName);
                                 Log::info("Stock devuelto a POS (anulación)", ['pos_id' => $posId]);
                             } else {
-                                $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion);
+                                $searchProduct->increaseStockInBranch($sucursalId, (float) $cantidad, $codGeneracion, $descripcion, $precioUnitario, $priceVariantId, $priceVariantName);
                                 Log::info("Stock devuelto a sucursal (anulación)", ['sucursal_id' => $sucursalId]);
                             }
                         }

@@ -25,6 +25,7 @@ class BusinessCustomer extends Model
         'codPais',
         'tipoPersona',
         'special_price',
+        'price_variant_id',
         'use_branches',
     ];
 
@@ -32,6 +33,11 @@ class BusinessCustomer extends Model
         'special_price' => 'boolean',
         'use_branches' => 'boolean',
     ];
+
+    public function priceVariant()
+    {
+        return $this->belongsTo(BusinessPriceVariant::class, 'price_variant_id');
+    }
 
     public function branches()
     {

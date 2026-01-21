@@ -116,32 +116,60 @@ $(document).ready(function () {
 
     let originalProductPrice = null;
 
+    function getSelectedVariantPrices() {
+        const $form = $("#form-add-product");
+        const baseWithout = parseFloat($form.data("base-price-without-iva")) || 0;
+        const baseWith = parseFloat($form.data("base-price-with-iva")) || 0;
+
+        const $select = $("#price_variant_id");
+        if ($select.length > 0 && $select.is(":visible")) {
+            const $opt = $select.find("option:selected");
+            const selectedWithout = parseFloat($opt.data("priceWithoutIva"));
+            const selectedWith = parseFloat($opt.data("priceWithIva"));
+
+            return {
+                without: !isNaN(selectedWithout) ? selectedWithout : baseWithout,
+                with: !isNaN(selectedWith) ? selectedWith : baseWith,
+            };
+        }
+
+        return {
+            without: baseWithout,
+            with: baseWith,
+        };
+    }
+
+    function applySelectedProductPrice() {
+        const $form = $("#form-add-product");
+        const baseWith = parseFloat($form.data("base-price-with-iva"));
+        const baseWithout = parseFloat($form.data("base-price-without-iva"));
+
+        if (isNaN(baseWith) && isNaN(baseWithout)) {
+            return;
+        }
+
+        const dteType = $form.data("dte-type");
+        const type_sale = $("#type-sale").val();
+        const prices = getSelectedVariantPrices();
+
+        let productPrice = dteType !== "01" ? prices.without : prices.with;
+
+        if (dteType === "01" && type_sale && type_sale !== "Gravada") {
+            productPrice = prices.with / 1.13;
+        }
+
+        originalProductPrice = prices.with;
+        $("#product_price").val(redondear(productPrice, 8));
+        $("#count").trigger("input");
+    }
+
     $("#type-sale").on("Changed", function () {
         const type_sale = $("#type-sale").val();
         const url = new URL(window.location.href);
         const document_type = url.searchParams.get("document_type");
 
         if (document_type === "01") {
-            let product_price = parseFloat($("#product_price").val());
-
-            // Save the original price only once
-            if (originalProductPrice === null && !isNaN(product_price)) {
-                originalProductPrice = product_price;
-            }
-
-            if (type_sale !== "Gravada") {
-                if (!isNaN(product_price)) {
-                    product_price = product_price / 1.13;
-                }
-                $("#product_price").val(redondear(product_price, 8));
-                $("#count").trigger("input");
-            } else {
-                // Restore original price if available
-                if (originalProductPrice !== null) {
-                    $("#product_price").val(redondear(originalProductPrice, 8));
-                    $("#count").trigger("input");
-                }
-            }
+            applySelectedProductPrice();
         }
     });
 
@@ -310,16 +338,48 @@ $(document).ready(function () {
                 let precioSinTributos = data.product.precioSinTributos;
                 let precioUni = data.product.precioUni;
 
-                if (data.customer && data.customer.special_price) {
+                if (!data.price_variants_enabled && data.customer && data.customer.special_price) {
                     precioSinTributos = data.product.special_price;
                     precioUni = data.product.special_price_with_iva;
                 }
 
-                const productPrice =
-                    data.dte != "01"
-                        ? precioSinTributos
-                        : precioUni;
-                $("#product_price").val(productPrice);
+                const $formAddProduct = $("#form-add-product");
+                $formAddProduct.data("base-price-with-iva", precioUni);
+                $formAddProduct.data("base-price-without-iva", precioSinTributos);
+                $formAddProduct.data("dte-type", data.dte);
+
+                const $variantContainer = $("#price-variant-container");
+                const $variantSelect = $("#price_variant_id");
+
+                if (data.price_variants_enabled && Array.isArray(data.price_variants) && data.price_variants.length > 0) {
+                    $variantSelect.empty();
+                    $variantSelect.append(new Option("Precio base", ""));
+
+                    data.price_variants.forEach((variant) => {
+                        const option = new Option(variant.name, variant.id);
+                        $(option).attr("data-price-with-iva", variant.effective_price_with_iva);
+                        $(option).attr("data-price-without-iva", variant.effective_price_without_iva);
+                        $variantSelect.append(option);
+                    });
+
+                    if (data.customer_price_variant_id) {
+                        $variantSelect.val(String(data.customer_price_variant_id));
+                        $variantSelect.prop("disabled", true);
+                        $("#price-variant-help").text("Variante asignada al cliente.");
+                    } else {
+                        $variantSelect.prop("disabled", false);
+                        $("#price-variant-help").text("Si no se selecciona variante, se utilizará el precio base.");
+                    }
+
+                    $variantContainer.removeClass("hidden");
+                } else {
+                    $variantSelect.prop("disabled", false);
+                    $variantSelect.empty().append(new Option("Precio base", ""));
+                    $variantContainer.addClass("hidden");
+                }
+
+                originalProductPrice = null;
+                applySelectedProductPrice();
 
                 $("#container-data-product").removeClass("hidden");
             })
@@ -330,6 +390,10 @@ $(document).ready(function () {
                 $("#loader").addClass("hidden");
                 $("body").removeClass("overflow-hidden");
             });
+    });
+
+    $(document).on("change", "#price_variant_id", function () {
+        applySelectedProductPrice();
     });
 
     //Calcular total en el modal de seleccionar producto

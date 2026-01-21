@@ -39,6 +39,9 @@ class ProductRequest extends FormRequest
             'margin' => 'nullable|numeric',
             'special_price_with_iva' => 'nullable|numeric',
             'discount' => 'nullable|numeric',
+            'price_variants' => 'nullable|array',
+            'price_variants.*.price_without_iva' => 'nullable|numeric',
+            'price_variants.*.price_with_iva' => 'nullable|numeric',
         ];
     }
 }

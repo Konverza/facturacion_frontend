@@ -54,7 +54,7 @@
                         label="Descripción" />
                 </div>
                 <!-- Precio Especial y Costo -->
-                @if($business->show_special_prices)
+                @if($business->show_special_prices && !$business->price_variants_enabled)
                     <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                         <div class="flex-1">
                             <x-input type="number" required icon="currency-dollar" placeholder="0.00" label="Costo"
@@ -87,15 +87,44 @@
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00"
-                            :label="$business->show_special_prices ? 'Precio normal (sin IVA)' : 'Precio (sin IVA)'" name="precio_sin_iva" id="price-not-iva"
+                            :label="($business->show_special_prices && !$business->price_variants_enabled) ? 'Precio normal (sin IVA)' : 'Precio (sin IVA)'" name="precio_sin_iva" id="price-not-iva"
                             value="{{ old('precio_sin_iva') }}" step="0.00000001" />
                     </div>
                     <div class="flex-1">
                         <x-input type="number" required icon="currency-dollar" placeholder="0.00"
-                            :label="$business->show_special_prices ? 'Precio normal (con IVA)' : 'Precio (con IVA)'" name="precio" step="0.00000001" value="{{ old('precio') }}"
+                            :label="($business->show_special_prices && !$business->price_variants_enabled) ? 'Precio normal (con IVA)' : 'Precio (con IVA)'" name="precio" step="0.00000001" value="{{ old('precio') }}"
                             id="price-with-iva" />
                     </div>
                 </div>
+                @if($business->price_variants_enabled)
+                    <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                        <h2 class="mb-4 text-lg font-semibold text-primary-600 dark:text-primary-300">Variantes de precio</h2>
+                        <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
+                            Deja los campos vacíos para usar el precio base en esa variante.
+                        </p>
+                        <div class="flex flex-col gap-4">
+                            @foreach ($priceVariants as $variant)
+                                <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+                                    <div class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                        {{ $variant->name }}
+                                    </div>
+                                    <div class="flex flex-col gap-4 sm:flex-row">
+                                        <div class="flex-1">
+                                            <x-input type="number" icon="currency-dollar" placeholder="Usar precio base"
+                                                label="Precio sin IVA" name="price_variants[{{ $variant->id }}][price_without_iva]"
+                                                value="{{ old('price_variants.' . $variant->id . '.price_without_iva') }}" step="0.00000001" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <x-input type="number" icon="currency-dollar" placeholder="Usar precio base"
+                                                label="Precio con IVA" name="price_variants[{{ $variant->id }}][price_with_iva]"
+                                                value="{{ old('price_variants.' . $variant->id . '.price_with_iva') }}" step="0.00000001" />
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                     <x-input type="toggle" label="Guardar inventario para este producto" name="has_stock"
                         id="has_stock" value="1" checked />

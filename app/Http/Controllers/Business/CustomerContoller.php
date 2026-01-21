@@ -8,6 +8,7 @@ use App\Models\Business;
 use App\Models\BusinessCustomer;
 use App\Models\BusinessCustomersBranch;
 use App\Models\BusinessUser;
+use App\Models\BusinessPriceVariant;
 use App\Services\OctopusService;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -62,11 +63,15 @@ class CustomerContoller extends Controller
             $tipos_documentos = $this->octopus_service->getCatalog("CAT-022");
             $actividades_economicas = $this->octopus_service->getCatalog("CAT-019");
             $countries = $this->octopus_service->getCatalog("CAT-020");
+            $priceVariants = BusinessPriceVariant::where('business_id', session('business'))
+                ->orderBy('name')
+                ->get();
             return view('business.customers.create', [
                 'departamentos' => $departamentos,
                 'tipos_documentos' => $tipos_documentos,
                 'actividades_economicas' => $actividades_economicas,
-                'countries' => $countries
+                'countries' => $countries,
+                'priceVariants' => $priceVariants,
             ]);
         } catch (\Exception $e) {
             return redirect()->route('business.customers.index')
@@ -95,6 +100,17 @@ class CustomerContoller extends Controller
             $business_user = BusinessUser::where("business_id", session("business"))
                 ->where("user_id", auth()->user()->id)
                 ->first();
+            $business = Business::find(session('business'));
+            $usePriceVariants = (bool) ($business?->price_variants_enabled);
+            $priceVariantId = $usePriceVariants ? $request->input('price_variant_id') : null;
+
+            if ($usePriceVariants && $priceVariantId) {
+                $priceVariantId = BusinessPriceVariant::where('business_id', $business_user->business_id)
+                    ->where('id', $priceVariantId)
+                    ->value('id');
+            } else {
+                $priceVariantId = null;
+            }
             DB::beginTransaction();
 
             $business_customer = new BusinessCustomer([
@@ -112,7 +128,8 @@ class CustomerContoller extends Controller
                 "correo" => $request->correo,
                 "codPais" => $request->codigo_pais,
                 "tipoPersona" => $request->tipo_persona,
-                "special_price" => $request->has('special_price') ? true : false,
+                "special_price" => $usePriceVariants ? false : ($request->has('special_price') ? true : false),
+                "price_variant_id" => $priceVariantId,
                 "use_branches" => $request->has('use_branches') ? true : false
             ]);
 
@@ -168,6 +185,9 @@ class CustomerContoller extends Controller
         try {
             $business_customer = BusinessCustomer::with('branches')->where("id", $id)->first();
             $municipios = $this->getMunicipios($business_customer->departamento);
+            $priceVariants = BusinessPriceVariant::where('business_id', session('business'))
+                ->orderBy('name')
+                ->get();
 
             // Preparar municipios para cada sucursal
             $branchesMunicipios = [];
@@ -182,7 +202,8 @@ class CustomerContoller extends Controller
                 'actividades_economicas' => $this->octopus_service->getCatalog("CAT-019"),
                 'countries' => $this->octopus_service->getCatalog("CAT-020"),
                 'municipios' => $municipios,
-                'branchesMunicipios' => $branchesMunicipios
+                'branchesMunicipios' => $branchesMunicipios,
+                'priceVariants' => $priceVariants,
             ]);
         } catch (\Exception $e) {
             return redirect()->route('business.customers.index')
@@ -209,6 +230,17 @@ class CustomerContoller extends Controller
             }
 
             $business_customer = BusinessCustomer::findOrFail($id);
+            $business = Business::find(session('business'));
+            $usePriceVariants = (bool) ($business?->price_variants_enabled);
+            $priceVariantId = $usePriceVariants ? $request->input('price_variant_id') : null;
+
+            if ($usePriceVariants && $priceVariantId) {
+                $priceVariantId = BusinessPriceVariant::where('business_id', $business_customer->business_id)
+                    ->where('id', $priceVariantId)
+                    ->value('id');
+            } else {
+                $priceVariantId = null;
+            }
             DB::beginTransaction();
             $business_customer->update([
                 "tipoDocumento" => $request->tipo_documento,
@@ -224,7 +256,8 @@ class CustomerContoller extends Controller
                 "correo" => $request->correo,
                 "codPais" => $request->codigo_pais,
                 "tipoPersona" => $request->tipo_persona,
-                "special_price" => $request->has('special_price') ? true : false,
+                "special_price" => $usePriceVariants ? false : ($request->has('special_price') ? true : false),
+                "price_variant_id" => $priceVariantId,
                 "use_branches" => $request->has('use_branches') ? true : false
             ]);
 

@@ -183,6 +183,13 @@ Breadcrumbs::for("business.products.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Productos", route("business.products.index"));
 });
 
+//Price Variants
+Breadcrumbs::for("business.price-variants.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='tag' class='w-4 h-4'/>");
+    $trail->parent("business.products.index");
+    $trail->push($icon . "Variantes de precio", route("business.price-variants.index"));
+});
+
 //Products > Create
 Breadcrumbs::for("business.products.create", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='plus' class='w-4 h-4'/>");

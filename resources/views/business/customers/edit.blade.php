@@ -77,9 +77,28 @@
                             placeholder="XXXX XXXX" value="{{ old('telefono', $customer->telefono) }}" />
                     </div>
                 </div>
-                @if($business->show_special_prices)
+                @if($business->show_special_prices && !$business->price_variants_enabled)
                     <div class="mt-4">
                         <x-input type="checkbox" label="Aplicar precio especial a este cliente" name="special_price" id="special_price" :checked="$customer->special_price" />
+                    </div>
+                @endif
+                @if ($business->price_variants_enabled)
+                    <div class="mt-4">
+                        <label for="price_variant_id" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Variante de precio
+                        </label>
+                        <select name="price_variant_id" id="price_variant_id"
+                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500">
+                            <option value="">Precio base</option>
+                            @foreach ($priceVariants as $variant)
+                                <option value="{{ $variant->id }}" @selected($customer->price_variant_id == $variant->id)>
+                                    {{ $variant->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Si no se selecciona variante, se utilizará el precio base.
+                        </p>
                     </div>
                 @endif
                 @if ($business->has_customer_branches)

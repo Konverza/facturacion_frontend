@@ -8,6 +8,8 @@ use App\Imports\BusinessProductImport;
 use App\Models\Business;
 use App\Models\BusinessProduct;
 use App\Models\BusinessProductMovement;
+use App\Models\BusinessPriceVariant;
+use App\Models\BusinessProductPriceVariant;
 use App\Models\ProductCategory;
 use App\Models\Tributes;
 use App\Services\OctopusService;
@@ -51,6 +53,10 @@ class ProductController extends Controller
                 return $category;
             })->pluck('full_path', 'id')->toArray();
             $categories = ["0" => "Sin categoria"] + $categories;
+
+            $priceVariants = BusinessPriceVariant::where('business_id', $business->id)
+                ->orderBy('name')
+                ->get();
             
             // Obtener sucursales del negocio
             $sucursales = \App\Models\Sucursal::where('business_id', session("business"))
@@ -78,7 +84,8 @@ class ProductController extends Controller
                 'categories' => $categories,
                 'sucursales' => $sucursales,
                 'canSelectBranch' => $canSelectBranch,
-                'defaultSucursalId' => $defaultSucursalId
+                'defaultSucursalId' => $defaultSucursalId,
+                'priceVariants' => $priceVariants,
             ]);
         } catch (\Exception $e) {
             return back()->with([
@@ -92,6 +99,7 @@ class ProductController extends Controller
     {
         try {
             DB::beginTransaction();
+            $business = Business::find(session("business"));
             $validated = $request->validated();
             $product = new BusinessProduct();
             $product->business_id = session("business");
@@ -100,11 +108,11 @@ class ProductController extends Controller
             $product->uniMedida = $validated['unidad_medida'];
             $product->descripcion = $validated['descripcion'];
             $product->precioUni = $validated['precio'];
-            $product->special_price = $validated['special_price'] ?? 0; // Default to 0 if not provided
+            $product->special_price = $business->price_variants_enabled ? 0 : ($validated['special_price'] ?? 0); // Default to 0 if not provided
             $product->cost = $validated['cost'] ?? 0; // Default to 0 if not provided
-            $product->special_price_with_iva = $validated['special_price_with_iva'] ?? 0; // Default to 0 if not provided
+            $product->special_price_with_iva = $business->price_variants_enabled ? 0 : ($validated['special_price_with_iva'] ?? 0); // Default to 0 if not provided
             $product->margin = $validated['margin'] ?? 0; // Default to 0 if not provided
-            $product->discount = $validated['discount'] ?? 0; // Default to 0 if not provided
+            $product->discount = $business->price_variants_enabled ? 0 : ($validated['discount'] ?? 0); // Default to 0 if not provided
             $product->precioSinTributos = $validated['precio_sin_iva'];
             $product->tributos = json_encode($validated["tributos"]);
             if(Arr::exists($validated, "has_stock")){
@@ -129,6 +137,11 @@ class ProductController extends Controller
             }
 
             $product->save();
+
+            // Sincronizar precios por variante (si aplica)
+            if ($business->price_variants_enabled) {
+                $this->syncProductPriceVariants($product, $request->input('price_variants', []));
+            }
             
             // Manejar disponibilidad por sucursales
             $isGlobal = $request->input('is_global', '0') === '1';
@@ -247,6 +260,12 @@ class ProductController extends Controller
         }
 
         $tributes = Tributes::all();
+        $priceVariants = BusinessPriceVariant::where('business_id', session('business'))
+            ->orderBy('name')
+            ->get();
+        $productVariantPrices = $product->priceVariantOverrides()
+            ->get()
+            ->keyBy('price_variant_id');
         return view('business.products.edit', [
             'product' => $product,
             'unidades_medidas' => $this->unidades_medidas,
@@ -255,7 +274,9 @@ class ProductController extends Controller
             'sucursales' => $sucursales,
             'sucursalesAsignadas' => $sucursalesAsignadas,
             'canSelectBranch' => $canSelectBranch,
-            'defaultSucursalId' => $defaultSucursalId
+            'defaultSucursalId' => $defaultSucursalId,
+            'priceVariants' => $priceVariants,
+            'productVariantPrices' => $productVariantPrices,
         ]);
     }
 
@@ -263,6 +284,7 @@ class ProductController extends Controller
     {
         try {
             DB::beginTransaction();
+            $business = Business::find(session("business"));
             $validated = $request->validated();
             $product = BusinessProduct::find($id);
             $product->tipoItem = $validated['tipo_producto'];
@@ -270,13 +292,13 @@ class ProductController extends Controller
             $product->uniMedida = $validated['unidad_medida'];
             $product->descripcion = $validated['descripcion'];
             $product->precioUni = $validated['precio'];
-            $product->special_price = $validated['special_price'] ?? 0; // Default to 0 if not provided
-            $product->special_price_with_iva = $validated['special_price_with_iva'] ?? 0; // Default to 0 if not provided
+            $product->special_price = $business->price_variants_enabled ? 0 : ($validated['special_price'] ?? 0); // Default to 0 if not provided
+            $product->special_price_with_iva = $business->price_variants_enabled ? 0 : ($validated['special_price_with_iva'] ?? 0); // Default to 0 if not provided
             $product->margin = $validated['margin'] ?? 0; // Default to
             $product->cost = $validated['cost'] ?? 0; // Default to 0 if not provided
             $product->precioSinTributos = $validated['precio_sin_iva'];
             $product->tributos = json_encode($validated["tributos"]);
-            $product->discount = $validated['discount'] ?? 0; // Default to 0 if not provided
+            $product->discount = $business->price_variants_enabled ? 0 : ($validated['discount'] ?? 0); // Default to 0 if not provided
 
             // Nota: NO actualizamos stock_inicial en edición, solo stockMinimo
             if(Arr::exists($validated, "has_stock")){
@@ -309,6 +331,11 @@ class ProductController extends Controller
             }
 
             $product->save();
+
+            // Sincronizar precios por variante (si aplica)
+            if ($business->price_variants_enabled) {
+                $this->syncProductPriceVariants($product, $request->input('price_variants', []));
+            }
             
             // Manejar disponibilidad por sucursales
             $isGlobal = $request->input('is_global', '0') === '1';
@@ -455,6 +482,44 @@ class ProductController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error')
                 ->with("error_message", "Ha ocurrido un error al actualizar el stock: " . $e->getMessage());
+        }
+    }
+
+    private function syncProductPriceVariants(BusinessProduct $product, array $priceVariantsInput): void
+    {
+        $businessId = session('business');
+        $variants = BusinessPriceVariant::where('business_id', $businessId)->get();
+
+        foreach ($variants as $variant) {
+            $input = $priceVariantsInput[$variant->id] ?? [];
+
+            $priceWithout = $input['price_without_iva'] ?? null;
+            $priceWith = $input['price_with_iva'] ?? null;
+
+            if ($priceWithout === '') {
+                $priceWithout = null;
+            }
+            if ($priceWith === '') {
+                $priceWith = null;
+            }
+
+            if ($priceWithout === null && $priceWith === null) {
+                BusinessProductPriceVariant::where('business_product_id', $product->id)
+                    ->where('price_variant_id', $variant->id)
+                    ->delete();
+                continue;
+            }
+
+            BusinessProductPriceVariant::updateOrCreate(
+                [
+                    'business_product_id' => $product->id,
+                    'price_variant_id' => $variant->id,
+                ],
+                [
+                    'price_without_iva' => $priceWithout,
+                    'price_with_iva' => $priceWith,
+                ]
+            );
         }
     }
 

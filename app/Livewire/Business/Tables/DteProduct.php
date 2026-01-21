@@ -29,9 +29,13 @@ class DteProduct extends Component
     public $defaultPosId = null;
     public $userOnlyDefaultPos = false;
     public $posHasIndependentInventory = false;
+    public $priceVariantsEnabled = false;
 
     public function mount()
     {
+        $business = \App\Models\Business::find(session('business'));
+        $this->priceVariantsEnabled = (bool) ($business?->price_variants_enabled);
+
         // Obtener configuración del usuario
         $businessUser = BusinessUser::where('business_id', session('business'))
             ->where('user_id', auth()->id())

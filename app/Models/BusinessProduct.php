@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\BusinessPriceVariant;
+use App\Models\BusinessProductPriceVariant;
 
 class BusinessProduct extends Model
 {
@@ -55,6 +57,64 @@ class BusinessProduct extends Model
     }
 
     /**
+     * Variantes de precio (override por producto)
+     */
+    public function priceVariantOverrides()
+    {
+        return $this->hasMany(BusinessProductPriceVariant::class, 'business_product_id');
+    }
+
+    /**
+     * Resolver precio según variante
+     *
+     * @param int|null $variantId
+     * @return array{without_iva: float, with_iva: float, variant: ?BusinessPriceVariant}
+     */
+    public function resolvePriceForVariant(?int $variantId): array
+    {
+        $baseWithout = (float) $this->precioSinTributos;
+        $baseWith = (float) $this->precioUni;
+
+        if (!$variantId) {
+            return [
+                'without_iva' => $baseWithout,
+                'with_iva' => $baseWith,
+                'variant' => null,
+            ];
+        }
+
+        $variant = BusinessPriceVariant::find($variantId);
+        if (!$variant || $variant->business_id !== $this->business_id) {
+            return [
+                'without_iva' => $baseWithout,
+                'with_iva' => $baseWith,
+                'variant' => null,
+            ];
+        }
+
+        $override = $this->priceVariantOverrides()
+            ->where('price_variant_id', $variantId)
+            ->first();
+
+        $without = $override?->price_without_iva;
+        $with = $override?->price_with_iva;
+
+        if ($without === null) {
+            $without = $variant->price_without_iva;
+        }
+
+        if ($with === null) {
+            $with = $variant->price_with_iva;
+        }
+
+        return [
+            'without_iva' => $without !== null ? (float) $without : $baseWithout,
+            'with_iva' => $with !== null ? (float) $with : $baseWith,
+            'variant' => $variant,
+        ];
+    }
+
+    /**
      * Relación con stocks por sucursal
      */
     public function branchStocks()
@@ -102,7 +162,7 @@ class BusinessProduct extends Model
     /**
      * Reducir stock de una sucursal
      */
-    public function reduceStockInBranch($sucursalId, float $cantidad, string $numeroFactura, string $descripcion = 'Venta de producto'): bool
+    public function reduceStockInBranch($sucursalId, float $cantidad, string $numeroFactura, string $descripcion = 'Venta de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null): bool
     {
         if ($this->is_global || !$this->has_stock) {
             return true; // Sin control de stock
@@ -125,9 +185,11 @@ class BusinessProduct extends Model
             'numero_factura' => $numeroFactura,
             'tipo' => 'salida',
             'cantidad' => $cantidad,
-            'precio_unitario' => $this->precioUni,
+            'precio_unitario' => $precioUnitario ?? $this->precioUni,
             'producto' => $this->descripcion,
             'descripcion' => $descripcion,
+            'price_variant_id' => $priceVariantId,
+            'price_variant_name' => $priceVariantName,
         ]);
 
         return true;
@@ -136,7 +198,7 @@ class BusinessProduct extends Model
     /**
      * Aumentar stock de una sucursal
      */
-    public function increaseStockInBranch($sucursalId, float $cantidad, string $numeroFactura, string $descripcion = 'Entrada de producto'): void
+    public function increaseStockInBranch($sucursalId, float $cantidad, string $numeroFactura, string $descripcion = 'Entrada de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null): void
     {
         if ($this->is_global || !$this->has_stock) {
             return; // Sin control de stock
@@ -163,9 +225,11 @@ class BusinessProduct extends Model
             'numero_factura' => $numeroFactura,
             'tipo' => 'entrada',
             'cantidad' => $cantidad,
-            'precio_unitario' => $this->precioUni,
+            'precio_unitario' => $precioUnitario ?? $this->precioUni,
             'producto' => $this->descripcion,
             'descripcion' => $descripcion,
+            'price_variant_id' => $priceVariantId,
+            'price_variant_name' => $priceVariantName,
         ]);
     }
 
@@ -215,7 +279,7 @@ class BusinessProduct extends Model
     /**
      * Reducir stock de un punto de venta
      */
-    public function reduceStockInPos($puntoVentaId, float $cantidad, string $numeroFactura, string $descripcion = 'Venta de producto'): bool
+    public function reduceStockInPos($puntoVentaId, float $cantidad, string $numeroFactura, string $descripcion = 'Venta de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null): bool
     {
         if ($this->is_global || !$this->has_stock) {
             return true; // Sin control de stock
@@ -243,9 +307,11 @@ class BusinessProduct extends Model
             'numero_factura' => $numeroFactura,
             'tipo' => 'salida',
             'cantidad' => $cantidad,
-            'precio_unitario' => $this->precioUni,
+            'precio_unitario' => $precioUnitario ?? $this->precioUni,
             'producto' => $this->descripcion,
             'descripcion' => $descripcion,
+            'price_variant_id' => $priceVariantId,
+            'price_variant_name' => $priceVariantName,
         ]);
 
         return true;
@@ -254,7 +320,7 @@ class BusinessProduct extends Model
     /**
      * Aumentar stock de un punto de venta
      */
-    public function increaseStockInPos($puntoVentaId, float $cantidad, string $numeroFactura, string $descripcion = 'Entrada de producto'): void
+    public function increaseStockInPos($puntoVentaId, float $cantidad, string $numeroFactura, string $descripcion = 'Entrada de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null): void
     {
         if ($this->is_global || !$this->has_stock) {
             return; // Sin control de stock
@@ -286,9 +352,11 @@ class BusinessProduct extends Model
             'numero_factura' => $numeroFactura,
             'tipo' => 'entrada',
             'cantidad' => $cantidad,
-            'precio_unitario' => $this->precioUni,
+            'precio_unitario' => $precioUnitario ?? $this->precioUni,
             'producto' => $this->descripcion,
             'descripcion' => $descripcion,
+            'price_variant_id' => $priceVariantId,
+            'price_variant_name' => $priceVariantName,
         ]);
     }
 

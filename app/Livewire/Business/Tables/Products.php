@@ -32,6 +32,8 @@ class Products extends Component
     public $defaultPosId = null;
     public $userOnlyDefaultPos = false;
     public $posHasIndependentInventory = false;
+    public $priceVariantsEnabled = false;
+    public $showSpecialPrices = false;
 
     public $options = [
         'todos' => 'Todos',
@@ -43,6 +45,10 @@ class Products extends Component
 
     public function mount()
     {
+        $business = \App\Models\Business::find(session('business'));
+        $this->priceVariantsEnabled = (bool) ($business?->price_variants_enabled);
+        $this->showSpecialPrices = (bool) ($business?->show_special_prices);
+
         // Obtener configuración del usuario
         $businessUser = BusinessUser::where('business_id', session('business'))
             ->where('user_id', auth()->id())

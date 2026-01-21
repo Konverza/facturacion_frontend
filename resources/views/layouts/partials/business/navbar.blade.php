@@ -225,6 +225,14 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ Route('business.price-variants.index') }}"
+                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                            <span class="ms-3 flex-1 whitespace-nowrap">
+                                Variantes de precio
+                            </span>
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ Route('business.movements.index') }}"
                             class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
                             <span class="ms-3 flex-1 whitespace-nowrap">

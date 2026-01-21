@@ -250,6 +250,48 @@ $(document).ready(function () {
         calculateDiscountFromSpecialPrice();
     });
 
+    function syncVariantPrice($input, mode) {
+        if ($input.data("syncing")) {
+            return;
+        }
+
+        const name = $input.attr("name") || "";
+        const match = name.match(/price_variants\[(\d+)\]\[(price_without_iva|price_with_iva)\]/);
+        if (!match) {
+            return;
+        }
+
+        const variantId = match[1];
+        const withoutSelector = `input[name="price_variants[${variantId}][price_without_iva]"]`;
+        const withSelector = `input[name="price_variants[${variantId}][price_with_iva]"]`;
+
+        let value = parseFloat($input.val());
+        if (isNaN(value)) {
+            return;
+        }
+
+        const $target = mode === "without" ? $(withSelector) : $(withoutSelector);
+        if ($target.length === 0) {
+            return;
+        }
+
+        $target.data("syncing", true);
+        if (mode === "without") {
+            $target.val((value * 1.13).toFixed(8));
+        } else {
+            $target.val((value / 1.13).toFixed(8));
+        }
+        $target.data("syncing", false);
+    }
+
+    $(document).on("input", "input[name^='price_variants'][name$='[price_without_iva]']", function () {
+        syncVariantPrice($(this), "without");
+    });
+
+    $(document).on("input", "input[name^='price_variants'][name$='[price_with_iva]']", function () {
+        syncVariantPrice($(this), "with");
+    });
+
     // Cálculos cuando cambian costo, margen o descuento
     $("#cost, #margin, #discount").on("input", function () {
         calculateFromCostMarginDiscount();

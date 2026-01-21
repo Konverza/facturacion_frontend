@@ -15,7 +15,9 @@ class BusinessProductMovement extends Model
         'cantidad',
         'precio_unitario',
         'producto',
-        'descripcion'  
+        'descripcion',
+        'price_variant_id',
+        'price_variant_name'
     ];
 
     public function businessProduct()

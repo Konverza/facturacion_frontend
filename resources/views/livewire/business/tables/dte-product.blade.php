@@ -68,12 +68,12 @@
                     <x-td>
                         @if ($number !== '01')
                             ${{ $product->precioSinTributos }} <br>
-                            @if ($product->special_price > 0)
+                            @if (!$priceVariantsEnabled && $product->special_price > 0)
                                 <span class="text-success">Con descuento: ${{ $product->special_price }}</span>
                             @endif
                         @else
                             ${{ $product->precioUni }} <br>
-                            @if ($product->special_price_with_iva > 0)
+                            @if (!$priceVariantsEnabled && $product->special_price_with_iva > 0)
                                 <span class="text-success">Con descuento: ${{ $product->special_price_with_iva }}</span>
                             @endif
                         @endif
