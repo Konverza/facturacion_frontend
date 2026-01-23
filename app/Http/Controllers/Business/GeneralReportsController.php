@@ -8,6 +8,7 @@ use App\Models\Business;
 use App\Models\BusinessProduct;
 use App\Models\PuntoVenta;
 use App\Models\Sucursal;
+use App\Services\OctopusService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -57,6 +58,7 @@ class GeneralReportsController extends Controller
     {
         $business_id = Session::get('business') ?? null;
         $business = Business::find($business_id);
+        $business_data = app(OctopusService::class)->getDatosEmpresa($business->nit);
 
         $request->validate([
             'report_type' => 'required|string',
@@ -122,6 +124,7 @@ class GeneralReportsController extends Controller
 
         $pdf = Pdf::loadView('business.reporting.pdf.general-report', [
             'business' => $business,
+            'business_data' => $business_data,
             'title' => $title,
             'filters' => $filters,
             'headers' => $headers,
@@ -199,7 +202,7 @@ class GeneralReportsController extends Controller
         }
 
         $filters['Estado'] = 'PROCESADO';
-        $filters['Tipo DTE'] = '01, 03, 05';
+        $filters['Tipo DTE'] = 'Factura de Consumidor Final, Comprobante de crédito fiscal, Nota de crédito';
 
         $filters['Generado'] = now()->format('d/m/Y H:i');
 

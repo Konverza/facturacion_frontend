@@ -9,9 +9,9 @@
             </div>
             <div class="flex items-center gap-2">
                 <x-button type="a" href="{{ route('business.invoice-bags.report-summary', $bag->id) }}"
-                    typeButton="info" icon="report" text="PDF Resumen" size="small" target="_blank" rel="noopener" />
+                    typeButton="info" icon="report" text="Resumen de Facturas (PDF)" size="small" target="_blank" rel="noopener" />
                 <x-button type="a" href="{{ route('business.invoice-bags.report-detail', $bag->id) }}"
-                    typeButton="default" icon="list" text="PDF Detalle" size="small" target="_blank" rel="noopener" />
+                    typeButton="default" icon="list" text="Detalle de Productos (PDF)" size="small" target="_blank" rel="noopener" />
                 @if ($bag->status === 'open')
                     <form action="{{ route('business.invoice-bags.send', $bag->id) }}" method="POST">
                         @csrf

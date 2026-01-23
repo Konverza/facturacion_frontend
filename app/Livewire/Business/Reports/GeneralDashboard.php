@@ -266,9 +266,11 @@ class GeneralDashboard extends Component
         $sucursal_options = $sucursales->pluck('nombre', 'codSucursal')->toArray();
         $sucursal_options = array_merge(['' => 'Todas'], $sucursal_options);
         $punto_venta_options = [];
+        $punto_venta_map = [];
         foreach ($sucursales as $sucursal) {
             foreach ($sucursal->puntosVentas as $puntoVenta) {
                 $punto_venta_options[$puntoVenta->codPuntoVenta] = "{$sucursal->nombre} - {$puntoVenta->nombre}";
+                $punto_venta_map[$sucursal->codSucursal . '|' . $puntoVenta->codPuntoVenta] = "{$sucursal->nombre} - {$puntoVenta->nombre}";
             }
         }
         $punto_venta_options = array_merge(['' => 'Todos'], $punto_venta_options);
@@ -285,7 +287,7 @@ class GeneralDashboard extends Component
             $saved_filter_options[$name] = $name;
         }
 
-        $this->dashboard = $this->buildDashboard($this->dtes, $sucursal_options, $punto_venta_options);
+        $this->dashboard = $this->buildDashboard($this->dtes, $sucursal_options, $punto_venta_options, $punto_venta_map);
 
         return view('livewire.business.reports.general-dashboard', [
             'dtes' => $this->dtes,
@@ -348,7 +350,7 @@ class GeneralDashboard extends Component
         }
     }
 
-    private function buildDashboard(array $dtes, array $sucursal_options, array $punto_venta_options): array
+    private function buildDashboard(array $dtes, array $sucursal_options, array $punto_venta_options, array $punto_venta_map = []): array
     {
         $stats = [
             'total_ventas' => 0,
@@ -424,7 +426,20 @@ class GeneralDashboard extends Component
             $stats['total_documentos'] += 1;
             $stats['total_ventas'] += $monto_venta;
 
-            $stats['ventas_gravadas'] += (float) data_get($resumen, 'totalGravada', 0) * $multiplier;
+            $tributos = data_get($resumen, 'tributos', []);
+            $total_tributos = 0;
+            if (is_array($tributos)) {
+                foreach ($tributos as $tributo) {
+                    if (is_object($tributo)) {
+                        $tributo = json_decode(json_encode($tributo), true);
+                    }
+                    if (is_array($tributo)) {
+                        $total_tributos += (float) data_get($tributo, 'valor', 0);
+                    }
+                }
+            }
+
+            $stats['ventas_gravadas'] += ((float) data_get($resumen, 'totalGravada', 0) + $total_tributos) * $multiplier;
             $stats['ventas_exentas'] += (float) data_get($resumen, 'totalExenta', 0) * $multiplier;
             $stats['ventas_no_sujetas'] += (float) data_get($resumen, 'totalNoSuj', 0) * $multiplier;
 
@@ -450,16 +465,19 @@ class GeneralDashboard extends Component
             }
 
             if ($codPuntoVenta) {
-                if (!isset($ventas_por_punto[$codPuntoVenta])) {
-                    $ventas_por_punto[$codPuntoVenta] = [
-                        'codigo' => $codPuntoVenta,
-                        'nombre' => $punto_venta_options[$codPuntoVenta] ?? $codPuntoVenta,
+                $puntoKey = ($codSucursal ?: 'N/A') . '|' . $codPuntoVenta;
+                if (!isset($ventas_por_punto[$puntoKey])) {
+                    $sucursalNombre = $sucursal_options[$codSucursal] ?? $codSucursal ?? 'Sin sucursal';
+                    $puntoNombre = $punto_venta_map[$puntoKey] ?? $codPuntoVenta;
+                    $ventas_por_punto[$puntoKey] = [
+                        'codigo' => $puntoKey,
+                        'nombre' => $puntoNombre ?: ($sucursalNombre . ' - ' . $codPuntoVenta),
                         'total' => 0,
                         'cantidad' => 0,
                     ];
                 }
-                $ventas_por_punto[$codPuntoVenta]['total'] += $monto_venta;
-                $ventas_por_punto[$codPuntoVenta]['cantidad'] += 1;
+                $ventas_por_punto[$puntoKey]['total'] += $monto_venta;
+                $ventas_por_punto[$puntoKey]['cantidad'] += 1;
             }
 
             if ($tipo) {

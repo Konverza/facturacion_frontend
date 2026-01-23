@@ -11,6 +11,7 @@
         .container { padding: 15px; }
         .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #2563eb; padding-bottom: 10px; }
         .header h1 { font-size: 20px; color: #2563eb; margin-bottom: 3px; }
+        .header h2 { font-size: 14px; color: #444; margin-bottom: 6px; }
         .header p { font-size: 12px; color: #666; }
         .info-grid { display: table; width: 100%; margin-bottom: 12px; }
         .info-row { display: table-row; }
@@ -33,9 +34,10 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>{{ strtoupper($title) }}</h1>
-            <p>{{ $business->nombreComercial ?? $business->nombre ?? '' }}</p>
-            <p style="font-size: 11px; color: #9ca3af;">{{ $business->nit ?? '' }}</p>
+            <h1>{{ strtoupper($business_data['nombre']) }}</h1>
+            <p style="font-size: 12px; color: #747a85; margin-top: 4px;">{{ $business_data['complemento'] }}</p>
+            <p style="font-size: 12px; color: #747a85; margin-bottom: 8px;">Registro de Contribuyente: {{ $business_data['nrc'] }} NIT: {{ $business_data['nit'] }}</p>
+            <h2>{{ strtoupper($title) }}</h2>
         </div>
 
         <div class="section-title">DATOS DEL REPORTE</div>
@@ -129,7 +131,6 @@
 
         <div class="footer">
             <p>Documento generado el {{ now()->format('d/m/Y H:i:s') }}</p>
-            <p>{{ $business->nombreComercial ?? $business->nombre ?? '' }} - {{ $business->nit ?? '' }}</p>
         </div>
     </div>
 </body>
