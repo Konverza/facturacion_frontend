@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +11,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: Arial, sans-serif;
             font-size: 9px;
@@ -135,11 +136,15 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <div class="header">
+        <h1>{{ strtoupper($business_data['nombre']) }}</h1>
+        <p style="font-size: 12px; color: #747a85; margin-top: 4px;">{{ $business_data['complemento'] }}</p>
+        <p style="font-size: 12px; color: #747a85; margin-bottom: 8px;">Registro de Contribuyente:
+            {{ $business_data['nrc'] }} NIT: {{ $business_data['nit'] }}</p>
         <h1>REPORTE KARDEX DE INVENTARIO</h1>
-        <h2>{{ $business->nombre_de_la_empresa }}</h2>
     </div>
 
     <!-- Información del Reporte -->
@@ -150,22 +155,18 @@
                 <div class="info-value">{{ $producto->codigo }} - {{ $producto->descripcion }}</div>
             </div>
             <div class="info-row">
-                <div class="info-label">Unidad de Medida:</div>
-                <div class="info-value">{{ $producto->uniMedida }}</div>
-            </div>
-            <div class="info-row">
                 <div class="info-label">Período:</div>
                 <div class="info-value">
                     Del {{ $fechaInicio->format('d/m/Y') }} al {{ $fechaFin->format('d/m/Y') }}
                 </div>
             </div>
-            @if($sucursal)
+            @if ($sucursal)
                 <div class="info-row">
                     <div class="info-label">Sucursal:</div>
                     <div class="info-value">{{ $sucursal->nombre }}</div>
                 </div>
             @endif
-            @if($puntoVenta)
+            @if ($puntoVenta)
                 <div class="info-row">
                     <div class="info-label">Punto de Venta:</div>
                     <div class="info-value">{{ $puntoVenta->nombre }}</div>
@@ -229,9 +230,11 @@
                     <td class="left">{{ Str::limit($item['sucursal'], 15) }}</td>
                     <td class="left">{{ Str::limit($item['punto_venta'], 15) }}</td>
                     <td>{{ $item['entrada'] > 0 ? number_format($item['entrada'], 2) : '-' }}</td>
-                    <td class="right">{{ $item['entrada'] > 0 ? '$' . number_format($item['valor_entrada'], 2) : '-' }}</td>
+                    <td class="right">
+                        {{ $item['entrada'] > 0 ? '$' . number_format($item['valor_entrada'], 2) : '-' }}</td>
                     <td>{{ $item['salida'] > 0 ? number_format($item['salida'], 2) : '-' }}</td>
-                    <td class="right">{{ $item['salida'] > 0 ? '$' . number_format($item['valor_salida'], 2) : '-' }}</td>
+                    <td class="right">{{ $item['salida'] > 0 ? '$' . number_format($item['valor_salida'], 2) : '-' }}
+                    </td>
                     <td><strong>{{ number_format($item['saldo'], 2) }}</strong></td>
                     <td class="right"><strong>${{ number_format($item['valor_saldo'], 2) }}</strong></td>
                 </tr>
@@ -244,7 +247,7 @@
             @endforelse
 
             <!-- Totales -->
-            @if(count($kardex) > 0)
+            @if (count($kardex) > 0)
                 <tr class="totales">
                     <td colspan="5" class="right"><strong>TOTALES:</strong></td>
                     <td><strong>{{ number_format($totalEntradas, 2) }}</strong></td>
@@ -264,8 +267,8 @@
 
     <!-- Footer -->
     <div class="footer">
-        <p>{{ $business->nombre_de_la_empresa }} - NIT: {{ $business->nit }}</p>
         <p>Generado el {{ now()->format('d/m/Y H:i:s') }}</p>
     </div>
 </body>
+
 </html>

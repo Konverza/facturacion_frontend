@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
+use App\Services\OctopusService;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Models\BusinessProduct;
@@ -54,6 +55,7 @@ class KardexController extends Controller
     {
         $business_id = Session::get('business');
         $business = Business::find($business_id);
+        $business_data = app(OctopusService::class)->getDatosEmpresa($business->nit);
 
         if (!$business) {
             return redirect()->route('business.dashboard')->with([
@@ -119,6 +121,7 @@ class KardexController extends Controller
 
         $pdf = Pdf::loadView('business.reports.kardex.pdf', [
             'business' => $business,
+            'business_data' => $business_data,
             'producto' => $producto,
             'kardex' => $kardex,
             'saldoInicial' => $saldoInicial,
