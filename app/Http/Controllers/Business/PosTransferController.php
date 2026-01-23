@@ -773,6 +773,7 @@ class PosTransferController extends Controller
     {
         $business_id = Session::get('business') ?? null;
         $business = Business::find($business_id);
+        $business_data = app(OctopusService::class)->getDatosEmpresa($business->nit);
 
         if (!$business) {
             abort(403, 'No autorizado');
@@ -790,6 +791,7 @@ class PosTransferController extends Controller
         $pdf = Pdf::loadView('business.inventory.pos-transfers.pdf.reporte', [
             'traslado' => $traslado,
             'business' => $business,
+            'business_data' => $business_data,
             'unidades_medidas' => $this->unidades_medidas,
         ]);
 
@@ -803,6 +805,7 @@ class PosTransferController extends Controller
     {
         $business_id = Session::get('business') ?? null;
         $business = Business::find($business_id);
+        $business_data = app(OctopusService::class)->getDatosEmpresa($business->nit);
 
         if (!$business) {
             abort(403, 'No autorizado');
@@ -822,6 +825,7 @@ class PosTransferController extends Controller
         $pdf = Pdf::loadView('business.inventory.pos-transfers.pdf.devolucion', [
             'traslado' => $traslado,
             'business' => $business,
+            'business_data' => $business_data,
             'unidades_medidas' => $this->unidades_medidas,
         ]);
 
@@ -835,6 +839,7 @@ class PosTransferController extends Controller
     {
         $business_id = Session::get('business') ?? null;
         $business = Business::find($business_id);
+        $business_data = app(OctopusService::class)->getDatosEmpresa($business->nit);
 
         if (!$business) {
             abort(403, 'No autorizado');
@@ -858,6 +863,7 @@ class PosTransferController extends Controller
         $pdf = Pdf::loadView('business.inventory.pos-transfers.pdf.liquidacion', [
             'traslado' => $traslado,
             'business' => $business,
+            'business_data' => $business_data,
             'unidades_medidas' => $this->unidades_medidas,
         ]);
 

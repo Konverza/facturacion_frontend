@@ -9,6 +9,7 @@
         .container { padding: 15px; }
         .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #059669; padding-bottom: 10px; }
         .header h1 { font-size: 20px; color: #059669; margin-bottom: 3px; }
+        .header h2 { font-size: 14px; color: #444; margin-bottom: 6px; }
         .header .subtitle { font-size: 14px; color: #047857; font-weight: bold; }
         .header p { font-size: 12px; color: #666; }
         .status-box { background: #d1fae5; border: 2px solid #059669; padding: 10px; margin: 12px 0; text-align: center; }
@@ -41,9 +42,11 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>REPORTE DE LIQUIDACIÓN</h1>
-            <div class="subtitle">Verificación de Inventario Devuelto</div>
-            <p>{{ $business->nombreComercial }}</p>
+            <h1>{{ strtoupper($business_data['nombre']) }}</h1>
+            <p style="font-size: 12px; color: #747a85; margin-top: 4px;">{{ $business_data['complemento'] }}</p>
+            <p style="font-size: 12px; color: #747a85; margin-bottom: 8px;">Registro de Contribuyente:
+                {{ $business_data['nrc'] }} NIT: {{ $business_data['nit'] }}</p>
+            <h2>REPORTE DE LIQUIDACIÓN</h2>
             <p style="font-size: 11px; color: #9ca3af;">{{ $traslado->numero_transferencia }}</p>
         </div>
 
@@ -226,7 +229,6 @@
         <!-- Footer -->
         <div class="footer">
             <p>Documento generado el {{ now()->format('d/m/Y H:i:s') }}</p>
-            <p>{{ $business->nombreComercial }} - {{ $business->nit ?? '' }}</p>
             <p style="margin-top: 5px; font-size: 9px;">
                 Este documento certifica la liquidación del inventario devuelto
             </p>
