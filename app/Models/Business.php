@@ -24,6 +24,7 @@ class Business extends Model
         'price_variants_enabled',
         'has_customer_branches',
         'pos_inventory_enabled',
+        'invoice_bag_enabled',
         'active',
     ];
 
@@ -33,6 +34,7 @@ class Business extends Model
         'price_variants_enabled' => 'boolean',
         'has_customer_branches' => 'boolean',
         'pos_inventory_enabled' => 'boolean',
+        'invoice_bag_enabled' => 'boolean',
         'active' => 'boolean',
     ];
 
@@ -59,5 +61,10 @@ class Business extends Model
     public function products()
     {
         return $this->hasMany(BusinessProduct::class, 'business_id');
+    }
+
+    public function invoiceBags()
+    {
+        return $this->hasMany(InvoiceBag::class, 'business_id');
     }
 }

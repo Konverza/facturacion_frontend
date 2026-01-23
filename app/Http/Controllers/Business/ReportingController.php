@@ -299,7 +299,7 @@ class ReportingController extends Controller
             $doc = $dte["documento"] ?: [];
             $resumen = $doc["resumen"] ?: [];
             $identificacion = $doc["identificacion"] ?: [];
-            $respuesta_hacienda = $doc["respuesta_hacienda"] ?? [];
+            $respuesta_hacienda = $doc["respuesta_hacienda"] ?? $doc["respuestaHacienda"] ?? [];
             if (is_string($respuesta_hacienda)) {
                 $respuesta_hacienda = json_decode($respuesta_hacienda, true) ?? [];
             }

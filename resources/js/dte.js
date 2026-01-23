@@ -838,6 +838,9 @@ $(document).ready(function () {
 
         form.find("[required]").each(function () {
             const input = $(this);
+            if (input.is(":hidden") || input.closest(".hidden").length) {
+                return;
+            }
             const error = $("#error-" + input.attr("id"));
             if (!input.val().trim()) {
                 input.addClass("is-invalid");
@@ -1093,6 +1096,12 @@ $(document).ready(function () {
             $("#datos-receptor").removeClass("hidden");
         }
     });
+
+    // Sincronizar estado inicial de omitidos al cargar la página
+    const omitReceptor = $("#omitir_datos_receptor");
+    if (omitReceptor.length && omitReceptor.is(":checked")) {
+        omitReceptor.trigger("change");
+    }
 
     //Inpust discounts
     $("#container-total-discount input").on("input", function () {

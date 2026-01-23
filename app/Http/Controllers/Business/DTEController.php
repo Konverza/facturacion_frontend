@@ -12,6 +12,8 @@ use App\Models\BusinessProductMovement;
 use App\Models\BusinessUser;
 use App\Models\CuentasCobrar;
 use App\Models\DTE;
+use App\Models\InvoiceBag;
+use App\Models\InvoiceBagInvoice;
 use App\Models\PuntoVenta;
 use App\Models\Sucursal;
 use App\Models\Tributes;
@@ -897,6 +899,8 @@ class DTEController extends Controller
         $business_id = Session::get('business') ?? null;
         if (isset($data["estado"])) {
             if ($data["estado"] === "PROCESADO" || $data["estado"] === "CONTINGENCIA") {
+                $skipInventory = $request->boolean('skip_inventory');
+
                 // Obtener sucursal y POS usado
                 $sucursalId = null;
                 $posId = $request->pos_id;
@@ -907,21 +911,66 @@ class DTEController extends Controller
 
                 // Para tipo 14 (Sujeto Excluido), actualizar stocks como entrada (compra)
                 if ($this->dte["type"] === "14") {
-                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "entrada", $sucursalId, "14", $posId);
+                    if (!$skipInventory) {
+                        $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "entrada", $sucursalId, "14", $posId);
+                    }
                     if ($request->condicion_operacion === 2) {
                         $this->createCXC($data, $request);
                     }
                 }
                 // Para tipo 05 (Nota de Crédito), devolver stocks (entrada)
-                elseif ($this->dte["type"] === "05") {
+                elseif (!$skipInventory && $this->dte["type"] === "05") {
                     $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "entrada", $sucursalId, $this->dte["type"], $posId);
                 }
                 // Para ventas normales (tipos: 01, 03, 11, etc.), descontar stocks (salida)
                 elseif ($this->dte["type"] !== "07" && $this->dte["type"] !== "04" && $this->dte["type"] !== "06" && $this->dte["type"] !== "15") {
-                    $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida", $sucursalId, $this->dte["type"], $posId);
+                    if (!$skipInventory) {
+                        $this->updateStocks($data["codGeneracion"], $this->dte["products"], $business_id, "salida", $sucursalId, $this->dte["type"], $posId);
+                    }
                     if ($request->condicion_operacion === 2) {
                         $this->createCXC($data, $request);
                     }
+                }
+
+                if ($request->filled('invoice_bag_invoice_id')) {
+                    InvoiceBagInvoice::where('id', $request->input('invoice_bag_invoice_id'))
+                        ->update([
+                            'status' => 'converted',
+                            'converted_at' => now(),
+                            'dte_id' => $data['codGeneracion'] ?? null,
+                            'individual_converted' => true,
+                        ]);
+                }
+
+                if ($request->filled('invoice_bag_id')) {
+                    $bagId = $request->input('invoice_bag_id');
+                    $invoiceIds = $request->input('invoice_bag_invoice_ids');
+                    $ids = [];
+                    if (is_array($invoiceIds)) {
+                        $ids = $invoiceIds;
+                    } elseif (is_string($invoiceIds) && $invoiceIds !== '') {
+                        $ids = array_filter(explode(',', $invoiceIds));
+                    }
+
+                    InvoiceBag::where('id', $bagId)
+                        ->update([
+                            'status' => 'sent',
+                            'sent_dte_codigo' => $data['codGeneracion'] ?? null,
+                            'sent_at' => now(),
+                        ]);
+
+                    $query = InvoiceBagInvoice::where('invoice_bag_id', $bagId)
+                        ->where('status', 'pending');
+
+                    if (!empty($ids)) {
+                        $query->whereIn('id', $ids);
+                    }
+
+                    $query->update([
+                        'status' => 'included',
+                        'dte_id' => $data['codGeneracion'] ?? null,
+                        'individual_converted' => false,
+                    ]);
                 }
 
                 if ($request->id_dte !== "" && $request->id_dte !== null && !$request->use_template) {

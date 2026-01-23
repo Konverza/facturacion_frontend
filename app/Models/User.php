@@ -57,4 +57,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(BusinessUser::class, 'user_id', 'id');
     }
+
+    public function invoiceBags()
+    {
+        return $this->hasMany(InvoiceBag::class, 'user_id');
+    }
+
+    public function invoiceBagInvoices()
+    {
+        return $this->hasMany(InvoiceBagInvoice::class, 'user_id');
+    }
 }

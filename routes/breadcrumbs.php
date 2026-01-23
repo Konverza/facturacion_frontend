@@ -141,6 +141,31 @@ Breadcrumbs::for("business.documents.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Documentos", route("business.documents.index"));
 });
 
+// Bolsón de Facturas
+Breadcrumbs::for("business.invoice-bags.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='files' class='w-4 h-4'/>");
+    $trail->parent("business.documents.index");
+    $trail->push($icon . "Bolsón de Facturas", route("business.invoice-bags.index"));
+});
+
+Breadcrumbs::for("business.invoice-bags.show", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='eye' class='w-4 h-4'/>");
+    $trail->parent("business.invoice-bags.index");
+    $trail->push($icon . "Detalle", route("business.invoice-bags.show", $id));
+});
+
+Breadcrumbs::for("business.invoice-bags.invoice", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='document' class='w-4 h-4'/>");
+    $trail->parent("business.invoice-bags.index");
+    $trail->push($icon . "Factura", route("business.invoice-bags.invoice", $id));
+});
+
+Breadcrumbs::for("business.invoice-bags.ticket", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='printer' class='w-4 h-4'/>");
+    $trail->parent("business.invoice-bags.index");
+    $trail->push($icon . "Ticket", route("business.invoice-bags.ticket", $id));
+});
+
 // Documents > Show
 Breadcrumbs::for("business.documents.show", function (BreadcrumbTrail $trail, string $codGeneracion) {
     $icon = Blade::render("<x-icon icon='eye' class='w-4 h-4'/>");

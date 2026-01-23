@@ -15,6 +15,7 @@ use App\Http\Controllers\Business\DTEDonationController;
 use App\Http\Controllers\Business\DTEProductController;
 use App\Http\Controllers\Business\DTERecibidoController;
 use App\Http\Controllers\Business\GeneralReportsController;
+use App\Http\Controllers\Business\InvoiceBagController;
 use App\Http\Controllers\Business\MailController;
 use App\Http\Controllers\Business\MovementController;
 use App\Http\Controllers\Business\PaymentMethodController;
@@ -174,6 +175,21 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         Route::post("/factura-exportacion", [DTEController::class, "factura_exportacion"])->name('factura-exportacion');
         Route::post("/factura-sujeto-excluido", [DTEController::class, "factura_sujeto_excluido"])->name('factura-sujeto-excluido');
         Route::post("/comprobante-donacion", [DTEController::class, "comprobante_donacion"])->name('comprobante-donacion');
+    });
+
+    // Bolsón de Facturas
+    Route::prefix('invoice-bags')->name('invoice-bags.')->group(function () {
+        Route::get('/', [InvoiceBagController::class, 'index'])->name('index');
+        Route::get('/{id}', [InvoiceBagController::class, 'show'])->name('show');
+        Route::post('/store-from-dte', [InvoiceBagController::class, 'storeFromDte'])->name('store-from-dte');
+        Route::get('/invoice/{id}', [InvoiceBagController::class, 'showInvoice'])->name('invoice');
+        Route::get('/ticket/{id}', [InvoiceBagController::class, 'ticket'])->name('ticket');
+        Route::get('/ticket/{id}/pdf', [InvoiceBagController::class, 'ticketPdf'])->name('ticket-pdf');
+        Route::get('/{id}/report/summary', [InvoiceBagController::class, 'reportSummaryPdf'])->name('report-summary');
+        Route::get('/{id}/report/detail', [InvoiceBagController::class, 'reportDetailPdf'])->name('report-detail');
+        Route::post('/convert/{id}', [InvoiceBagController::class, 'convertToDte'])->name('convert');
+        Route::post('/void/{id}', [InvoiceBagController::class, 'voidInvoice'])->name('void');
+        Route::post('/send/{id}', [InvoiceBagController::class, 'sendToHacienda'])->name('send');
     });
 
     Route::get("/get-session", function () {

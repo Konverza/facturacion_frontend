@@ -206,6 +206,16 @@
                             </span>
                         </a>
                     </li>
+                    @if ($business->invoice_bag_enabled)
+                        <li>
+                            <a href="{{ Route('business.invoice-bags.index') }}"
+                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
+                                <span class="ms-3 flex-1 whitespace-nowrap">
+                                    Bolsón de Facturas
+                                </span>
+                            </a>
+                        </li>
+                    @endif
                     @if ($business->posmode)
                         <li>
                             <a href="{{ Route('business.categories.index') }}"

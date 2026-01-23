@@ -7,6 +7,19 @@
             @csrf
             @include('layouts.partials.business.dte.data-top-dte')
             <input type="hidden" name="id_dte" value="{{ $dte['id'] ?? '' }}">
+            @if (!empty($dte['skip_inventory']))
+                <input type="hidden" name="skip_inventory" value="1">
+            @endif
+            @if (!empty($dte['invoice_bag_invoice_id']))
+                <input type="hidden" name="invoice_bag_invoice_id" value="{{ $dte['invoice_bag_invoice_id'] }}">
+            @endif
+            @if (!empty($dte['invoice_bag_id']))
+                <input type="hidden" name="invoice_bag_id" value="{{ $dte['invoice_bag_id'] }}">
+            @endif
+            @if (!empty($dte['invoice_bag_invoice_ids']))
+                <input type="hidden" name="invoice_bag_invoice_ids"
+                    value="{{ is_array($dte['invoice_bag_invoice_ids']) ? implode(',', $dte['invoice_bag_invoice_ids']) : $dte['invoice_bag_invoice_ids'] }}">
+            @endif
             <div class="mt-4">
 
                 <!-- Sección datos del emisor y receptor -->
@@ -51,13 +64,14 @@
                                 <div class="flex flex-col justify-between gap-y-4 sm:flex-row sm:items-center {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}}" id="omitir-datos-receptor-container">
                                     <div>
                                         <x-input type="checkbox" label="Omitir datos del receptor"
-                                            name="omitir_datos_receptor" id="omitir_datos_receptor" />
+                                            name="omitir_datos_receptor" id="omitir_datos_receptor"
+                                            :checked="old('omitir_datos_receptor', (bool) ($dte['omitir_datos_receptor'] ?? false))" />
                                     </div>
                                     <x-button type="button" text="Seleccionar cliente existente" typeButton="success"
-                                        data-target="#selected-customer" class="show-modal w-full sm:w-auto"
+                                        data-target="#selected-customer" class="show-modal w-full sm:w-auto {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}} {{ old('omitir_datos_receptor', (bool) ($dte['omitir_datos_receptor'] ?? false)) ? 'hidden' : '' }}"
                                         icon="user" />
                                 </div>
-                                <div class="mt-4 {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}}" id="datos-receptor">
+                                <div class="mt-4 {{(($dte['status'] ?? null) === 'template') ? 'hidden' : ''}} {{ old('omitir_datos_receptor', (bool) ($dte['omitir_datos_receptor'] ?? false)) ? 'hidden' : '' }}" id="datos-receptor">
                                     <div class="flex flex-col gap-4 sm:flex-row">
                                         <div class="flex-1" id="select-tipos-documentos">
                                             <x-select label="Tipo de documento" name="tipo_documento" id="type_document"
@@ -157,7 +171,9 @@
                     'monto' => "$25,000.00",
                 ])
             </div>
-            @include('layouts.partials.business.dte.button-actions')
+            @include('layouts.partials.business.dte.button-actions', [
+                'show_bolson_button' => ($business->invoice_bag_enabled ?? false),
+            ])
         </form>
     </section>
 
