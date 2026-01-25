@@ -220,6 +220,7 @@
                             </div>
                         </li>
                     @endif
+                    @if($business->price_variants_enabled)
                     <li data-menu-item data-menu-level="sub">
                         <a href="{{ Route('business.price-variants.index') }}" data-menu-text="Variantes de Precio"
                             data-tooltip-target="tooltip-variantes-precio" data-menu-keywords="variantes precio tarifas"
@@ -234,6 +235,7 @@
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
                     </li>
+                    @endif
                     <li data-menu-item data-menu-level="sub">
                         <a href="{{ Route('business.products.index') }}" data-menu-text="Lista de Productos"
                             data-tooltip-target="tooltip-lista-productos" data-menu-keywords="lista productos"
