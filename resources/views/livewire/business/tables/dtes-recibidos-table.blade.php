@@ -71,6 +71,10 @@
                 <x-button type="a" typeButton="info" icon="download"
                     href="{{ Route('business.received-documents.import.index') }}" text="Obtener DTEs de Hacienda" />
             </div>
+            <div class="flex-1">
+                <x-button type="a" typeButton="success" icon="download"
+                    href="{{ Route('business.received-documents.zip') }}" text="Descargar DTEs" />
+            </div>
         </div>
         <div x-data="{ showFilters: false }"
             class="mb-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -163,7 +167,7 @@
                 </div>
             </div>
         </div>
-        {{-- <div class="flex-1">
+        <div class="flex-1">
             <div class="flex justify-end items-center">
                 <x-button wire:click="exportAsExcel" typeButton="success" icon="excel"
                     text="Exportar esta tabla a Excel" class="my-3" wire:loading.attr="disabled" />
@@ -171,7 +175,7 @@
             <div wire:loading wire:target="exportAsExcel" class="mt-2 text-sm text-gray-500">
                 Generando archivo Excel, por favor espere...
             </div>
-        </div> --}}
+        </div>
         <div class="relative">
             <!-- Overlay mientras carga -->
             <div wire:loading.delay

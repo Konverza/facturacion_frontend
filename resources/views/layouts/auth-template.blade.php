@@ -85,17 +85,55 @@
     @livewireScripts
 </body>
 <script>
-    // Oculta el loader al cargar la página o al restaurarla desde el bfcache
-    window.addEventListener("pageshow", function(event) {
-        console.log("Página mostrada o restaurada desde caché.");
-        document.getElementById("loader").classList.add("hidden");
-    });
+    (function() {
+        let skipBeforeUnload = false;
 
-    // Muestra el loader al intentar salir o recargar la página
-    window.addEventListener("beforeunload", function() {
-        console.log("Página a punto de recargarse...");
-        document.getElementById("loader").classList.remove("hidden");
-    });
+        function hideLoader() {
+            const loader = document.getElementById("loader");
+            if (loader) {
+                loader.classList.add("hidden");
+            }
+        }
+
+        // Oculta el loader al cargar la página o al restaurarla desde el bfcache
+        window.addEventListener("pageshow", function() {
+            hideLoader();
+        });
+
+        // Si el usuario vuelve al foco luego de iniciar una descarga, ocultar loader
+        window.addEventListener("focus", function() {
+            if (skipBeforeUnload) {
+                hideLoader();
+                setTimeout(() => {
+                    skipBeforeUnload = false;
+                }, 300);
+            }
+        });
+
+        // Marcar descargas para evitar el loader de navegación
+        document.addEventListener("click", function(event) {
+            const downloadTrigger = event.target.closest(
+                "a.download-zip-link, a[data-download='true'], button[data-download='true']"
+            );
+
+            if (downloadTrigger) {
+                skipBeforeUnload = true;
+                // Fallback por si no hay cambio de foco
+                setTimeout(hideLoader, 1500);
+            }
+        });
+
+        // Muestra el loader al intentar salir o recargar la página
+        window.addEventListener("beforeunload", function() {
+            if (skipBeforeUnload) {
+                return;
+            }
+            const loader = document.getElementById("loader");
+            if (loader) {
+                loader.classList.remove("hidden");
+            }
+        });
+    })();
 </script>
 @stack('scripts')
 

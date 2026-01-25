@@ -254,5 +254,12 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
         Route::get("/import", [DTERecibidoController::class, "importIndex"])->name('import.index');
         Route::post("/import/start", [DTERecibidoController::class, "startImport"])->name('import.start');
         Route::get("/import/progress/{id}", [DTERecibidoController::class, "getProgress"])->name('import.progress');
+
+        // Gestión de descargas ZIP para DTEs recibidos
+        Route::get("/zip", [DTERecibidoController::class, "zipDownloads"])->name('zip');
+        Route::post("/zip/create", [DTERecibidoController::class, "createZipDownload"])->name('zip.create');
+        Route::get("/zip/status/{id}", [DTERecibidoController::class, "getZipStatus"])->name('zip.status');
+        Route::get("/zip/download/{id}", [DTERecibidoController::class, "downloadZip"])->name('zip.download');
+        Route::delete("/zip/{id}", [DTERecibidoController::class, "deleteZipJob"])->name('zip.delete');
     });
 });

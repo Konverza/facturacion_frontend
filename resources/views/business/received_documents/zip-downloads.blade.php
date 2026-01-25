@@ -1,14 +1,13 @@
 @extends('layouts.auth-template')
-@section('title', 'Descargas de DTEs')
+@section('title', 'Descargas de DTEs recibidos')
 @section('content')
     <section class="my-4 px-4">
         <div class="flex w-full justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
-                Descarga de DTEs
+                Descarga de DTEs recibidos
             </h1>
         </div>
 
-        <!-- Formulario para nueva solicitud -->
         <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
                 <x-icon icon="cube-plus" class="inline mr-2" />
@@ -39,28 +38,18 @@
                                 <x-input type="date" name="emision_fin" id="emision_fin" label="Fecha Emisión Hasta"
                                     required />
                             </div>
-                            <div>
-                                <x-input type="date" name="procesamiento_inicio" id="procesamiento_inicio" label="Fecha Procesamiento Desde" />
-                            </div>
-                            <div>
-                                <x-input type="date" name="procesamiento_fin" id="procesamiento_fin" label="Fecha Procesamiento Hasta" />
-                            </div>
                             <div class="flex-1">
-                                <x-select id="tipo_dte" :options="$dtes_disponibles" name="tipo_dte"
+                                <x-select id="tipo_dte" :options="$tipos_dte" name="tipo_dte"
                                     placeholder="Seleccione un tipo de DTE" :search="false"
                                     label="Buscar por tipo de DTE" />
                             </div>
                             <div>
-                                <x-select id="codSucursal" :options="$sucursal_options" name="codSucursal"
-                                    placeholder="Seleccione una sucursal" label="Buscar por sucursal" />
+                                <x-select id="documento_emisor" :options="$emisores_unicos" name="documento_emisor"
+                                    placeholder="Seleccione un emisor" label="Buscar por emisor" :search="false" />
                             </div>
                             <div>
-                                <x-select id="codPuntoVenta" :options="$puntos_venta_options" name="codPuntoVenta"
-                                    placeholder="Seleccione un punto de venta" label="Buscar por punto de venta" />
-                            </div>
-                            <div>
-                                <x-select id="documento_receptor" :options="$receptores_unicos" name="documento_receptor"
-                                    placeholder="Seleccione un receptor" label="Buscar por receptor" :search="false" />
+                                <x-input type="text" name="busqueda" id="busqueda" label="Búsqueda rápida"
+                                    placeholder="Código generación, sello, documento o nombre" />
                             </div>
                         </div>
                     </div>
@@ -73,7 +62,6 @@
             @endif
         </div>
 
-        <!-- Trabajo activo -->
         @if ($activeJob)
             <div id="active-job-container"
                 class="mb-6 rounded-lg border border-blue-300 bg-blue-50 p-6 dark:border-blue-600 dark:bg-blue-900/30">
@@ -91,12 +79,7 @@
                             <p class="text-sm text-gray-600 dark:text-gray-300">
                                 <strong>Creado:</strong> {{ $activeJob->created_at->format('d/m/Y H:i') }}
                             </p>
-                            @if (
-                                $activeJob->tipo_dte ||
-                                    $activeJob->estado ||
-                                    $activeJob->cod_sucursal ||
-                                    $activeJob->documento_receptor ||
-                                    $activeJob->busqueda)
+                            @if ($activeJob->tipo_dte || $activeJob->documento_emisor || $activeJob->busqueda)
                                 <p class="text-sm text-blue-600 dark:text-blue-400 mt-2">
                                     <x-icon icon="filter" class="inline mr-1" />
                                     <strong>Con filtros aplicados</strong>
@@ -115,7 +98,6 @@
                         </div>
                     </div>
 
-                    <!-- Barra de progreso -->
                     <div class="mt-4">
                         <div class="mb-1 flex justify-between">
                             <span class="text-sm font-medium text-blue-700 dark:text-blue-400">Procesando...</span>
@@ -128,16 +110,14 @@
                         </div>
                     </div>
 
-                    <!-- Botón de descarga (oculto hasta completar) -->
                     <div id="download-button-container" class="mt-4 hidden">
-                        <a href="{{ route('business.documents.zip.download', $activeJob->id) }}" id="btn-download-zip" data-download="true"
+                        <a href="{{ route('business.received-documents.zip.download', $activeJob->id) }}" id="btn-download-zip" data-download="true"
                             class="inline-flex items-center justify-center w-full px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800">
                             <x-icon icon="download" class="mr-2" />
                             Descargar ZIP
                         </a>
                     </div>
 
-                    <!-- Mensaje de error (oculto por defecto) -->
                     <div id="error-message-container" class="mt-4 hidden rounded-lg bg-red-100 p-4 dark:bg-red-900/30">
                         <p class="text-sm text-red-800 dark:text-red-200">
                             <x-icon icon="circle-x" class="inline mr-1" />
@@ -148,7 +128,6 @@
             </div>
         @endif
 
-        <!-- Historial de descargas -->
         <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
                 <x-icon icon="history" class="inline mr-2" />
@@ -180,7 +159,7 @@
                                         {{ $job->created_at->format('d/m/Y H:i') }}
                                     </td>
                                     <td class="px-6 py-4">
-                                        @if ($job->tipo_dte || $job->estado || $job->cod_sucursal || $job->documento_receptor || $job->busqueda)
+                                        @if ($job->tipo_dte || $job->documento_emisor || $job->busqueda)
                                             <span class="text-blue-600 dark:text-blue-400"
                                                 title="{{ $job->getFiltersDescription() }}">
                                                 <x-icon icon="filter" class="inline" />
@@ -219,7 +198,7 @@
                                     <td class="px-6 py-4">
                                         <div class="flex gap-2">
                                             @if ($job->status === 'completed' && $job->fileExists())
-                                                <a href="{{ route('business.documents.zip.download', $job->id) }}" data-download="true"
+                                                <a href="{{ route('business.received-documents.zip.download', $job->id) }}" data-download="true"
                                                     class="download-zip-link font-medium text-blue-600 hover:underline dark:text-blue-500">
                                                     <x-icon icon="download" class="inline" /> Descargar
                                                 </a>
@@ -247,7 +226,6 @@
     <script>
         let pollingInterval = null;
 
-        // Crear nueva solicitud de ZIP
         document.getElementById('btn-create-zip')?.addEventListener('click', async function() {
             const form = document.getElementById('form-create-zip');
             const formData = new FormData(form);
@@ -258,162 +236,92 @@
                 return;
             }
 
-            this.disabled = true;
-            const originalHTML = this.innerHTML;
-            this.innerHTML =
-                '<svg class="inline animate-spin mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Creando solicitud...';
-
             try {
-                const response = await fetch('{{ route('business.documents.zip.create') }}', {
+                const response = await fetch("{{ route('business.received-documents.zip.create') }}", {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: formData
                 });
 
-                const responseData = await response.json();
+                const result = await response.json();
 
-                if (responseData.success) {
-                    window.location.reload();
-                } else {
-                    alert(responseData.message || 'Error al crear la solicitud');
-                    this.disabled = false;
-                    this.innerHTML = originalHTML;
+                if (!response.ok) {
+                    alert(result.message || 'Error al crear la solicitud');
+                    return;
                 }
+
+                window.location.reload();
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al procesar la solicitud');
-                this.disabled = false;
-                this.innerHTML = originalHTML;
+                alert('Error al crear la solicitud');
             }
         });
 
-        // Polling para actualizar el estado del trabajo activo
-        function updateActiveJobStatus() {
-            const activeJobContent = document.getElementById('active-job-content');
-            if (!activeJobContent) return;
+        const activeJobContainer = document.getElementById('active-job-content');
+        if (activeJobContainer) {
+            const jobId = activeJobContainer.dataset.jobId;
 
-            const jobId = activeJobContent.dataset.jobId;
+            const updateStatus = async () => {
+                try {
+                    const response = await fetch(`{{ url('/business/received-documents/zip/status') }}/${jobId}`);
+                    const data = await response.json();
 
-            fetch(`{{ url('business/documents/zip/status') }}/${jobId}`)
-                .then(response => response.json())
-                .then(data => {
                     if (data.success) {
                         const job = data.job;
 
-                        // Actualizar estado
-                        document.getElementById('job-status').textContent =
-                            job.status === 'completed' ? 'Completado' :
-                            job.status === 'processing' ? 'Procesando' :
-                            job.status === 'failed' ? 'Fallido' : 'Pendiente';
+                        document.getElementById('job-status').textContent = job.status.charAt(0).toUpperCase() + job.status.slice(1);
+                        document.getElementById('job-progress-text').textContent = `${job.processed_dtes} / ${job.total_dtes}`;
+                        document.getElementById('job-progress-percentage').textContent = `${job.progress}%`;
+                        document.getElementById('job-progress-bar').style.width = `${job.progress}%`;
 
-                        // Actualizar progreso
-                        document.getElementById('job-progress-text').textContent =
-                            `${job.processed_dtes} / ${job.total_dtes}`;
-                        document.getElementById('job-progress-percentage').textContent =
-                            `${job.progress}%`;
-                        document.getElementById('job-progress-bar').style.width =
-                            `${job.progress}%`;
-
-                        // Si está completado, mostrar botón de descarga
                         if (job.status === 'completed' && job.can_download) {
-                            const downloadContainer = document.getElementById('download-button-container');
-                            downloadContainer.classList.remove('hidden');
-
-                            // Agregar evento para ocultar loader al descargar
-                            const downloadBtn = document.getElementById('btn-download-zip');
-                            if (downloadBtn && !downloadBtn.dataset.listenerAdded) {
-                                downloadBtn.addEventListener('click', function() {
-                                    // Mostrar loader
-                                    document.getElementById('loader')?.classList.remove('hidden');
-
-                                    // Ocultar loader después de 2 segundos (cuando comience la descarga)
-                                    setTimeout(() => {
-                                        document.getElementById('loader')?.classList.add('hidden');
-                                        // Recargar página para actualizar tabla
-                                        setTimeout(() => window.location.reload(), 500);
-                                    }, 2000);
-                                });
-                                downloadBtn.dataset.listenerAdded = 'true';
-                            }
-
-                            stopPolling();
+                            document.getElementById('download-button-container').classList.remove('hidden');
+                            clearInterval(pollingInterval);
                         }
 
-                        // Si falló, mostrar error
                         if (job.status === 'failed') {
-                            const errorContainer = document.getElementById('error-message-container');
-                            const errorText = document.getElementById('error-message-text');
-                            errorContainer.classList.remove('hidden');
-                            errorText.textContent = job.error_message || 'Error desconocido';
-                            stopPolling();
+                            document.getElementById('error-message-text').textContent = job.error_message || 'Error en el proceso';
+                            document.getElementById('error-message-container').classList.remove('hidden');
+                            clearInterval(pollingInterval);
                         }
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error al actualizar estado:', error);
-                });
+                }
+            };
+
+            pollingInterval = setInterval(updateStatus, 5000);
+            updateStatus();
         }
 
-        function startPolling() {
-            if (pollingInterval) return;
-            pollingInterval = setInterval(updateActiveJobStatus, 3000); // Cada 3 segundos
-        }
-
-        function stopPolling() {
-            if (pollingInterval) {
-                clearInterval(pollingInterval);
-                pollingInterval = null;
-            }
-        }
-
-        // Eliminar trabajo
         async function deleteJob(jobId) {
-            if (!confirm('¿Está seguro de eliminar esta descarga?')) return;
+            if (!confirm('¿Seguro que deseas eliminar este registro?')) {
+                return;
+            }
 
             try {
-                const response = await fetch(`{{ url('business/documents/zip') }}/${jobId}`, {
+                const response = await fetch(`{{ url('/business/received-documents/zip') }}/${jobId}`, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
+                        'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                        'Accept': 'application/json'
+                    },
                 });
 
-                const data = await response.json();
+                const result = await response.json();
 
-                if (data.success) {
+                if (response.ok) {
                     window.location.reload();
                 } else {
-                    alert(data.message || 'Error al eliminar');
+                    alert(result.message || 'Error al eliminar el trabajo');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al procesar la solicitud');
+                alert('Error al eliminar el trabajo');
             }
         }
-
-        // Iniciar polling si hay trabajo activo
-        if (document.getElementById('active-job-content')) {
-            startPolling();
-            updateActiveJobStatus(); // Primera actualización inmediata
-        }
-
-        // Detener polling al salir de la página
-        window.addEventListener('beforeunload', stopPolling);
-
-        // Manejar clicks en enlaces de descarga de la tabla
-        document.querySelectorAll('.download-zip-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                // Mostrar loader
-                document.getElementById('loader')?.classList.remove('hidden');
-
-                // Ocultar loader después de 2 segundos
-                setTimeout(() => {
-                    document.getElementById('loader')?.classList.add('hidden');
-                }, 2000);
-            });
-        });
     </script>
 @endpush

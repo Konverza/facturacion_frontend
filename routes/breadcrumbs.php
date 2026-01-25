@@ -201,6 +201,13 @@ Breadcrumbs::for("business.received-documents.import.index", function (Breadcrum
     $trail->push($icon . "Importar desde Hacienda", route("business.received-documents.import.index"));
 });
 
+// Received Documents > ZIP Downloads
+Breadcrumbs::for("business.received-documents.zip", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='download' class='w-4 h-4'/>");
+    $trail->parent("business.received-documents.index");
+    $trail->push($icon . "Descargas ZIP", route("business.received-documents.zip"));
+});
+
 //Products
 Breadcrumbs::for("business.products.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='box' class='w-4 h-4'/>");

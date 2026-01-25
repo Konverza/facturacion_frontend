@@ -673,7 +673,7 @@
                             <x-button type="button" class="hide-modal" text="Cancelar" icon="x"
                                 typeButton="secondary" data-target="#download-anexos" />
                             <x-button type="button" text="Descargar" icon="download" typeButton="primary"
-                                id="downloadAnexos" />
+                                id="downloadAnexos" data-download="true" />
                         </div>
                     </form>
                 </div>
@@ -712,7 +712,7 @@
                             <x-button type="button" class="hide-modal" text="Cancelar" icon="x"
                                 typeButton="secondary" data-target="#download-dtes" />
                             <x-button type="button" text="Descargar" icon="download" typeButton="primary"
-                                id="downloadFiles" />
+                                id="downloadFiles" data-download="true" />
                         </div>
                     </form>
                 </div>

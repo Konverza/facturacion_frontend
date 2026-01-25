@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Session;
 use App\Models\Business;
 use App\Models\DteImportProcess;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\Business\DteExport;
+use App\Exports\Business\DteRecibidoExport;
 
 class DtesRecibidosTable extends Component
 {
@@ -132,5 +132,33 @@ class DtesRecibidosTable extends Component
             'statistics' => $this->statistics,
             'lastImport' => $lastImport,
         ]);
+    }
+
+    public function exportAsExcel()
+    {
+        $business_id = Session::get('business') ?? null;
+        $business = Business::find($business_id);
+        $this->nit = $business->nit ?? null;
+
+        $parameters = [
+            'nit' => $this->nit,
+            'fechaInicio' => $this->fechaInicio ? "{$this->fechaInicio}T00:00:00" : null,
+            'fechaFin' => $this->fechaFin ? "{$this->fechaFin}T23:59:59" : null,
+            'tipo_dte' => $this->tipo_dte,
+            'documento_emisor' => $this->documento_emisor,
+            'q' => $this->q,
+            'sort' => $this->sort,
+        ];
+
+        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes_recibidos/", $parameters);
+        $data = $response_dtes->json();
+        $dtes = array_map(function ($dte) {
+            $dte["documento"] = json_decode($dte["documento"]);
+            return $dte;
+        }, $data['items'] ?? []);
+
+        $fileName = 'dtes_recibidos_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(new DteRecibidoExport($dtes, $this->formas_pago, $this->types), $fileName);
     }
 }

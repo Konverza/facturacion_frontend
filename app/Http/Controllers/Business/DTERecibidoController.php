@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Jobs\DownloadDtesFromHacienda;
 use App\Models\Business;
 use App\Models\DteImportProcess;
+use App\Models\ReceivedZipDownloadJob;
+use App\Jobs\GenerateReceivedZipDownload;
 use App\Services\OctopusService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Session;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 class DTERecibidoController extends Controller
 {
@@ -158,6 +161,184 @@ class DTERecibidoController extends Controller
                 'error_message' => $process->error_message,
                 'is_in_progress' => $process->isInProgress(),
             ]
+        ]);
+    }
+
+    /**
+     * Vista de gestión de descargas ZIP de DTEs recibidos
+     */
+    public function zipDownloads()
+    {
+        $business_id = Session::get('business');
+        $business = Business::find($business_id);
+
+        $activeJob = ReceivedZipDownloadJob::getActiveJobForBusiness($business_id);
+
+        $query = ReceivedZipDownloadJob::where('business_id', $business_id)
+            ->orderBy('created_at', 'desc');
+
+        if ($activeJob) {
+            $query->where('id', '!=', $activeJob->id);
+        }
+
+        $recentJobs = $query->take(10)->get();
+
+        if ($activeJob) {
+            $recentJobs = collect([$activeJob])->concat($recentJobs);
+        }
+
+        $tipos_dte = [
+            '' => 'Todos',
+            '01' => 'Factura Consumidor Final',
+            '03' => 'Comprobante de crédito fiscal',
+            '04' => 'Nota de Remisión',
+            '05' => 'Nota de crédito',
+            '06' => 'Nota de débito',
+            '07' => 'Comprobante de retención',
+            '08' => 'Comprobante de liquidación',
+            '09' => 'Documento Contable de Liquidación',
+            '11' => 'Factura de exportación',
+            '14' => 'Factura de sujeto excluido',
+            '15' => 'Comprobante de Donación'
+        ];
+
+        $emisores_unicos = [];
+        $nit = $business->nit ?? null;
+
+        $response_emisores = Http::get(env("OCTOPUS_API_URL") . "/dtes_recibidos/emisor-list/{$nit}");
+        $emisores = $response_emisores->json() ?? [];
+        foreach ($emisores as $emisor) {
+            if (isset($emisor['documento_emisor'], $emisor['nombre_emisor'])) {
+                $emisores_unicos[$emisor['documento_emisor']] = $emisor['nombre_emisor'];
+            }
+        }
+        $emisores_unicos = array_merge(['' => 'Todos'], $emisores_unicos);
+
+        return view('business.received_documents.zip-downloads', compact(
+            'activeJob',
+            'recentJobs',
+            'tipos_dte',
+            'emisores_unicos'
+        ));
+    }
+
+    /**
+     * Crear solicitud de descarga ZIP para DTEs recibidos
+     */
+    public function createZipDownload(Request $request)
+    {
+        $request->validate([
+            'emision_inicio' => 'required|date',
+            'emision_fin' => 'required|date|after_or_equal:emision_inicio',
+            'tipo_dte' => 'nullable|string',
+            'documento_emisor' => 'nullable|string',
+            'busqueda' => 'nullable|string',
+        ]);
+
+        $business_id = Session::get('business');
+
+        if (ReceivedZipDownloadJob::hasActiveJobForBusiness($business_id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ya existe una solicitud de descarga en proceso. Por favor espere a que finalice.'
+            ], 422);
+        }
+
+        $zipJob = ReceivedZipDownloadJob::create([
+            'business_id' => $business_id,
+            'fecha_inicio' => $request->emision_inicio,
+            'fecha_fin' => $request->emision_fin,
+            'tipo_dte' => $request->tipo_dte,
+            'documento_emisor' => $request->documento_emisor,
+            'busqueda' => $request->busqueda,
+            'status' => 'pending',
+        ]);
+
+        GenerateReceivedZipDownload::dispatch($zipJob);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Solicitud de descarga creada. El proceso comenzará en breve.',
+            'job_id' => $zipJob->id,
+        ]);
+    }
+
+    /**
+     * Obtener el estado de un trabajo ZIP de DTEs recibidos
+     */
+    public function getZipStatus($id)
+    {
+        $business_id = Session::get('business');
+        $zipJob = ReceivedZipDownloadJob::where('id', $id)
+            ->where('business_id', $business_id)
+            ->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'job' => [
+                'id' => $zipJob->id,
+                'status' => $zipJob->status,
+                'progress' => $zipJob->getProgressPercentage(),
+                'processed_dtes' => $zipJob->processed_dtes,
+                'total_dtes' => $zipJob->total_dtes,
+                'file_name' => $zipJob->file_name,
+                'error_message' => $zipJob->error_message,
+                'created_at' => $zipJob->created_at->format('d/m/Y H:i'),
+                'can_download' => $zipJob->status === 'completed' && $zipJob->fileExists(),
+            ]
+        ]);
+    }
+
+    /**
+     * Descargar archivo ZIP generado desde S3
+     */
+    public function downloadZip($id)
+    {
+        $business_id = Session::get('business');
+        $zipJob = ReceivedZipDownloadJob::where('id', $id)
+            ->where('business_id', $business_id)
+            ->where('status', 'completed')
+            ->firstOrFail();
+
+        if (!$zipJob->fileExists()) {
+            return redirect()->back()->with([
+                'error' => 'Error',
+                'error_message' => 'El archivo no está disponible.'
+            ]);
+        }
+
+        $stream = Storage::disk('s3')->readStream($zipJob->file_path);
+        if (!$stream) {
+            return redirect()->back()->with([
+                'error' => 'Error',
+                'error_message' => 'No se pudo abrir el archivo para descarga.'
+            ]);
+        }
+
+        return response()->streamDownload(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, $zipJob->file_name);
+    }
+
+    /**
+     * Cancelar/eliminar un trabajo ZIP de DTEs recibidos
+     */
+    public function deleteZipJob($id)
+    {
+        $business_id = Session::get('business');
+        $zipJob = ReceivedZipDownloadJob::where('id', $id)
+            ->where('business_id', $business_id)
+            ->firstOrFail();
+
+        $zipJob->deleteFile();
+        $zipJob->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Trabajo eliminado correctamente.'
         ]);
     }
 }
