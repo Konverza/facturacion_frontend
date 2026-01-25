@@ -121,276 +121,435 @@
 </nav>
 
 <aside id="sidebar"
-    class="@if ($test_enviroment || $maintenance_notice) mt-12 sm:mt-8 @endif  fixed left-0 top-0 z-40 h-screen w-72 -translate-x-full border-r border-secondary-300 bg-white pt-4 transition-transform dark:border-secondary-800 dark:bg-secondary-950 lg:z-[35] lg:translate-x-0 lg:dark:bg-transparent"
+    class="@if ($test_enviroment || $maintenance_notice) mt-12 sm:mt-8 @endif  fixed left-0 top-0 z-40 h-screen w-72 -translate-x-full border-r border-secondary-300 bg-white dark:bg-gray-900 pt-4 transition-transform dark:border-secondary-800 lg:z-[35] lg:translate-x-0 lg:dark:bg-transparent"
     aria-label="Sidebar">
     <div class="flex h-full flex-col overflow-y-auto px-2 pb-2">
         <a href="#" class="ms-2 flex">
             <img src="{{ asset('images/logo.png') }}" class="me-3 h-8" alt="Logo Konverza" />
         </a>
-        <ul class="mt-2 space-y-2 font-medium">
-            <li>
-                <a href="{{ Route('business.dashboard') }}"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
-                    <x-icon icon="dashboard"
+        <div class="sidebar-search mt-3 px-1">
+            <label for="sidebar-search" class="sr-only">Buscar en el menú</label>
+            <div class="relative">
+                <span
+                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 dark:text-gray-500">
+                    <x-icon icon="search" class="h-4 w-4" />
+                </span>
+                <input id="sidebar-search" type="search" placeholder="Buscar en el menú"
+                    class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-xs text-gray-700 placeholder:text-gray-400 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:border-gray-800 dark:bg-secondary-950 dark:text-gray-200 dark:placeholder:text-gray-500" />
+            </div>
+        </div>
+        <ul class="mt-3 space-y-1 text-[15px] font-medium">
+            <li data-menu-item data-menu-level="main">
+                <a href="{{ Route('business.dashboard') }}" data-menu-text="Inicio" data-tooltip-target="tooltip-inicio"
+                    data-menu-keywords="home inicio dashboard"
+                    class="group flex items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-secondary-900">
+                    <x-icon icon="home"
                         class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                     <span class="ms-3">Inicio</span>
                 </a>
+                <div id="tooltip-inicio" role="tooltip"
+                    class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Inicio
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
             </li>
-            <li>
-                <a href="{{ Route('business.customers.index') }}"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
+            <li data-menu-item data-menu-level="main">
+                <a href="{{ Route('business.customers.index') }}" data-menu-text="Clientes"
+                    data-tooltip-target="tooltip-clientes"
+                    data-menu-keywords="clientes customer"
+                    class="group flex items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-secondary-900">
                     <x-icon icon="users"
                         class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                     <span class="ms-3">Clientes</span>
                 </a>
+                <div id="tooltip-clientes" role="tooltip"
+                    class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Clientes
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
             </li>
 
             @if ($business->posmode)
-                <li>
-                    <a href="{{ Route('business.pos.index') }}"
-                        class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
+                <li data-menu-item data-menu-level="main">
+                    <a href="{{ Route('business.pos.index') }}" data-menu-text="Punto de Venta"
+                        data-tooltip-target="tooltip-pos"
+                        data-menu-keywords="pos punto de venta caja"
+                        class="group flex items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-secondary-900">
                         <x-icon icon="cash-register"
                             class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                        <span class="ms-3">Punto de venta</span>
+                        <span class="ms-3">Punto de Venta</span>
                     </a>
+                    <div id="tooltip-pos" role="tooltip"
+                        class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                        Punto de Venta
+                        <div class="tooltip-arrow" data-popper-arrow></div>
+                    </div>
                 </li>
             @endif
-            @if ($business->bulk_emission)
-                <li>
-                    <button type="button"
-                        class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
-                        aria-controls="dropdown-lotes" data-collapse-toggle="dropdown-lotes">
-                        <x-icon icon="files"
-                            class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                        <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Facturación por
-                            lotes</span>
-                        <x-icon icon="arrow-down"
-                            class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    </button>
-                    <ul id="dropdown-lotes" class="hidden space-y-2 py-2">
-                        <li>
-                            <a href="{{ Route('business.bulk.index') }}"
-                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                                <span class="ms-3 flex-1 whitespace-nowrap">
-                                    Plantillas de DTE
-                                </span>
+
+            <li data-menu-item data-menu-level="main">
+                <button type="button" data-accordion-trigger="dropdown-productos" data-panel-id="dropdown-productos"
+                    aria-controls="dropdown-productos" aria-expanded="false" data-menu-text="Productos"
+                    data-tooltip-target="tooltip-productos" data-menu-keywords="productos catalogo inventario"
+                    class="group flex w-full items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                    <x-icon icon="package"
+                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Productos</span>
+                    <x-icon icon="arrow-down"
+                        class="h-4 w-4 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                </button>
+                <div id="tooltip-productos" role="tooltip"
+                    class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Productos
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
+                <ul id="dropdown-productos" data-menu-panel class="hidden space-y-1 py-1">
+                    @if ($business->posmode)
+                        <li data-menu-item data-menu-level="sub">
+                            <a href="{{ Route('business.categories.index') }}" data-menu-text="Categorías"
+                                data-tooltip-target="tooltip-categorias" data-menu-keywords="categorias productos pos"
+                                class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                                <x-icon icon="layers"
+                                    class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                                <span class="ms-2">Categorías</span>
                             </a>
+                            <div id="tooltip-categorias" role="tooltip"
+                                class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                                Categorías
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
                         </li>
-                        <li>
-                            <a href="{{ Route('business.bulk.send') }}"
-                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                                <span class="ms-3 flex-1 whitespace-nowrap">
-                                    Envío Masivo
-                                </span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-            @endif
-            <li>
-                <button type="button"
-                    class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
-                    aria-controls="dropdown-ventas" data-collapse-toggle="dropdown-ventas">
+                    @endif
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.price-variants.index') }}" data-menu-text="Variantes de Precio"
+                            data-tooltip-target="tooltip-variantes-precio" data-menu-keywords="variantes precio tarifas"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                            <x-icon icon="currency-dollar"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Variantes de Precio</span>
+                        </a>
+                        <div id="tooltip-variantes-precio" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Variantes de Precio
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </li>
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.products.index') }}" data-menu-text="Lista de Productos"
+                            data-tooltip-target="tooltip-lista-productos" data-menu-keywords="lista productos"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                            <x-icon icon="list"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Lista de Productos</span>
+                        </a>
+                        <div id="tooltip-lista-productos" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Lista de Productos
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </li>
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.movements.index') }}" data-menu-text="Movimientos"
+                            data-tooltip-target="tooltip-movimientos" data-menu-keywords="movimientos kardex"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                            <x-icon icon="transfer"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Movimientos</span>
+                        </a>
+                        <div id="tooltip-movimientos" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Movimientos
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+
+            <li data-menu-item data-menu-level="main">
+                <button type="button" data-accordion-trigger="dropdown-ventas" data-panel-id="dropdown-ventas"
+                    aria-controls="dropdown-ventas" aria-expanded="false" data-menu-text="Ventas"
+                    data-tooltip-target="tooltip-ventas" data-menu-keywords="ventas facturas dte"
+                    class="group flex w-full items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
                     <x-icon icon="receipt"
                         class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                     <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Ventas</span>
                     <x-icon icon="arrow-down"
-                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                        class="h-4 w-4 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                 </button>
-                <ul id="dropdown-ventas" class="hidden space-y-2 py-2">
-                    <li>
-                        <a href="{{ Route('business.documents.index') }}"
-                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                            <span class="ms-3 flex-1 whitespace-nowrap">
-                                Documentos emitidos
-                            </span>
+                <div id="tooltip-ventas" role="tooltip"
+                    class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Ventas
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
+                <ul id="dropdown-ventas" data-menu-panel class="hidden space-y-1 py-1">
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.documents.index') }}" data-menu-text="Documentos Emitidos"
+                            data-tooltip-target="tooltip-documentos-emitidos"
+                            data-menu-keywords="documentos emitidos dte"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                            <x-icon icon="document"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Documentos Emitidos</span>
                         </a>
+                        <div id="tooltip-documentos-emitidos" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Documentos Emitidos
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
                     </li>
                     @if ($business->invoice_bag_enabled)
-                        <li>
-                            <a href="{{ Route('business.invoice-bags.index') }}"
-                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                                <span class="ms-3 flex-1 whitespace-nowrap">
-                                    Bolsón de Facturas
-                                </span>
+                        <li data-menu-item data-menu-level="sub">
+                            <a href="{{ Route('business.invoice-bags.index') }}" data-menu-text="Bolsón de Facturas"
+                                data-tooltip-target="tooltip-bolson-facturas"
+                                data-menu-keywords="bolson facturas"
+                                class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                                <x-icon icon="files"
+                                    class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                                <span class="ms-2">Bolsón de Facturas</span>
                             </a>
+                            <div id="tooltip-bolson-facturas" role="tooltip"
+                                class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                                Bolsón de Facturas
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
                         </li>
                     @endif
-                    @if ($business->posmode)
-                        <li>
-                            <a href="{{ Route('business.categories.index') }}"
-                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                                <span class="ms-3 flex-1 whitespace-nowrap">
-                                    Categorías
-                                </span>
-                            </a>
-                        </li>
-                    @endif
-                    <li>
-                        <a href="{{ Route('business.products.index') }}"
-                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                            <span class="ms-3 flex-1 whitespace-nowrap">
-                                Productos
-                            </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ Route('business.price-variants.index') }}"
-                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                            <span class="ms-3 flex-1 whitespace-nowrap">
-                                Variantes de precio
-                            </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ Route('business.movements.index') }}"
-                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                            <span class="ms-3 flex-1 whitespace-nowrap">
-                                Movimientos
-                            </span>
-                        </a>
-                    </li>
                     @if (!auth()->user()->only_fcf)
-                        <li>
+                        <li data-menu-item data-menu-level="sub">
                             <a href="{{ Route('business.cuentas-por-cobrar.index') }}"
-                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                                <span class="ms-3 flex-1 whitespace-nowrap">
-                                    Cuentas por Cobrar
-                                </span>
+                                data-menu-text="Cuentas por Cobrar" data-tooltip-target="tooltip-cuentas-cobrar"
+                                data-menu-keywords="cxc cuentas por cobrar"
+                                class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                                <x-icon icon="moneybag"
+                                    class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                                <span class="ms-2">Cuentas por Cobrar</span>
                             </a>
+                            <div id="tooltip-cuentas-cobrar" role="tooltip"
+                                class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                                Cuentas por Cobrar
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
                         </li>
                     @endif
                 </ul>
             </li>
-            <li>
-                <button type="button"
-                    class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
-                    aria-controls="dropdown-compras" data-collapse-toggle="dropdown-compras">
-                    <x-icon icon="shopping-cart"
-                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Compras</span>
-                    <x-icon icon="arrow-down"
-                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                </button>
-                <ul id="dropdown-compras" class="hidden space-y-2 py-2">
-                    <li>
-                        <a href="{{ Route('business.received-documents.index') }}"
-                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
-                            tabindex="-1" aria-disabled="true">
-                            <span class="ms-3 flex-1 whitespace-nowrap">
-                                Documentos Recibidos
-                            </span>
-                        </a>
-                    </li>
-                    {{-- <li>
-                        <a href="#"
-                            class="group pointer-events-none flex cursor-not-allowed items-center rounded-lg p-2 text-secondary-400 opacity-50 dark:text-secondary-600 dark:opacity-50"
-                            tabindex="-1" aria-disabled="true">
-                            <span class="ms-3 flex-1 whitespace-nowrap">
-                                Cuentas por pagar
-                            </span>
-                            <span
-                                class="ml-2 inline-block rounded-full bg-secondary-300 px-2 py-0.5 text-xs font-semibold text-secondary-700 dark:bg-secondary-700 dark:text-secondary-300">
-                                Próximamente
-                            </span>
-                        </a>
-                    </li> --}}
-                </ul>
-            </li>
-            <li>
-                <a href="{{ Route('business.reporting.index') }}"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
-                    <x-icon icon="report-accounting"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3">Reportería Contable</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ Route('business.reporting.general') }}"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-secondary-900">
-                    <x-icon icon="report-general"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">
-                        Reportería General
-                    </span>
-                </a>
-            </li>
-            @if ($business->pos_inventory_enabled)
-                <li>
-                    <button type="button"
-                        class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
-                        aria-controls="dropdown-inventario" data-collapse-toggle="dropdown-inventario">
-                        <x-icon icon="package"
+
+            @if ($business->bulk_emission)
+                <li data-menu-item data-menu-level="main">
+                    <button type="button" data-accordion-trigger="dropdown-lotes" data-panel-id="dropdown-lotes"
+                        aria-controls="dropdown-lotes" aria-expanded="false" data-menu-text="Facturación por Lotes"
+                        data-tooltip-target="tooltip-lotes" data-menu-keywords="lotes masivo dte"
+                        class="group flex w-full items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                        <x-icon icon="files"
                             class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                        <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Inventario</span>
+                        <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Facturación por Lotes</span>
                         <x-icon icon="arrow-down"
-                            class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                            class="h-4 w-4 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                     </button>
-                    <ul id="dropdown-inventario" class="hidden space-y-2 py-2">
-                        <li>
-                            <a href="{{ Route('business.inventory.pos.index') }}"
-                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                                <span class="ms-3 flex-1 whitespace-nowrap">
-                                    Inventario por POS
-                                </span>
+                    <div id="tooltip-lotes" role="tooltip"
+                        class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                        Facturación por Lotes
+                        <div class="tooltip-arrow" data-popper-arrow></div>
+                    </div>
+                    <ul id="dropdown-lotes" data-menu-panel class="hidden space-y-1 py-1">
+                        <li data-menu-item data-menu-level="sub">
+                            <a href="{{ Route('business.bulk.index') }}" data-menu-text="Plantillas de DTE"
+                                data-tooltip-target="tooltip-plantillas-dte" data-menu-keywords="plantillas dte"
+                                class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                                <x-icon icon="file-text"
+                                    class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                                <span class="ms-2">Plantillas de DTE</span>
                             </a>
+                            <div id="tooltip-plantillas-dte" role="tooltip"
+                                class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                                Plantillas de DTE
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
                         </li>
-                        <li>
-                            <a href="{{ Route('business.inventory.transfers.index') }}"
-                                class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                                <span class="ms-3 flex-1 whitespace-nowrap">
-                                    Traslados
-                                </span>
+                        <li data-menu-item data-menu-level="sub">
+                            <a href="{{ Route('business.bulk.send') }}" data-menu-text="Envío Masivo"
+                                data-tooltip-target="tooltip-envio-masivo" data-menu-keywords="envio masivo"
+                                class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                                <x-icon icon="send"
+                                    class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                                <span class="ms-2">Envío Masivo</span>
                             </a>
+                            <div id="tooltip-envio-masivo" role="tooltip"
+                                class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                                Envío Masivo
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
                         </li>
                     </ul>
                 </li>
             @endif
-            <li>
-                <button type="button"
-                    class="group flex w-full items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900"
-                    aria-controls="dropdown-configuracion" data-collapse-toggle="dropdown-configuracion">
+
+            <li data-menu-item data-menu-level="main">
+                <button type="button" data-accordion-trigger="dropdown-compras" data-panel-id="dropdown-compras"
+                    aria-controls="dropdown-compras" aria-expanded="false" data-menu-text="Compras"
+                    data-tooltip-target="tooltip-compras" data-menu-keywords="compras documentos recibidos"
+                    class="group flex w-full items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                    <x-icon icon="shopping-cart"
+                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Compras</span>
+                    <x-icon icon="arrow-down"
+                        class="h-4 w-4 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                </button>
+                <div id="tooltip-compras" role="tooltip"
+                    class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Compras
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
+                <ul id="dropdown-compras" data-menu-panel class="hidden space-y-1 py-1">
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.received-documents.index') }}" data-menu-text="Documentos Recibidos"
+                            data-tooltip-target="tooltip-documentos-recibidos" data-menu-keywords="documentos recibidos"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
+                            tabindex="-1" aria-disabled="true">
+                            <x-icon icon="inbox"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Documentos Recibidos</span>
+                        </a>
+                        <div id="tooltip-documentos-recibidos" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Documentos Recibidos
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+
+            @if ($business->pos_inventory_enabled)
+                <li data-menu-item data-menu-level="main">
+                    <button type="button" data-accordion-trigger="dropdown-inventario"
+                        data-panel-id="dropdown-inventario" aria-controls="dropdown-inventario" aria-expanded="false"
+                        data-menu-text="Inventario" data-tooltip-target="tooltip-inventario"
+                        data-menu-keywords="inventario stock"
+                        class="group flex w-full items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                        <x-icon icon="package"
+                            class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                        <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Inventario</span>
+                        <x-icon icon="arrow-down"
+                            class="h-4 w-4 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    </button>
+                    <div id="tooltip-inventario" role="tooltip"
+                        class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                        Inventario
+                        <div class="tooltip-arrow" data-popper-arrow></div>
+                    </div>
+                    <ul id="dropdown-inventario" data-menu-panel class="hidden space-y-1 py-1">
+                        <li data-menu-item data-menu-level="sub">
+                            <a href="{{ Route('business.inventory.pos.index') }}" data-menu-text="Inventario por POS"
+                                data-tooltip-target="tooltip-inventario-pos" data-menu-keywords="inventario pos"
+                                class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                                <x-icon icon="device-pos"
+                                    class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                                <span class="ms-2">Inventario por POS</span>
+                            </a>
+                            <div id="tooltip-inventario-pos" role="tooltip"
+                                class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                                Inventario por POS
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
+                        </li>
+                        <li data-menu-item data-menu-level="sub">
+                            <a href="{{ Route('business.inventory.transfers.index') }}" data-menu-text="Traslados"
+                                data-tooltip-target="tooltip-traslados" data-menu-keywords="traslados transferencias"
+                                class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                                <x-icon icon="transfer"
+                                    class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                                <span class="ms-2">Traslados</span>
+                            </a>
+                            <div id="tooltip-traslados" role="tooltip"
+                                class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                                Traslados
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            @endif
+
+            <li data-menu-item data-menu-level="main">
+                <a href="{{ Route('business.reporting.general') }}" data-menu-text="Reportería General"
+                    data-tooltip-target="tooltip-reporte-general" data-menu-keywords="reporteria general reportes"
+                    class="group flex items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-secondary-900">
+                    <x-icon icon="report-general"
+                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3 flex-1 whitespace-nowrap">Reportería General</span>
+                </a>
+                <div id="tooltip-reporte-general" role="tooltip"
+                    class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Reportería General
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
+            </li>
+            <li data-menu-item data-menu-level="main">
+                <a href="{{ Route('business.reporting.index') }}" data-menu-text="Reportería Contable"
+                    data-tooltip-target="tooltip-reporte-contable" data-menu-keywords="reporteria contable"
+                    class="group flex items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-secondary-900">
+                    <x-icon icon="report-accounting"
+                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                    <span class="ms-3">Reportería Contable</span>
+                </a>
+                <div id="tooltip-reporte-contable" role="tooltip"
+                    class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                    Reportería Contable
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
+            </li>
+
+            <li data-menu-item data-menu-level="main">
+                <button type="button" data-accordion-trigger="dropdown-configuracion"
+                    data-panel-id="dropdown-configuracion" aria-controls="dropdown-configuracion"
+                    aria-expanded="false" data-menu-text="Configuración" data-tooltip-target="tooltip-configuracion"
+                    data-menu-keywords="configuracion ajustes"
+                    class="group flex w-full items-center rounded-lg px-2 py-1.5 text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
                     <x-icon icon="settings"
                         class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                     <span class="ms-3 flex-1 whitespace-nowrap text-left rtl:text-right">Configuración</span>
                     <x-icon icon="arrow-down"
-                        class="h-5 w-5 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
+                        class="h-4 w-4 shrink-0 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
                 </button>
-                <ul id="dropdown-configuracion" class="hidden space-y-2 py-2">
-                    <li>
-                        <a href="{{ Route('business.sucursales.index', $business_id) }}"
-                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                            <span class="ms-3 flex-1 whitespace-nowrap">
-                                Sucursales
-                            </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{{ Route('business.profile.index') }}"
-                            class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                            <span class="ms-3 flex-1 whitespace-nowrap">
-                                Datos del Negocio
-                            </span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-            <li>
-                @include('layouts.partials.business.button-new-dte')
-            </li>
-            {{--   <li>
-                <a href="{{ Route('admin.configuration.index') }}" data-tooltip-target="tooltip-configuration"
-                    class="group flex items-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-900">
-                    <x-icon icon="settings"
-                        class="h-5 w-5 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white" />
-                    <span class="ms-3 flex-1 whitespace-nowrap">Configuración</span>
-                </a>
-                <div id="tooltip-configuration" role="tooltip"
-                    class="shadow-xs tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                <div id="tooltip-configuracion" role="tooltip"
+                    class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
                     Configuración
                     <div class="tooltip-arrow" data-popper-arrow></div>
                 </div>
-            </li> --}}
+                <ul id="dropdown-configuracion" data-menu-panel class="hidden space-y-1 py-1">
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.sucursales.index', $business_id) }}" data-menu-text="Sucursales"
+                            data-tooltip-target="tooltip-sucursales" data-menu-keywords="sucursales"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                            <x-icon icon="building-store"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Sucursales</span>
+                        </a>
+                        <div id="tooltip-sucursales" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Sucursales
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </li>
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.profile.index') }}" data-menu-text="Datos del Negocio"
+                            data-tooltip-target="tooltip-datos-negocio" data-menu-keywords="negocio perfil"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                            <x-icon icon="building"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Datos del Negocio</span>
+                        </a>
+                        <div id="tooltip-datos-negocio" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Datos del Negocio
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li data-menu-item data-menu-level="main">
+                @include('layouts.partials.business.button-new-dte')
+            </li>
         </ul>
     </div>
 </aside>

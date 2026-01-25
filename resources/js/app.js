@@ -7,3 +7,4 @@ import "./users";
 import "./alert";
 import "./business";
 import "./admin";
+import "./navbar";
