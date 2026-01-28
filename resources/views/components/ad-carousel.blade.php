@@ -1,8 +1,8 @@
 @props([
     'ads' => [],
     'duration' => 5000,
-    'maxWidth' => '1200px',
-    'maxHeight' => '300px',
+    'maxWidth' => '900px',
+    'maxHeight' => '225px',
     'carouselId' => 'default-carousel',
 ])
 @if (count($ads) === 0)
@@ -10,15 +10,16 @@
         No hay anuncios disponibles.
     </div>
 @else
-    <div id="{{ $carouselId }}" class="relative max-w-[{{ $maxWidth }}] max-h-[{{ $maxHeight }}]"
+    <div id="{{ $carouselId }}" class="relative w-full mx-auto"
+        style="max-width: {{ $maxWidth }}; max-height: {{ $maxHeight }};"
         data-carousel="slide" data-carousel-interval="{{ $duration }}">
         <!-- Carousel wrapper -->
-        <div class="relative h-56 overflow-hidden md:h-96 max-h-[300px]">
+        <div class="relative overflow-hidden" style="height: {{ $maxHeight }};">
             @foreach ($ads as $ad)
                 <div class="hidden duration-1000 ease-in-out" data-carousel-item>
                     <a href="{{ $ad->link_url }}" target="_blank">
                         <img src="{{ asset($ad->image_path) }}"
-                            class="absolute block w-full -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"
+                            class="absolute block w-full h-full object-contain -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"
                             alt="{{ $ad->name }}">
                     </a>
                 </div>
