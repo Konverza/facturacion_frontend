@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Services\OctopusService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -60,7 +61,7 @@ class DteMail extends Mailable
                 break;
         }
 
-        return $this->subject('Facturación Electrónica Konverza')
+        $mailable = $this->subject('Facturación Electrónica Konverza')
             ->from(config('mail.from.address'), $this->dte["documento"]["emisor"]["nombre"])
             ->view('mail.dte')
             ->with([
@@ -74,8 +75,26 @@ class DteMail extends Mailable
                 'fecha_emision' => \Carbon\Carbon::parse($this->dte["fhProcesamiento"])->format('d/m/Y H:i:s'),
                 'total' => $total,
                 'logo' => $logo,
-            ])
-            ->attach($this->pdfPath)
-            ->attach($this->jsonPath);
+            ]);
+
+        $this->attachFileSafely($mailable, $this->pdfPath, 'application/pdf', 'documento.pdf');
+        $this->attachFileSafely($mailable, $this->jsonPath, 'application/json', 'documento.json');
+
+        return $mailable;
+    }
+
+    protected function attachFileSafely(Mailable $mailable, string $path, string $mime, string $defaultName): void
+    {
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            $response = Http::timeout(30)->retry(2, 200)->get($path);
+
+            if ($response->successful()) {
+                $filename = basename(parse_url($path, PHP_URL_PATH)) ?: $defaultName;
+                $mailable->attachData($response->body(), $filename, ['mime' => $mime]);
+                return;
+            }
+        }
+
+        $mailable->attach($path, ['mime' => $mime]);
     }
 }
