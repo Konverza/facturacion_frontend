@@ -11,7 +11,7 @@
                 Actualmente estamos en mantenimiento, por favor, vuelve más tarde.
             </p>
             <p class="mb-8 text-lg font-medium text-gray-800 dark:text-gray-400 md:text-xl">
-                El mantenimiento finalizará en: <span id="eta"></span>
+                El mantenimiento finalizará aproximadamente en: <span id="eta"></span>
             </p>
             <div class="mb-8 animate-bounce">
                 <svg class="mx-auto h-16 w-16 text-gray-800 dark:text-white" fill="none" viewBox="0 0 24 24"
