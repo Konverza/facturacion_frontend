@@ -196,7 +196,7 @@
         <div class="relative">
             <!-- Overlay mientras carga -->
             <div wire:loading.delay
-                wire:target="fechaInicio,fechaFin,tipo_dte,documento_receptor,estado,codSucursal,codPuntoVenta,page,perPage"
+                wire:target="emisionInicio,emisionFin,fechaInicio,fechaFin,tipo_dte,documento_receptor,estado,codSucursal,codPuntoVenta,page,perPage"
                 class="absolute inset-0 mt-8 bg-white bg-opacity-70 z-50 flex items-center justify-center">
                 <div class="text-center">
                     <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg"
