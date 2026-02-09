@@ -65,11 +65,11 @@ class GenerateZipDownload implements ShouldQueue
             if ($this->zipDownloadJob->procesamiento_fin) {
                 $params['fechaFin'] = $this->zipDownloadJob->procesamiento_fin->format('Y-m-d') . 'T23:59:59';
             }
-            if ($this->zipDownloadJob->codSucursal) {
-                $params['codSucursal'] = $this->zipDownloadJob->codSucursal;
+            if ($this->zipDownloadJob->cod_sucursal) {
+                $params['codSucursal'] = $this->zipDownloadJob->cod_sucursal;
             }
-            if ($this->zipDownloadJob->codPuntoVenta) {
-                $params['codPuntoVenta'] = $this->zipDownloadJob->codPuntoVenta;
+            if ($this->zipDownloadJob->cod_punto_venta) {
+                $params['codPuntoVenta'] = $this->zipDownloadJob->cod_punto_venta;
             }
             if ($this->zipDownloadJob->tipo_dte) {
                 $params['tipo_dte'] = $this->zipDownloadJob->tipo_dte;
