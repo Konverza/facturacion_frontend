@@ -25,6 +25,10 @@ class Business extends Model
         'has_customer_branches',
         'pos_inventory_enabled',
         'invoice_bag_enabled',
+        'has_api_access',
+        'api_key_hash',
+        'api_key_last4',
+        'api_key_created_at',
         'active',
     ];
 
@@ -35,6 +39,8 @@ class Business extends Model
         'has_customer_branches' => 'boolean',
         'pos_inventory_enabled' => 'boolean',
         'invoice_bag_enabled' => 'boolean',
+        'has_api_access' => 'boolean',
+        'api_key_created_at' => 'datetime',
         'active' => 'boolean',
     ];
 

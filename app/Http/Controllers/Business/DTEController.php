@@ -1160,8 +1160,8 @@ class DTEController extends Controller
                 "nombre" => $request->nombre_customer,
                 "codActividad" => $codActividad ?? $request->actividad_economica,
                 "nombreComercial" => $request->nombre_comercial,
-                "departamento" => $departamentoCode ?? $request->departamento,
-                "municipio" => $municipioCode ?? $request->municipio,
+                "departamento" => $departamentoCode ?? "06", // default San Salvador
+                "municipio" => $municipioCode ?? "01", // default primer Municipio
                 "complemento" => $request->complemento,
                 "telefono" => $telefonoStr,
                 "correo" => $request->correo,
@@ -1196,8 +1196,8 @@ class DTEController extends Controller
                         "telefono" => $telefonoStr,
                         "correo" => $request->correo,
                         "direccion" => [
-                            "departamento" => $departamentoCode ?? $request->departamento,
-                            "municipio" => $municipioCode ?? $request->municipio,
+                            "departamento" => $departamentoCode ?? "06", // default San Salvador
+                            "municipio" => $municipioCode ?? "01", // default primer Municipio
                             "complemento" => $request->complemento
                         ],
                         "tipoDocumento" => $docCode,
@@ -1215,8 +1215,8 @@ class DTEController extends Controller
                     "telefono" => $telefonoStr,
                     "correo" => $request->correo,
                     "direccion" => [
-                        "departamento" => $departamentoCode ?? $request->departamento,
-                        "municipio" => $municipioCode ?? $request->municipio,
+                        "departamento" => $departamentoCode ?? "06", // default San Salvador
+                        "municipio" => $municipioCode ?? "01", // default primer Municipio
                         "complemento" => $request->complemento
                     ],
                     "nit" => $numDoc,
@@ -1231,8 +1231,8 @@ class DTEController extends Controller
                     "telefono" => $telefonoStr,
                     "correo" => $request->correo,
                     "direccion" => [
-                        "departamento" => $departamentoCode ?? $request->departamento,
-                        "municipio" => $municipioCode ?? $request->municipio,
+                        "departamento" => $departamentoCode ?? "06", // default San Salvador
+                        "municipio" => $municipioCode ?? "01", // default primer Municipio
                         "complemento" => $request->complemento
                     ],
                     "tipoDocumento" => $docCode,
@@ -1247,8 +1247,8 @@ class DTEController extends Controller
                     "codActividad" => $codActividad ?? $request->actividad_economica,
                     "descActividad" => $descAct ?? $descActividad,
                     "direccion" => [
-                        "departamento" => $departamentoCode ?? $request->departamento,
-                        "municipio" => $municipioCode ?? $request->municipio,
+                        "departamento" => $departamentoCode ?? "06", // default San Salvador
+                        "municipio" => $municipioCode ?? "01", // default primer Municipio
                         "complemento" => $request->complemento
                     ],
                     "telefono" => $telefonoStr,
@@ -1270,8 +1270,8 @@ class DTEController extends Controller
                     "codActividad" => $codActividad ?? $request->actividad_economica,
                     "descActividad" => $descAct ?? $descActividad,
                     "direccion" => [
-                        "departamento" => $departamentoCode ?? $request->departamento,
-                        "municipio" => $municipioCode ?? $request->municipio,
+                        "departamento" => $departamentoCode ?? "06", // default San Salvador
+                        "municipio" => $municipioCode ?? "01", // default primer Municipio
                         "complemento" => $request->complemento
                     ],
                     "telefono" => $telefonoStr,
@@ -1300,8 +1300,8 @@ class DTEController extends Controller
                     "codActividad" => $codActividad ?? $request->actividad_economica,
                     "descActividad" => $descAct ?? $descActividad,
                     "direccion" => [
-                        "departamento" => $departamentoCode ?? $request->departamento,
-                        "municipio" => $municipioCode ?? $request->municipio,
+                        "departamento" => $departamentoCode ?? "06", // default San Salvador
+                        "municipio" => $municipioCode ?? "01", // default primer Municipio
                         "complemento" => $request->complemento
                     ],
                     "telefono" => $telefonoStr,
@@ -1320,8 +1320,8 @@ class DTEController extends Controller
                     "codActividad" => $codActividad ?? $request->actividad_economica,
                     "descActividad" => $descAct ?? $descActividad,
                     "direccion" => [
-                        "departamento" => $departamentoCode ?? $request->departamento,
-                        "municipio" => $municipioCode ?? $request->municipio,
+                        "departamento" => $departamentoCode ?? "06", // default San Salvador
+                        "municipio" => $municipioCode ?? "01", // default primer Municipio
                         "complemento" => $request->complemento
                     ],
                     "telefono" => $telefonoStr,
@@ -2101,13 +2101,16 @@ class DTEController extends Controller
         }
 
         // 3) POS por defecto
-        $business_user = BusinessUser::where('business_id', session('business'))
-            ->where('user_id', auth()->id())
-            ->first();
+        $businessId = session('business');
+        $business_user = null;
+        if (auth()->check()) {
+            $business_user = BusinessUser::where('business_id', $businessId)
+                ->where('user_id', auth()->id())
+                ->first();
+        }
         $pos_id = $business_user?->default_pos_id;
         if (!$pos_id) {
-            $pos = PuntoVenta::where('business_id', session('business'))->first();
-            $pos_id = $pos?->id;
+            $pos_id = $this->resolveDefaultPosId($businessId);
         }
         if (!$pos_id) {
             return response()->json(['success' => false, 'message' => 'No hay Punto de Venta configurado.'], 422);
@@ -2273,6 +2276,19 @@ class DTEController extends Controller
         if (!array_key_exists('name', $this->dte)) {
             $this->dte['name'] = null;
         }
+    }
+
+    private function resolveDefaultPosId(?int $businessId): ?int
+    {
+        if (!$businessId) {
+            return null;
+        }
+
+        return PuntoVenta::whereHas('sucursal', function ($query) use ($businessId) {
+            $query->where('business_id', $businessId);
+        })
+            ->orderBy('id')
+            ->value('id');
     }
 
     /**

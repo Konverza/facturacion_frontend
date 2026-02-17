@@ -14,8 +14,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias(
             [
                 "role" => App\Http\Middleware\Role::class,
+                "api-key" => App\Http\Middleware\ApiKeyAuth::class,
             ],
         );
+
+        $middleware->validateCsrfTokens(except: [
+            'api/submitDte',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

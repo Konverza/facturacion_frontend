@@ -3,6 +3,7 @@
 use App\Http\Controllers\ConsultaController;
 use App\Http\Controllers\Business\CustomerContoller;
 use App\Http\Controllers\Admin\BusinessController;
+use App\Http\Controllers\Api\DTEApiController;
 
 require base_path('routes/admin.php');
 require base_path('routes/business.php');
@@ -43,3 +44,4 @@ Route::get('/icons', function () {
 Route::get('/registro-clientes/{nit}', [CustomerContoller::class, 'showPublicRegistration'])->name('registro-clientes');
 Route::post('/registro-clientes/{nit}', [CustomerContoller::class, 'storePublicRegistration'])->name('registro-clientes.store');
 Route::get('/api/municipios/', [BusinessController::class, "getMunicipios"])->name('api.municipios');
+Route::post('/api/submitDte', [DTEApiController::class, 'submitDte'])->middleware('api-key');

@@ -554,6 +554,57 @@ class BusinessController extends Controller
         }
     }
 
+    public function apiAccess(Business $business)
+    {
+        return view('admin.business.api-access', compact('business'));
+    }
+
+    public function enableApiAccess(Business $business)
+    {
+        $business->update([
+            'has_api_access' => true,
+        ]);
+
+        return back()->with('success', 'Acceso API habilitado.');
+    }
+
+    public function disableApiAccess(Business $business)
+    {
+        $business->update([
+            'has_api_access' => false,
+        ]);
+
+        return back()->with('success', 'Acceso API deshabilitado.');
+    }
+
+    public function generateApiKey(Business $business)
+    {
+        $plainKey = Str::random(48);
+
+        $business->update([
+            'has_api_access' => true,
+            'api_key_hash' => hash('sha256', $plainKey),
+            'api_key_last4' => substr($plainKey, -4),
+            'api_key_created_at' => now(),
+        ]);
+
+        return back()
+            ->with('success', 'API Key generada correctamente.')
+            ->with('api_key_plain', $plainKey);
+    }
+
+    public function revokeApiKey(Business $business)
+    {
+        $business->update([
+            'has_api_access' => false,
+            'api_key_hash' => null,
+            'api_key_last4' => null,
+            'api_key_created_at' => null,
+        ]);
+
+        return back()->with('success', 'API Key revocada.');
+    }
+
     public function rebuildStock(Business $business)
     {
         return view('admin.business.rebuild-stock', compact('business'));

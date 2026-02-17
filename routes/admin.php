@@ -17,6 +17,11 @@ Route::middleware(['auth', 'role:admin'])->prefix("admin")->name("admin.")->grou
     Route::get("/business/{business}/rebuild-stock", [BusinessController::class, "rebuildStock"])->name("business.rebuild-stock");
     Route::post("/business/{business}/rebuild-stock", [BusinessController::class, "executeRebuildStock"])->name("business.execute-rebuild-stock");
     Route::get("/business/{business}/stock-report", [BusinessController::class, "stockReport"])->name("business.stock-report");
+    Route::get("/business/{business}/api-access", [BusinessController::class, "apiAccess"])->name("business.api-access");
+    Route::post("/business/{business}/api-access/enable", [BusinessController::class, "enableApiAccess"])->name("business.api-access.enable");
+    Route::post("/business/{business}/api-access/disable", [BusinessController::class, "disableApiAccess"])->name("business.api-access.disable");
+    Route::post("/business/{business}/api-access/generate", [BusinessController::class, "generateApiKey"])->name("business.api-access.generate");
+    Route::post("/business/{business}/api-access/revoke", [BusinessController::class, "revokeApiKey"])->name("business.api-access.revoke");
     Route::resource("/plans", PlansController::class);
     Route::resource("/users", UserController::class);
     Route::get("/get-municipios", [BusinessController::class, "getMunicipios"])->name("get-municipios");

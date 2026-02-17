@@ -53,6 +53,12 @@ Breadcrumbs::for("admin.business.stock-report", function (BreadcrumbTrail $trail
     $trail->push($icon . "Reporte de Movimientos", route("admin.business.stock-report", $business));
 });
 
+Breadcrumbs::for("admin.business.api-access", function (BreadcrumbTrail $trail, $business) {
+    $icon = Blade::render("<x-icon icon='code' class='w-4 h-4'/>");
+    $trail->parent("admin.business.index");
+    $trail->push($icon . "Acceso API", route("admin.business.api-access", $business));
+});
+
 Breadcrumbs::for("admin.sucursales.index", function (BreadcrumbTrail $trail, string $id) {
     $icon = Blade::render("<x-icon icon='building-store' class='w-4 h-4'/>");
     $trail->parent("admin.business.index");
