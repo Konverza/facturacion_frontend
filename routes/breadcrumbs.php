@@ -207,6 +207,13 @@ Breadcrumbs::for("business.received-documents.import.index", function (Breadcrum
     $trail->push($icon . "Importar desde Hacienda", route("business.received-documents.import.index"));
 });
 
+//Received Documents > Manual Upload
+Breadcrumbs::for("business.received-documents.manual-upload.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='cloud-upload' class='w-4 h-4'/>");
+    $trail->parent("business.received-documents.index");
+    $trail->push($icon . "Carga manual de DTE", route("business.received-documents.manual-upload.index"));
+});
+
 // Received Documents > ZIP Downloads
 Breadcrumbs::for("business.received-documents.zip", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='download' class='w-4 h-4'/>");

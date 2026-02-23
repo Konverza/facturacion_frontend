@@ -42,6 +42,7 @@ class DtesRecibidosTable extends Component
         '15' => 'Comprobante de Donación'
     ];
     public $q;
+    public $searchDeleted = false;
     public $statistics;
     protected $updatesQueryString = ['page'];
     protected $octopus_service;
@@ -55,7 +56,7 @@ class DtesRecibidosTable extends Component
 
     public function updating($property)
     {
-        if (in_array($property, ['fechaInicio', 'fechaFin', 'tipo_dte', 'sort', 'perPage', 'documento_emisor', 'q'])) {
+        if (in_array($property, ['fechaInicio', 'fechaFin', 'tipo_dte', 'sort', 'perPage', 'documento_emisor', 'q', 'searchDeleted'])) {
             $this->page = 1; // Reset page when any of these properties change
         }
     }
@@ -67,9 +68,42 @@ class DtesRecibidosTable extends Component
             'fechaFin',
             'tipo_dte',
             'documento_emisor',
-            'q'
+            'q',
+            'searchDeleted'
         ]);
         $this->page = 1;
+    }
+
+    public function restore(string $codGeneracion)
+    {
+        $business_id = Session::get('business') ?? null;
+        $business = Business::find($business_id);
+        $this->nit = $business->nit ?? null;
+
+        if (!$this->nit) {
+            session()->flash('error', 'Error');
+            session()->flash('error_message', 'No se encontró un negocio válido para restaurar el DTE.');
+            return;
+        }
+
+        $response = Http::put(env("OCTOPUS_API_URL") . "/dtes_recibidos/restore/{$codGeneracion}", [
+            'nit' => $this->nit,
+        ]);
+
+        if (!$response->successful()) {
+            $responseBody = $response->json();
+            session()->flash('error', 'Error');
+            session()->flash(
+                'error_message',
+                is_array($responseBody)
+                    ? ($responseBody['message'] ?? $responseBody['detail'] ?? 'No fue posible recuperar el DTE.')
+                    : 'No fue posible recuperar el DTE.'
+            );
+            return;
+        }
+
+        session()->flash('success', 'Éxito');
+        session()->flash('success_message', 'El DTE fue recuperado correctamente.');
     }
 
     public function render()
@@ -92,7 +126,9 @@ class DtesRecibidosTable extends Component
         ];
 
         // Realizar la solicitud a la API de Octopus para obtener los DTEs
-        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes_recibidos/",   array_merge($parameters, [
+        $dtesEndpoint = $this->searchDeleted ? "/dtes_recibidos/deleted" : "/dtes_recibidos/";
+
+        $response_dtes = Http::get(env("OCTOPUS_API_URL") . $dtesEndpoint,   array_merge($parameters, [
             'page' => $this->page,
             'limit' => $this->perPage,
             'sort' => $this->sort,
@@ -150,7 +186,9 @@ class DtesRecibidosTable extends Component
             'sort' => $this->sort,
         ];
 
-        $response_dtes = Http::get(env("OCTOPUS_API_URL") . "/dtes_recibidos/", $parameters);
+        $dtesEndpoint = $this->searchDeleted ? "/dtes_recibidos/deleted" : "/dtes_recibidos/";
+
+        $response_dtes = Http::get(env("OCTOPUS_API_URL") . $dtesEndpoint, $parameters);
         $data = $response_dtes->json();
         $dtes = array_map(function ($dte) {
             $dte["documento"] = json_decode($dte["documento"]);

@@ -250,7 +250,10 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::prefix("received-documents")->name("received-documents.")->group(function () {
         Route::get("/", [DTERecibidoController::class, "index"])->name('index');
         Route::get("/show/{codGeneracion}", [DTERecibidoController::class, "show"])->name('show');
+        Route::delete("/{codGeneracion}", [DTERecibidoController::class, "destroy"])->name('destroy');
         Route::get("/download-pdf/{codGeneracion}", [DTERecibidoController::class, "downloadPdf"])->name('download-pdf');
+        Route::get("/manual-upload", [DTERecibidoController::class, "manualUploadIndex"])->name('manual-upload.index');
+        Route::post("/manual-upload", [DTERecibidoController::class, "manualUploadStore"])->name('manual-upload.store');
         Route::get("/import", [DTERecibidoController::class, "importIndex"])->name('import.index');
         Route::post("/import/start", [DTERecibidoController::class, "startImport"])->name('import.start');
         Route::get("/import/progress/{id}", [DTERecibidoController::class, "getProgress"])->name('import.progress');

@@ -8,6 +8,7 @@ class DteImportProcess extends Model
 {
     protected $fillable = [
         'nit',
+        'dui',
         'status',
         'filename',
         'total_dtes',

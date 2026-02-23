@@ -8,9 +8,11 @@ use App\Models\Business;
 use App\Models\DteImportProcess;
 use App\Models\ReceivedZipDownloadJob;
 use App\Jobs\GenerateReceivedZipDownload;
+use App\Services\HaciendaService;
 use App\Services\OctopusService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Session;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
@@ -47,6 +49,38 @@ class DTERecibidoController extends Controller
             'bienTitulo' => $this->octopus_service->getCatalog("CAT-025"),
         ];
         return view("business.received_documents.show", compact('dte', 'codGeneracion', 'catalogos'));
+    }
+
+    public function destroy(string $codGeneracion)
+    {
+        $business_id = Session::get('business') ?? null;
+        $business = Business::find($business_id);
+
+        if (!$business || !$business->nit) {
+            return redirect()->route('business.select')->with([
+                'error' => 'Error',
+                'error_message' => 'Debe seleccionar un negocio válido para eliminar el DTE.',
+            ]);
+        }
+
+        $response = Http::delete(env('OCTOPUS_API_URL') . "/dtes_recibidos/{$codGeneracion}", [
+            'nit' => $business->nit,
+        ]);
+
+        if (!$response->successful()) {
+            $responseBody = $response->json();
+            return redirect()->back()->with([
+                'error' => 'Error',
+                'error_message' => is_array($responseBody)
+                    ? ($responseBody['message'] ?? $responseBody['detail'] ?? 'No fue posible eliminar el DTE recibido.')
+                    : 'No fue posible eliminar el DTE recibido.',
+            ]);
+        }
+
+        return redirect()->back()->with([
+            'success' => 'Éxito',
+            'success_message' => 'El DTE recibido fue eliminado correctamente.',
+        ]);
     }
 
     public function downloadPdf(string $codGeneracion)
@@ -101,6 +135,110 @@ class DTERecibidoController extends Controller
         return view("business.received_documents.import", compact('activeProcess', 'processHistory'));
     }
 
+    public function manualUploadIndex()
+    {
+        return view("business.received_documents.manual-upload");
+    }
+
+    public function manualUploadStore(Request $request)
+    {
+        $request->validate([
+            'dte_json_files' => 'required|array|min:1',
+            'dte_json_files.*' => 'required|file|mimes:json,txt|max:5120',
+        ]);
+
+        $business_id = Session::get('business') ?? null;
+        $business = Business::find($business_id);
+
+        if (!$business || !$business->nit) {
+            return redirect()->route('business.select')->with([
+                'error' => 'Error',
+                'error_message' => 'Debe seleccionar un negocio válido para cargar el DTE.',
+            ]);
+        }
+
+        $haciendaService = new HaciendaService($business->nit, $business->dui ?? null);
+
+        $files = $request->file('dte_json_files', []);
+        $results = [];
+        $processed = 0;
+        $failed = 0;
+
+        foreach ($files as $file) {
+            $result = $this->processManualJsonUpload($file, $haciendaService, $business->nit);
+            $results[] = $result;
+
+            if ($result['success']) {
+                $processed++;
+            } else {
+                $failed++;
+            }
+        }
+
+        $summary = [
+            'total' => count($files),
+            'processed' => $processed,
+            'failed' => $failed,
+        ];
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => $failed === 0,
+                'summary' => $summary,
+                'results' => $results,
+                'message' => $failed === 0
+                    ? 'Todos los DTEs fueron cargados correctamente.'
+                    : 'La carga finalizó con errores en algunos archivos.',
+            ]);
+        }
+
+        if ($failed > 0) {
+            return redirect()->back()->with([
+                'warning' => 'Carga completada con observaciones',
+                'warning_message' => "Se procesaron {$processed} de {$summary['total']} archivos. {$failed} fallaron.",
+            ]);
+        }
+
+        return redirect()->route('business.received-documents.index')->with([
+            'success' => 'Éxito',
+            'success_message' => "Se cargaron correctamente {$processed} DTE(s).",
+        ]);
+    }
+
+    private function processManualJsonUpload(UploadedFile $file, HaciendaService $haciendaService, string $nit): array
+    {
+        $jsonContent = file_get_contents($file->getRealPath());
+        $decoded = json_decode($jsonContent, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+            return [
+                'file_name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'success' => false,
+                'message' => 'El archivo no contiene un JSON válido.',
+            ];
+        }
+
+        $dte = isset($decoded['dte']) && is_array($decoded['dte']) ? $decoded['dte'] : $decoded;
+        $response = $haciendaService->sendDteToOctopus($dte, $nit, true);
+
+        if (!is_array($response) || ($response['error'] ?? true)) {
+            return [
+                'file_name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'success' => false,
+                'message' => $response['message'] ?? 'No fue posible guardar el DTE.',
+            ];
+        }
+
+        return [
+            'file_name' => $file->getClientOriginalName(),
+            'size' => $file->getSize(),
+            'success' => true,
+            'message' => $response['message'] ?? 'DTE cargado correctamente.',
+        ];
+    }
+
     public function startImport(Request $request)
     {
         $business_id = Session::get('business') ?? null;
@@ -114,6 +252,9 @@ class DTERecibidoController extends Controller
         }
         
         $nit = $business->nit;
+        if($business->different_id){
+            $dui = $business->dui;
+        }
 
         // Verificar si hay un proceso activo
         $activeProcess = DteImportProcess::where('nit', $nit)
@@ -130,11 +271,12 @@ class DTERecibidoController extends Controller
         // Crear nuevo proceso
         $importProcess = DteImportProcess::create([
             'nit' => $nit,
+            'dui' => $dui ?? null,
             'status' => 'pending',
         ]);
 
         // Despachar Job
-        DownloadDtesFromHacienda::dispatch($importProcess, $nit);
+        DownloadDtesFromHacienda::dispatch($importProcess, $nit, $dui ?? null);
 
         return response()->json([
             'success' => true,

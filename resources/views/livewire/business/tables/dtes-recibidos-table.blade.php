@@ -58,6 +58,20 @@
             </div>
         @endif
 
+        @if (session('success') && session('success_message'))
+            <div class="mb-4 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                <p class="text-sm font-semibold text-green-800 dark:text-green-200">{{ session('success') }}</p>
+                <p class="text-xs text-green-700 dark:text-green-300">{{ session('success_message') }}</p>
+            </div>
+        @endif
+
+        @if (session('error') && session('error_message'))
+            <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+                <p class="text-sm font-semibold text-red-800 dark:text-red-200">{{ session('error') }}</p>
+                <p class="text-xs text-red-700 dark:text-red-300">{{ session('error_message') }}</p>
+            </div>
+        @endif
+
         <div class="mb-4 flex w-full flex-col gap-4 sm:flex-row">
             <div class="flex-[6]">
                 <x-input type="text" placeholder="Búsqueda Rápida" class="w-full" icon="search"
@@ -66,6 +80,10 @@
                     Puede buscar rápidamente por codígo de generación, sello de recibido, documento o nombre del
                     emisor.
                 </span>
+            </div>
+            <div class="flex-1">
+                <x-button type="a" typeButton="primary" icon="cloud-upload"
+                    href="{{ Route('business.received-documents.manual-upload.index') }}" text="Cargar DTE manualmente" />
             </div>
             <div class="flex-1">
                 <x-button type="a" typeButton="info" icon="download"
@@ -115,6 +133,13 @@
                                 placeholder="Seleccione un emisor" label="Buscar por emisor" :search="false"
                                 wire:model.live.debounce.500ms="documento_emisor" :value="$documento_emisor" :selected="$documento_emisor" />
                         </div>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <label class="inline-flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" wire:model.live="searchDeleted"
+                                class="rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200">Buscar en DTEs eliminados</span>
+                        </label>
                     </div>
                     <!-- Botón Limpiar Filtros (centrado) -->
                     <div class="flex justify-center">
@@ -179,7 +204,7 @@
         <div class="relative">
             <!-- Overlay mientras carga -->
             <div wire:loading.delay
-                wire:target="fechaInicio,fechaFin,tipo_dte,documento_emisor,estado,codSucursal,codPuntoVenta,page,perPage,q"
+                wire:target="fechaInicio,fechaFin,tipo_dte,documento_emisor,estado,codSucursal,codPuntoVenta,page,perPage,q,searchDeleted"
                 class="absolute inset-0 mt-8 bg-white bg-opacity-70 z-50 flex items-center justify-center">
                 <div class="text-center">
                     <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg"
@@ -352,9 +377,29 @@
                                 @endif
                             </x-td>
                             <x-td th :last="true">
-                                <x-button type="a" typeButton="primary" icon="eye"
-                                    href="{{ Route('business.received-documents.show', ['codGeneracion' => $invoice['codGeneracion']]) }}"
-                                    text="Ver detalles" />
+                                <div class="flex flex-col gap-2">
+                                    @if(!$searchDeleted)
+                                    <x-button type="a" typeButton="primary" icon="eye"
+                                        href="{{ Route('business.received-documents.show', ['codGeneracion' => $invoice['codGeneracion']]) }}"
+                                        text="Ver detalles" />
+                                    @endif
+                                    @if ($searchDeleted)
+                                        <x-button type="button" typeButton="success" icon="arrow-left" text="Recuperar"
+                                            wire:click="restore('{{ $invoice['codGeneracion'] }}')"
+                                            wire:confirm="¿Está seguro de recuperar este DTE recibido?"
+                                            wire:loading.attr="disabled" wire:target="restore" />
+                                    @else
+                                        <form action="{{ Route('business.received-documents.destroy', ['codGeneracion' => $invoice['codGeneracion']]) }}"
+                                            method="POST" id="form-delete-dte-{{ $invoice['codGeneracion'] }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <x-button type="button" typeButton="danger" icon="trash" text="Eliminar"
+                                                class="buttonDelete w-full" data-modal-target="deleteModal"
+                                                data-modal-toggle="deleteModal"
+                                                data-form="form-delete-dte-{{ $invoice['codGeneracion'] }}" />
+                                        </form>
+                                    @endif
+                                </div>
                             </x-td>
                         </x-tr>
                     @empty
@@ -400,6 +445,9 @@
 
             </div>
         </div>
+
+        <x-delete-modal modalId="deleteModal" title="¿Estás seguro de eliminar este DTE recibido?"
+            message="No podrás recuperar este registro después de eliminarlo." />
     </div>
 </section>
 @push('scripts')

@@ -18,14 +18,16 @@ class DownloadDtesFromHacienda implements ShouldQueue
 
     protected $importProcess;
     protected $nit;
+    protected $dui;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(DteImportProcess $importProcess, string $nit)
+    public function __construct(DteImportProcess $importProcess, string $nit, ?string $dui = null)
     {
         $this->importProcess = $importProcess;
         $this->nit = $nit;
+        $this->dui = $dui;
     }
 
     /**
@@ -38,7 +40,7 @@ class DownloadDtesFromHacienda implements ShouldQueue
             $this->importProcess->markAsDownloading();
 
             // Obtener DTEs desde Hacienda
-            $haciendaService = new HaciendaService($this->nit);
+            $haciendaService = new HaciendaService($this->nit, $this->dui);
             $dtes = $haciendaService->fetchDtes();
 
             // Caso especial: respuesta exitosa pero sin DTEs

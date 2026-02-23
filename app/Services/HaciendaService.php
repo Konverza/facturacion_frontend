@@ -12,13 +12,15 @@ class HaciendaService
     protected $hacienda_auth_url;
     protected $hacienda_obtencion_url;
     protected $nit;
+    protected $dui;
 
 
-    public function __construct(string $nit)
+    public function __construct(string $nit, ?string $dui = null)
     {
         $this->hacienda_auth_url = env("HACIENDA_AUTH_URL");
         $this->hacienda_obtencion_url = env("HACIENDA_OBTENCION_URL");
         $this->nit = $nit;
+        $this->dui = $dui;
     }
 
     protected function getAuthToken()
@@ -141,7 +143,7 @@ class HaciendaService
         try {
             $response = Http::withToken($token)->timeout(60)->post($this->hacienda_obtencion_url, [
                 'nitEmision' => $this->nit,
-                'duiEmision' => $this->nit,
+                'duiEmision' => $this->dui ?? $this->nit,
                 'tipoRpt' => "R"
             ]);
 
@@ -170,18 +172,46 @@ class HaciendaService
         }
     }
 
-    public function sendDteToOctopus(array $dte, string $nit)
+    public function sendDteToOctopus(array $dte, string $nit, ?bool $direct = false)
     {
         try {
-            $response = Http::timeout(60)->post(env("OCTOPUS_API_URL") . "/dtes_recibidos/", [
+            $url = env("OCTOPUS_API_URL") . "/dtes_recibidos/" . ($direct ? "direct" : "");
+            $response = Http::timeout(60)->post($url, [
                 'nit' => $nit,
                 'dte' => $dte,
             ]);
-            return $response->json();
+
+            if (!$response->successful()) {
+                Log::warning('Error HTTP al enviar DTE', [
+                    'nit' => $nit,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                $responseJson = $response->json();
+                return [
+                    'error' => true,
+                    'status' => $response->status(),
+                    'message' => is_array($responseJson)
+                        ? ($responseJson['message'] ?? $responseJson['detail'] ?? 'Ocurrió un error al guardar el DTE.')
+                        : 'Ocurrió un error al guardar el DTE.',
+                ];
+            }
+
+            $responseJson = $response->json();
+
+            if (is_array($responseJson)) {
+                return array_merge(['error' => false], $responseJson);
+            }
+
+            return [
+                'error' => false,
+                'message' => 'DTE enviado correctamente.',
+            ];
         } catch (\Exception $e) {
             return [
                 'error' => true,
-                'message' => 'Error al enviar el DTE a Octopus: ' . $e->getMessage(),
+                'message' => 'Error al enviar el DTE: ' . $e->getMessage(),
             ];
         }
     }
