@@ -1,54 +1,70 @@
 @extends('layouts.template')
 @section('title', 'Servidor No Disponible')
 @section('content')
-    <section class="flex min-h-screen items-center justify-center">
-        <div class="px-4 py-8 text-center lg:px-40">
-            <h1 class="mb-4 text-7xl font-extrabold text-primary-500 dark:text-primary-300 lg:text-9xl">Mantenimiento</h1>
-            <p class="mb-4 text-3xl font-bold tracking-tight dark:text-gray-300 md:text-4xl">
-                El Servidor no está disponible.
-            </p>
-            <p class="mb-8 text-lg font-medium text-gray-800 dark:text-gray-400 md:text-xl">
-                Actualmente estamos en mantenimiento, por favor, vuelve más tarde.
-            </p>
-            <p class="mb-8 text-lg font-medium text-gray-800 dark:text-gray-400 md:text-xl">
-                El mantenimiento finalizará aproximadamente en: <span id="eta"></span>
-            </p>
-            <div class="mb-8 animate-bounce">
-                <svg class="mx-auto h-16 w-16 text-gray-800 dark:text-white" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
+    <section class="flex min-h-screen items-center justify-center md:h-screen md:overflow-hidden">
+        <div class="flex h-full w-full max-w-6xl flex-col items-center justify-center md:flex-row">
+            <div class="h-[40vh] w-full md:h-auto md:w-1/4">
+                <img src="{{ asset('images/maintenance.png') }}" alt="Mantenimiento" class="h-full w-full object-contain" />
+            </div>
+            <div class="flex w-full flex-col items-center justify-center px-4 py-6 text-center md:w-7/12 md:px-8 lg:px-12">
+                <h1 class="mb-4 text-5xl font-extrabold text-primary-500 dark:text-primary-300 lg:text-7xl">Mantenimiento
+                </h1>
+                <p class="mb-4 text-3xl font-bold tracking-tight dark:text-gray-300 md:text-4xl">
+                    El sistema no está disponible.
+                </p>
+                <p class="mb-8 text-lg font-medium text-gray-800 dark:text-gray-400 md:text-xl">
+                    Actualmente estamos en mantenimiento, por favor, vuelve más tarde.
+                </p>
+                <p class="mb-8 text-lg font-medium text-gray-800 dark:text-gray-400 md:text-xl">
+                    El mantenimiento finalizará aproximadamente en: <span id="eta"></span>
+                </p>
             </div>
         </div>
     </section>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Set the date we're counting down to
-            var countDownDate = new Date(2026, 0, 28, 12, 15, 0).getTime();
+    @push('scripts')
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var dateString = "{{ config('app.maintenance_end') }}";
+                var countDownDate = new Date(dateString).getTime();
+                var etaElement = document.getElementById("eta");
 
-            // Update the count down every 1 second
-            var x = setInterval(function() {
-
-                // Get today's date and time
-                var now = new Date().getTime();
-
-                // Find the distance between now and the count down date
-                var distance = countDownDate - now;
-
-                // Time calculations for minutes and seconds
-                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                // Display the result in the element with id="eta"
-                document.getElementById("eta").innerHTML = minutes + "m " + seconds + "s ";
-
-                // If the count down is over, write some text
-                if (distance < 0) {
-                    clearInterval(x);
-                    document.getElementById("eta").innerHTML = "EXPIRED";
+                if (!dateString || isNaN(countDownDate)) {
+                    etaElement.innerHTML = "En breve";
+                    return;
                 }
-            }, 1000);
-        });
-    </script>
+
+                function renderEta() {
+                    var now = new Date().getTime();
+                    var distance = countDownDate - now;
+
+                    if (distance <= 0) {
+                        etaElement.innerHTML = "En breve";
+                        return false;
+                    }
+
+                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    var parts = [];
+                    if (hours > 0) parts.push(hours + "h");
+                    if (minutes > 0) parts.push(minutes + "m");
+                    if (seconds > 0) parts.push(seconds + "s");
+
+                    etaElement.innerHTML = parts.length ? parts.join(" ") : "En breve";
+
+                    return true;
+                }
+
+                renderEta();
+
+                var x = setInterval(function() {
+                    var shouldContinue = renderEta();
+                    if (!shouldContinue) {
+                        clearInterval(x);
+                    }
+                }, 1000);
+            });
+        </script>
+    @endpush
 @endsection

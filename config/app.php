@@ -125,4 +125,8 @@ return [
 
     'test_environment' => env('TEST_ENVIRONMENT', true),
 
+    /*
+    | Maintenance end time
+    */
+    'maintenance_end' => env('MAINTENANCE_END', null),
 ];
