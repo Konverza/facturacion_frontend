@@ -30,6 +30,7 @@ class Business extends Model
         'api_key_last4',
         'api_key_created_at',
         'active',
+        'sac_report'
     ];
 
     protected $casts = [
@@ -42,6 +43,7 @@ class Business extends Model
         'has_api_access' => 'boolean',
         'api_key_created_at' => 'datetime',
         'active' => 'boolean',
+        'sac_report' => 'boolean',
     ];
 
     public function priceVariants()

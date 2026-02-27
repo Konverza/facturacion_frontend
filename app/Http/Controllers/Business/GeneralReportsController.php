@@ -16,7 +16,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class GeneralReportsController extends Controller
 {
@@ -91,6 +94,14 @@ class GeneralReportsController extends Controller
             'estado' => 'PROCESADO',
         ];
 
+        if ($request->report_type === 'sac_report') {
+            if ($request->input('format') !== 'excel') {
+                return back()->withErrors(['format' => 'El Reporte SAC solo puede generarse en formato Excel.']);
+            }
+
+            return $this->generateSacReport($parameters);
+        }
+
         $dtes = $this->fetchDtes($parameters);
 
         $sucursal = null;
@@ -134,6 +145,414 @@ class GeneralReportsController extends Controller
         ]);
 
         return $pdf->stream('reporte_' . $request->report_type . '_' . now()->format('Ymd_His') . '.pdf');
+    }
+
+    private function generateSacReport(array $parameters)
+    {
+        $templatePath = public_path('reportes/reporte_sac.xlsm');
+        if (!file_exists($templatePath)) {
+            abort(404, 'No se encontró la plantilla del Reporte SAC.');
+        }
+
+        $dtes = $this->fetchDtes($parameters);
+        $dtes = array_values(array_filter($dtes, function ($dte) {
+            $tipo = (string) ($dte['tipo_dte'] ?? data_get($dte, 'documento.identificacion.tipoDte'));
+            return in_array($tipo, ['01', '03'], true);
+        }));
+
+        usort($dtes, function ($left, $right) {
+            $leftDate = data_get($left, 'fhEmision') ?? data_get($left, 'documento.identificacion.fecEmi') ?? '';
+            $rightDate = data_get($right, 'fhEmision') ?? data_get($right, 'documento.identificacion.fecEmi') ?? '';
+
+            if ($leftDate === $rightDate) {
+                return strcmp((string) ($left['codGeneracion'] ?? ''), (string) ($right['codGeneracion'] ?? ''));
+            }
+
+            return strcmp((string) $leftDate, (string) $rightDate);
+        });
+
+        $spreadsheet = IOFactory::load($templatePath);
+        $ventasSheet = $spreadsheet->getSheetByName('ventas');
+        $detalleSheet = $spreadsheet->getSheetByName('detalle_ventas');
+        $clientesSheet = $spreadsheet->getSheetByName('Clientes');
+
+        if (!$ventasSheet || !$detalleSheet || !$clientesSheet) {
+            abort(500, 'La plantilla del Reporte SAC no contiene las hojas requeridas.');
+        }
+
+        $ventasHeaderMap = $this->getSacHeaderMap($ventasSheet, 1);
+        $detalleHeaderMap = $this->getSacHeaderMap($detalleSheet, 1);
+        $clientesCatalog = $this->readSacClientesCatalog($clientesSheet);
+        $departamentosCatalog = app(OctopusService::class)->simpleDepartamentos();
+
+        $ventasRow = 3;
+        $detalleRow = 3;
+        $idVenta = 1;
+
+        foreach ($dtes as $dte) {
+            $tipoDte = (string) ($dte['tipo_dte'] ?? data_get($dte, 'documento.identificacion.tipoDte'));
+            $receptorNombre = trim((string) data_get($dte, 'documento.receptor.nombre', ''));
+            $cliente = $this->findSacClienteByNombre($clientesCatalog, $receptorNombre);
+
+            $codCliente = $this->firstNotEmpty([
+                data_get($cliente, 'cod_cliente'),
+                data_get($dte, 'documento.receptor.nrc'),
+                data_get($dte, 'documento.receptor.numDocumento'),
+                data_get($dte, 'documento.receptor.nit'),
+            ]);
+
+            $direccionCliente = $this->firstNotEmpty([
+                data_get($cliente, 'direccion'),
+                data_get($dte, 'documento.receptor.direccion.complemento'),
+            ]);
+
+            $departamentoCode = data_get($dte, 'documento.receptor.direccion.departamento');
+            $municipioCode = data_get($dte, 'documento.receptor.direccion.municipio');
+            $departamentoFromDte = $this->resolveSacDepartamentoNombre($departamentoCode, $departamentosCatalog);
+            $municipioFromDte = $this->resolveSacMunicipioNombre($departamentoCode, $municipioCode, $departamentosCatalog);
+
+            $municipioCliente = $this->firstNotEmpty([
+                data_get($cliente, 'municipio'),
+                $municipioFromDte,
+            ]);
+
+            $departamentoCliente = $this->firstNotEmpty([
+                data_get($cliente, 'departamento'),
+                $departamentoFromDte,
+            ]);
+
+            $fechaComprobante = $this->formatDateForSac(data_get($dte, 'fhEmision') ?? data_get($dte, 'documento.identificacion.fecEmi'));
+            $totalPagar = (float) data_get($dte, 'documento.resumen.totalPagar', 0);
+            $totalGravada = (float) data_get($dte, 'documento.resumen.totalGravada', 0);
+            $totalExenta = (float) data_get($dte, 'documento.resumen.totalExenta', 0);
+            $totalNoSuj = (float) data_get($dte, 'documento.resumen.totalNoSuj', 0);
+
+            $valorIva = $tipoDte === '01'
+                ? (float) data_get($dte, 'documento.resumen.totalIva', 0)
+                : (float) data_get($dte, 'documento.resumen.tributos.0.valor', 0);
+
+            $ventaRowData = [
+                'id_venta' => $idVenta,
+                'prefijo' => data_get($dte, 'selloRecibido'),
+                'numero_comprobante' => data_get($dte, 'codGeneracion'),
+                'tipo_comprobante' => $tipoDte === '01' ? 2 : 1,
+                'fecha_comprobante' => $fechaComprobante,
+                'cod_cliente' => $codCliente,
+                'nombre_cliente' => $receptorNombre,
+                'direccion_cliente' => $direccionCliente,
+                'municipio' => $municipioCliente,
+                'departamento' => $departamentoCliente,
+                'giro' => data_get($dte, 'documento.receptor.descActividad'),
+                'num_registro' => data_get($dte, 'documento.receptor.nrc'),
+                'numero_nit' => data_get($dte, 'documento.receptor.nit'),
+                'forma_pago' => data_get($dte, 'documento.resumen.condicionOperacion'),
+                'fecha_vencimiento' => null,
+                'num_pedido' => null,
+                'cod_vendedor' => $this->resolveSacCodVendedor((string) data_get($dte, 'codSucursal', ''), (string) data_get($dte, 'codPuntoVenta', '')),
+                'tipo_venta' => 1,
+                'venta_titulo' => null,
+                'telefonos' => null,
+                'descto' => null,
+                'notas_remision' => null,
+                'valor_descuento' => null,
+                'saldo_actual' => $totalPagar,
+                'venta_afecta' => $totalGravada,
+                'venta_exenta' => $totalExenta,
+                'venta_nosujeta' => $totalNoSuj,
+                'valor_iva' => $valorIva,
+                'total_comprobante' => $totalPagar,
+                'per_ret' => 'F',
+                'anulado' => null,
+                'fecha_cancelacion' => null,
+                'id_venta_nc' => null,
+                'id_bodega' => '01',
+                'id_punto' => '01',
+                'creado_por' => null,
+                'fecha_hora_creacion' => null,
+                'id_sucursal' => '01',
+                'valor_iva2' => 0,
+                'tipo_factura' => 1,
+                'id_origen' => '4',
+                'valor_cesc' => 0,
+                'id_costo' => null,
+                'id_tienda' => 0,
+                'nombre_tienda' => null,
+                'id_lista' => 0,
+                'valor_efectivo' => $totalPagar,
+                'num_nota_remision' => null,
+                'valor_cuenta_ajena' => null,
+                'desc1_cuenta_ajena' => null,
+                'desc2_cuenta_ajena' => null,
+                'desc3_cuenta_ajena' => null,
+                'desc4_cuenta_ajena' => null,
+                'numero_anticipo' => null,
+                'fecha_pago' => null,
+                'total_pago' => null,
+                'valor_anticipo' => null,
+                'resolucion' => data_get($dte, 'selloRecibido'),
+                'tipo_exportacion' => null,
+                'pre_impreso_desde' => null,
+                'pre_impreso_hasta' => null,
+                'nombre_proyecto' => null,
+                'numerocontrol' => data_get($dte, 'documento.identificacion.numeroControl'),
+                'codigogeneracion' => data_get($dte, 'codGeneracion'),
+                'ventatercero_nit' => null,
+                'ventatercero_nombre' => null,
+                'total_enletras' => data_get($dte, 'documento.resumen.totalLetras'),
+                'cod_formapago1dte' => null,
+                'cod_formapago2dte' => null,
+                'monto_formapago1dte' => null,
+                'monto_formapago2dte' => null,
+                'codigo_generacion' => data_get($dte, 'codGeneracion'),
+                'numero_control' => data_get($dte, 'documento.identificacion.numeroControl'),
+                'sellorecepcion' => data_get($dte, 'selloRecibido'),
+                'fecharecepcion' => null,
+                'observacionesfel' => null,
+                'estado_fel' => 'PROCESADO',
+                'recinto_fiscal' => null,
+                'regimen' => null,
+                'tipo_persona' => null,
+                'transporte' => null,
+                'incoterms' => null,
+                'valor_renta' => null,
+                'incoterm' => null,
+                'bultos' => null,
+                'peso_neto' => null,
+                'peso_bruto' => null,
+                'origen' => null,
+                'observaciones' => null,
+                'motorista' => null,
+                'orden_compra_ext' => null,
+            ];
+
+            $this->writeSacRow($ventasSheet, $ventasRow, $ventasHeaderMap, $ventaRowData);
+            $ventasRow++;
+
+            $items = data_get($dte, 'documento.cuerpoDocumento', []);
+            if (!is_array($items)) {
+                $items = [];
+            }
+
+            foreach ($items as $item) {
+                if (is_object($item)) {
+                    $item = json_decode(json_encode($item), true);
+                }
+                if (!is_array($item)) {
+                    continue;
+                }
+
+                $ventaGravada = (float) Arr::get($item, 'ventaGravada', 0);
+                $ivaItem = (float) Arr::get($item, 'ivaItem', 0);
+
+                $detalleRowData = [
+                    'id_venta' => $idVenta,
+                    'cod_producto' => Arr::get($item, 'codigo'),
+                    'tipo_precio' => 1,
+                    'cantidad' => (float) Arr::get($item, 'cantidad', 0),
+                    'descripcion' => Arr::get($item, 'descripcion'),
+                    'precio_venta' => (float) Arr::get($item, 'precioUni', 0),
+                    'descuento' => (float) Arr::get($item, 'montoDescu', 0),
+                    'precio_unitario' => (float) Arr::get($item, 'precioUni', 0),
+                    'venta_exenta' => (float) Arr::get($item, 'ventaExenta', 0),
+                    'venta_afecta' => $ventaGravada,
+                    'venta_neta' => $tipoDte === '01' ? ($ventaGravada - $ivaItem) : $ventaGravada,
+                    'venta_nosujeta' => (float) Arr::get($item, 'ventaNoSuj', 0),
+                    'valor_cesc' => null,
+                    'id_unidad' => null,
+                    'cantidad_umd' => null,
+                    'observaciones' => null,
+                    'linea_item' => null,
+                ];
+
+                $this->writeSacRow($detalleSheet, $detalleRow, $detalleHeaderMap, $detalleRowData);
+                $detalleRow++;
+            }
+
+            $idVenta++;
+        }
+
+        $tempDirectory = storage_path('app/temp');
+        if (!is_dir($tempDirectory)) {
+            mkdir($tempDirectory, 0775, true);
+        }
+
+        $timestamp = now()->format('Ymd_His');
+        $outputPath = $tempDirectory . DIRECTORY_SEPARATOR . 'reporte_sac_' . $timestamp . '.xlsm';
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->setPreCalculateFormulas(false);
+        $writer->save($outputPath);
+
+        return response()->download($outputPath, 'reporte_sac_' . $timestamp . '.xlsm')->deleteFileAfterSend(true);
+    }
+
+    private function getSacHeaderMap($sheet, int $headerRow): array
+    {
+        $map = [];
+        $highestColumn = Coordinate::columnIndexFromString($sheet->getHighestColumn());
+
+        for ($column = 1; $column <= $highestColumn; $column++) {
+            $header = trim((string) $sheet->getCellByColumnAndRow($column, $headerRow)->getValue());
+            if ($header === '') {
+                continue;
+            }
+
+            $normalized = $this->normalizeSacKey($header);
+            if (!isset($map[$normalized])) {
+                $map[$normalized] = $column;
+            }
+        }
+
+        return $map;
+    }
+
+    private function readSacClientesCatalog($clientesSheet): array
+    {
+        $headerMap = $this->getSacHeaderMap($clientesSheet, 1);
+        $required = ['nombre', 'cod_cliente', 'direccion', 'municipio', 'departamento'];
+        foreach ($required as $key) {
+            if (!isset($headerMap[$key])) {
+                return [];
+            }
+        }
+
+        $rows = [];
+        $highestRow = $clientesSheet->getHighestRow();
+
+        for ($row = 2; $row <= $highestRow; $row++) {
+            $nombre = trim((string) $clientesSheet->getCellByColumnAndRow($headerMap['nombre'], $row)->getValue());
+            if ($nombre === '') {
+                continue;
+            }
+
+            $normalizedName = $this->normalizeSacKey($nombre);
+            if ($normalizedName === '') {
+                continue;
+            }
+
+            if (!isset($rows[$normalizedName])) {
+                $rows[$normalizedName] = [
+                    'cod_cliente' => trim((string) $clientesSheet->getCellByColumnAndRow($headerMap['cod_cliente'], $row)->getValue()),
+                    'direccion' => trim((string) $clientesSheet->getCellByColumnAndRow($headerMap['direccion'], $row)->getValue()),
+                    'municipio' => trim((string) $clientesSheet->getCellByColumnAndRow($headerMap['municipio'], $row)->getValue()),
+                    'departamento' => trim((string) $clientesSheet->getCellByColumnAndRow($headerMap['departamento'], $row)->getValue()),
+                ];
+            }
+        }
+
+        return $rows;
+    }
+
+    private function findSacClienteByNombre(array $clientesCatalog, ?string $nombre): ?array
+    {
+        $normalizedName = $this->normalizeSacKey((string) $nombre);
+        if ($normalizedName === '') {
+            return null;
+        }
+
+        return $clientesCatalog[$normalizedName] ?? null;
+    }
+
+    private function writeSacRow($sheet, int $row, array $headerMap, array $data): void
+    {
+        foreach ($data as $key => $value) {
+            $normalized = $this->normalizeSacKey((string) $key);
+            if (!isset($headerMap[$normalized])) {
+                continue;
+            }
+
+            $column = $headerMap[$normalized];
+            $sheet->setCellValueByColumnAndRow($column, $row, $value);
+        }
+    }
+
+    private function normalizeSacKey(string $value): string
+    {
+        $value = Str::ascii($value);
+        $value = mb_strtolower($value);
+        $value = preg_replace('/[^a-z0-9]+/u', '_', $value);
+
+        return trim((string) $value, '_');
+    }
+
+    private function firstNotEmpty(array $values)
+    {
+        foreach ($values as $value) {
+            if (is_null($value)) {
+                continue;
+            }
+
+            if (is_string($value) && trim($value) === '') {
+                continue;
+            }
+
+            return $value;
+        }
+
+        return null;
+    }
+
+    private function resolveSacCodVendedor(string $codSucursal, string $codPuntoVenta): ?string
+    {
+        $map = [
+            'S001|P001' => '08',
+            'S001|P002' => '06',
+            'S001|P003' => '07',
+        ];
+
+        return $map[$codSucursal . '|' . $codPuntoVenta] ?? null;
+    }
+
+    private function formatDateForSac(?string $date): ?string
+    {
+        if (!$date) {
+            return null;
+        }
+
+        return Carbon::parse($date)->format('d/m/Y');
+    }
+
+    private function resolveSacDepartamentoNombre($departamentoCode, array $departamentosCatalog): ?string
+    {
+        if (is_null($departamentoCode) || (is_string($departamentoCode) && trim($departamentoCode) === '')) {
+            return null;
+        }
+
+        $departamentoCode = (string) $departamentoCode;
+
+        if (isset($departamentosCatalog[$departamentoCode]['nombre'])) {
+            return (string) $departamentosCatalog[$departamentoCode]['nombre'];
+        }
+
+        return $departamentoCode;
+    }
+
+    private function resolveSacMunicipioNombre($departamentoCode, $municipioCode, array $departamentosCatalog): ?string
+    {
+        if (is_null($municipioCode) || (is_string($municipioCode) && trim($municipioCode) === '')) {
+            return null;
+        }
+
+        $municipioCode = (string) $municipioCode;
+        $departamentoCode = is_null($departamentoCode) ? null : (string) $departamentoCode;
+
+        if ($departamentoCode && isset($departamentosCatalog[$departamentoCode]['municipios'][$municipioCode]['nombre'])) {
+            return $this->formatSacTitleCase((string) $departamentosCatalog[$departamentoCode]['municipios'][$municipioCode]['nombre']);
+        }
+
+        foreach ($departamentosCatalog as $departamento) {
+            if (isset($departamento['municipios'][$municipioCode]['nombre'])) {
+                return $this->formatSacTitleCase((string) $departamento['municipios'][$municipioCode]['nombre']);
+            }
+        }
+
+        return $this->formatSacTitleCase($municipioCode);
+    }
+
+    private function formatSacTitleCase(string $value): string
+    {
+        $normalized = preg_replace('/\s+/u', ' ', trim($value));
+        return Str::title(mb_strtolower((string) $normalized));
     }
 
     private function fetchDtes(array $parameters): array

@@ -1,3 +1,20 @@
+@php
+    $options = [
+        'ventas_globales' => 'Ventas globales (por día)',
+        'ventas_punto_venta' => 'Ventas por punto de venta (por día)',
+        'ventas_sucursal' => 'Ventas por sucursal (por día)',
+        'ventas_productos_periodo' => 'Ventas de productos por período',
+        'ventas_producto_especifico' => 'Ventas de producto específico (por día)',
+        'ventas_credito' => 'Ventas al crédito',
+        'ventas_contado' => 'Ventas al contado',
+    ];
+
+    $business = \App\Models\Business::find(session('business'));
+    if ($business->sac_report) {
+        $options['sac_report'] = 'Reporte SAC';
+    }
+
+@endphp
 @extends('layouts.auth-template')
 @section('title', 'Reportería General')
 @section('content')
@@ -16,23 +33,17 @@
         </div>
 
         <div class="mt-4 pb-4">
-            <div class="mb-4 rounded-lg border border-dashed border-yellow-400 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-200">
-                El tiempo de generación del reporte puede variar según los filtros aplicados. Si el volumen de datos es muy alto, el reporte podría no generarse. Intenta con un rango o filtros más acotados.
+            <div
+                class="mb-4 rounded-lg border border-dashed border-yellow-400 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-200">
+                El tiempo de generación del reporte puede variar según los filtros aplicados. Si el volumen de datos es muy
+                alto, el reporte podría no generarse. Intenta con un rango o filtros más acotados.
             </div>
             <form action="{{ route('business.reporting.general-reports.generate') }}" method="POST" target="_blank"
                 class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 @csrf
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <x-select id="report_type" name="report_type" label="Tipo de reporte" :options="[
-                        'ventas_globales' => 'Ventas globales (por día)',
-                        'ventas_punto_venta' => 'Ventas por punto de venta (por día)',
-                        'ventas_sucursal' => 'Ventas por sucursal (por día)',
-                        'ventas_productos_periodo' => 'Ventas de productos por período',
-                        'ventas_producto_especifico' => 'Ventas de producto específico (por día)',
-                        'ventas_credito' => 'Ventas al crédito',
-                        'ventas_contado' => 'Ventas al contado',
-                    ]"
+                    <x-select id="report_type" name="report_type" label="Tipo de reporte" :options="$options"
                         :search="false" required />
 
                     <x-select id="format" name="format" label="Formato" :options="[
@@ -72,21 +83,42 @@
         <script>
             $(document).ready(function() {
                 const $reportType = $('#report_type');
+                const $format = $('#format');
+                const $pdfOption = $format.find('option[value="pdf"]');
                 const $codSucursal = $('#container_sucursal');
                 const $codPuntoVenta = $('#container_punto_venta');
                 const $producto = $('#container_productos');
 
                 function toggleFields() {
-                    console.log('Report type changed');
                     const value = $reportType.val();
-                    $codSucursal.toggleClass('hidden', !['ventas_sucursal'].includes(value));
-                    $codPuntoVenta.toggleClass('hidden', !['ventas_punto_venta'].includes(value));
-                    $producto.toggleClass('hidden', !['ventas_producto_especifico', 'ventas_productos_periodo']
-                        .includes(value));
+                    const isSacReport = value === 'sac_report';
+
+                    if (isSacReport) {
+                        $pdfOption.prop('disabled', true).attr('hidden', true);
+                        $format.val('excel').trigger('change');
+                        $format.prop('disabled', true);
+                    } else {
+                        $pdfOption.prop('disabled', false).removeAttr('hidden');
+                        $format.prop('disabled', false);
+                    }
+
+                    $codSucursal.toggleClass('hidden', isSacReport || !['ventas_sucursal'].includes(value));
+                    $codPuntoVenta.toggleClass('hidden', isSacReport || !['ventas_punto_venta'].includes(value));
+                    $producto.toggleClass('hidden', isSacReport || !['ventas_producto_especifico',
+                        'ventas_productos_periodo'
+                    ].includes(value));
                 }
 
                 $reportType.on('Changed', toggleFields);
+                $reportType.on('change', toggleFields);
                 toggleFields();
+
+                $('form').on('submit', function() {
+                    if ($reportType.val() === 'sac_report') {
+                        $format.prop('disabled', false);
+                        $format.val('excel');
+                    }
+                });
             });
         </script>
     @endpush
