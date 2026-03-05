@@ -46,7 +46,7 @@ class Clients extends Component
 
     public function updating($name, $value)
     {
-        if (in_array($name, ['search', 'searchNombre', 'searchNumDocumento', 'exactSearch', 'departamentos', 'municipios'])) {
+        if (in_array($name, ['search', 'searchNombre', 'searchNumDocumento', 'exactSearch', 'departamentos'])) {
             $this->resetPage();
         }
     }
@@ -63,7 +63,7 @@ class Clients extends Component
 
     public function clearFilters()
     {
-        $this->reset(['search', 'searchNombre', 'searchNumDocumento', 'exactSearch', 'departamentos', 'municipios']);
+        $this->reset(['search', 'searchNombre', 'searchNumDocumento', 'exactSearch', 'departamentos']);
         $this->resetPage();
     }
 
@@ -80,12 +80,26 @@ class Clients extends Component
                 });
             })
             ->when($this->searchNombre, function ($query) {
-                $query->where('nombre', $this->exactSearch ? $this->searchNombre : 'like', "%{$this->searchNombre}%")
-                    ->orWhere('nombreComercial', $this->exactSearch ? $this->searchNombre : 'like', "%{$this->searchNombre}%");
+                $query->where(function ($q) {
+                    if ($this->exactSearch) {
+                        $q->where('nombre', $this->searchNombre)
+                            ->orWhere('nombreComercial', $this->searchNombre);
+                    } else {
+                        $q->where('nombre', 'like', "%{$this->searchNombre}%")
+                            ->orWhere('nombreComercial', 'like', "%{$this->searchNombre}%");
+                    }
+                });
             })
             ->when($this->searchNumDocumento, function ($query) {
-                $query->where('numDocumento', $this->exactSearch ? $this->searchNumDocumento : 'like', "%{$this->searchNumDocumento}%")
-                    ->orWhere('nrc', $this->exactSearch ? $this->searchNumDocumento : 'like', "%{$this->searchNumDocumento}%");
+                $query->where(function ($q) {
+                    if ($this->exactSearch) {
+                        $q->where('numDocumento', $this->searchNumDocumento)
+                            ->orWhere('nrc', $this->searchNumDocumento);
+                    } else {
+                        $q->where('numDocumento', 'like', "%{$this->searchNumDocumento}%")
+                            ->orWhere('nrc', 'like', "%{$this->searchNumDocumento}%");
+                    }
+                });
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
