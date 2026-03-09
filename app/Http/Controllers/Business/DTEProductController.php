@@ -1379,7 +1379,7 @@ class DTEProductController extends Controller
                 )
             );
             $this->dte["total_iva_retenido"] = $this->precise_round(($total_bienes ?? 0) * 0.01, 8);
-            $this->dte["isr"] = $this->precise_round(($total_servicios ?? 0) * 0.10, 8);
+            $this->dte["isr"] = $this->precise_round((($total_servicios + $total_bienes) ?? 0) * 0.10, 8);
         } else {
             $this->dte["total_iva_retenido"] = $this->precise_round((($this->dte["total_ventas_gravadas"] ?? 0) - ($this->dte["descuento_venta_gravada"] ?? 0)) * 0.01, 8);
 

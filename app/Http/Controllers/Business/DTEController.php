@@ -2499,13 +2499,11 @@ class DTEController extends Controller
                 } else {
                     $g['total_pagar'] = round($g['total'] - $g['total_descuentos'], 8);
                 }
-                // Retención 10% sólo en tipo 14 para líneas servicio o ambos (aplica igual en modo row)
+                // Retención 10% en tipo 14 para todos los items
                 if ($g['type'] === '14') {
                     $retencionBase = 0;
                     foreach ($g['products'] as $p) {
-                        if (isset($p['tipo_item']) && in_array((int) $p['tipo_item'], [2, 3], true)) {
-                            $retencionBase += (float) ($p['total'] ?? 0);
-                        }
+                        $retencionBase += (float) ($p['total'] ?? 0);
                     }
                     if ($retencionBase > 0) {
                         $isr = round($retencionBase * 0.10, 8);
