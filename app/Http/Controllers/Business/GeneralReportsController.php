@@ -114,7 +114,11 @@ class GeneralReportsController extends Controller
                 return back()->withErrors(['format' => 'El Reporte de liquidación diario - Kuali solo puede generarse en formato Excel.']);
             }
 
-            $puntoVenta = PuntoVenta::where('codPuntoVenta', $request->codPuntoVenta)->first();
+            $puntoVenta = PuntoVenta::where('codPuntoVenta', $request->codPuntoVenta)
+                ->whereHas('sucursal', function ($query) use ($business_id) {
+                    $query->where('business_id', $business_id);
+                })
+                ->first();
 
             return $this->generateLiquidacionKualiReport($parameters, $start, $end, $puntoVenta);
         }
@@ -127,7 +131,11 @@ class GeneralReportsController extends Controller
             $sucursal = Sucursal::where('codSucursal', $request->codSucursal)->first();
         }
         if ($request->codPuntoVenta) {
-            $puntoVenta = PuntoVenta::where('codPuntoVenta', $request->codPuntoVenta)->first();
+            $puntoVenta = PuntoVenta::where('codPuntoVenta', $request->codPuntoVenta)
+                ->whereHas('sucursal', function ($query) use ($business_id) {
+                    $query->where('business_id', $business_id);
+                })
+                ->first();
         }
 
         $filters = $this->buildFilters($request, $sucursal, $puntoVenta);
