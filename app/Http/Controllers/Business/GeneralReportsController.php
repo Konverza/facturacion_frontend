@@ -250,7 +250,6 @@ class GeneralReportsController extends Controller
         $outputPath = $tempDirectory . DIRECTORY_SEPARATOR . 'reporte_liquidacion_kuali_' . $timestamp . '.xlsx';
 
         $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $writer->setPreCalculateFormulas(false);
         $writer->save($outputPath);
 
         return response()->download($outputPath, 'reporte_liquidacion_kuali_' . $timestamp . '.xlsx')->deleteFileAfterSend(true);
