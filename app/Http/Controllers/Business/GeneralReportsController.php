@@ -20,6 +20,9 @@ use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\ReferenceHelper;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class GeneralReportsController extends Controller
 {
@@ -74,6 +77,10 @@ class GeneralReportsController extends Controller
             return back()->withErrors(['codPuntoVenta' => 'Debe seleccionar un punto de venta.']);
         }
 
+        if (in_array($request->report_type, ['liquidacion_kuali']) && !$request->codPuntoVenta) {
+            return back()->withErrors(['codPuntoVenta' => 'Debe seleccionar un punto de venta.']);
+        }
+
         if (in_array($request->report_type, ['ventas_sucursal']) && !$request->codSucursal) {
             return back()->withErrors(['codSucursal' => 'Debe seleccionar una sucursal.']);
         }
@@ -100,6 +107,16 @@ class GeneralReportsController extends Controller
             }
 
             return $this->generateSacReport($parameters);
+        }
+
+        if ($request->report_type === 'liquidacion_kuali') {
+            if ($request->input('format') !== 'excel') {
+                return back()->withErrors(['format' => 'El Reporte de liquidación diario - Kuali solo puede generarse en formato Excel.']);
+            }
+
+            $puntoVenta = PuntoVenta::where('codPuntoVenta', $request->codPuntoVenta)->first();
+
+            return $this->generateLiquidacionKualiReport($parameters, $start, $end, $puntoVenta);
         }
 
         $dtes = $this->fetchDtes($parameters);
@@ -145,6 +162,257 @@ class GeneralReportsController extends Controller
         ]);
 
         return $pdf->stream('reporte_' . $request->report_type . '_' . now()->format('Ymd_His') . '.pdf');
+    }
+
+    private function generateLiquidacionKualiReport(array $parameters, Carbon $start, Carbon $end, ?PuntoVenta $puntoVenta)
+    {
+        $templatePath = public_path('reportes/formato_liquidacion_kuali.xlsx');
+        if (!file_exists($templatePath)) {
+            abort(404, 'No se encontró la plantilla del reporte de liquidación Kuali.');
+        }
+
+        $dtes = $this->fetchDtes($parameters);
+
+        usort($dtes, function ($left, $right) {
+            $leftDate = data_get($left, 'fhEmision') ?? data_get($left, 'documento.identificacion.fecEmi') ?? '';
+            $rightDate = data_get($right, 'fhEmision') ?? data_get($right, 'documento.identificacion.fecEmi') ?? '';
+
+            if ($leftDate === $rightDate) {
+                return strcmp((string) data_get($left, 'codGeneracion', ''), (string) data_get($right, 'codGeneracion', ''));
+            }
+
+            return strcmp((string) $leftDate, (string) $rightDate);
+        });
+
+        $spreadsheet = IOFactory::load($templatePath);
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $rowsPerPage = 29;
+        $pageHeight = 47;
+        $templateStartColumn = 'A';
+        $templateEndColumn = 'R';
+        $totalPages = max(1, (int) ceil(count($dtes) / $rowsPerPage));
+
+        for ($page = 2; $page <= $totalPages; $page++) {
+            $targetStartRow = (($page - 1) * $pageHeight) + 1;
+            $this->appendKualiTemplatePage($sheet, $templateStartColumn, $templateEndColumn, $pageHeight, $targetStartRow);
+        }
+
+        $periodText = $start->isSameDay($end)
+            ? $start->format('d/m/Y')
+            : $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
+
+        $puntoVentaNombre = $puntoVenta?->nombre ?? (string) ($parameters['codPuntoVenta'] ?? '');
+
+        for ($pageIndex = 0; $pageIndex < $totalPages; $pageIndex++) {
+            $baseRow = $pageIndex * $pageHeight;
+            $sheet->setCellValue('B' . (3 + $baseRow), $periodText);
+            $sheet->setCellValue('N' . (3 + $baseRow), $puntoVentaNombre);
+            $sheet->setCellValue('G' . (47 + $baseRow), 'Página ' . ($pageIndex + 1) . ' de ' . $totalPages);
+
+            for ($line = 0; $line < $rowsPerPage; $line++) {
+                $dteIndex = ($pageIndex * $rowsPerPage) + $line;
+                if (!isset($dtes[$dteIndex])) {
+                    continue;
+                }
+
+                $row = 8 + $baseRow + $line;
+                $rowData = $this->buildKualiRowData($dtes[$dteIndex]);
+
+                foreach ($rowData as $column => $value) {
+                    $sheet->setCellValue($column . $row, $value);
+                }
+            }
+        }
+
+        for ($page = 2; $page <= $totalPages; $page++) {
+            $sheet->setBreak('A' . ((($page - 1) * $pageHeight) + 1), Worksheet::BREAK_ROW);
+        }
+
+        // Keep print output consistent with the base template across all appended pages.
+        $sheet->getPageSetup()->setPaperSize(PageSetup::PAPERSIZE_LETTER);
+        $sheet->getPageSetup()->setPrintArea('A1:R' . ($totalPages * $pageHeight));
+
+        $tempDirectory = storage_path('app/temp');
+        if (!is_dir($tempDirectory)) {
+            mkdir($tempDirectory, 0775, true);
+        }
+
+        $timestamp = now()->format('Ymd_His');
+        $outputPath = $tempDirectory . DIRECTORY_SEPARATOR . 'reporte_liquidacion_kuali_' . $timestamp . '.xlsx';
+
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->setPreCalculateFormulas(false);
+        $writer->save($outputPath);
+
+        return response()->download($outputPath, 'reporte_liquidacion_kuali_' . $timestamp . '.xlsx')->deleteFileAfterSend(true);
+    }
+
+    private function appendKualiTemplatePage(Worksheet $sheet, string $startColumn, string $endColumn, int $pageHeight, int $targetStartRow): void
+    {
+        $sourceMergeCells = $sheet->getMergeCells();
+        $sheet->insertNewRowBefore($targetStartRow, $pageHeight);
+
+        $startIndex = Coordinate::columnIndexFromString($startColumn);
+        $endIndex = Coordinate::columnIndexFromString($endColumn);
+        $rowOffset = $targetStartRow - 1;
+
+        for ($sourceOffset = 0; $sourceOffset < $pageHeight; $sourceOffset++) {
+            $sourceRow = 1 + $sourceOffset;
+            $targetRow = $targetStartRow + $sourceOffset;
+
+            for ($columnIndex = $startIndex; $columnIndex <= $endIndex; $columnIndex++) {
+                $column = Coordinate::stringFromColumnIndex($columnIndex);
+                $sourceCoordinate = $column . $sourceRow;
+                $targetCoordinate = $column . $targetRow;
+
+                $sourceCell = $sheet->getCell($sourceCoordinate);
+                $value = $sourceCell->getValue();
+                if (is_string($value) && str_starts_with($value, '=')) {
+                    $value = $this->shiftKualiFormulaRows($value, $rowOffset);
+                }
+
+                $sheet->setCellValue(
+                    $targetCoordinate,
+                    $value
+                );
+
+                // Copy full style per-cell to preserve wrap text and accounting number formats.
+                $sheet->duplicateStyle($sheet->getStyle($sourceCoordinate), $targetCoordinate);
+            }
+
+            $sourceRowDimension = $sheet->getRowDimension($sourceRow);
+            $targetRowDimension = $sheet->getRowDimension($targetRow);
+            $targetRowDimension->setRowHeight($sourceRowDimension->getRowHeight());
+            $targetRowDimension->setVisible($sourceRowDimension->getVisible());
+            $targetRowDimension->setCollapsed($sourceRowDimension->getCollapsed());
+            $targetRowDimension->setOutlineLevel($sourceRowDimension->getOutlineLevel());
+        }
+
+        foreach ($sourceMergeCells as $mergeRange) {
+            [$startCell, $endCell] = explode(':', $mergeRange);
+            [$startMergeColumn, $startMergeRow] = Coordinate::coordinateFromString($startCell);
+            [$endMergeColumn, $endMergeRow] = Coordinate::coordinateFromString($endCell);
+
+            $startMergeColumnIndex = Coordinate::columnIndexFromString($startMergeColumn);
+            $endMergeColumnIndex = Coordinate::columnIndexFromString($endMergeColumn);
+
+            if ($startMergeRow < 1 || $endMergeRow > $pageHeight) {
+                continue;
+            }
+
+            if ($startMergeColumnIndex < $startIndex || $endMergeColumnIndex > $endIndex) {
+                continue;
+            }
+
+            $targetStartCell = $startMergeColumn . ($startMergeRow + $rowOffset);
+            $targetEndCell = $endMergeColumn . ($endMergeRow + $rowOffset);
+            $targetRange = $targetStartCell . ':' . $targetEndCell;
+
+            if (!in_array($targetRange, $sheet->getMergeCells(), true)) {
+                $sheet->mergeCells($targetRange);
+            }
+        }
+    }
+
+    private function shiftKualiFormulaRows(string $formula, int $rowOffset): string
+    {
+        if ($rowOffset === 0) {
+            return $formula;
+        }
+
+        try {
+            return ReferenceHelper::getInstance()->updateFormulaReferences($formula, 'A1', 0, $rowOffset);
+        } catch (\Throwable $e) {
+            return $formula;
+        }
+    }
+
+    private function buildKualiRowData(array $dte): array
+    {
+        $tipoDte = (string) ($dte['tipo_dte'] ?? data_get($dte, 'documento.identificacion.tipoDte'));
+
+        $resumen = data_get($dte, 'documento.resumen', data_get($dte, 'resumen', []));
+        $items = data_get($dte, 'documento.cuerpoDocumento', []);
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $metrics = [
+            'PT GARRAFA +L001' => ['cantidad' => 0.0, 'monto' => 0.0],
+            'PT GARRAFA +L001 -2' => ['cantidad' => 0.0, 'monto' => 0.0],
+            'PT 5001' => ['cantidad' => 0.0, 'monto' => 0.0],
+            'PT 5003' => ['cantidad' => 0.0, 'monto' => 0.0],
+            'PT 5002' => ['cantidad' => 0.0, 'monto' => 0.0],
+            'PT 5005' => ['cantidad' => 0.0, 'monto' => 0.0],
+        ];
+
+        foreach ($items as $item) {
+            if (is_object($item)) {
+                $item = json_decode(json_encode($item), true);
+            }
+
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $codigo = trim((string) Arr::get($item, 'codigo', ''));
+            if (!array_key_exists($codigo, $metrics)) {
+                continue;
+            }
+
+            $cantidad = (float) Arr::get($item, 'cantidad', 0);
+            $monto = (float) Arr::get($item, 'ventaGravada', 0)
+                + (float) Arr::get($item, 'ventaExenta', 0)
+                + (float) Arr::get($item, 'ventaNoSuj', 0);
+
+            $metrics[$codigo]['cantidad'] += $cantidad;
+            $metrics[$codigo]['monto'] += $monto;
+        }
+
+        $codigoPago = (string) data_get($resumen, 'pagos.0.codigo', '');
+        if (is_numeric($codigoPago)) {
+            $codigoPago = str_pad((string) (int) $codigoPago, 2, '0', STR_PAD_LEFT);
+        }
+
+        $condicionOperacion = (int) data_get($resumen, 'condicionOperacion', 0);
+        $totalPagar = (float) data_get($resumen, 'totalPagar', 0);
+        $esPago05 = $codigoPago === '05';
+
+        return [
+            'A' => match ($tipoDte) {
+                '01' => 'FACTURA',
+                '03' => 'C. CREDITO FISCAL',
+                default => 'OTRO',
+            },
+            'B' => data_get($dte, 'documento.identificacion.numeroControl'),
+            'C' => data_get($dte, 'documento.receptor.nombre'),
+            'D' => $this->blankIfZero($metrics['PT GARRAFA +L001']['cantidad']),
+            'E' => $this->blankIfZero($metrics['PT GARRAFA +L001 -2']['cantidad']),
+            'F' => $this->blankIfZero($metrics['PT 5001']['cantidad']),
+            'G' => $this->blankIfZero($metrics['PT 5003']['cantidad']),
+            'H' => $this->blankIfZero($metrics['PT 5002']['cantidad']),
+            'I' => $this->blankIfZero($metrics['PT 5005']['cantidad']),
+            'J' => $this->blankIfZero($metrics['PT GARRAFA +L001']['monto']),
+            'K' => $this->blankIfZero($metrics['PT GARRAFA +L001 -2']['monto']),
+            'L' => $this->blankIfZero($metrics['PT 5001']['monto']),
+            'M' => $this->blankIfZero($metrics['PT 5003']['monto']),
+            'N' => $this->blankIfZero($metrics['PT 5002']['monto']),
+            'O' => $this->blankIfZero($metrics['PT 5005']['monto']),
+            'P' => $this->blankIfZero(!$esPago05 && $condicionOperacion === 2 ? $totalPagar : 0),
+            'Q' => $this->blankIfZero(!$esPago05 && $condicionOperacion === 1 ? $totalPagar : 0),
+            'R' => $this->blankIfZero($esPago05 ? $totalPagar : 0),
+        ];
+    }
+
+    private function blankIfZero($value)
+    {
+        if (is_null($value)) {
+            return null;
+        }
+
+        $numeric = (float) $value;
+        return abs($numeric) < 0.0000001 ? null : $value;
     }
 
     private function generateSacReport(array $parameters)
@@ -638,6 +906,7 @@ class GeneralReportsController extends Controller
             'ventas_producto_especifico' => 'Reporte de ventas de producto específico',
             'ventas_credito' => 'Reporte de ventas al crédito',
             'ventas_contado' => 'Reporte de ventas al contado',
+            'liquidacion_kuali' => 'Reporte de liquidación diario - Kuali',
             default => 'Reporte general',
         };
     }

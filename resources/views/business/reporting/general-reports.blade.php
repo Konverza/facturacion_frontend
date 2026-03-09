@@ -12,6 +12,7 @@
     $business = \App\Models\Business::find(session('business'));
     if ($business->sac_report) {
         $options['sac_report'] = 'Reporte SAC';
+        $options['liquidacion_kuali'] = 'Reporte de liquidación diario - Kuali';
     }
 
 @endphp
@@ -92,8 +93,10 @@
                 function toggleFields() {
                     const value = $reportType.val();
                     const isSacReport = value === 'sac_report';
+                    const isKualiReport = value === 'liquidacion_kuali';
+                    const onlyExcel = isSacReport || isKualiReport;
 
-                    if (isSacReport) {
+                    if (onlyExcel) {
                         $pdfOption.prop('disabled', true).attr('hidden', true);
                         $format.val('excel').trigger('change');
                         $format.prop('disabled', true);
@@ -103,7 +106,8 @@
                     }
 
                     $codSucursal.toggleClass('hidden', isSacReport || !['ventas_sucursal'].includes(value));
-                    $codPuntoVenta.toggleClass('hidden', isSacReport || !['ventas_punto_venta'].includes(value));
+                    $codPuntoVenta.toggleClass('hidden', isSacReport || !['ventas_punto_venta', 'liquidacion_kuali']
+                        .includes(value));
                     $producto.toggleClass('hidden', isSacReport || !['ventas_producto_especifico',
                         'ventas_productos_periodo'
                     ].includes(value));
@@ -114,7 +118,7 @@
                 toggleFields();
 
                 $('form').on('submit', function() {
-                    if ($reportType.val() === 'sac_report') {
+                    if (['sac_report', 'liquidacion_kuali'].includes($reportType.val())) {
                         $format.prop('disabled', false);
                         $format.val('excel');
                     }
