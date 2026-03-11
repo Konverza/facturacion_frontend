@@ -86,8 +86,15 @@ class DTEController extends Controller
             $business = Business::find($business_user->business_id);
             $datos_empresa = $this->octopus_service->get("/datos_empresa/nit/" . $business->nit);
             if ($id) {
-                $dte = DTE::find($id);
-                $this->dte = json_decode($dte->content, true);
+                $dte = DTE::where('business_id', session('business'))->find($id);
+                if (!$dte) {
+                    return redirect()->route("business.index")
+                        ->with("error", "Error")
+                        ->with("error_message", "El borrador solicitado no existe o no pertenece a la empresa seleccionada.");
+                }
+
+                $decodedDte = json_decode($dte->content, true);
+                $this->dte = is_array($decodedDte) ? $decodedDte : [];
                 $this->dte["id"] = $id;
                 $this->dte["type"] = $dte->type;
                 if (!$request->input("use_template")) {
@@ -103,10 +110,12 @@ class DTEController extends Controller
                 $this->dte["name"] = null;
             }
 
-            if (session()->has("dte") && session("dte.type") !== $number) {
+            if (!$id && session()->has("dte") && session("dte.type") !== $number) {
                 session()->forget("dte");
                 $this->dte = [];
             }
+
+            $this->ensureDteDefaults();
 
             $this->dte["type"] = $number;
             session(["dte" => $this->dte]);
@@ -126,11 +135,9 @@ class DTEController extends Controller
             $document_type = $types[$number];
             $currentDate = date("Y-m-d");
 
-            if (!$id || $id !== "") {
-                if ($number !== "15") {
-                    $dteProductController = new DTEProductController();
-                    $dteProductController->totals();
-                }
+            if (!$id && $number !== "15") {
+                $dteProductController = new DTEProductController();
+                $dteProductController->totals();
             }
 
             $sucursals = Sucursal::where("business_id", session("business"))->get()->pluck("nombre", "id")->toArray();
@@ -1152,22 +1159,32 @@ class DTEController extends Controller
         $municipioCode = $resolveMunicipio($departamentoCode, $request->municipio);
         $tipoPersonaCode = $normalizeTipoPersona($request->tipo_persona);
 
-        if (!isset($this->dte["customer"])) {
-            $this->dte["customer"] = [
-                "tipoDocumento" => $docCode,
-                "numDocumento" => $numDoc,
-                "nrc" => $nrcDigits,
-                "nombre" => $request->nombre_customer,
-                "codActividad" => $codActividad ?? $request->actividad_economica,
-                "nombreComercial" => $request->nombre_comercial,
-                "departamento" => $departamentoCode ?? "06", // default San Salvador
-                "municipio" => $municipioCode ?? "01", // default primer Municipio
-                "complemento" => $request->complemento,
-                "telefono" => $telefonoStr,
-                "correo" => $request->correo,
-                "tipoPersona" => $tipoPersonaCode ?? $request->tipo_persona,
-            ];
+        $existingCustomer = [];
+        if (isset($this->dte["customer"])) {
+            if (is_array($this->dte["customer"])) {
+                $existingCustomer = $this->dte["customer"];
+            } elseif (is_object($this->dte["customer"])) {
+                $existingCustomer = (array) $this->dte["customer"];
+            }
         }
+
+        $customerName = $request->nombre_customer ?? $request->nombre_receptor;
+        $this->dte["customer"] = array_merge($existingCustomer, [
+            "tipoDocumento" => $docCode ?? ($existingCustomer["tipoDocumento"] ?? null),
+            "numDocumento" => $numDoc ?? ($existingCustomer["numDocumento"] ?? null),
+            "nrc" => $nrcDigits ?? ($existingCustomer["nrc"] ?? null),
+            "nombre" => $customerName,
+            "codActividad" => $codActividad ?? $request->actividad_economica ?? ($existingCustomer["codActividad"] ?? null),
+            "descActividad" => $descAct ?? $descActividad ?? ($existingCustomer["descActividad"] ?? null),
+            "nombreComercial" => $request->nombre_comercial ?? ($existingCustomer["nombreComercial"] ?? null),
+            "departamento" => $departamentoCode ?? ($existingCustomer["departamento"] ?? "06"),
+            "municipio" => $municipioCode ?? ($existingCustomer["municipio"] ?? "01"),
+            "complemento" => $request->complemento ?? ($existingCustomer["complemento"] ?? null),
+            "telefono" => $telefonoStr ?? ($existingCustomer["telefono"] ?? null),
+            "correo" => $request->correo ?? ($existingCustomer["correo"] ?? null),
+            "tipoPersona" => $tipoPersonaCode ?? $request->tipo_persona ?? ($existingCustomer["tipoPersona"] ?? null),
+        ]);
+        session(["dte" => $this->dte]);
 
         if ($request->has("save_as_template")) {
             return [
@@ -2244,6 +2261,9 @@ class DTEController extends Controller
         }
 
         // Cliente base (evitar accesos indefinidos en buildDTE)
+        if (isset($this->dte['customer']) && is_object($this->dte['customer'])) {
+            $this->dte['customer'] = (array) $this->dte['customer'];
+        }
         if (!isset($this->dte['customer']) || !is_array($this->dte['customer'])) {
             $this->dte['customer'] = [];
         }
