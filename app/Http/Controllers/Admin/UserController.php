@@ -159,6 +159,7 @@ class UserController extends Controller
             'default_pos_id' => 'nullable|exists:punto_ventas,id',
             'only_default_pos' => 'nullable|boolean',
             'branch_selector' => 'nullable|boolean', // Indicates if the user can select branches
+            'see_others_dtes' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
@@ -175,6 +176,7 @@ class UserController extends Controller
                 'default_pos_id' => $request->default_pos_id,
                 'only_default_pos' => $request->only_default_pos ?? false,
                 'branch_selector' => $request->branch_selector ?? false,
+                'see_others_dtes' => $request->see_others_dtes ?? false,
             ]);
 
             DB::commit();
@@ -222,6 +224,7 @@ class UserController extends Controller
             'sucursal_id' => $businessUser->defaultPos ? $businessUser->defaultPos->sucursal_id : null,
             'only_default_pos' => $businessUser->only_default_pos,
             'branch_selector' => $businessUser->branch_selector,
+            'see_others_dtes' => $businessUser->see_others_dtes,
         ]);
     }
 
@@ -232,6 +235,7 @@ class UserController extends Controller
             'pos' => 'nullable|exists:punto_ventas,id',
             'only_default_pos' => 'nullable',
             'branch_selector' => 'nullable',
+            'see_others_dtes' => 'nullable',
         ]);
 
         DB::beginTransaction();
@@ -248,6 +252,7 @@ class UserController extends Controller
             $businessUser->default_pos_id = $request->pos;
             $businessUser->only_default_pos = $request->has('only_default_pos') ? 1 : 0;
             $businessUser->branch_selector = $request->has('branch_selector') ? 1 : 0;
+            $businessUser->see_others_dtes = $request->has('see_others_dtes') ? 1 : 0;
             $businessUser->save();
 
             DB::commit();

@@ -45,10 +45,18 @@ class DashboardController extends Controller
         try {
             $business_id = Session::get('business') ?? null;
             $user = User::with('businesses.business')->find(auth()->user()->id);
-            $business_user = BusinessUser::where("user_id", $user->id)->first();
+            $business_user = BusinessUser::where("business_id", $business_id)
+                ->where("user_id", $user->id)
+                ->first();
             $business = Business::find($business_id);
             $business_plan = BusinessPlan::where("nit", $business->nit)->with('plan')->first();
             $dtes_pending = DTE::where('business_id', $business->id)->whereNot('status', 'template');
+            if (!$business_user?->see_others_dtes) {
+                $dtes_pending->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                        ->orWhereNull('user_id');
+                });
+            }
             if ($user->only_fcf) {
                 $dtes_pending = $dtes_pending->where('type', '01');
             } else {
@@ -81,7 +89,7 @@ class DashboardController extends Controller
                 "limit" => 5,
             ];
             if ($user->only_fcf) { $params["tipo_dte"] = "01"; }
-            if ($business_user->only_default_pos) {
+            if ($business_user?->only_default_pos) {
                 $puntoVenta = PuntoVenta::find($business_user->default_pos_id);
                 $params["codSucursal"] = $puntoVenta->sucursal->codSucursal;
                 $params["codPuntoVenta"] = $puntoVenta->codPuntoVenta;

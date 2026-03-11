@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessCustomer;
+use App\Models\BusinessUser;
 use Illuminate\Http\Request;
 use App\Models\DTE;
 use Illuminate\Support\Facades\Session;
@@ -16,7 +17,7 @@ class BulkController extends Controller
     public function index()
     {
         $business_id = Session::get('business') ?? null;
-        $templates = DTE::where('business_id', $business_id)
+        $templates = $this->scopedDteQuery($business_id)
             ->where("status", "template")->get();
         return view('business.bulk.index', compact('templates'));
     }
@@ -27,7 +28,7 @@ class BulkController extends Controller
     public function send()
     {
         $business_id = Session::get('business') ?? null;
-        $templates = DTE::where('business_id', $business_id)
+        $templates = $this->scopedDteQuery($business_id)
             ->where("status", "template")->get()->pluck('name', 'id')->toArray();
         $customers = BusinessCustomer::where('business_id', $business_id)->get();
         return view('business.bulk.send', compact('templates', 'customers'));
@@ -72,7 +73,7 @@ class BulkController extends Controller
     {
         try {
             $business_id = Session::get('business') ?? null;
-            $template = DTE::where('business_id', $business_id)
+            $template = $this->scopedDteQuery($business_id)
                 ->where('id', $id)
                 ->where("status", "template")
                 ->first();
@@ -105,7 +106,7 @@ class BulkController extends Controller
             if (!$business_id) {
                 return response()->json(['success' => false, 'message' => 'Sesión de empresa no encontrada'], 401);
             }
-            $template = DTE::where('business_id', $business_id)
+            $template = $this->scopedDteQuery($business_id)
                 ->where('id', $id)
                 ->where('status', 'template')
                 ->first();
@@ -121,5 +122,23 @@ class BulkController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'message' => 'Error al obtener la plantilla'], 500);
         }
+    }
+
+    private function scopedDteQuery(?int $businessId)
+    {
+        $query = DTE::query()->where('business_id', $businessId);
+
+        $businessUser = BusinessUser::where('business_id', $businessId)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$businessUser?->see_others_dtes) {
+            $query->where(function ($subQuery) {
+                $subQuery->where('user_id', auth()->id())
+                    ->orWhereNull('user_id');
+            });
+        }
+
+        return $query;
     }
 }

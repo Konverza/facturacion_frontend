@@ -86,11 +86,11 @@ class DTEController extends Controller
             $business = Business::find($business_user->business_id);
             $datos_empresa = $this->octopus_service->get("/datos_empresa/nit/" . $business->nit);
             if ($id) {
-                $dte = DTE::where('business_id', session('business'))->find($id);
+                $dte = $this->scopedDteQuery()->where('id', $id)->first();
                 if (!$dte) {
                     return redirect()->route("business.index")
                         ->with("error", "Error")
-                        ->with("error_message", "El borrador solicitado no existe o no pertenece a la empresa seleccionada.");
+                        ->with("error_message", "El borrador solicitado no existe o no tiene permisos para accederlo.");
                 }
 
                 $decodedDte = json_decode($dte->content, true);
@@ -981,7 +981,7 @@ class DTEController extends Controller
                 }
 
                 if ($request->id_dte !== "" && $request->id_dte !== null && !$request->use_template) {
-                    DTE::where("id", $request->id_dte)->delete();
+                    $this->scopedDteQuery()->where("id", $request->id_dte)->delete();
                 }
 
                 session()->forget('dte');
@@ -1502,6 +1502,7 @@ class DTEController extends Controller
             DB::beginTransaction();
             DTE::create([
                 "business_id" => session("business"),
+                "user_id" => auth()->id(),
                 "content" => json_encode($this->dte),
                 "type" => $this->dte["type"],
                 "name" => $name,
@@ -1525,8 +1526,9 @@ class DTEController extends Controller
     {
         try {
             DB::beginTransaction();
-            DTE::where("id", $id)->update([
+            $this->scopedDteQuery()->where("id", $id)->update([
                 "content" => json_encode($this->dte),
+                "user_id" => auth()->id(),
                 "status" => $status,
                 "name" => $name,
                 "error_message" => $error
@@ -1889,7 +1891,7 @@ class DTEController extends Controller
     {
         try {
             DB::beginTransaction();
-            DTE::where("id", $id)->delete();
+            $this->scopedDteQuery()->where("id", $id)->delete();
             DB::commit();
             return redirect()->route("business.index")
                 ->with("success", "Exito")
@@ -1909,7 +1911,7 @@ class DTEController extends Controller
             $business_id = Session::get('business') ?? null;
             if ($business_id) {
                 DB::beginTransaction();
-                DTE::where("business_id", $business_id)->delete();
+                $this->scopedDteQuery($business_id)->delete();
                 DB::commit();
                 return redirect()->route("business.index")
                     ->with("success", "Exito")
@@ -2682,5 +2684,24 @@ class DTEController extends Controller
 
         // Otros documentos pueden incluir letras; devolver tal cual, recortado
         return $raw !== '' ? $raw : null;
+    }
+
+    private function scopedDteQuery(?int $businessId = null)
+    {
+        $businessId = $businessId ?? (Session::get('business') ?? null);
+        $query = DTE::query()->where('business_id', $businessId);
+
+        $businessUser = BusinessUser::where('business_id', $businessId)
+            ->where('user_id', auth()->id())
+            ->first();
+
+        if (!$businessUser?->see_others_dtes) {
+            $query->where(function ($subQuery) {
+                $subQuery->where('user_id', auth()->id())
+                    ->orWhereNull('user_id');
+            });
+        }
+
+        return $query;
     }
 }
