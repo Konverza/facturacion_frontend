@@ -54,7 +54,7 @@ class DashboardController extends Controller
             } else {
                 
             }
-            $dtes_pending = $dtes_pending->get();
+            $dtes_pending = $dtes_pending->orderBy('created_at', 'desc')->get();
 
             if (!$business) {
                 return back()->with('error', 'No se encontró la empresa asociada.');
