@@ -43,12 +43,29 @@ class ObtenerRegistroFEID extends Command
             $empresa = DB::connection('registro_fe')
                 ->table('empresas')
                 ->where("softDelete", 0)
-                ->where(function ($query) use ($searchValues) {
-                    foreach($searchValues as $value) {
-                        $query->orWhereRaw('JSON_UNQUOTE(JSON_EXTRACT(datos_empresa, "$.dui_nit")) = ?', [$value]);
-                    }
-                })
+                ->whereRaw('JSON_UNQUOTE(JSON_EXTRACT(datos_empresa, "$.dui_nit")) = ?', [$business->formatted_nit])
                 ->first();
+            if(!$empresa){
+                $empresa = DB::connection('registro_fe')
+                    ->table('empresas')
+                    ->where("softDelete", 0)
+                    ->whereRaw('JSON_UNQUOTE(JSON_EXTRACT(datos_empresa, "$.dui_nit")) = ?', [$business->nit])
+                    ->first();
+            }
+            if(!$empresa){
+                $empresa = DB::connection('registro_fe')
+                    ->table('empresas')
+                    ->where("softDelete", 0)
+                    ->whereRaw('JSON_UNQUOTE(JSON_EXTRACT(datos_empresa, "$.dui_nit")) = ?', [$business->formatted_dui])
+                    ->first();
+            }
+            if(!$empresa){
+                $empresa = DB::connection('registro_fe')
+                    ->table('empresas')
+                    ->where("softDelete", 0)
+                    ->whereRaw('JSON_UNQUOTE(JSON_EXTRACT(datos_empresa, "$.dui_nit")) = ?', [$business->dui])
+                    ->first();
+            }
 
             if($empresa){
                 $business->registrofe_id = $empresa->id;
