@@ -12,6 +12,7 @@ use App\Models\BusinessProductMovement;
 use App\Models\BusinessUser;
 use App\Models\CuentasCobrar;
 use App\Models\DTE;
+use App\Models\Quotation;
 use App\Models\InvoiceBag;
 use App\Models\InvoiceBagInvoice;
 use App\Models\PuntoVenta;
@@ -234,6 +235,7 @@ class DTEController extends Controller
     public function cancel()
     {
         session()->forget('dte');
+        session()->forget('quotation_source_id');
         return redirect()->route("business.index");
     }
 
@@ -1127,13 +1129,27 @@ class DTEController extends Controller
                     $this->scopedDteQuery()->where("id", $request->id_dte)->delete();
                 }
 
+                $quotationSourceId = session('quotation_source_id');
+                if ($quotationSourceId) {
+                    Quotation::withoutGlobalScopes()
+                        ->where('id', $quotationSourceId)
+                        ->where('business_id', $business_id)
+                        ->where('is_quotation', true)
+                        ->update([
+                            'linked_dte_code' => $data['codGeneracion'] ?? null,
+                            'updated_at' => now(),
+                        ]);
+                }
+
                 session()->forget('dte');
+                session()->forget('quotation_source_id');
                 return redirect()->route('business.documents.index')
                     ->with([
                         'success' => "Exito",
                         'success_message' => "Documento generado correctamente",
                     ])->send();
             } elseif ($data["estado"] === "RECHAZADO") {
+                session()->forget('quotation_source_id');
                 if ($request->id_dte !== "" && $request->id_dte !== null && !$request->use_template) {
                     $this->updateDtePending($request->id_dte, "error", $data["observaciones"] ?? "Error al generar el documento");
                 } else {
@@ -1146,6 +1162,7 @@ class DTEController extends Controller
                         "Ha ocurrido un error al generar el documento."
                     )->send();
             } elseif ($data["estado"] === "BORRADOR") {
+                session()->forget('quotation_source_id');
                 return redirect()->route('business.documents.drafts')
                     ->with('success', "Exito")
                     ->with(
@@ -1153,6 +1170,7 @@ class DTEController extends Controller
                         "Documento guardado como borrador"
                     )->send();
             } elseif ($data["estado"] === "PLANTILLA") {
+                session()->forget('quotation_source_id');
                 return redirect()->route('business.index')
                     ->with('success', "Exito")
                     ->with(
@@ -1161,6 +1179,7 @@ class DTEController extends Controller
                     )->send();
             }
         } else {
+            session()->forget('quotation_source_id');
             Log::error($data);
             $this->createDtePending(json_encode($data), "error");
             return redirect()->route('business.documents.index')

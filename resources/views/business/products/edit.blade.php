@@ -225,6 +225,8 @@
                                 label="Categoría (opcional)" />
                         </div>
                     </div>
+                @endif
+                @if ($business->posmode || $business->quotation_enabled)
                     <div class="w-100 mt-2 flex justify-center">
                         <div
                             class="group relative mx-auto h-32 w-32 overflow-hidden rounded-full border border-gray-300 dark:border-gray-800 md:mx-0 md:mr-4">

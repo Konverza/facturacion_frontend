@@ -206,6 +206,8 @@
                                 label="Categoría (opcional)" />
                         </div>
                     </div>
+                @endif
+                @if ($business->posmode || $business->quotation_enabled)
                     <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                         <div class="flex-1">
                             <x-input type="file" label="Imagen de Producto" name="image" id="image"

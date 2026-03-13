@@ -1,0 +1,105 @@
+<form action="{{ $formAction }}" method="POST">
+    @csrf
+    @if (($method ?? 'POST') !== 'POST')
+        @method($method)
+    @endif
+
+    <div class="grid gap-4 md:grid-cols-2">
+        <x-input type="text" name="name" id="quotation_name" label="Nombre de cotizacion"
+            value="{{ old('name', $quotation->name ?? '') }}" required />
+
+        <x-select label="Tipo de DTE al convertir" name="dte_type" id="quotation_dte_type"
+            :options="['01' => 'Factura', '03' => 'Credito fiscal']"
+            selected="{{ old('dte_type', $quotation->type ?? ($dte['type'] ?? '01')) }}"
+            value="{{ old('dte_type', $quotation->type ?? ($dte['type'] ?? '01')) }}" :search="false" required />
+    </div>
+
+    <div class="mt-6 rounded-lg border border-gray-300 p-4 dark:border-gray-800">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="text-lg font-semibold text-primary-500 dark:text-primary-300">Datos del cliente</h2>
+            <div class="flex flex-col gap-2 sm:flex-row">
+                <x-button type="button" text="Seleccionar cliente existente" typeButton="success" icon="user"
+                    data-target="#selected-customer" class="show-modal w-full sm:w-auto" />
+                <x-button type="a" href="{{ Route('business.customers.create') }}" target="_blank"
+                    text="Crear cliente" typeButton="secondary" icon="plus" class="w-full sm:w-auto" />
+            </div>
+        </div>
+
+        <input type="hidden" name="customer_id" id="customer_id"
+            value="{{ old('customer_id', $dte['customer']['id'] ?? '') }}" />
+
+        <div class="grid gap-4 md:grid-cols-2">
+            <x-input type="text" name="numero_documento" id="numero_documento_customer" label="Numero de documento"
+                value="{{ old('numero_documento', $dte['customer']['numDocumento'] ?? '') }}" />
+            <x-input type="text" name="nrc_customer" id="nrc_customer" label="NRC"
+                value="{{ old('nrc_customer', $dte['customer']['nrc'] ?? '') }}" />
+            <x-input type="text" name="nombre_receptor" id="nombre_customer" label="Nombre del cliente"
+                value="{{ old('nombre_receptor', $dte['customer']['nombre'] ?? '') }}" required />
+            <x-input type="text" name="telefono" id="telefono_customer" label="Telefono"
+                value="{{ old('telefono', $dte['customer']['telefono'] ?? '') }}" />
+            <x-input type="email" name="correo" id="correo_customer" label="Correo"
+                value="{{ old('correo', $dte['customer']['correo'] ?? '') }}" class="md:col-span-2" />
+        </div>
+    </div>
+
+    <div class="mt-6 rounded-lg border border-gray-300 p-4 dark:border-gray-800">
+        <div class="mb-4 flex flex-col items-center justify-start gap-4 sm:flex-row">
+            <div class="relative w-full sm:w-auto">
+                <x-button type="button" icon="arrow-down" typeButton="info" text="Agregar detalle"
+                    class="show-options w-full sm:w-auto" data-target="#options-add-quotation-item" size="normal"
+                    data-align="right" />
+                <div class="options absolute right-0 top-0 z-10 mt-1 hidden w-max rounded-lg border border-gray-300 bg-white p-2 dark:border-gray-800 dark:bg-gray-950"
+                    id="options-add-quotation-item">
+                    <ul class="flex flex-col text-sm">
+                        <li>
+                            <button type="button"
+                                class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900"
+                                data-drawer-target="drawer-new-product" data-drawer-show="drawer-new-product"
+                                aria-controls="drawer-new-product">
+                                <x-icon icon="pencil" class="h-4 w-4" />
+                                Producto o servicio
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <x-button type="button" text="Seleccionar producto existente" icon="arrow-double-next" typeButton="success"
+                data-modal-target="selected-product" data-modal-toggle="selected-product" class="w-full sm:w-auto" />
+        </div>
+
+        <div id="table-products-dte" class="mt-4">
+            @include('layouts.partials.ajax.business.table-products-dte')
+        </div>
+    </div>
+
+    <div class="mt-6 rounded-lg border border-gray-300 p-4 dark:border-gray-800">
+        <h2 class="text-lg font-semibold text-primary-500 dark:text-primary-300">Condiciones de cotizacion</h2>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <x-input type="number" name="vigencia_dias" label="Vigencia (dias)" min="1" max="365"
+                value="{{ old('vigencia_dias', $meta['vigencia_dias'] ?? 15) }}" required />
+            <x-input type="text" name="tiempo_entrega" label="Tiempo de entrega"
+                value="{{ old('tiempo_entrega', $meta['tiempo_entrega'] ?? 'Coordinado con el cliente') }}" />
+            <x-select label="Forma de pago" name="forma_pago_tipo" id="quotation_payment_type" :options="[
+                'Contado' => 'Contado',
+                'Credito' => 'Credito a N dias',
+                '50-50' => '50% y 50%',
+                'Otros' => 'Otros',
+            ]" selected="{{ old('forma_pago_tipo', $meta['forma_pago_tipo'] ?? 'Contado') }}"
+                value="{{ old('forma_pago_tipo', $meta['forma_pago_tipo'] ?? 'Contado') }}" :search="false" required />
+            <x-input type="text" name="forma_pago_detalle" label="Detalle forma de pago"
+                value="{{ old('forma_pago_detalle', $meta['forma_pago_detalle'] ?? '') }}" />
+            <x-input type="textarea" name="thank_you_message" label="Mensaje de agradecimiento"
+                value="{{ old('thank_you_message', $meta['thank_you_message'] ?? 'Gracias por su preferencia.') }}"
+                class="md:col-span-2" />
+            <x-input type="textarea" name="terms_conditions" label="Terminos y condiciones"
+                value="{{ old('terms_conditions', $meta['terms_conditions'] ?? '') }}" class="md:col-span-2" />
+        </div>
+    </div>
+
+    <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+        <x-button type="a" href="{{ Route('business.quotations.index') }}" text="Cancelar" icon="x"
+            typeButton="secondary" class="w-full sm:w-auto" />
+        <x-button type="submit" text="Guardar cotizacion" icon="save" typeButton="primary"
+            class="w-full sm:w-auto" />
+    </div>
+</form>

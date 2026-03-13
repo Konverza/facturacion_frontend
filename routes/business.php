@@ -28,6 +28,7 @@ use App\Http\Controllers\Business\ProfileController;
 use App\Http\Controllers\Business\PriceVariantController;
 use App\Http\Controllers\Business\RelatedDocumentsController;
 use App\Http\Controllers\Business\ReportingController;
+use App\Http\Controllers\Business\QuotationController;
 use App\Http\Controllers\Business\WhatsAppController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +41,9 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::get("/", [DashboardController::class, "index"])->name('index');
     Route::get("/dashboard", [DashboardController::class, "index"])->name('dashboard');
     Route::get("/documents/drafts", [DTEDraftController::class, "index"])->name('documents.drafts');
+    Route::resource('/quotations', QuotationController::class);
+    Route::post('/quotations/{id}/convert', [QuotationController::class, 'convert'])->name('quotations.convert');
+    Route::get('/quotations/{id}/pdf', [QuotationController::class, 'pdf'])->name('quotations.pdf');
     Route::resource("/documents", DocumentController::class);
     Route::get("/documents/{codGeneracion}", [DocumentController::class, "show"])->name('documents.show');
     

@@ -153,6 +153,30 @@ Breadcrumbs::for("business.documents.drafts", function (BreadcrumbTrail $trail) 
     $trail->push($icon . "Borradores", route("business.documents.drafts"));
 });
 
+Breadcrumbs::for("business.quotations.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='file-report' class='w-4 h-4'/>");
+    $trail->parent("business.documents.index");
+    $trail->push($icon . "Cotizaciones", route("business.quotations.index"));
+});
+
+Breadcrumbs::for("business.quotations.create", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='plus' class='w-4 h-4'/>");
+    $trail->parent("business.quotations.index");
+    $trail->push($icon . "Nueva", route("business.quotations.create"));
+});
+
+Breadcrumbs::for("business.quotations.show", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='eye' class='w-4 h-4'/>");
+    $trail->parent("business.quotations.index");
+    $trail->push($icon . "Detalle", route("business.quotations.show", $id));
+});
+
+Breadcrumbs::for("business.quotations.edit", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='pencil' class='w-4 h-4'/>");
+    $trail->parent("business.quotations.index");
+    $trail->push($icon . "Editar", route("business.quotations.edit", $id));
+});
+
 // Bolsón de Facturas
 Breadcrumbs::for("business.invoice-bags.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='files' class='w-4 h-4'/>");
