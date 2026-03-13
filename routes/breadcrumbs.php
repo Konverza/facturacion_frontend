@@ -147,6 +147,12 @@ Breadcrumbs::for("business.documents.index", function (BreadcrumbTrail $trail) {
     $trail->push($icon . "Documentos", route("business.documents.index"));
 });
 
+Breadcrumbs::for("business.documents.drafts", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='file-report' class='w-4 h-4'/>");
+    $trail->parent("business.documents.index");
+    $trail->push($icon . "Borradores", route("business.documents.drafts"));
+});
+
 // Bolsón de Facturas
 Breadcrumbs::for("business.invoice-bags.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='files' class='w-4 h-4'/>");

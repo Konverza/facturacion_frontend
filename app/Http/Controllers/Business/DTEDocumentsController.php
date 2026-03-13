@@ -16,14 +16,51 @@ class DTEDocumentsController extends Controller
     public $dte;
     public $business_id;
     public $business;
-    public $dtes;
 
     public function __construct()
     {
         $this->dte = session("dte");
         $this->business_id = session("business");
         $this->business = Business::find($this->business_id);
-        $this->dtes = Http::timeout(30)->get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $this->business->nit)->json();
+    }
+
+    private function findDteByCodGeneracion(string $codGeneracion): ?array
+    {
+        if (!$this->business || !$this->business->nit) {
+            return null;
+        }
+
+        $page = 1;
+        $totalPages = 1;
+        $limit = 25;
+
+        do {
+            $response = Http::timeout(30)->get(env("OCTOPUS_API_URL") . "/dtes/", [
+                "nit" => $this->business->nit,
+                "q" => $codGeneracion,
+                "page" => $page,
+                "limit" => $limit,
+                "sort" => "desc",
+            ]);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $data = $response->json() ?? [];
+            $items = $data["items"] ?? [];
+
+            foreach ($items as $item) {
+                if (($item["codGeneracion"] ?? null) === $codGeneracion) {
+                    return $item;
+                }
+            }
+
+            $totalPages = (int) ($data["total_pages"] ?? 1);
+            $page++;
+        } while ($page <= $totalPages);
+
+        return null;
     }
 
     public function store(Request $request)
@@ -77,14 +114,7 @@ class DTEDocumentsController extends Controller
     {
         try {
             $codGeneracion = $request->codGeneracion;
-            $dtes = $this->dtes["items"] ?? [];
-            $dte = null;
-            foreach ($dtes as $dte_) {
-                if ($dte_["codGeneracion"] === $codGeneracion) {
-                    $dte = $dte_;
-                    break;
-                }
-            }
+            $dte = $this->findDteByCodGeneracion($codGeneracion);
 
             if ($dte === null) {
                 return response()->json([
@@ -126,15 +156,7 @@ class DTEDocumentsController extends Controller
         try {
 
             $codGeneracion = $request->cod_generacion;
-            $dtes = $this->dtes["items"] ?? [];
-
-            $dte = null;
-            foreach ($dtes as $dte_) {
-                if ($dte_["codGeneracion"] === $codGeneracion) {
-                    $dte = $dte_;
-                    break;
-                }
-            }
+            $dte = $this->findDteByCodGeneracion($codGeneracion);
 
             if ($dte === null) {
                 return response()->json([

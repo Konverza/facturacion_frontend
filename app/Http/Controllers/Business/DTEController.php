@@ -1911,7 +1911,14 @@ class DTEController extends Controller
             $business_id = Session::get('business') ?? null;
             if ($business_id) {
                 DB::beginTransaction();
-                $this->scopedDteQuery($business_id)->delete();
+                $query = $this->scopedDteQuery($business_id);
+
+                $statusFilter = request('status_filter');
+                if ($statusFilter === 'error') {
+                    $query->where('status', 'error');
+                }
+
+                $query->delete();
                 DB::commit();
                 return redirect()->route("business.index")
                     ->with("success", "Exito")

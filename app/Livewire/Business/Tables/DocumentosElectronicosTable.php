@@ -5,7 +5,6 @@ namespace App\Livewire\Business\Tables;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Session;
 
 class DocumentosElectronicosTable extends Component
 {
@@ -59,18 +58,20 @@ class DocumentosElectronicosTable extends Component
             'q' => $this->search,
             'tipo_dte' => $this->tipo_documento,
             'documento_receptor' => $this->numero_documento,
+            'estado' => 'PROCESADO',
             'emisionInicio' => $this->emitido_desde ? $this->emitido_desde . 'T00:00:00' : null,
             'emisionFin' => $this->emitido_hasta ? $this->emitido_hasta . 'T23:59:59' : null,
+            'page' => $this->page,
+            'limit' => $this->perPage,
+            'sort' => 'desc',
         ];
 
         // Limpiar nulos
         $params = array_filter($params, function($v) { return $v !== null && $v !== ''; });
 
         $response = Http::timeout(30)->get(env('OCTOPUS_API_URL') . '/dtes/', $params);
-        $data = $response->json();
-        $items = collect($data['items'] ?? [])->filter(function ($dte) {
-            return $dte['estado'] === 'PROCESADO';
-        });
+        $data = $response->json() ?? [];
+        $items = collect($data['items'] ?? []);
 
         // Filtros según el tipo de documento relacionado (solo para la tabla, no para la API)
         if ($this->number === '04') {
@@ -87,10 +88,12 @@ class DocumentosElectronicosTable extends Component
             });
         }
 
-        $total = $items->count();
-        $total_pages = (int) ceil($total / $this->perPage);
-        $page = $this->page;
-        $items = $items->forPage($page, $this->perPage)->values();
+        $total = (int) ($data['total'] ?? $items->count());
+        $total_pages = (int) ($data['total_pages'] ?? 1);
+        $total_pages = max(1, $total_pages);
+        $page = min(max(1, (int) $this->page), $total_pages);
+        $this->page = $page;
+        $items = $items->values();
 
         // Tipos de documentos para mostrar en la tabla
         $tipos_documentos = [];

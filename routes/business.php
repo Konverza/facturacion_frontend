@@ -8,6 +8,7 @@ use App\Http\Controllers\Business\CategoryController;
 use App\Http\Controllers\Business\CuentasCobrarController;
 use App\Http\Controllers\Business\CustomerContoller;
 use App\Http\Controllers\Business\DashboardController;
+use App\Http\Controllers\Business\DTEDraftController;
 use App\Http\Controllers\Business\DocumentController;
 use App\Http\Controllers\Business\DTEController;
 use App\Http\Controllers\Business\DTEDocumentsController;
@@ -38,6 +39,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
 
     Route::get("/", [DashboardController::class, "index"])->name('index');
     Route::get("/dashboard", [DashboardController::class, "index"])->name('dashboard');
+    Route::get("/documents/drafts", [DTEDraftController::class, "index"])->name('documents.drafts');
     Route::resource("/documents", DocumentController::class);
     Route::get("/documents/{codGeneracion}", [DocumentController::class, "show"])->name('documents.show');
     

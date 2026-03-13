@@ -350,6 +350,15 @@
                 </div>
             </div>
         </div>
+
+        <div class="my-4 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
+            Los borradores se movieron a <b>Documentos Emitidos → Borradores</b>.
+            @if (($drafts_count ?? 0) > 0)
+                Tienes {{ $drafts_count }} borrador{{ $drafts_count > 1 ? 'es' : '' }} disponible{{ $drafts_count > 1 ? 's' : '' }}.
+            @endif
+            <a href="{{ Route('business.documents.drafts') }}" class="ml-1 underline font-semibold">Ver borradores</a>
+        </div>
+
         @if ($dtes_pending->count() > 0)
             <div class="w-full">
                 <div class="flex items-center justify-between">
@@ -362,6 +371,7 @@
                     <form action="{{ Route('business.delete-all-dte') }}" method="POST" id="form-delete-all">
                         @csrf
                         @method('DELETE')
+                        <input type="hidden" name="status_filter" value="error" />
                         <x-button type="button" text="Eliminar todos" icon="trash" typeButton="danger"
                             class="buttonDelete" data-modal-toggle="deleteAllModal" data-modal-target="deleteAllModal"
                             data-form="form-delete-all" />

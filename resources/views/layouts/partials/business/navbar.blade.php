@@ -299,6 +299,21 @@
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
                     </li>
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.documents.drafts') }}" data-menu-text="Borradores"
+                            data-tooltip-target="tooltip-borradores-dte"
+                            data-menu-keywords="borradores dte pendientes"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                            <x-icon icon="file-report"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Borradores</span>
+                        </a>
+                        <div id="tooltip-borradores-dte" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Borradores
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </li>
                     @if ($business->invoice_bag_enabled)
                         <li data-menu-item data-menu-level="sub">
                             <a href="{{ Route('business.invoice-bags.index') }}" data-menu-text="Bolsón de Facturas"

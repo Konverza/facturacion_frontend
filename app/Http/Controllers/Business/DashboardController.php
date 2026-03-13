@@ -50,19 +50,30 @@ class DashboardController extends Controller
                 ->first();
             $business = Business::find($business_id);
             $business_plan = BusinessPlan::where("nit", $business->nit)->with('plan')->first();
-            $dtes_pending = DTE::where('business_id', $business->id)->whereNot('status', 'template');
+            $dtes_pending = DTE::where('business_id', $business->id)->whereNotIn('status', ['template', 'pending']);
             if (!$business_user?->see_others_dtes) {
                 $dtes_pending->where(function ($query) use ($user) {
                     $query->where('user_id', $user->id)
                         ->orWhereNull('user_id');
                 });
             }
+
+            $dtes_drafts = DTE::where('business_id', $business->id)->where('status', 'pending');
+            if (!$business_user?->see_others_dtes) {
+                $dtes_drafts->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                        ->orWhereNull('user_id');
+                });
+            }
+
             if ($user->only_fcf) {
                 $dtes_pending = $dtes_pending->where('type', '01');
+                $dtes_drafts = $dtes_drafts->where('type', '01');
             } else {
                 
             }
             $dtes_pending = $dtes_pending->orderBy('created_at', 'desc')->get();
+            $drafts_count = (int) $dtes_drafts->count();
 
             if (!$business) {
                 return back()->with('error', 'No se encontró la empresa asociada.');
@@ -114,6 +125,7 @@ class DashboardController extends Controller
                 'business_plan',
                 'types',
                 'dtes_pending',
+                'drafts_count',
                 'inicio_mes',
                 'fin_mes',
                 'ads',
