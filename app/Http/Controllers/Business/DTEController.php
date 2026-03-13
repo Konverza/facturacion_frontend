@@ -237,6 +237,145 @@ class DTEController extends Controller
         return redirect()->route("business.index");
     }
 
+    public function printDraft(string $id)
+    {
+        $previousDte = session('dte');
+
+        try {
+            $draft = $this->scopedDteQuery()
+                ->where('id', $id)
+                ->where('status', 'pending')
+                ->first();
+
+            if (!$draft) {
+                return redirect()->route('business.documents.drafts')
+                    ->with('error', 'Error')
+                    ->with('error_message', 'El borrador solicitado no existe o no tiene permisos para accederlo.');
+            }
+
+            $payload = json_decode($draft->content, true);
+            if (!is_array($payload)) {
+                return redirect()->route('business.documents.drafts')
+                    ->with('error', 'Error')
+                    ->with('error_message', 'El contenido del borrador es invalido.');
+            }
+
+            $this->dte = $payload;
+            $this->dte['type'] = $draft->type;
+            $this->ensureDteDefaults();
+            session(['dte' => $this->dte]);
+
+            $endpointByType = [
+                '01' => '/factura/',
+                '03' => '/credito_fiscal/',
+                '04' => '/nota_remision/',
+                '05' => '/nota_credito/',
+                '06' => '/nota_debito/',
+                '07' => '/comprobante_retencion/',
+                '11' => '/factura_exportacion/',
+                '14' => '/sujeto_excluido/',
+                '15' => '/comprobante_donacion/',
+            ];
+
+            $type = $this->dte['type'] ?? null;
+            if (!$type || !isset($endpointByType[$type])) {
+                return redirect()->route('business.documents.drafts')
+                    ->with('error', 'Error')
+                    ->with('error_message', 'Tipo de DTE no soportado para impresion.');
+            }
+
+            $businessId = Session::get('business') ?? null;
+            $businessUser = BusinessUser::where('business_id', $businessId)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            $posId = $this->dte['pos_id'] ?? null;
+            if (!$posId) {
+                $posId = $businessUser?->default_pos_id;
+            }
+            if (!$posId) {
+                $posId = $this->resolveDefaultPosId($businessId);
+            }
+            if (!$posId) {
+                return redirect()->route('business.documents.drafts')
+                    ->with('error', 'Error')
+                    ->with('error_message', 'No hay Punto de Venta configurado para generar el borrador.');
+            }
+
+            $c = $this->dte['customer'] ?? [];
+            $req = new Request();
+            $req->merge([
+                'pos_id' => $posId,
+                'tipo_documento' => $c['tipoDocumento'] ?? null,
+                'numero_documento' => $c['numDocumento'] ?? null,
+                'nrc_customer' => $c['nrc'] ?? null,
+                'nombre_customer' => $c['nombre'] ?? null,
+                'nombre_receptor' => $c['nombre'] ?? null,
+                'nombre_comercial' => $c['nombreComercial'] ?? null,
+                'actividad_economica' => $c['codActividad'] ?? null,
+                'departamento' => $c['departamento'] ?? null,
+                'municipio' => $c['municipio'] ?? null,
+                'complemento' => $c['complemento'] ?? null,
+                'telefono' => $c['telefono'] ?? null,
+                'correo' => $c['correo'] ?? null,
+                'tipo_persona' => $c['tipoPersona'] ?? null,
+                'codigo_pais' => $c['pais'] ?? null,
+                'bienTitulo' => $this->dte['bienTitulo'] ?? null,
+                'condicion_operacion' => $this->dte['condicion_operacion'] ?? ($this->dte['resumen']['condicionOperacion'] ?? '1'),
+                'orden_compra' => $this->dte['orden_compra'] ?? null,
+                'customer_branch_id' => $this->dte['customer_branch']['id'] ?? null,
+                'action' => 'send',
+                'json_mode' => true,
+                'borrador' => true,
+            ]);
+
+            if ($type === '11') {
+                $req->merge([
+                    'regimen_exportacion' => Arr::get($this->dte, 'emisor.regimen'),
+                    'recinto_fiscal' => Arr::get($this->dte, 'emisor.recintoFiscal'),
+                    'tipo_item_exportar' => Arr::get($this->dte, 'emisor.tipoItemExpor'),
+                    'incoterms' => Arr::get($this->dte, 'resumen.codIncoterms') ?? Arr::get($this->dte, 'incoterms'),
+                ]);
+            }
+
+            $data = $this->processDTE($req, $type, $endpointByType[$type]);
+
+            if ($data instanceof \Illuminate\Http\RedirectResponse) {
+                $msg = session('error_message') ?? 'No fue posible generar el DTE para impresion.';
+                return redirect()->route('business.documents.drafts')
+                    ->with('error', 'Error')
+                    ->with('error_message', $msg);
+            }
+
+            if (!is_array($data)) {
+                return redirect()->route('business.documents.drafts')
+                    ->with('error', 'Error')
+                    ->with('error_message', 'Respuesta invalida al generar el PDF del borrador.');
+            }
+
+            if (!empty($data['enlace_pdf'])) {
+                return redirect()->away($data['enlace_pdf']);
+            }
+
+            $obs = $data['observaciones'] ?? 'No se pudo obtener el enlace de PDF para el borrador.';
+            return redirect()->route('business.documents.drafts')
+                ->with('error', 'Error')
+                ->with('error_message', $obs);
+        } catch (\Throwable $e) {
+            Log::error('printDraft error: ' . $e->getMessage());
+
+            return redirect()->route('business.documents.drafts')
+                ->with('error', 'Error')
+                ->with('error_message', 'Ha ocurrido un error al generar la impresion del borrador.');
+        } finally {
+            if ($previousDte === null) {
+                session()->forget('dte');
+            } else {
+                session(['dte' => $previousDte]);
+            }
+        }
+    }
+
     public function factura(Request $request)
     {
         $numero_documento = $request->numero_documento;
@@ -288,7 +427,7 @@ class DTEController extends Controller
                     'success_message' => "Documento generado correctamente",
                 ]);
         } elseif ($response === "BORRADOR") {
-            return redirect()->route('business.index')
+            return redirect()->route('business.documents.drafts')
                 ->with('success', "Exito")
                 ->with(
                     "success_message",
@@ -330,7 +469,7 @@ class DTEController extends Controller
                     'success_message' => "Documento generado correctamente",
                 ]);
         } elseif ($response === "BORRADOR") {
-            return redirect()->route('business.index')
+            return redirect()->route('business.documents.drafts')
                 ->with('success', "Exito")
                 ->with(
                     "success_message",
@@ -378,7 +517,7 @@ class DTEController extends Controller
                     'success_message' => "Documento generado correctamente",
                 ]);
         } elseif ($response === "BORRADOR") {
-            return redirect()->route('business.index')
+            return redirect()->route('business.documents.drafts')
                 ->with('success', "Exito")
                 ->with(
                     "success_message",
@@ -886,7 +1025,11 @@ class DTEController extends Controller
             }
 
             // dd($dte);
-            $response = Http::timeout(30)->post(env("OCTOPUS_API_URL") . $endpoint, $dte);
+            $url = env("OCTOPUS_API_URL") . $endpoint;
+            if ($request->boolean('borrador')) {
+                $url .= (str_contains($url, '?') ? '&' : '?') . 'borrador=true';
+            }
+            $response = Http::timeout(30)->post($url, $dte);
             $data = json_decode($response->body(), true) ?? [];
             return $data;
         } catch (\Exception $e) {
@@ -1003,7 +1146,7 @@ class DTEController extends Controller
                         "Ha ocurrido un error al generar el documento."
                     )->send();
             } elseif ($data["estado"] === "BORRADOR") {
-                return redirect()->route('business.index')
+                return redirect()->route('business.documents.drafts')
                     ->with('success', "Exito")
                     ->with(
                         "success_message",

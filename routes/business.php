@@ -103,6 +103,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
 
     Route::prefix("dte")->name("dte.")->group(function () {
         Route::get("/generate", [DTEController::class, "create"])->name('create');
+        Route::get('/drafts/{id}/print', [DTEController::class, 'printDraft'])->name('print-draft');
         Route::get("/cancel", [DTEController::class, "cancel"])->name('cancel');
         Route::post("/", [DTEController::class, "store"])->name('store');
         Route::post("/anular", [DTEController::class, "anular"])->name('anular');

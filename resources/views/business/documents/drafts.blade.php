@@ -57,21 +57,31 @@
                                 <div class="flex items-center gap-2">
                                     <x-button type="a"
                                         href="{!! Route('business.dte.create', ['document_type' => $draft->type]) . '&id=' . $draft->id !!}"
-                                        icon="arrow-right" typeButton="secondary" onlyIcon />
+                                        icon="arrow-right" typeButton="primary" class="js-draft-action" text="Editar o Enviar" />
 
-                                    <button type="button"
-                                        class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white p-2 text-gray-600 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900"
-                                        title="Imprimir (próximamente)">
-                                        <x-icon icon="printer" class="size-5" />
-                                    </button>
+                                    <a href="{{ route('business.dte.print-draft', ['id' => $draft->id]) }}" target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="js-draft-action js-print-draft inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white p-2 text-gray-600 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900"
+                                        title="Imprimir borrador">
+                                        <span class="js-print-icon inline-flex">
+                                            <x-icon icon="printer" class="size-5" />
+                                            Imprimir borrador
+                                        </span>
+                                        <span class="js-print-loader hidden" aria-hidden="true">
+                                            <svg class="size-5 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" class="opacity-30"></circle>
+                                                <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                                            </svg>
+                                        </span>
+                                    </a>
 
                                     <form action="{{ Route('business.delete-dte', $draft->id) }}" method="POST"
                                         id="form-delete-draft-{{ $draft->id }}">
                                         @csrf
                                         @method('DELETE')
-                                        <x-button type="button" icon="trash" typeButton="danger" class="buttonDelete"
+                                        <x-button type="button" icon="trash" typeButton="danger" class="buttonDelete js-draft-action"
                                             data-modal-toggle="deleteModal" data-modal-target="deleteModal"
-                                            data-form="form-delete-draft-{{ $draft->id }}" onlyIcon />
+                                            data-form="form-delete-draft-{{ $draft->id }}" text="Eliminar" />
                                     </form>
                                 </div>
                             </x-td>
@@ -101,3 +111,62 @@
             message="No podrás recuperar este registro" />
     </section>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let printInProgress = false;
+
+            const disableAction = (element) => {
+                if (!element) return;
+                element.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                if ('disabled' in element) {
+                    element.disabled = true;
+                }
+                if (element.tagName === 'A') {
+                    element.setAttribute('aria-disabled', 'true');
+                    element.setAttribute('tabindex', '-1');
+                }
+            };
+
+            const enableAction = (element) => {
+                if (!element) return;
+                element.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                if ('disabled' in element) {
+                    element.disabled = false;
+                }
+                if (element.tagName === 'A') {
+                    element.removeAttribute('aria-disabled');
+                    element.removeAttribute('tabindex');
+                }
+            };
+
+            document.querySelectorAll('.js-print-draft').forEach((printButton) => {
+                printButton.addEventListener('click', function(e) {
+                    if (printInProgress) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    printInProgress = true;
+
+                    const allActions = document.querySelectorAll('.js-draft-action');
+                    allActions.forEach(disableAction);
+
+                    const icon = printButton.querySelector('.js-print-icon');
+                    const loader = printButton.querySelector('.js-print-loader');
+                    if (icon) icon.classList.add('hidden');
+                    if (loader) loader.classList.remove('hidden');
+
+                    // Fallback por si el navegador bloquea popups o la apertura tarda demasiado.
+                    setTimeout(() => {
+                        printInProgress = false;
+                        allActions.forEach(enableAction);
+                        if (icon) icon.classList.remove('hidden');
+                        if (loader) loader.classList.add('hidden');
+                    }, 3000);
+                });
+            });
+        });
+    </script>
+@endpush
