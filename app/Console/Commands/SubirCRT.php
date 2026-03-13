@@ -62,7 +62,7 @@ class SubirCRT extends Command
 
                 file_put_contents($tmp_path, $crt_content);
 
-                $file_key = (env("APP_ENV") == "local") ? "archivos[path_pruebas]" : "archivos[path_producc]";
+                $file_key = (env("AMBIENTE_HACIENDA") == "00") ? "archivos[path_pruebas]" : "archivos[path_producc]";
 
                 $uploadResponse = Http::withToken($token)
                     ->timeout(60)
