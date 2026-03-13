@@ -119,6 +119,7 @@ class BusinessController extends Controller
                         $prefill['correo_responsable'] = $bs_row->correo_responsable;
                         $prefill['telefono_responsable'] = $bs_row->telefono;
                         $prefill['dui'] = $bs_row->dui;
+                        $prefill['id_registro'] = $bs_row->registrofe_id;
                     }
 
                     if (!empty($data['departamento'])) {
@@ -320,6 +321,7 @@ class BusinessController extends Controller
                         $business->nombre = $request->nombre_comercial;
                         $business->plan_id = $request->plan_id;
                         $business->dui = $request->dui;
+                        $business->registrofe_id = $request->id_registro ?? null;
                         $business->telefono = $request->telefono_responsable;
                         $business->correo_responsable = $request->correo_responsable;
                         $business->nombre_responsable = $request->nombre_responsable;
@@ -435,6 +437,28 @@ class BusinessController extends Controller
                                 $user->update([
                                     'easypay_access' => true,
                                 ]);
+                            }
+                        }
+
+                        // Actualización de información en Registro FE
+                        if ($request->id_registro) {
+                            switch (env("AMBIENTE_HACIENDA")) {
+                                case "00":
+                                    DB::connection("registro_fe")->table("empresas")
+                                        ->where("id", $request->id_registro)
+                                        ->update([
+                                            "estado" => "Completado",
+                                            "etapa" => "Pruebas"
+                                        ]);
+                                    break;
+                                case "01":
+                                    DB::connection("registro_fe")->table("empresas")
+                                        ->where("id", $request->id_registro)
+                                        ->update([
+                                            "estado" => "Completado",
+                                            "etapa" => "Producción"
+                                        ]);
+                                    break;
                             }
                         }
 
@@ -559,6 +583,50 @@ class BusinessController extends Controller
         return view('admin.business.api-access', compact('business'));
     }
 
+    public function activate(Business $business)
+    {
+        $business->update([
+            'active' => true,
+        ]);
+
+        switch (env("AMBIENTE_HACIENDA")) {
+            case "00":
+                DB::connection("registro_fe")->table("empresas")
+                    ->where("id", $business->registrofe_id)
+                    ->update([
+                        "estado" => "Completado",
+                        "etapa" => "Pruebas"
+                    ]);
+                break;
+            case "01":
+                DB::connection("registro_fe")->table("empresas")
+                    ->where("id", $business->registrofe_id)
+                    ->update([
+                        "estado" => "Completado",
+                        "etapa" => "Producción"
+                    ]);
+                break;
+        }
+
+        return back()->with('success', 'Negocio activado correctamente.');
+    }
+
+    public function deactivate(Business $business)
+    {
+        $business->update([
+            'active' => false,
+        ]);
+
+        DB::connection("registro_fe")->table("empresas")
+            ->where("id", $business->registrofe_id)
+            ->update([
+                "estado" => "Completado",
+                "etapa" => "Cancelado"
+            ]);
+
+        return back()->with('success', 'Negocio desactivado correctamente.');
+    }
+
     public function enableApiAccess(Business $business)
     {
         $business->update([
@@ -632,8 +700,8 @@ class BusinessController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $dryRun 
-                    ? 'Simulación completada. Revisa los resultados a continuación.' 
+                'message' => $dryRun
+                    ? 'Simulación completada. Revisa los resultados a continuación.'
                     : 'Stock reconstruido exitosamente.',
                 'output' => $output,
             ]);
@@ -649,18 +717,21 @@ class BusinessController extends Controller
     public function stockReport(Business $business)
     {
         // Obtener todos los stocks por sucursal del negocio
-        $stocksSucursales = \App\Models\BranchProductStock::whereHas('businessProduct', function($query) use ($business) {
+        $stocksSucursales = \App\Models\BranchProductStock::whereHas('businessProduct', function ($query) use ($business) {
             $query->where('business_id', $business->id)
-                  ->where('has_stock', true)
-                  ->where('is_global', false);
+                ->where('has_stock', true)
+                ->where('is_global', false);
         })
-        ->with(['businessProduct.movements' => function($query) {
-            $query->orderBy('created_at', 'asc');
-        }, 'sucursal'])
-        ->get();
+            ->with([
+                'businessProduct.movements' => function ($query) {
+                    $query->orderBy('created_at', 'asc');
+                },
+                'sucursal'
+            ])
+            ->get();
 
         // Calcular el reporte para cada producto en cada sucursal
-        $reporte = $stocksSucursales->map(function($stock) {
+        $reporte = $stocksSucursales->map(function ($stock) {
             $producto = $stock->businessProduct;
             $stockInicial = $producto->stockInicial ?? 0;
             $entradas = $producto->movements->where('tipo', 'entrada')->sum('cantidad');

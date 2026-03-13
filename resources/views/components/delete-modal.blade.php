@@ -1,3 +1,11 @@
+@props([
+    'modalId',
+    'title' => '¿Estás seguro?',
+    'message' => 'No podrás recuperar este registro',
+    'confirmText' => 'Sí, eliminar',
+    'cancelText' => 'No, cancelar',
+])
+
 <div id="{{ $modalId }}" tabindex="-1" aria-hidden="true"
     class="deleteModal fixed inset-0 left-0 right-0 top-0 z-[100] hidden h-full w-full items-center justify-center overflow-y-auto overflow-x-hidden bg-gray-200/50 dark:bg-gray-900/50">
     <div class="relative flex h-full w-full max-w-md items-center justify-center p-4 md:h-auto">
@@ -29,9 +37,9 @@
                 <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">{{ $message }}</p>
             </div>
             <div class="flex items-center justify-center space-x-4 py-4">
-                <x-button type="button" data-modal-toggle="{{ $modalId }}" class="closeModal" text="No, cancelar"
+                <x-button type="button" data-modal-toggle="{{ $modalId }}" class="closeModal" text="{{ $cancelText }}"
                     icon="x" typeButton="secondary" />
-                <x-button type="button" class="confirmDelete" text="Sí, eliminar" icon="trash" typeButton="danger" />
+                <x-button type="button" class="confirmDelete" text="{{ $confirmText }}" icon="trash" typeButton="danger" />
             </div>
         </div>
     </div>

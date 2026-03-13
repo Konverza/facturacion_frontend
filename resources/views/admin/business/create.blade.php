@@ -48,6 +48,9 @@
                             Registro FE para intentar autocompletar los campos.</p>
                     </div>
                     <!-- Fin búsqueda por ID -->
+                @else
+                    {{-- Viene de Pruebas, tomar datos prellenados --}}
+                    <input type="hidden" name="id_registro" value="{{ $prefill['id_registro'] ?? '' }}">
                 @endif
                 <div class="flex flex-col gap-6 xl:flex-row">
                     <div class="flex-1">

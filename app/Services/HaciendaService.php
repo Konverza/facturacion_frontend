@@ -23,7 +23,7 @@ class HaciendaService
         $this->dui = $dui;
     }
 
-    protected function getAuthToken()
+    public function getAuthToken()
     {
         $nit = $this->nit;
         $hacienda_auth_url = $this->hacienda_auth_url;
@@ -39,28 +39,34 @@ class HaciendaService
         $username = env("PRUEBAS_USER");
         $password = env("PRUEBAS_PASS");
         $pruebasUrl = env("PRUEBAS_URL");
+        $pruebasTokenCacheKey = "pruebas_token_" . md5("{$pruebasUrl}|{$username}");
+        $token = Cache::get($pruebasTokenCacheKey);
         
-        // Paso 1: Login en PRUEBAS_URL
-        $token_response = Http::asForm()->post($pruebasUrl . "/auth/login", [
-            "username" => $username,
-            "password" => $password
-        ]);
-        
-        if (!$token_response->successful()) {
-            Log::error("Error en login PRUEBAS_URL", [
-                'status' => $token_response->status(),
-                'body' => $token_response->body()
-            ]);
-            return null;
-        }
-        
-        $token = $token_response->json()['access_token'] ?? null;
-        
+        // Paso 1: Login en PRUEBAS_URL (solo si no existe en caché)
         if (!$token) {
-            Log::error("No se obtuvo access_token de PRUEBAS", [
-                'response' => $token_response->json()
+            $token_response = Http::asForm()->post($pruebasUrl . "/auth/login", [
+                "username" => $username,
+                "password" => $password
             ]);
-            return null;
+
+            if (!$token_response->successful()) {
+                Log::error("Error en login PRUEBAS_URL", [
+                    'status' => $token_response->status(),
+                    'body' => $token_response->body()
+                ]);
+                return null;
+            }
+
+            $token = $token_response->json()['access_token'] ?? null;
+
+            if (!$token) {
+                Log::error("No se obtuvo access_token de PRUEBAS", [
+                    'response' => $token_response->json()
+                ]);
+                return null;
+            }
+
+            Cache::put($pruebasTokenCacheKey, $token, now()->addHour());
         }
         
         // Paso 2: Obtener credenciales del NIT

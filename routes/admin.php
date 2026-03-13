@@ -14,6 +14,8 @@ Route::middleware(['auth', 'role:admin'])->prefix("admin")->name("admin.")->grou
     Route::get("/", [DashboardController::class, "index"])->name('index');
     Route::get("/dashboard", [DashboardController::class, "index"])->name('dashboard');
     Route::resource("/business", BusinessController::class);
+    Route::post("/business/{business}/activate", [BusinessController::class, "activate"])->name("business.activate");
+    Route::post("/business/{business}/deactivate", [BusinessController::class, "deactivate"])->name("business.deactivate");
     Route::get("/business/{business}/rebuild-stock", [BusinessController::class, "rebuildStock"])->name("business.rebuild-stock");
     Route::post("/business/{business}/rebuild-stock", [BusinessController::class, "executeRebuildStock"])->name("business.execute-rebuild-stock");
     Route::get("/business/{business}/stock-report", [BusinessController::class, "stockReport"])->name("business.stock-report");

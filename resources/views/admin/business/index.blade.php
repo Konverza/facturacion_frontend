@@ -33,6 +33,7 @@
                     @foreach ($business as $busines)
                         @php
                             $percentage = ($busines->statistics["approved"] / $busines->plan->limite) * 100;
+                            $active = $busines->active;
                             $class = '';
                             $progress_class = 'bg-blue-600';
                             if ($percentage > 75 && $percentage <= 90) {
@@ -42,10 +43,26 @@
                                 $class = 'bg-red-200';
                                 $progress_class = 'bg-red-600';
                             }
+
+                            if(!$active){
+                                $class = 'bg-red-200';
+                                $progress_class = 'bg-red-600';
+                            }
+
                         @endphp
                         <x-tr class="{{ $class }}">
                             <x-td>{{ $loop->iteration }}</x-td>
-                            <x-td>{{ $busines->nombre }}</x-td>
+                            <x-td>
+                                <span class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">{{ $busines->nombre }}</span>
+                                <span class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400"><b>NIT: </b>{{ $busines->nit }}</span>
+                                <span class="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400"><b>DUI: </b>{{ $busines->dui }}</span>
+                                {{-- Badge if active = 0 --}}
+                                @if (!$busines->active)
+                                    <span class="flex w-max items-center gap-1 rounded-full px-2 py-1 text-xs font-bold text-red-500 dark:text-red-300">
+                                        Suspendido
+                                    </span>
+                                @endif
+                            </x-td>
                             <x-td>
                                 <span
                                     class="flex w-max items-center gap-1 rounded-full px-2 py-1 text-sm font-bold text-primary-500 dark:text-primary-300">
@@ -128,11 +145,30 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <button type="button"
-                                                    class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
-                                                    <x-icon icon="user-off" class="h-4 w-4" />
-                                                    Desactivar
-                                                </button>
+                                                @if ($busines->active)
+                                                    <form action="{{ Route('admin.business.deactivate', $busines->id) }}"
+                                                        method="POST" id="form-deactivate-business-{{ $busines->id }}">
+                                                        @csrf
+                                                        <button type="button"
+                                                            data-form="form-deactivate-business-{{ $busines->id }}"
+                                                            data-modal-target="deleteModal"
+                                                            data-modal-toggle="deleteModal"
+                                                            class="buttonDelete flex w-full items-center gap-1 rounded-lg px-2 py-2 text-red-500 hover:bg-red-100 dark:text-red-500 dark:hover:bg-red-950/30">
+                                                            <x-icon icon="user-off" class="h-4 w-4" />
+                                                            Desactivar
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <form action="{{ Route('admin.business.activate', $busines->id) }}"
+                                                        method="POST">
+                                                        @csrf
+                                                        <button type="submit"
+                                                            class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/30">
+                                                            <x-icon icon="user-check" class="h-4 w-4" />
+                                                            Activar
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </li>
                                         </ul>
                                     </div>
@@ -142,6 +178,10 @@
                     @endforeach
                 </x-slot>
             </x-table>
+
+            <x-delete-modal modalId="deleteModal" title="¿Estás seguro de desactivar este negocio?"
+                message="EL negocio no podrá facturar hasta ser activado nuevamente." confirmText="Sí, desactivar"
+                cancelText="No, cancelar" />
         </div>
     </section>
 @endsection
