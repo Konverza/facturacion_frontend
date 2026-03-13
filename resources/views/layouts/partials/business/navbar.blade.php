@@ -314,6 +314,7 @@
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
                     </li>
+                    @if ($business->quotation_enabled)
                     <li data-menu-item data-menu-level="sub">
                         <a href="{{ Route('business.quotations.index') }}" data-menu-text="Cotizaciones"
                             data-tooltip-target="tooltip-cotizaciones"
@@ -329,6 +330,7 @@
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
                     </li>
+                    @endif
                     @if ($business->invoice_bag_enabled)
                         <li data-menu-item data-menu-level="sub">
                             <a href="{{ Route('business.invoice-bags.index') }}" data-menu-text="Bolsón de Facturas"
