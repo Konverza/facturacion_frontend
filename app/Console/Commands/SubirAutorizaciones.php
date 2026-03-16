@@ -14,7 +14,7 @@ class SubirAutorizaciones extends Command
      *
      * @var string
      */
-    protected $signature = 'app:subir-autorizaciones';
+    protected $signature = 'app:subir-autorizaciones {--nit= : NIT específico a procesar}';
 
     /**
      * The console command description.
@@ -28,7 +28,25 @@ class SubirAutorizaciones extends Command
      */
     public function handle()
     {
-        $businesses = Business::all();
+        $nitOption = (string) ($this->option('nit') ?? '');
+        $nitNormalized = preg_replace('/\D/', '', $nitOption);
+
+        $businessesQuery = Business::query();
+        if (!empty($nitNormalized)) {
+            $businessesQuery->whereRaw("REPLACE(nit, '-', '') = ?", [$nitNormalized]);
+        }
+
+        $businesses = $businessesQuery->get();
+
+        if ($businesses->isEmpty()) {
+            if (!empty($nitNormalized)) {
+                $this->warn("No se encontró un negocio con el NIT especificado: {$nitOption}");
+                return Command::FAILURE;
+            }
+
+            $this->warn('No hay negocios para procesar.');
+            return Command::SUCCESS;
+        }
 
         $registroFeApiUrl = rtrim((string) env('REGISTRO_FE_API_URL'), '/');
         $loginResponse = Http::timeout(30)->post("{$registroFeApiUrl}/login", [
