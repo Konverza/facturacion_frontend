@@ -351,10 +351,12 @@
             </div>
         </div>
 
-        <div class="my-4 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
+        <div
+            class="my-4 rounded-lg border border-dashed border-blue-500 bg-blue-100 p-4 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300">
             Los borradores se movieron a <b>Documentos Emitidos → Borradores</b>.
             @if (($drafts_count ?? 0) > 0)
-                Tienes {{ $drafts_count }} borrador{{ $drafts_count > 1 ? 'es' : '' }} disponible{{ $drafts_count > 1 ? 's' : '' }}.
+                Tienes {{ $drafts_count }} borrador{{ $drafts_count > 1 ? 'es' : '' }}
+                disponible{{ $drafts_count > 1 ? 's' : '' }}.
             @endif
             <a href="{{ Route('business.documents.drafts') }}" class="ml-1 underline font-semibold">Ver borradores</a>
         </div>

@@ -33,7 +33,11 @@
                 window.axios.defaults.withCredentials = true; // same-origin: envía cookies
             }
             if (window.jQuery && token) {
-                window.jQuery.ajaxSetup({ headers: { 'X-CSRF-TOKEN': token } });
+                window.jQuery.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': token
+                    }
+                });
             }
             // Expone global por si se necesita en scripts inline
             window.csrfToken = token || '';
@@ -79,8 +83,11 @@
 
     <main class="@if (auth()->user()->hasRole('admin')) admin @else business @endif">
         @include('layouts.partials.breadcrumb')
+        @if (!auth()->user()->hasRole('admin'))
+            @include('layouts.partials.business.payment_notice')
+        @endif
         @include('layouts.partials.alert')
-        @yield('content')
+            @yield('content')
     </main>
     @livewireScripts
 </body>
