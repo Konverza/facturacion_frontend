@@ -10,6 +10,7 @@
     $sorted_avisos = collect($avisos);
     $oldest_payment_date = null;
     $should_show_notice = false;
+    $payment_document_for_link = $business?->nit ?? $business?->dui ?? '';
     if ($business?->nit || $business?->dui) {
         $documents_to_try = array_values(array_filter(array_unique([
             $business?->nit,
@@ -41,6 +42,7 @@
                 }
 
                 $notices_data = $response_data;
+                $payment_document_for_link = $document;
                 $procesando = $notices_data['procesando'] ?? false;
                 $avisos = $notices_data['avisos'] ?? [];
                 $sorted_avisos = collect($avisos)->sortBy('pago_ultimo_dia');
@@ -80,7 +82,7 @@
         con fecha de vencimiento el <b class="underline">{{ $oldest_payment_date?->format('d/m/Y') ?? '' }}</b>. Para
         evitar interrupciones en el servicio,
         le recomendamos realizar el pago a la brevedad posible. Realice su pago <a
-            href="https://pagos.konverza.digital?nit={{ $business->nit }}"
+            href="https://pagos.konverza.digital?nit={{ $payment_document_for_link }}"
             class="underline text-blue-500 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-500"
             target="_blank">en
             este enlace</a>
