@@ -1,7 +1,8 @@
 @php
     $business_id = session('business');
     $business = \App\Models\Business::find($business_id);
-    $endpoint = rtrim((string) env('EASYPAY_URL'), '/') . '/usuario-avisos-login/' . ($business?->nit ?? '');
+    $base_endpoint = rtrim((string) env('EASYPAY_URL'), '/') . '/usuario-avisos-login/';
+    $not_found_error = 'No fue posible encontrar datos para el documento proporcionado';
 
     $notices_data = null;
     $procesando = true;
@@ -9,16 +10,37 @@
     $sorted_avisos = collect($avisos);
     $oldest_payment_date = null;
     $should_show_notice = false;
-    if ($business?->nit) {
-        try {
-            $notices_response = Illuminate\Support\Facades\Http::acceptJson()
-                ->connectTimeout(5)
-                ->timeout(10)
-                ->retry(3, 300)
-                ->get($endpoint);
+    if ($business?->nit || $business?->dui) {
+        $documents_to_try = array_values(array_filter(array_unique([
+            $business?->nit,
+            $business?->dui,
+        ])));
 
-            if ($notices_response->successful()) {
-                $notices_data = $notices_response->json();
+        foreach ($documents_to_try as $document) {
+            $endpoint = $base_endpoint . $document;
+
+            try {
+                $notices_response = Illuminate\Support\Facades\Http::acceptJson()
+                    ->connectTimeout(5)
+                    ->timeout(10)
+                    ->retry(3, 300)
+                    ->get($endpoint);
+
+                if (!$notices_response->successful()) {
+                    continue;
+                }
+
+                $response_data = $notices_response->json();
+
+                if (!is_array($response_data)) {
+                    continue;
+                }
+
+                if (($response_data['error'] ?? null) === $not_found_error) {
+                    continue;
+                }
+
+                $notices_data = $response_data;
                 $procesando = $notices_data['procesando'] ?? false;
                 $avisos = $notices_data['avisos'] ?? [];
                 $sorted_avisos = collect($avisos)->sortBy('pago_ultimo_dia');
@@ -34,14 +56,18 @@
                         $should_show_notice = false;
                     }
                 }
+
+                break;
+            } catch (\Throwable $th) {
+                Illuminate\Support\Facades\Log::warning('No se pudo consultar avisos de pago de EasyPay', [
+                    'endpoint' => $endpoint,
+                    'business_id' => $business_id,
+                    'document' => $document,
+                    'nit' => $business?->nit,
+                    'dui' => $business?->dui,
+                    'error' => $th->getMessage(),
+                ]);
             }
-        } catch (\Throwable $th) {
-            Illuminate\Support\Facades\Log::warning('No se pudo consultar avisos de pago de EasyPay', [
-                'endpoint' => $endpoint,
-                'business_id' => $business_id,
-                'nit' => $business?->nit,
-                'error' => $th->getMessage(),
-            ]);
         }
     }
 @endphp
