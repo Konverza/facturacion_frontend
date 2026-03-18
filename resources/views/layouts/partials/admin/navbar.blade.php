@@ -1,6 +1,13 @@
-
+@if (session('ambiente') == '2')
+    <div class="fixed top-0 z-[90] flex h-12 w-full items-center justify-center bg-red-500 px-2 text-white sm:h-8">
+        <span class="flex items-center gap-2 text-xs font-semibold sm:text-sm">
+            <x-icon icon="info-circle" class="h-4 w-4 min-w-4 max-w-4" />
+            Advertencia: Está en el ambiente de pruebas.
+        </span>
+    </div>
+@endif
 <nav
-    class="z-20 ms-auto h-14 w-full border-b border-gray-300 bg-transparent bg-white dark:border-gray-800 dark:bg-gray-950 md:w-calc-full-minus-56 md:bg-transparent md:dark:bg-transparent">
+    class="@if (session('ambiente') == '2') mt-12 sm:mt-8 @endif z-20 ms-auto h-14 w-full border-b border-gray-300 bg-transparent bg-white dark:border-gray-800 dark:bg-gray-950 md:w-calc-full-minus-56 md:bg-transparent md:dark:bg-transparent">
     <div class="flex h-full items-center px-3 lg:px-5 lg:pl-3">
         <div class="flex w-full items-center justify-between">
             <div class="flex items-center justify-start rtl:justify-end">
@@ -71,7 +78,7 @@
 </nav>
 
 <aside id="sidebar"
-    class="e fixed left-0 top-0 z-[35] h-screen w-56 -translate-x-full border-r border-gray-300 bg-white pt-4 transition-transform dark:border-gray-800 dark:bg-gray-950 md:translate-x-0 md:bg-transparent dark:md:bg-transparent"
+    class="@if (session('ambiente') == '2') mt-12 sm:mt-8 @endif fixed left-0 top-0 z-[35] h-screen w-56 -translate-x-full border-r border-gray-300 bg-white pt-4 transition-transform dark:border-gray-800 dark:bg-gray-950 md:translate-x-0 md:bg-transparent dark:md:bg-transparent"
     aria-label="Sidebar">
     <div class="h-full overflow-y-auto px-2 pb-4">
         <a href="#" class="ms-2 flex">
