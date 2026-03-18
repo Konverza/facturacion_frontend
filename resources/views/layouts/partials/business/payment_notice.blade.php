@@ -1,35 +1,48 @@
 @php
     $business_id = session('business');
     $business = \App\Models\Business::find($business_id);
+    $endpoint = rtrim((string) env('EASYPAY_URL'), '/') . '/usuario-avisos-login/' . ($business?->nit ?? '');
+
+    $notices_data = null;
+    $procesando = true;
+    $avisos = [];
+    $sorted_avisos = collect($avisos);
     $oldest_payment_date = null;
     $should_show_notice = false;
-    $notices_response = Illuminate\Support\Facades\Http::get(
-        env('EASYPAY_URL') . 'usuario-avisos-login/' . $business->nit,
-    );
-    if ($notices_response->successful()) {
-        $notices_data = $notices_response->json();
-        $procesando = $notices_data['procesando'] ?? false;
-        $avisos = $notices_data['avisos'] ?? [];
-        $sorted_avisos = collect($avisos)->sortBy('pago_ultimo_dia');
+    if ($business?->nit) {
+        try {
+            $notices_response = Illuminate\Support\Facades\Http::acceptJson()
+                ->connectTimeout(5)
+                ->timeout(10)
+                ->retry(3, 300)
+                ->get($endpoint);
 
-        $oldest_payment_date_raw = $sorted_avisos->first()['pago_ultimo_dia'] ?? null;
+            if ($notices_response->successful()) {
+                $notices_data = $notices_response->json();
+                $procesando = $notices_data['procesando'] ?? false;
+                $avisos = $notices_data['avisos'] ?? [];
+                $sorted_avisos = collect($avisos)->sortBy('pago_ultimo_dia');
 
-        if (!empty($oldest_payment_date_raw)) {
-            try {
-                $oldest_payment_date = \Carbon\Carbon::parse($oldest_payment_date_raw);
-                $should_show_notice = $oldest_payment_date->lt(\Carbon\Carbon::today());
-            } catch (\Throwable $th) {
-                $oldest_payment_date = null;
-                $should_show_notice = false;
+                $oldest_payment_date_raw = $sorted_avisos->first()['pago_ultimo_dia'] ?? null;
+
+                if (!empty($oldest_payment_date_raw)) {
+                    try {
+                        $oldest_payment_date = \Carbon\Carbon::parse($oldest_payment_date_raw);
+                        $should_show_notice = $oldest_payment_date->lt(\Carbon\Carbon::today());
+                    } catch (\Throwable $th) {
+                        $oldest_payment_date = null;
+                        $should_show_notice = false;
+                    }
+                }
             }
+        } catch (\Throwable $th) {
+            Illuminate\Support\Facades\Log::warning('No se pudo consultar avisos de pago de EasyPay', [
+                'endpoint' => $endpoint,
+                'business_id' => $business_id,
+                'nit' => $business?->nit,
+                'error' => $th->getMessage(),
+            ]);
         }
-    } else {
-        $notices_data = null;
-        $procesando = true;
-        $avisos = [];
-        $sorted_avisos = collect($avisos);
-        $oldest_payment_date = null;
-        $should_show_notice = false;
     }
 @endphp
 @if (!$procesando && $sorted_avisos->count() > 0 && $should_show_notice)
