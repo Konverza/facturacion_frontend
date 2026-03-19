@@ -2690,11 +2690,19 @@ class DTEController extends Controller
                 } else {
                     $g['total_pagar'] = round($g['total'] - $g['total_descuentos'], 8);
                 }
-                // Retención 10% en tipo 14 para todos los items
+                $business = Business::find(session('business'));
+                $onlyServiceRetention = (bool) ($business?->only_service_retention);
+
+                // Retención 10% en tipo 14
                 if ($g['type'] === '14') {
                     $retencionBase = 0;
                     foreach ($g['products'] as $p) {
-                        $retencionBase += (float) ($p['total'] ?? 0);
+                        if (
+                            !$onlyServiceRetention ||
+                            (isset($p['tipo_item']) && in_array((int) $p['tipo_item'], [2, 3], true))
+                        ) {
+                            $retencionBase += (float) ($p['total'] ?? 0);
+                        }
                     }
                     if ($retencionBase > 0) {
                         $isr = round($retencionBase * 0.10, 8);
