@@ -422,6 +422,13 @@ class GeneralReportsController extends Controller
         return abs($numeric) < 0.0000001 ? null : $value;
     }
 
+    private function extractNumeroComprobanteSac($dte) {
+        $codGeneracionArr = explode('-',data_get($dte, 'documento.identificacion.numeroControl'));
+        $puntoVenta = data_get($dte, 'codPuntoVenta', '');
+        $numero = end($codGeneracionArr);
+        return "$puntoVenta-" . substr($numero, -6);
+    }
+
     private function generateSacReport(array $parameters)
     {
         $templatePath = public_path('reportes/reporte_sac.xlsm');
@@ -497,6 +504,7 @@ class GeneralReportsController extends Controller
             ]);
 
             $fechaComprobante = $this->formatDateForSac(data_get($dte, 'fhEmision') ?? data_get($dte, 'documento.identificacion.fecEmi'));
+            $anioComprobante = substr($fechaComprobante, -4);
             $totalPagar = (float) data_get($dte, 'documento.resumen.totalPagar', 0);
             $totalGravada = (float) data_get($dte, 'documento.resumen.totalGravada', 0);
             $totalExenta = (float) data_get($dte, 'documento.resumen.totalExenta', 0);
@@ -508,8 +516,8 @@ class GeneralReportsController extends Controller
 
             $ventaRowData = [
                 'id_venta' => $idVenta,
-                'prefijo' => data_get($dte, 'selloRecibido'),
-                'numero_comprobante' => data_get($dte, 'codGeneracion'),
+                'prefijo' => $anioComprobante,
+                'numero_comprobante' => $this->extractNumeroComprobanteSac($dte),
                 'tipo_comprobante' => $tipoDte === '01' ? 2 : 1,
                 'fecha_comprobante' => $fechaComprobante,
                 'cod_cliente' => $codCliente,
