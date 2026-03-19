@@ -467,8 +467,8 @@ class GeneralReportsController extends Controller
         $clientesCatalog = $this->readSacClientesCatalog($clientesSheet);
         $departamentosCatalog = app(OctopusService::class)->simpleDepartamentos();
 
-        $ventasRow = 3;
-        $detalleRow = 3;
+        $ventasRow = 2;
+        $detalleRow = 2;
         $idVenta = 1;
 
         foreach ($dtes as $dte) {
@@ -544,7 +544,7 @@ class GeneralReportsController extends Controller
                 'venta_nosujeta' => $totalNoSuj,
                 'valor_iva' => $valorIva,
                 'total_comprobante' => $totalPagar,
-                'per_ret' => 'F',
+                'per_ret' =>  $codCliente == 4 ? 'V' : 'F',
                 'anulado' => null,
                 'fecha_cancelacion' => null,
                 'id_venta_nc' => null,
@@ -606,6 +606,8 @@ class GeneralReportsController extends Controller
                 'observaciones' => null,
                 'motorista' => null,
                 'orden_compra_ext' => null,
+                'tipo_operacion' => null,
+                'tipo_ingreso' => null,
             ];
 
             $this->writeSacRow($ventasSheet, $ventasRow, $ventasHeaderMap, $ventaRowData);
@@ -653,6 +655,9 @@ class GeneralReportsController extends Controller
 
             $idVenta++;
         }
+
+        $this->resizeSacTable($ventasSheet, 'Tabla11', $ventasRow - 2);
+        $this->resizeSacTable($detalleSheet, 'Tabla10', $detalleRow - 2);
 
         $tempDirectory = storage_path('app/temp');
         if (!is_dir($tempDirectory)) {
@@ -747,6 +752,21 @@ class GeneralReportsController extends Controller
             $column = $headerMap[$normalized];
             $sheet->setCellValueByColumnAndRow($column, $row, $value);
         }
+    }
+
+    private function resizeSacTable(Worksheet $sheet, string $tableName, int $dataRowCount): void
+    {
+        $table = $sheet->getTableByName($tableName);
+        if (!$table) {
+            abort(500, "La plantilla del Reporte SAC no contiene la tabla requerida {$tableName} en la hoja {$sheet->getTitle()}.");
+        }
+
+        [$startCell, $endCell] = explode(':', $table->getRange());
+        [$startColumn, $startRow] = Coordinate::coordinateFromString($startCell);
+        [$endColumn] = Coordinate::coordinateFromString($endCell);
+
+        $endRow = $startRow + max(0, $dataRowCount);
+        $table->setRange("{$startColumn}{$startRow}:{$endColumn}{$endRow}");
     }
 
     private function normalizeSacKey(string $value): string
