@@ -35,6 +35,7 @@ class Products extends Component
     public $priceVariantsEnabled = false;
     public $showSpecialPrices = false;
     public $hasQuotationEnabled = false;
+    public $enableProductCosts = false;
 
     public $options = [
         'todos' => 'Todos',
@@ -50,6 +51,7 @@ class Products extends Component
         $this->priceVariantsEnabled = (bool) ($business?->price_variants_enabled);
         $this->showSpecialPrices = (bool) ($business?->show_special_prices);
         $this->hasQuotationEnabled = (bool) ($business?->quotation_enabled);
+        $this->enableProductCosts = (bool) ($business?->enable_product_costs);
 
         // Obtener configuración del usuario
         $businessUser = BusinessUser::where('business_id', session('business'))

@@ -55,7 +55,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::get("/documents/zip/download/{id}", [DocumentController::class, "downloadZip"])->name('documents.zip.download');
     Route::delete("/documents/zip/{id}", [DocumentController::class, "deleteZipJob"])->name('documents.zip.delete');
     
-    Route::resource("/products", ProductController::class);
+    Route::resource("/products", ProductController::class)->except(['show']);
     Route::resource("/categories", CategoryController::class);
     Route::get("/price-variants", [PriceVariantController::class, "index"])->name('price-variants.index');
     Route::post("/price-variants", [PriceVariantController::class, "store"])->name('price-variants.store');
@@ -65,6 +65,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::post("/products/add-stock", [ProductController::class, "add_stock"])->name('products.add-stock');
     Route::post("/products/remove-stock", [ProductController::class, "remove_stock"])->name('products.remove-stock');
     Route::post("/products/transfer-stock", [ProductController::class, "transferStock"])->name('products.transfer-stock');
+    Route::get("/products/{id}/providers-comparison-pdf", [ProductController::class, "providersComparisonPdf"])->name('products.providers-comparison-pdf');
     Route::get("/products/{id}/branch-info", [ProductController::class, "getBranchInfo"])->name('products.branch-info');
     Route::get("/products/{id}/branch-stock", [ProductController::class, "getBranchStock"])->name('products.branch-stock');
     Route::post("/products/import", [ProductController::class, "import"])->name('products.import');

@@ -14,6 +14,7 @@ use App\Models\BusinessProductCostVariant;
 use App\Models\ProductCategory;
 use App\Models\Tributes;
 use App\Services\OctopusService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +43,30 @@ class ProductController extends Controller
                 'error_message' => 'Ha ocurrido un error al cargar los productos'
             ]);
         }
+    }
+
+    public function providersComparisonPdf(string $id)
+    {
+        $business = Business::findOrFail(session('business'));
+
+        if (!(bool) ($business->enable_product_costs ?? false)) {
+            abort(403, 'El modulo de costos por proveedor no esta habilitado para este negocio.');
+        }
+
+        $product = BusinessProduct::where('business_id', $business->id)
+            ->with([
+                'costVariants.priceVariant:id,name,price_without_iva,price_with_iva',
+                'priceVariantOverrides:business_product_id,price_variant_id,price_without_iva,price_with_iva',
+            ])
+            ->findOrFail($id);
+
+        $pdf = Pdf::loadView('business.products.providers-comparison-pdf', [
+            'business' => $business,
+            'product' => $product,
+            'generatedAt' => now(),
+        ])->setPaper('letter', 'portrait');
+
+        return $pdf->stream('comparativa-proveedores-' . $product->id . '-' . now()->format('Ymd-His') . '.pdf');
     }
 
     public function create()
