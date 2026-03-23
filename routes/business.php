@@ -73,6 +73,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::post("/customers/import", [CustomerContoller::class, "import"])->name('customers.import');
     Route::get("/customers/qr/image", [CustomerContoller::class, "generateQRImage"])->name('customers.qr-image');
     Route::resource("/movements", MovementController::class);
+    Route::get('/movements/{id}/invoice-link', [MovementController::class, 'getInvoiceLink'])->name('movements.invoice-link');
     
     // Reportes
     Route::prefix('reports')->name('reports.')->group(function () {
@@ -82,6 +83,8 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     
     Route::resource("/cuentas-por-cobrar", CuentasCobrarController::class);
     Route::post("/cuentas-por-cobrar/movement", [CuentasCobrarController::class, "movement"])->name('cuentas-por-cobrar.movement');
+    Route::get('/cuentas-por-cobrar/{id}/invoice-link', [CuentasCobrarController::class, 'getInvoiceLink'])->name('cuentas-por-cobrar.invoice-link');
+    Route::get('/cuentas-por-cobrar/invoice-link/{codGeneracion}', [CuentasCobrarController::class, 'getInvoiceLinkByCodGeneracion'])->name('cuentas-por-cobrar.invoice-link-cod');
 
     Route::delete("/delete-dte/{id}", [DTEController::class, "delete"])->name('delete-dte');
     Route::delete("/delete-all-dte", [DTEController::class, "delete_all"])->name('delete-all-dte');

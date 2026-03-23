@@ -7,18 +7,63 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessProduct;
 use App\Models\BusinessProductMovement;
-use App\Models\Movements;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 
 class MovementController extends Controller
 {
+    private function getBusinessFromSession(): ?Business
+    {
+        $businessId = Session::get('business');
+
+        if (!$businessId) {
+            return null;
+        }
+
+        return Business::find($businessId);
+    }
+
+    private function findDteByCodGeneracion(string $nit, string $codGeneracion): ?array
+    {
+        $page = 1;
+        $limit = 25;
+        $maxPages = 50;
+        $totalPages = 1;
+
+        do {
+            $response = Http::timeout(30)->get(env("OCTOPUS_API_URL") . '/dtes/', [
+                'nit' => $nit,
+                'q' => $codGeneracion,
+                'page' => $page,
+                'limit' => $limit,
+                'sort' => 'desc',
+            ]);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $data = $response->json() ?? [];
+            $items = $data['items'] ?? [];
+
+            foreach ($items as $item) {
+                if (($item['codGeneracion'] ?? null) === $codGeneracion) {
+                    return $item;
+                }
+            }
+
+            $totalPages = (int) ($data['total_pages'] ?? 1);
+            $page++;
+        } while ($page <= $totalPages && $page <= $maxPages);
+
+        return null;
+    }
+
     public function index()
     {
         try {
-            $business_id = Session::get('business') ?? null;
-            $business = Business::find($business_id);
+            $business = $this->getBusinessFromSession();
             
             if (!$business) {
                 return redirect()->route('business.dashboard')->with([
@@ -28,30 +73,11 @@ class MovementController extends Controller
             }
             
             $movements = BusinessProductMovement::with(['businessProduct', 'sucursal', 'puntoVenta'])
-                ->whereHas('businessProduct', function ($query) use ($business_id) {
-                    $query->where('business_id', $business_id);
+                ->whereHas('businessProduct', function ($query) use ($business) {
+                    $query->where('business_id', $business->id);
                 })
                 ->orderBy('created_at', 'desc')
                 ->paginate(50); // 50 registros por página
-            
-            $dtes = Http::get(env("OCTOPUS_API_URL") . '/dtes/?nit=' . $business->nit)->json();
-            $dtes = $dtes["items"] ?? [];
-
-            $dteByCodGeneracion = [];
-            foreach ($dtes as $dte) {
-                if (isset($dte["codGeneracion"])) {
-                    $dteByCodGeneracion[$dte["codGeneracion"]] = $dte;
-                }
-            }
-
-            // Solo asociar la información del DTE sin guardar cambios
-            foreach ($movements as $movement) {
-                if (isset($dteByCodGeneracion[$movement->numero_factura])) {
-                    $movement->invoice = $dteByCodGeneracion[$movement->numero_factura];
-                } else {
-                    $movement->invoice = null;
-                }
-            }
 
             return view("business.movements.index", [
                 "movimientos" => $movements
@@ -118,6 +144,57 @@ class MovementController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('business.movements.index')->with('error', 'Error')->with("error_message", "Error al eliminar el movimiento: " . $e->getMessage());
+        }
+    }
+
+    public function getInvoiceLink(Request $request, string $id)
+    {
+        try {
+            $business = $this->getBusinessFromSession();
+
+            if (!$business || !$business->nit) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró el negocio seleccionado',
+                ], 404);
+            }
+
+            $movement = BusinessProductMovement::with('businessProduct')->find($id);
+
+            if (
+                !$movement ||
+                !$movement->numero_factura ||
+                !$movement->businessProduct ||
+                (int) $movement->businessProduct->business_id !== (int) $business->id
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró la factura para este movimiento',
+                ], 404);
+            }
+
+            $dte = $this->findDteByCodGeneracion($business->nit, $movement->numero_factura);
+
+            if (!$dte || empty($dte['enlace_pdf'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se pudo obtener el enlace de la factura',
+                ], 404);
+            }
+
+            if ($request->boolean('open')) {
+                return redirect()->away($dte['enlace_pdf']);
+            }
+
+            return response()->json([
+                'success' => true,
+                'url' => $dte['enlace_pdf'],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error al consultar la factura',
+            ], 500);
         }
     }
 }

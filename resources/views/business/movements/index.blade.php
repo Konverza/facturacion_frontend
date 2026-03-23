@@ -29,7 +29,7 @@
                         <x-th>Precio unitario</x-th>
                         <x-th>Producto</x-th>
                         <x-th>Descripción</x-th>
-                        <x-th :last="true">Accciones</x-th>
+                        <x-th :last="true">Acciones</x-th>
                     </x-tr>
                 </x-slot>
                 <x-slot name="tbody">
@@ -84,13 +84,15 @@
                                     <div class="options absolute right-0 top-0 z-10 mt-1 hidden w-max rounded-lg border border-gray-300 bg-white p-1 dark:border-gray-800 dark:bg-gray-950"
                                         id="options-movimientos-{{ $movimiento->id }}">
                                         <ul class="flex flex-col text-xs">
-                                            @if ($movimiento->numero_factura && $movimiento->invoice)
+                                            @if ($movimiento->numero_factura)
                                                 <li>
-                                                    <a href="{{ $movimiento->invoice['enlace_pdf'] }}" target="_blank"
-                                                        class="flex w-full items-center gap-1 rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
+                                                    <button type="button"
+                                                        data-url="{{ Route('business.movements.invoice-link', $movimiento->id) }}"
+                                                        data-cod-generacion="{{ $movimiento->numero_factura }}"
+                                                        class="btn-open-invoice flex w-full items-center gap-1 rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900">
                                                         <x-icon icon="pdf" class="h-4 w-4" />
                                                         Ver factura
-                                                    </a>
+                                                    </button>
                                                 </li>
                                             @endif
                                             <li>

@@ -130,16 +130,71 @@ $(document).ready(function () {
     $(document).on("click", ".btn-add-pay", function () {
         const id = $(this).data("id");
         const monto = $(this).data("amount");
+        const numeroFactura = $(this).data("invoice");
         $("#cuenta-id").val(id);
         $("#monto").attr("max", monto).val(monto);
+        $("#numero_factura_movimiento").val(numeroFactura || "");
     });
 
-    $("#tipo").on("Changed", function () {
-        const value = $(this).val();
+    $(document).on("click", ".btn-select-cxc-dte", function () {
+        const cod = $(this).data("cod");
+
+        if (!cod) {
+            Toast.fire({
+                icon: "error",
+                title: "No se pudo seleccionar la factura",
+            });
+            return;
+        }
+
+        $("#numero_factura").val(cod);
+        $("#numero_factura_text").val(cod);
+        $("#select-account-invoice").removeClass("flex").addClass("hidden");
+    });
+
+    const toggleNumeroFacturaByTipo = function (value) {
+        const $numeroFactura = $("#numero_factura_movimiento");
+
         if (value === "ajuste") {
             $("#numero-factura-container").addClass("hidden");
+            $numeroFactura.prop("required", false).prop("disabled", true).val("");
         } else {
             $("#numero-factura-container").removeClass("hidden");
+            $numeroFactura.prop("required", true).prop("disabled", false);
+        }
+    };
+
+    $("#tipo").on("Changed", function () {
+        toggleNumeroFacturaByTipo($(this).val());
+    });
+
+    $(document).on("click", ".btn-add-pay", function () {
+        const tipoActual = $("#tipo").val() || "pago";
+        toggleNumeroFacturaByTipo(tipoActual);
+    });
+
+    $(document).on("click", ".btn-open-invoice", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const baseUrl = $(this).data("url") || $(this).attr("href");
+        if (!baseUrl) {
+            Toast.fire({
+                icon: "error",
+                title: "No se pudo abrir la factura",
+            });
+            return;
+        }
+
+        const separator = baseUrl.includes("?") ? "&" : "?";
+        const openUrl = `${baseUrl}${separator}open=1`;
+        const tab = window.open(openUrl, "_blank", "noopener,noreferrer");
+
+        if (!tab) {
+            Toast.fire({
+                icon: "error",
+                title: "El navegador bloqueó la pestaña. Permite popups para este sitio.",
+            });
         }
     });
 
