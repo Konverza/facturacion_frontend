@@ -30,4 +30,9 @@ class BusinessPriceVariant extends Model
     {
         return $this->hasMany(BusinessProductPriceVariant::class, 'price_variant_id');
     }
+
+    public function productCosts()
+    {
+        return $this->hasMany(BusinessProductCostVariant::class, 'price_variant_id');
+    }
 }

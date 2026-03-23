@@ -28,7 +28,7 @@
             </div>
         @endif
 
-        {{-- <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
+        <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Configuración</h2>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 Al activar variantes de precio, los precios especiales se deshabilitan automáticamente.
@@ -37,11 +37,15 @@
                 @csrf
                 <x-input type="toggle" name="price_variants_enabled" label="Habilitar variantes de precio"
                     value="1" id="price_variants_enabled" :checked="$business?->price_variants_enabled" />
+                <div class="mt-3">
+                    <x-input type="toggle" name="enable_product_costs" label="Habilitar costos por proveedor"
+                        value="1" id="enable_product_costs" :checked="$business?->enable_product_costs" />
+                </div>
                 <div class="mt-4">
                     <x-button type="submit" typeButton="primary" text="Guardar configuración" icon="save" />
                 </div>
             </form>
-        </div> --}}
+        </div>
 
         <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Crear variante</h2>

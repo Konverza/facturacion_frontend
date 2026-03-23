@@ -64,11 +64,19 @@ class QuotationController extends Controller
     public function show(string $id)
     {
         $quotation = $this->findQuotation($id);
+        $business = Business::findOrFail(session('business'));
+        $companyData = $this->octopusService->getDatosEmpresa((string) $business->nit);
+        $logo = $this->resolveLogo((string) $business->nit, is_array($companyData) ? $companyData : []);
+        $canProfitabilityReport = $this->canAccessProfitabilityReport($business);
 
         return view('business.quotations.show', [
             'quotation' => $quotation,
             'content' => is_array($quotation->content) ? $quotation->content : [],
             'meta' => is_array($quotation->quotation_meta) ? $quotation->quotation_meta : [],
+            'business' => $business,
+            'companyData' => is_array($companyData) ? $companyData : [],
+            'logo' => $logo,
+            'canProfitabilityReport' => $canProfitabilityReport,
         ]);
     }
 
@@ -263,6 +271,32 @@ class QuotationController extends Controller
         ])->setPaper('letter', 'portrait');
 
         return $pdf->stream('cotizacion-' . $quotation->id . '.pdf');
+    }
+
+    public function profitabilityPdf(string $id)
+    {
+        $quotation = $this->findQuotation($id);
+        $content = is_array($quotation->content) ? $quotation->content : [];
+        $meta = is_array($quotation->quotation_meta) ? $quotation->quotation_meta : [];
+
+        $business = Business::findOrFail(session('business'));
+        if (!$this->canAccessProfitabilityReport($business)) {
+            abort(403, 'El modulo de reporte de rentabilidad no esta habilitado para este negocio.');
+        }
+
+        $companyData = $this->octopusService->getDatosEmpresa((string) $business->nit);
+        $logo = $this->resolveLogo((string) $business->nit, is_array($companyData) ? $companyData : []);
+
+        $pdf = Pdf::loadView('business.quotations.profitability-pdf', [
+            'quotation' => $quotation,
+            'content' => $content,
+            'meta' => $meta,
+            'business' => $business,
+            'companyData' => is_array($companyData) ? $companyData : [],
+            'logo' => $logo,
+        ])->setPaper('letter', 'portrait');
+
+        return $pdf->stream('cotizacion-rentabilidad-' . $quotation->id . '.pdf');
     }
 
     private function formView(string $title, string $view, ?Quotation $quotation, array $dte)
@@ -483,5 +517,10 @@ class QuotationController extends Controller
         }
 
         return (bool) base64_decode($value, true);
+    }
+
+    private function canAccessProfitabilityReport(Business $business): bool
+    {
+        return (bool) ($business->enable_product_costs ?? false);
     }
 }

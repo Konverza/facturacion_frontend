@@ -71,6 +71,7 @@ class PriceVariantController extends Controller
     {
         $request->validate([
             'price_variants_enabled' => 'nullable|boolean',
+            'enable_product_costs' => 'nullable|boolean',
         ]);
 
         $business = Business::find(session('business'));
@@ -80,7 +81,9 @@ class PriceVariantController extends Controller
 
         DB::transaction(function () use ($business, $request) {
             $enabled = $request->has('price_variants_enabled');
+            $enableProductCosts = $request->has('enable_product_costs');
             $business->price_variants_enabled = $enabled;
+            $business->enable_product_costs = $enableProductCosts;
 
             if ($enabled) {
                 $business->show_special_prices = false;

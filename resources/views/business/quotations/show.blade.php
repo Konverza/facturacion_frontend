@@ -12,6 +12,11 @@
                     typeButton="secondary" class="w-full sm:w-auto" />
                 <x-button type="a" href="{{ Route('business.quotations.pdf', $quotation->id) }}" text="Ver PDF"
                     icon="eye" typeButton="info" class="w-full sm:w-auto" target="_blank" rel="noopener noreferrer" />
+                @if ($canProfitabilityReport ?? false)
+                    <x-button type="a" href="{{ Route('business.quotations.profitability-pdf', $quotation->id) }}"
+                        text="Reporte de Rentabilidad" icon="report" typeButton="success" class="w-full sm:w-auto"
+                        target="_blank" rel="noopener noreferrer" />
+                @endif
                 <x-button type="a" href="{{ Route('business.quotations.edit', $quotation->id) }}" text="Editar"
                     icon="pencil" typeButton="primary" class="w-full sm:w-auto" />
             </div>

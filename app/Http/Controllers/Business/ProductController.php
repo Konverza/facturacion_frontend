@@ -10,6 +10,7 @@ use App\Models\BusinessProduct;
 use App\Models\BusinessProductMovement;
 use App\Models\BusinessPriceVariant;
 use App\Models\BusinessProductPriceVariant;
+use App\Models\BusinessProductCostVariant;
 use App\Models\ProductCategory;
 use App\Models\Tributes;
 use App\Services\OctopusService;
@@ -139,8 +140,17 @@ class ProductController extends Controller
             $product->save();
 
             // Sincronizar precios por variante (si aplica)
+            $variantAliasMap = [];
             if ($business->price_variants_enabled) {
-                $this->syncProductPriceVariants($product, $request->input('price_variants', []));
+                $variantAliasMap = $this->syncProductPriceVariants(
+                    $product,
+                    $request->input('price_variants', []),
+                    $request->input('new_price_variants', [])
+                );
+            }
+
+            if ($business->enable_product_costs) {
+                $this->syncProductCostVariants($product, $request->input('cost_variants', []), $variantAliasMap);
             }
             
             // Manejar disponibilidad por sucursales
@@ -266,6 +276,9 @@ class ProductController extends Controller
         $productVariantPrices = $product->priceVariantOverrides()
             ->get()
             ->keyBy('price_variant_id');
+        $productCostVariants = $product->costVariants()
+            ->orderBy('id')
+            ->get();
         return view('business.products.edit', [
             'product' => $product,
             'unidades_medidas' => $this->unidades_medidas,
@@ -277,6 +290,7 @@ class ProductController extends Controller
             'defaultSucursalId' => $defaultSucursalId,
             'priceVariants' => $priceVariants,
             'productVariantPrices' => $productVariantPrices,
+            'productCostVariants' => $productCostVariants,
         ]);
     }
 
@@ -333,8 +347,19 @@ class ProductController extends Controller
             $product->save();
 
             // Sincronizar precios por variante (si aplica)
+            $variantAliasMap = [];
             if ($business->price_variants_enabled) {
-                $this->syncProductPriceVariants($product, $request->input('price_variants', []));
+                $variantAliasMap = $this->syncProductPriceVariants(
+                    $product,
+                    $request->input('price_variants', []),
+                    $request->input('new_price_variants', [])
+                );
+            }
+
+            if ($business->enable_product_costs) {
+                $this->syncProductCostVariants($product, $request->input('cost_variants', []), $variantAliasMap);
+            } else {
+                $product->costVariants()->delete();
             }
             
             // Manejar disponibilidad por sucursales
@@ -485,12 +510,64 @@ class ProductController extends Controller
         }
     }
 
-    private function syncProductPriceVariants(BusinessProduct $product, array $priceVariantsInput): void
+    private function syncProductPriceVariants(BusinessProduct $product, array $priceVariantsInput, array $newPriceVariantsInput = []): array
     {
         $businessId = session('business');
+        $variantAliasMap = [];
+        $newlyCreatedVariantIds = [];
+
+        foreach ($newPriceVariantsInput as $index => $newVariantInput) {
+            $name = trim((string) ($newVariantInput['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $variant = BusinessPriceVariant::firstOrCreate(
+                [
+                    'business_id' => $businessId,
+                    'name' => $name,
+                ],
+                [
+                    'price_without_iva' => null,
+                    'price_with_iva' => null,
+                ]
+            );
+
+            $priceWithout = $newVariantInput['price_without_iva'] ?? null;
+            $priceWith = $newVariantInput['price_with_iva'] ?? null;
+
+            if ($priceWithout === '') {
+                $priceWithout = null;
+            }
+            if ($priceWith === '') {
+                $priceWith = null;
+            }
+
+            if ($priceWithout !== null || $priceWith !== null) {
+                BusinessProductPriceVariant::updateOrCreate(
+                    [
+                        'business_product_id' => $product->id,
+                        'price_variant_id' => $variant->id,
+                    ],
+                    [
+                        'price_without_iva' => $priceWithout,
+                        'price_with_iva' => $priceWith,
+                    ]
+                );
+            }
+
+            $newlyCreatedVariantIds[] = (int) $variant->id;
+            $variantAliasMap['new:' . $index] = (int) $variant->id;
+        }
+
         $variants = BusinessPriceVariant::where('business_id', $businessId)->get();
 
         foreach ($variants as $variant) {
+            if (in_array((int) $variant->id, $newlyCreatedVariantIds, true)) {
+                // Ya fue sincronizada arriba usando new_price_variants.
+                continue;
+            }
+
             $input = $priceVariantsInput[$variant->id] ?? [];
 
             $priceWithout = $input['price_without_iva'] ?? null;
@@ -521,6 +598,58 @@ class ProductController extends Controller
                 ]
             );
         }
+
+        return $variantAliasMap;
+    }
+
+    private function syncProductCostVariants(BusinessProduct $product, array $costVariantsInput, array $variantAliasMap = []): void
+    {
+        $businessId = session('business');
+        $validVariantIds = BusinessPriceVariant::where('business_id', $businessId)
+            ->pluck('id')
+            ->all();
+
+        $keptIds = [];
+
+        foreach ($costVariantsInput as $row) {
+            $nombreProveedor = trim((string) ($row['nombre_proveedor'] ?? ''));
+            $costoFinal = $row['costo_final'] ?? null;
+
+            if ($nombreProveedor === '' || $costoFinal === null || $costoFinal === '') {
+                continue;
+            }
+
+            $priceVariantId = $row['price_variant_id'] ?? null;
+
+            if (is_string($priceVariantId) && str_starts_with($priceVariantId, 'new:')) {
+                $priceVariantId = $variantAliasMap[$priceVariantId] ?? null;
+            }
+
+            if ($priceVariantId === '' || !in_array((int) $priceVariantId, $validVariantIds, true)) {
+                $priceVariantId = null;
+            }
+
+            $record = BusinessProductCostVariant::updateOrCreate(
+                [
+                    'business_product_id' => $product->id,
+                    'nombre_proveedor' => $nombreProveedor,
+                ],
+                [
+                    'costo_final' => $costoFinal,
+                    'price_variant_id' => $priceVariantId,
+                ]
+            );
+
+            $keptIds[] = $record->id;
+        }
+
+        BusinessProductCostVariant::where('business_product_id', $product->id)
+            ->when(!empty($keptIds), function ($query) use ($keptIds) {
+                $query->whereNotIn('id', $keptIds);
+            }, function ($query) {
+                $query->whereRaw('1 = 1');
+            })
+            ->delete();
     }
 
     public function import(Request $request)

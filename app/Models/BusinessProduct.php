@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BusinessPriceVariant;
 use App\Models\BusinessProductPriceVariant;
+use App\Models\BusinessProductCostVariant;
 
 class BusinessProduct extends Model
 {
@@ -65,6 +66,14 @@ class BusinessProduct extends Model
     }
 
     /**
+     * Variantes de costo por proveedor
+     */
+    public function costVariants()
+    {
+        return $this->hasMany(BusinessProductCostVariant::class, 'business_product_id');
+    }
+
+    /**
      * Resolver precio según variante
      *
      * @param int|null $variantId
@@ -111,6 +120,46 @@ class BusinessProduct extends Model
             'without_iva' => $without !== null ? (float) $without : $baseWithout,
             'with_iva' => $with !== null ? (float) $with : $baseWith,
             'variant' => $variant,
+        ];
+    }
+
+    /**
+     * Resuelve el precio efectivo de venta según proveedor/costo seleccionado.
+     */
+    public function resolvePriceForCostVariant(?int $costVariantId): array
+    {
+        $base = $this->resolvePriceForVariant(null);
+
+        if (!$costVariantId) {
+            return [
+                'without_iva' => (float) $base['without_iva'],
+                'with_iva' => (float) $base['with_iva'],
+                'cost_variant' => null,
+                'price_variant' => null,
+            ];
+        }
+
+        $costVariant = $this->costVariants()
+            ->with('priceVariant')
+            ->where('id', $costVariantId)
+            ->first();
+
+        if (!$costVariant) {
+            return [
+                'without_iva' => (float) $base['without_iva'],
+                'with_iva' => (float) $base['with_iva'],
+                'cost_variant' => null,
+                'price_variant' => null,
+            ];
+        }
+
+        $resolved = $this->resolvePriceForVariant($costVariant->price_variant_id);
+
+        return [
+            'without_iva' => (float) $resolved['without_iva'],
+            'with_iva' => (float) $resolved['with_iva'],
+            'cost_variant' => $costVariant,
+            'price_variant' => $resolved['variant'] ?? null,
         ];
     }
 
@@ -162,7 +211,7 @@ class BusinessProduct extends Model
     /**
      * Reducir stock de una sucursal
      */
-    public function reduceStockInBranch($sucursalId, float $cantidad, string $numeroFactura, string $descripcion = 'Venta de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null): bool
+    public function reduceStockInBranch($sucursalId, float $cantidad, string $numeroFactura, string $descripcion = 'Venta de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null, ?int $productCostVariantId = null, ?string $supplierName = null, ?float $supplierCost = null): bool
     {
         if ($this->is_global || !$this->has_stock) {
             return true; // Sin control de stock
@@ -190,6 +239,9 @@ class BusinessProduct extends Model
             'descripcion' => $descripcion,
             'price_variant_id' => $priceVariantId,
             'price_variant_name' => $priceVariantName,
+            'product_cost_variant_id' => $productCostVariantId,
+            'supplier_name' => $supplierName,
+            'supplier_cost' => $supplierCost,
         ]);
 
         return true;
@@ -198,7 +250,7 @@ class BusinessProduct extends Model
     /**
      * Aumentar stock de una sucursal
      */
-    public function increaseStockInBranch($sucursalId, float $cantidad, string $numeroFactura, string $descripcion = 'Entrada de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null): void
+    public function increaseStockInBranch($sucursalId, float $cantidad, string $numeroFactura, string $descripcion = 'Entrada de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null, ?int $productCostVariantId = null, ?string $supplierName = null, ?float $supplierCost = null): void
     {
         if ($this->is_global || !$this->has_stock) {
             return; // Sin control de stock
@@ -230,6 +282,9 @@ class BusinessProduct extends Model
             'descripcion' => $descripcion,
             'price_variant_id' => $priceVariantId,
             'price_variant_name' => $priceVariantName,
+            'product_cost_variant_id' => $productCostVariantId,
+            'supplier_name' => $supplierName,
+            'supplier_cost' => $supplierCost,
         ]);
     }
 
@@ -279,7 +334,7 @@ class BusinessProduct extends Model
     /**
      * Reducir stock de un punto de venta
      */
-    public function reduceStockInPos($puntoVentaId, float $cantidad, string $numeroFactura, string $descripcion = 'Venta de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null): bool
+    public function reduceStockInPos($puntoVentaId, float $cantidad, string $numeroFactura, string $descripcion = 'Venta de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null, ?int $productCostVariantId = null, ?string $supplierName = null, ?float $supplierCost = null): bool
     {
         if ($this->is_global || !$this->has_stock) {
             return true; // Sin control de stock
@@ -312,6 +367,9 @@ class BusinessProduct extends Model
             'descripcion' => $descripcion,
             'price_variant_id' => $priceVariantId,
             'price_variant_name' => $priceVariantName,
+            'product_cost_variant_id' => $productCostVariantId,
+            'supplier_name' => $supplierName,
+            'supplier_cost' => $supplierCost,
         ]);
 
         return true;
@@ -320,7 +378,7 @@ class BusinessProduct extends Model
     /**
      * Aumentar stock de un punto de venta
      */
-    public function increaseStockInPos($puntoVentaId, float $cantidad, string $numeroFactura, string $descripcion = 'Entrada de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null): void
+    public function increaseStockInPos($puntoVentaId, float $cantidad, string $numeroFactura, string $descripcion = 'Entrada de producto', ?float $precioUnitario = null, ?int $priceVariantId = null, ?string $priceVariantName = null, ?int $productCostVariantId = null, ?string $supplierName = null, ?float $supplierCost = null): void
     {
         if ($this->is_global || !$this->has_stock) {
             return; // Sin control de stock
@@ -357,6 +415,9 @@ class BusinessProduct extends Model
             'descripcion' => $descripcion,
             'price_variant_id' => $priceVariantId,
             'price_variant_name' => $priceVariantName,
+            'product_cost_variant_id' => $productCostVariantId,
+            'supplier_name' => $supplierName,
+            'supplier_cost' => $supplierCost,
         ]);
     }
 

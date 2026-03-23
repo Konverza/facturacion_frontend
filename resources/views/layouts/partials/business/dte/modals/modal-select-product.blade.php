@@ -42,6 +42,18 @@
                                     Si no se selecciona variante, se utilizará el precio base.
                                 </p>
                             </div>
+                            <div class="mt-4 hidden" id="product-cost-variant-container">
+                                <label for="product_cost_variant_id" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    Proveedor
+                                </label>
+                                <select name="product_cost_variant_id" id="product_cost_variant_id"
+                                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500">
+                                    <option value="">Precio base del producto</option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" id="product-cost-variant-help">
+                                    Selecciona proveedor para usar su precio vinculado (si aplica).
+                                </p>
+                            </div>
                             <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                                 <div class="flex-1">
                                     <x-input type="number" label="Cantidad" name="cantidad" id="count" required

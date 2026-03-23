@@ -44,6 +44,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::resource('/quotations', QuotationController::class);
     Route::post('/quotations/{id}/convert', [QuotationController::class, 'convert'])->name('quotations.convert');
     Route::get('/quotations/{id}/pdf', [QuotationController::class, 'pdf'])->name('quotations.pdf');
+    Route::get('/quotations/{id}/profitability-pdf', [QuotationController::class, 'profitabilityPdf'])->name('quotations.profitability-pdf');
     Route::resource("/documents", DocumentController::class);
     Route::get("/documents/{codGeneracion}", [DocumentController::class, "show"])->name('documents.show');
     

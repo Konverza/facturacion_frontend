@@ -98,7 +98,11 @@
                 </div>
                 @if($business->price_variants_enabled)
                     <div class="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-                        <h2 class="mb-4 text-lg font-semibold text-primary-600 dark:text-primary-300">Variantes de precio</h2>
+                        <div class="mb-4 flex items-center justify-between gap-3">
+                            <h2 class="text-lg font-semibold text-primary-600 dark:text-primary-300">Variantes de precio</h2>
+                            <x-button type="button" typeButton="secondary" size="small" icon="plus" text="Nueva variante"
+                                id="btn-add-new-price-variant" />
+                        </div>
                         <p class="mb-4 text-xs text-gray-500 dark:text-gray-400">
                             Deja los campos vacíos para usar el precio base en esa variante.
                         </p>
@@ -126,7 +130,193 @@
                                 </div>
                             @endforeach
                         </div>
+
+                        @php
+                            $oldNewPriceVariants = old('new_price_variants', []);
+                        @endphp
+                        <div class="mt-5 border-t border-dashed border-gray-300 pt-4 dark:border-gray-700">
+                            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Crear variantes nuevas</h3>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Puedes crear variantes aquí sin salir del formulario.
+                            </p>
+
+                            <div class="mt-3 space-y-3" id="new-price-variants-wrapper" data-next-index="{{ count($oldNewPriceVariants) }}">
+                                @foreach ($oldNewPriceVariants as $index => $newVariant)
+                                    <div class="new-price-variant-row rounded-lg border border-gray-200 p-3 dark:border-gray-700" data-new-index="{{ $index }}">
+                                        <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+                                            <div class="md:col-span-2">
+                                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de variante</label>
+                                                <input type="text" name="new_price_variants[{{ $index }}][name]"
+                                                    value="{{ $newVariant['name'] ?? '' }}" placeholder="Ej: Precio proveedor A"
+                                                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Precio sin IVA</label>
+                                                <input type="number" step="0.00000001" min="0"
+                                                    name="new_price_variants[{{ $index }}][price_without_iva]"
+                                                    value="{{ $newVariant['price_without_iva'] ?? '' }}"
+                                                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Precio con IVA</label>
+                                                <div class="flex items-center gap-2">
+                                                    <input type="number" step="0.00000001" min="0"
+                                                        name="new_price_variants[{{ $index }}][price_with_iva]"
+                                                        value="{{ $newVariant['price_with_iva'] ?? '' }}"
+                                                        class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                                    <button type="button" class="remove-new-price-variant rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Quitar</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <template id="new-price-variant-template">
+                                <div class="new-price-variant-row rounded-lg border border-gray-200 p-3 dark:border-gray-700" data-new-index="__INDEX__">
+                                    <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+                                        <div class="md:col-span-2">
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Nombre de variante</label>
+                                            <input type="text" name="new_price_variants[__INDEX__][name]"
+                                                value="" placeholder="Ej: Precio proveedor A"
+                                                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Precio sin IVA</label>
+                                            <input type="number" step="0.00000001" min="0"
+                                                name="new_price_variants[__INDEX__][price_without_iva]"
+                                                value=""
+                                                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                        </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Precio con IVA</label>
+                                            <div class="flex items-center gap-2">
+                                                <input type="number" step="0.00000001" min="0"
+                                                    name="new_price_variants[__INDEX__][price_with_iva]"
+                                                    value=""
+                                                    class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                                <button type="button" class="remove-new-price-variant rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Quitar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
+                @endif
+
+                @if($business->enable_product_costs)
+                    @php
+                        $oldCostVariants = old('cost_variants');
+                        if (!is_array($oldCostVariants)) {
+                            $oldCostVariants = ($productCostVariants ?? collect())
+                                ->map(function ($variant) {
+                                    return [
+                                        'nombre_proveedor' => $variant->nombre_proveedor,
+                                        'costo_final' => $variant->costo_final,
+                                        'price_variant_id' => $variant->price_variant_id,
+                                    ];
+                                })
+                                ->values()
+                                ->toArray();
+                        }
+
+                        if (count($oldCostVariants) === 0) {
+                            $oldCostVariants = [[
+                                'nombre_proveedor' => '',
+                                'costo_final' => '',
+                                'price_variant_id' => '',
+                            ]];
+                        }
+                    @endphp
+                    <div class="mt-6 rounded-lg border border-gray-200 p-4 dark:border-gray-700" id="product-cost-variants-card">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="text-lg font-semibold text-primary-600 dark:text-primary-300">Costos por proveedor</h2>
+                            <x-button type="button" typeButton="secondary" size="small" icon="plus" text="Agregar proveedor"
+                                id="btn-add-cost-variant" />
+                        </div>
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            Agrega uno o más proveedores. Puedes vincular una variante de precio para calcular la ganancia con ese precio.
+                        </p>
+
+                        <div class="mt-4 space-y-3" id="product-cost-variants-wrapper" data-next-index="{{ count($oldCostVariants) }}">
+                            @foreach ($oldCostVariants as $index => $costVariant)
+                                <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700 product-cost-variant-row" data-row-index="{{ $index }}">
+                                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                        <div class="flex-1">
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Proveedor</label>
+                                            <input type="text" placeholder="Ej: Proveedor Norte"
+                                                name="cost_variants[{{ $index }}][nombre_proveedor]"
+                                                value="{{ $costVariant['nombre_proveedor'] ?? '' }}"
+                                                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Costo final</label>
+                                            <input type="number" placeholder="0.00" step="0.00000001" min="0"
+                                                name="cost_variants[{{ $index }}][costo_final]"
+                                                value="{{ $costVariant['costo_final'] ?? '' }}"
+                                                class="provider-cost-input block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Variante de precio (opcional)</label>
+                                            <select name="cost_variants[{{ $index }}][price_variant_id]"
+                                                class="provider-price-variant-select block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                                <option value="">Precio base</option>
+                                                @foreach ($priceVariants as $variant)
+                                                    <option value="{{ $variant->id }}" {{ (string) ($costVariant['price_variant_id'] ?? '') === (string) $variant->id ? 'selected' : '' }}>
+                                                        {{ $variant->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="sm:pt-7">
+                                            <x-button type="button" typeButton="danger" size="small" icon="trash" text="Quitar"
+                                                class="remove-cost-variant" />
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 text-xs text-gray-600 dark:text-gray-300 provider-gain-label" data-role="gain-text">
+                                        0.00% de ganancia con este proveedor
+                                    </p>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <template id="product-cost-variant-row-template">
+                        <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700 product-cost-variant-row" data-row-index="__INDEX__">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <div class="flex-1">
+                                    <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Proveedor</label>
+                                    <input type="text" placeholder="Ej: Proveedor Norte"
+                                        name="cost_variants[__INDEX__][nombre_proveedor]" value=""
+                                        class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                </div>
+                                <div class="flex-1">
+                                    <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Costo final</label>
+                                    <input type="number" placeholder="0.00" step="0.00000001" min="0"
+                                        name="cost_variants[__INDEX__][costo_final]" value=""
+                                        class="provider-cost-input block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                                </div>
+                                <div class="flex-1">
+                                    <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Variante de precio (opcional)</label>
+                                    <select name="cost_variants[__INDEX__][price_variant_id]"
+                                        class="provider-price-variant-select block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-600 focus:ring-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                        <option value="">Precio base</option>
+                                        @foreach ($priceVariants as $variant)
+                                            <option value="{{ $variant->id }}">{{ $variant->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="sm:pt-7">
+                                    <x-button type="button" typeButton="danger" size="small" icon="trash" text="Quitar"
+                                        class="remove-cost-variant" />
+                                </div>
+                            </div>
+                            <p class="mt-2 text-xs text-gray-600 dark:text-gray-300 provider-gain-label" data-role="gain-text">
+                                0.00% de ganancia con este proveedor
+                            </p>
+                        </div>
+                    </template>
                 @endif
                 <div class="mt-4 flex flex-col gap-4 sm:flex-row">
                     <x-input type="toggle" label="Guardar inventario para este producto" name="has_stock"
@@ -305,6 +495,191 @@
                         reader.readAsDataURL(file);
                     }
                 });
+
+                const parseNumber = (value) => {
+                    const n = parseFloat(value);
+                    return Number.isFinite(n) ? n : 0;
+                };
+
+                const getPriceWithoutIvaFromVariantSelect = (selectedVariantId, fallback) => {
+                    if (!selectedVariantId) {
+                        return fallback;
+                    }
+
+                    if (String(selectedVariantId).startsWith("new:")) {
+                        const newIndex = String(selectedVariantId).replace("new:", "");
+                        const dynamicInput = $("input[name='new_price_variants[" + newIndex + "][price_without_iva]']");
+                        if (dynamicInput.length === 0) {
+                            return fallback;
+                        }
+
+                        const dynamicValue = parseFloat(dynamicInput.val());
+                        return Number.isFinite(dynamicValue) ? dynamicValue : fallback;
+                    }
+
+                    const variantInput = $("input[name='price_variants[" + selectedVariantId + "][price_without_iva]']");
+                    if (variantInput.length === 0) {
+                        return fallback;
+                    }
+
+                    const variantValue = parseFloat(variantInput.val());
+                    return Number.isFinite(variantValue) ? variantValue : fallback;
+                };
+
+                const getSalePriceWithoutIva = (row) => {
+                    const basePrice = parseNumber($("#price-not-iva").val());
+                    const selectedVariantId = row.find(".provider-price-variant-select").val();
+
+                    return getPriceWithoutIvaFromVariantSelect(selectedVariantId, basePrice);
+                };
+
+                const syncProviderVariantOptionsFromNewRows = () => {
+                    const providerSelects = $(".provider-price-variant-select");
+                    if (providerSelects.length === 0) {
+                        return;
+                    }
+
+                    const dynamicOptions = [];
+                    $(".new-price-variant-row").each(function() {
+                        const row = $(this);
+                        const index = row.data("new-index");
+                        const name = (row.find("input[name$='[name]']").val() || "").trim();
+
+                        if (!name || index === undefined || index === null) {
+                            return;
+                        }
+
+                        dynamicOptions.push({
+                            value: "new:" + index,
+                            label: name + " (nueva)",
+                        });
+                    });
+
+                    providerSelects.each(function() {
+                        const select = $(this);
+                        const prev = select.val();
+
+                        select.find("option[data-dynamic-new='1']").remove();
+
+                        dynamicOptions.forEach((opt) => {
+                            if (select.find("option[value='" + opt.value + "']").length === 0) {
+                                const option = new Option(opt.label, opt.value);
+                                $(option).attr("data-dynamic-new", "1");
+                                select.append(option);
+                            }
+                        });
+
+                        if (prev && select.find("option[value='" + prev + "']").length > 0) {
+                            select.val(prev);
+                        }
+                    });
+                };
+
+                const updateGainLabelForRow = (row) => {
+                    const cost = parseNumber(row.find(".provider-cost-input").val());
+                    const salePrice = getSalePriceWithoutIva(row);
+                    const label = row.find("[data-role='gain-text']");
+
+                    if (cost <= 0) {
+                        label.text("0.00% de ganancia con este proveedor");
+                        return;
+                    }
+
+                    const gain = ((salePrice - cost) / cost) * 100;
+                    label.text(gain.toFixed(2) + "% de ganancia con este proveedor");
+                };
+
+                const updateAllGainLabels = () => {
+                    $(".product-cost-variant-row").each(function() {
+                        updateGainLabelForRow($(this));
+                    });
+                };
+
+                $(document).on("input", "#price-not-iva, .provider-cost-input, input[name^='price_variants'][name$='[price_without_iva]'], input[name^='new_price_variants'][name$='[price_without_iva]']", function() {
+                    updateAllGainLabels();
+                });
+
+                $(document).on("change", ".provider-price-variant-select", function() {
+                    updateGainLabelForRow($(this).closest(".product-cost-variant-row"));
+                });
+
+                $(document).on("click", ".remove-cost-variant", function() {
+                    const rows = $(".product-cost-variant-row");
+                    if (rows.length <= 1) {
+                        $(this).closest(".product-cost-variant-row").find("input, select").val("");
+                        updateAllGainLabels();
+                        return;
+                    }
+                    $(this).closest(".product-cost-variant-row").remove();
+                    updateAllGainLabels();
+                });
+
+                $("#btn-add-cost-variant").on("click", function() {
+                    const wrapper = $("#product-cost-variants-wrapper");
+                    const template = $("#product-cost-variant-row-template").html();
+                    const nextIndex = parseInt(wrapper.attr("data-next-index"), 10) || 0;
+
+                    wrapper.append(template.replaceAll("__INDEX__", String(nextIndex)));
+                    wrapper.attr("data-next-index", String(nextIndex + 1));
+                    syncProviderVariantOptionsFromNewRows();
+                    updateAllGainLabels();
+                });
+
+                const addNewPriceVariantRow = () => {
+                    const wrapper = $("#new-price-variants-wrapper");
+                    if (wrapper.length === 0) {
+                        return;
+                    }
+
+                    const template = $("#new-price-variant-template").html();
+                    const nextIndex = parseInt(wrapper.attr("data-next-index"), 10) || 0;
+                    wrapper.append(template.replaceAll("__INDEX__", String(nextIndex)));
+                    wrapper.attr("data-next-index", String(nextIndex + 1));
+                    syncProviderVariantOptionsFromNewRows();
+                };
+
+                $("#btn-add-new-price-variant").on("click", function() {
+                    addNewPriceVariantRow();
+                });
+
+                $(document).on("click", ".remove-new-price-variant", function() {
+                    $(this).closest(".new-price-variant-row").remove();
+                    syncProviderVariantOptionsFromNewRows();
+                    updateAllGainLabels();
+                });
+
+                $(document).on("input", "input[name^='new_price_variants'][name$='[name]']", function() {
+                    syncProviderVariantOptionsFromNewRows();
+                });
+
+                $(document).on("input", "input[name^='new_price_variants']", function() {
+                    const input = $(this);
+                    const name = input.attr("name") || "";
+                    const match = name.match(/new_price_variants\[(\d+)\]\[(price_without_iva|price_with_iva)\]/);
+                    if (!match) {
+                        return;
+                    }
+
+                    const index = match[1];
+                    const field = match[2];
+                    const value = parseFloat(input.val()) || 0;
+
+                    if (field === "price_without_iva") {
+                        $("input[name='new_price_variants[" + index + "][price_with_iva]']").val((value * 1.13).toFixed(8));
+                    } else {
+                        $("input[name='new_price_variants[" + index + "][price_without_iva]']").val((value / 1.13).toFixed(8));
+                    }
+
+                    updateAllGainLabels();
+                });
+
+                if ($("#new-price-variants-wrapper").length > 0 && $("#new-price-variants-wrapper .new-price-variant-row").length === 0) {
+                    addNewPriceVariantRow();
+                }
+
+                syncProviderVariantOptionsFromNewRows();
+
+                updateAllGainLabels();
             });
         </script>
     @endpush

@@ -17,7 +17,10 @@ class BusinessProductMovement extends Model
         'producto',
         'descripcion',
         'price_variant_id',
-        'price_variant_name'
+        'price_variant_name',
+        'product_cost_variant_id',
+        'supplier_name',
+        'supplier_cost'
     ];
 
     public function businessProduct()
@@ -33,5 +36,10 @@ class BusinessProductMovement extends Model
     public function puntoVenta()
     {
         return $this->belongsTo(PuntoVenta::class, 'punto_venta_id');
+    }
+
+    public function productCostVariant()
+    {
+        return $this->belongsTo(BusinessProductCostVariant::class, 'product_cost_variant_id');
     }
 }

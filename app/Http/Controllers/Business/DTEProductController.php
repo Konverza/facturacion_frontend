@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessProduct;
 use App\Models\Business;
 use App\Models\BusinessPriceVariant;
+use App\Models\BusinessProductCostVariant;
 use Illuminate\Support\Facades\DB;
 
 
@@ -26,6 +27,7 @@ class DTEProductController extends Controller
         $customer = session("dte")["customer"] ?? null;
         $business = Business::find(session('business'));
         $priceVariantsEnabled = (bool) ($business?->price_variants_enabled);
+        $productCostsEnabled = (bool) ($business?->enable_product_costs);
         // Normalizar: convertir strings vacíos en null
         $sucursalId = $request->sucursal_id && $request->sucursal_id !== '' ? $request->sucursal_id : null;
         $posId = $request->pos_id && $request->pos_id !== '' ? $request->pos_id : null;
@@ -199,6 +201,28 @@ class DTEProductController extends Controller
                 ->values();
         }
 
+        $productCostVariants = [];
+        if ($productCostsEnabled) {
+            $productCostVariants = $product->costVariants()
+                ->with('priceVariant')
+                ->orderBy('nombre_proveedor')
+                ->get()
+                ->map(function ($costVariant) use ($product) {
+                    $resolved = $product->resolvePriceForCostVariant($costVariant->id);
+
+                    return [
+                        'id' => $costVariant->id,
+                        'nombre_proveedor' => $costVariant->nombre_proveedor,
+                        'costo_final' => (float) $costVariant->costo_final,
+                        'price_variant_id' => $costVariant->price_variant_id,
+                        'price_variant_name' => $costVariant->priceVariant?->name,
+                        'effective_price_without_iva' => (float) $resolved['without_iva'],
+                        'effective_price_with_iva' => (float) $resolved['with_iva'],
+                    ];
+                })
+                ->values();
+        }
+
         // Log temporal para debugging
         \Log::info('DTEProductController::select - Stock Debug', [
             'product_id' => $product->id,
@@ -224,6 +248,8 @@ class DTEProductController extends Controller
             "price_variants_enabled" => $priceVariantsEnabled,
             "price_variants" => $priceVariants,
             "customer_price_variant_id" => $customerVariantId,
+            "enable_product_costs" => $productCostsEnabled,
+            "product_cost_variants" => $productCostVariants,
         ]);
     }
 
@@ -234,6 +260,7 @@ class DTEProductController extends Controller
             $customer = session("dte")["customer"] ?? null;
             $business = Business::find(session('business'));
             $priceVariantsEnabled = (bool) ($business?->price_variants_enabled);
+            $productCostsEnabled = (bool) ($business?->enable_product_costs);
 
             if (!isset($this->dte["products"]) || !is_array($this->dte["products"])) {
                 $this->dte["products"] = [];
@@ -332,8 +359,31 @@ class DTEProductController extends Controller
 
             $selectedPriceVariantId = null;
             $selectedPriceVariantName = null;
+            $selectedCostVariantId = null;
+            $selectedSupplierName = null;
+            $selectedSupplierCost = null;
 
-            if ($priceVariantsEnabled) {
+            if ($productCostsEnabled) {
+                $requestCostVariantId = $request->input('product_cost_variant_id');
+                if ($requestCostVariantId) {
+                    $costVariant = BusinessProductCostVariant::where('business_product_id', $business_product->id)
+                        ->where('id', $requestCostVariantId)
+                        ->first();
+
+                    if ($costVariant) {
+                        $selectedCostVariantId = (int) $costVariant->id;
+                        $selectedSupplierName = $costVariant->nombre_proveedor;
+                        $selectedSupplierCost = (float) $costVariant->costo_final;
+
+                        if ($costVariant->price_variant_id) {
+                            $selectedPriceVariantId = (int) $costVariant->price_variant_id;
+                            $selectedPriceVariantName = $costVariant->priceVariant?->name;
+                        }
+                    }
+                }
+            }
+
+            if ($priceVariantsEnabled && !$selectedCostVariantId) {
                 $customerVariantId = $customer
                     ? (is_array($customer) ? ($customer['price_variant_id'] ?? null) : ($customer->price_variant_id ?? null))
                     : null;
@@ -358,12 +408,14 @@ class DTEProductController extends Controller
             foreach ($this->dte["products"] as &$product) {
                 $current_doc = $product["documento_relacionado"] ?? '';
                 $currentVariantId = $product["price_variant_id"] ?? null;
+                $currentCostVariantId = $product["product_cost_variant_id"] ?? null;
 
                 if (
                     $product["product_id"] == $business_product->id &&
                     $product["tipo"] === $request->tipo &&
                     $current_doc === $incoming_doc &&
-                    $currentVariantId == $selectedPriceVariantId
+                    $currentVariantId == $selectedPriceVariantId &&
+                    $currentCostVariantId == $selectedCostVariantId
                 ) {
                     $found = true;
 
@@ -427,7 +479,15 @@ class DTEProductController extends Controller
                 }
 
                 if ($priceVariantsEnabled) {
-                    $resolved = $business_product->resolvePriceForVariant($selectedPriceVariantId);
+                    if ($selectedCostVariantId) {
+                        $resolved = $business_product->resolvePriceForCostVariant($selectedCostVariantId);
+                    } else {
+                        $resolved = $business_product->resolvePriceForVariant($selectedPriceVariantId);
+                    }
+                    $precio = (float) $resolved['with_iva'];
+                    $precio_sin_tributos = (float) $resolved['without_iva'];
+                } elseif ($selectedCostVariantId) {
+                    $resolved = $business_product->resolvePriceForCostVariant($selectedCostVariantId);
                     $precio = (float) $resolved['with_iva'];
                     $precio_sin_tributos = (float) $resolved['without_iva'];
                 } elseif ($customer && ((is_array($customer) && ($customer['special_price'] ?? false)) || (!is_array($customer) && ($customer->special_price ?? false)))) {
@@ -471,6 +531,9 @@ class DTEProductController extends Controller
                     "documento_relacionado" => $request->documento_relacionado ?? null,
                     "price_variant_id" => $selectedPriceVariantId,
                     "price_variant_name" => $selectedPriceVariantName,
+                    "product_cost_variant_id" => $selectedCostVariantId,
+                    "supplier_name" => $selectedSupplierName,
+                    "supplier_cost" => $selectedSupplierCost,
                     "precio_unitario" => ($this->dte["type"] === "14") ? $precio_sin_tributos : ($request->tipo == "Gravada" ? $precio : $precio_sin_tributos),
                 ];
             }

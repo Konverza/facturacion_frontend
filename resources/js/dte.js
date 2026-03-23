@@ -139,6 +139,28 @@ $(document).ready(function () {
         };
     }
 
+    function getSelectedCostVariantPrices() {
+        const $form = $("#form-add-product");
+        const baseWithout = parseFloat($form.data("base-price-without-iva")) || 0;
+        const baseWith = parseFloat($form.data("base-price-with-iva")) || 0;
+
+        const $select = $("#product_cost_variant_id");
+        if ($select.length > 0 && $select.is(":visible")) {
+            const $opt = $select.find("option:selected");
+            const selectedWithout = parseFloat($opt.data("priceWithoutIva"));
+            const selectedWith = parseFloat($opt.data("priceWithIva"));
+
+            if (!isNaN(selectedWithout) || !isNaN(selectedWith)) {
+                return {
+                    without: !isNaN(selectedWithout) ? selectedWithout : baseWithout,
+                    with: !isNaN(selectedWith) ? selectedWith : baseWith,
+                };
+            }
+        }
+
+        return null;
+    }
+
     function applySelectedProductPrice() {
         const $form = $("#form-add-product");
         const baseWith = parseFloat($form.data("base-price-with-iva"));
@@ -150,7 +172,8 @@ $(document).ready(function () {
 
         const dteType = $form.data("dte-type");
         const type_sale = $("#type-sale").val();
-        const prices = getSelectedVariantPrices();
+        const costVariantPrices = getSelectedCostVariantPrices();
+        const prices = costVariantPrices || getSelectedVariantPrices();
 
         let productPrice = dteType !== "01" ? prices.without : prices.with;
 
@@ -350,6 +373,8 @@ $(document).ready(function () {
 
                 const $variantContainer = $("#price-variant-container");
                 const $variantSelect = $("#price_variant_id");
+                const $costContainer = $("#product-cost-variant-container");
+                const $costSelect = $("#product_cost_variant_id");
 
                 if (data.price_variants_enabled && Array.isArray(data.price_variants) && data.price_variants.length > 0) {
                     $variantSelect.empty();
@@ -378,6 +403,24 @@ $(document).ready(function () {
                     $variantContainer.addClass("hidden");
                 }
 
+                if (data.enable_product_costs && Array.isArray(data.product_cost_variants) && data.product_cost_variants.length > 0) {
+                    $costSelect.empty();
+                    $costSelect.append(new Option("Precio base del producto", ""));
+
+                    data.product_cost_variants.forEach((supplier) => {
+                        const option = new Option(supplier.nombre_proveedor, supplier.id);
+                        $(option).attr("data-price-with-iva", supplier.effective_price_with_iva);
+                        $(option).attr("data-price-without-iva", supplier.effective_price_without_iva);
+                        $costSelect.append(option);
+                    });
+
+                    $costContainer.removeClass("hidden");
+                    $("#product-cost-variant-help").text("Selecciona proveedor para usar su precio vinculado (si aplica).");
+                } else {
+                    $costSelect.empty().append(new Option("Precio base del producto", ""));
+                    $costContainer.addClass("hidden");
+                }
+
                 originalProductPrice = null;
                 applySelectedProductPrice();
 
@@ -393,6 +436,10 @@ $(document).ready(function () {
     });
 
     $(document).on("change", "#price_variant_id", function () {
+        applySelectedProductPrice();
+    });
+
+    $(document).on("change", "#product_cost_variant_id", function () {
         applySelectedProductPrice();
     });
 
