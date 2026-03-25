@@ -12,6 +12,45 @@
         <div class="mt-4">
             <livewire:business.tables.clients />
         </div>
+        @if (session('customer_import_summary'))
+            <div class="mt-4 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-sm text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-300">
+                <p class="font-semibold">Resultado de importación</p>
+                <p>
+                    Procesados: {{ session('customer_import_summary.processed', 0) }} |
+                    Actualizados: {{ session('customer_import_summary.updated', 0) }} |
+                    Insertados: {{ session('customer_import_summary.inserted', 0) }} |
+                    Omitidos: {{ session('customer_import_summary.skipped', 0) }}
+                </p>
+            </div>
+        @endif
+
+        @if (session('customer_import_errors') && count(session('customer_import_errors')) > 0)
+            <div class="mt-4 overflow-hidden rounded-lg border border-red-300 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30">
+                <div class="border-b border-red-200 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-900/70 dark:text-red-300">
+                    Filas con error ({{ count(session('customer_import_errors')) }})
+                </div>
+                <div class="max-h-80 overflow-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-red-100 text-left text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                            <tr>
+                                <th class="px-4 py-2">Fila</th>
+                                <th class="px-4 py-2">Documento</th>
+                                <th class="px-4 py-2">Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (session('customer_import_errors') as $rowError)
+                                <tr class="border-t border-red-100 dark:border-red-900/40">
+                                    <td class="px-4 py-2 text-gray-700 dark:text-gray-200">{{ $rowError['row'] ?? '-' }}</td>
+                                    <td class="px-4 py-2 text-gray-700 dark:text-gray-200">{{ $rowError['numDocumento'] ?? '-' }}</td>
+                                    <td class="px-4 py-2 text-gray-700 dark:text-gray-200">{{ $rowError['reason'] ?? 'Error no especificado' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
 
         <x-delete-modal modalId="deleteModal" title="¿Estás seguro de eliminar el cliente"
             message="No podrás recuperar este registro" />
@@ -52,6 +91,46 @@
                                     el nombre de un cliente ya existente, se actualizará el cliente con los nuevos
                                     datos. Si no existe, se creará un nuevo cliente.
                                 </div>
+
+                                <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                                    <p class="mb-2 text-sm font-semibold text-gray-800 dark:text-gray-100">Modo de importación</p>
+                                    <div class="flex flex-col gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                        <label class="inline-flex items-center gap-2">
+                                            <input type="radio" name="import_mode" value="full" checked class="import-mode-radio">
+                                            <span>Importación completa (crea nuevos y actualiza existentes)</span>
+                                        </label>
+                                        <label class="inline-flex items-center gap-2">
+                                            <input type="radio" name="import_mode" value="partial" class="import-mode-radio">
+                                            <span>Actualización parcial (solo actualiza clientes existentes)</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div id="partial-update-fields"
+                                    class="hidden rounded-lg border border-dashed border-indigo-300 bg-indigo-50 p-4 dark:border-indigo-900/70 dark:bg-indigo-950/20">
+                                    <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                                        Campos a actualizar en modo parcial
+                                    </p>
+                                    <p class="mt-1 text-xs text-indigo-700 dark:text-indigo-300">
+                                        El campo <b>Número de Documento</b> siempre es obligatorio en el archivo.
+                                    </p>
+                                    <div class="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-700 dark:text-gray-300 sm:grid-cols-2">
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="tipoDocumento"> Tipo de Documento</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="nrc"> NRC</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="nombre"> Nombre</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="codActividad"> Actividad Económica</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="nombreComercial"> Nombre Comercial</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="departamento"> Departamento</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="municipio"> Municipio</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="complemento"> Dirección</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="telefono"> Teléfono</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="correo"> Correo</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="codPais"> País</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="tipoPersona"> Tipo de Persona</label>
+                                        <label class="inline-flex items-center gap-2"><input type="checkbox" name="update_fields[]" value="special_price"> Aplicar Descuento</label>
+                                    </div>
+                                </div>
+
                                 <x-input type="file" label="Archivo de Clientes" name="file" id="file"
                                     accept=".xlsx" maxSize="3072" />
                             </div>
@@ -120,6 +199,20 @@
 
     @push('scripts')
     <script>
+        const importModeInputs = document.querySelectorAll('.import-mode-radio');
+        const partialFieldsContainer = document.getElementById('partial-update-fields');
+
+        const togglePartialFields = () => {
+            const selectedMode = document.querySelector('.import-mode-radio:checked')?.value;
+            if (!partialFieldsContainer) return;
+            partialFieldsContainer.classList.toggle('hidden', selectedMode !== 'partial');
+        };
+
+        importModeInputs.forEach((input) => {
+            input.addEventListener('change', togglePartialFields);
+        });
+        togglePartialFields();
+
         document.getElementById('share-link-btn')?.addEventListener('click', function() {
             document.getElementById('share-link-container')?.classList.toggle('hidden');
         });

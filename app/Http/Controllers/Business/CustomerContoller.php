@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Exceptions\SheetNotFoundException;
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -389,8 +390,21 @@ class CustomerContoller extends Controller
     {
         try {
             $request->validate([
-                'file' => 'required|file|mimes:xlsx,xls,csv'
+                'file' => 'required|file|mimes:xlsx,xls,csv',
+                'import_mode' => 'nullable|in:full,partial',
+                'update_fields' => 'nullable|array',
+                'update_fields.*' => 'in:tipoDocumento,nrc,nombre,codActividad,nombreComercial,departamento,municipio,complemento,telefono,correo,codPais,tipoPersona,special_price',
             ]);
+
+            $importMode = $request->input('import_mode', 'full');
+            $updateFields = $request->input('update_fields', []);
+
+            if ($importMode === 'partial' && empty($updateFields)) {
+                return back()
+                    ->with('error', 'Error')
+                    ->with('error_message', 'Debe seleccionar al menos un campo para actualizar en modo parcial');
+            }
+
             $departamentos = $this->octopus_service->simpleDepartamentos();
             $tipos_documentos = $this->octopus_service->getCatalog("CAT-022");
             $tipos_personas = [
@@ -400,21 +414,46 @@ class CustomerContoller extends Controller
             $actividades_economicas = $this->octopus_service->getCatalog("CAT-019");
             $countries = $this->octopus_service->getCatalog("CAT-020");
             $business_id = session("business");
-            Excel::import(new BusinessCustomerImport(
+            $import = new BusinessCustomerImport(
                 $business_id,
                 $tipos_documentos,
                 $tipos_personas,
                 $actividades_economicas,
                 $countries,
-                $departamentos
-            ), $request->file('file'));
-            // $business_id = session("business");
-            // $unidades_medidas = $this->unidades_medidas;
-            // Excel::import(new BusinessProductImport($business_id, $unidades_medidas), $request->file('file'));
+                $departamentos,
+                $importMode,
+                $updateFields
+            );
+
+            Excel::import($import, $request->file('file'));
+
+            $summary = $import->getSummary();
+            $errors = $import->getErrors();
+
+            if (($summary['processed'] ?? 0) === 0) {
+                return redirect()->route('business.customers.index')
+                    ->with('warning', 'Importación sin datos')
+                    ->with('warning_message', 'No se encontraron filas con datos para procesar');
+            }
+
+            $successMessage = "Procesados: {$summary['processed']}. Actualizados: {$summary['updated']}. Insertados: {$summary['inserted']}. Omitidos: {$summary['skipped']}.";
+
+            if (($summary['errors'] ?? 0) > 0) {
+                return redirect()->route('business.customers.index')
+                    ->with('warning', 'Importación completada con observaciones')
+                    ->with('warning_message', $successMessage)
+                    ->with('customer_import_errors', $errors)
+                    ->with('customer_import_summary', $summary);
+            }
 
             return redirect()->route('business.customers.index')
                 ->with('success', 'Clientes importados')
-                ->with("success_message", "Los clientes han sido importados correctamente");
+                ->with("success_message", $successMessage)
+                ->with('customer_import_summary', $summary);
+        } catch (SheetNotFoundException $e) {
+            return back()
+                ->with('error', 'Error')
+                ->with('error_message', 'El archivo debe contener una hoja llamada "Datos" para poder importar clientes');
         } catch (\Exception $e) {
             Log::error('Error al importar clientes: ' . $e->getMessage());
             return back()->with('error', 'Error')->with("error_message", "Ha ocurrido un error al importar los clientes");
