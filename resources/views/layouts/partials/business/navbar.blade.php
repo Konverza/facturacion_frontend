@@ -418,7 +418,7 @@
                 </li>
             @endif
 
-            <li data-menu-item data-menu-level="main">
+            {{-- <li data-menu-item data-menu-level="main">
                 <button type="button" data-accordion-trigger="dropdown-compras" data-panel-id="dropdown-compras"
                     aria-controls="dropdown-compras" aria-expanded="false" data-menu-text="Compras"
                     data-tooltip-target="tooltip-compras" data-menu-keywords="compras documentos recibidos"
@@ -451,7 +451,7 @@
                         </div>
                     </li>
                 </ul>
-            </li>
+            </li> --}}
 
             @if ($business->pos_inventory_enabled)
                 <li data-menu-item data-menu-level="main">

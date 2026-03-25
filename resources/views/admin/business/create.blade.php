@@ -6,10 +6,10 @@
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl md:text-4xl">
                 Nuevo negocio
             </h1>
-            @if (env('AMBIENTE_HACIENDA') == '01')
+            {{-- @if (env('AMBIENTE_HACIENDA') == '01')
                 <x-button type="button" icon="plus" typeButton="primary" text="Obtener del ambiente de pruebas"
                     id="obtener-pruebas" />
-            @endif
+            @endif --}}
             <a href="{{ Route('admin.business.index') }}"
                 class="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                 <x-icon icon="arrow-back" class="size-5" />
@@ -23,7 +23,7 @@
             <form class="mt-4 flex flex-col pb-4" action="{{ Route('admin.business.store') }}" method="POST"
                 enctype="multipart/form-data">
                 @csrf
-                @if (env('AMBIENTE_HACIENDA') == '00')
+                {{-- @if (env('AMBIENTE_HACIENDA') == '00')
                     <!-- Búsqueda por ID de Registro FE -->
                     <div
                         class="mt-2 rounded-md border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -49,9 +49,8 @@
                     </div>
                     <!-- Fin búsqueda por ID -->
                 @else
-                    {{-- Viene de Pruebas, tomar datos prellenados --}}
                     <input type="hidden" name="id_registro" value="{{ $prefill['id_registro'] ?? '' }}">
-                @endif
+                @endif --}}
                 <div class="flex flex-col gap-6 xl:flex-row">
                     <div class="flex-1">
                         <div class="mt-4">
