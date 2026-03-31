@@ -177,6 +177,18 @@ Breadcrumbs::for("business.quotations.edit", function (BreadcrumbTrail $trail, s
     $trail->push($icon . "Editar", route("business.quotations.edit", $id));
 });
 
+Breadcrumbs::for("business.quotation-payment-methods.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='currency-dollar' class='w-4 h-4'/>");
+    $trail->parent("business.quotations.index");
+    $trail->push($icon . "Formas de pago", route("business.quotation-payment-methods.index"));
+});
+
+Breadcrumbs::for("business.quotation-delivery-times.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='clock' class='w-4 h-4'/>");
+    $trail->parent("business.quotations.index");
+    $trail->push($icon . "Tiempos de entrega", route("business.quotation-delivery-times.index"));
+});
+
 // Bolsón de Facturas
 Breadcrumbs::for("business.invoice-bags.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='files' class='w-4 h-4'/>");

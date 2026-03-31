@@ -114,11 +114,7 @@
     <div class="footer">
         <p><b>{{ $meta['thank_you_message'] ?? 'Gracias por su preferencia.' }}</b></p>
         <p><b>Tiempo de entrega:</b> {{ $meta['tiempo_entrega'] ?? 'Coordinado con el cliente' }}</p>
-        <p><b>Formas de pago:</b> {{ $meta['forma_pago_tipo'] ?? 'Contado' }}
-            @if (!empty($meta['forma_pago_detalle']))
-                - {{ $meta['forma_pago_detalle'] }}
-            @endif
-        </p>
+        <p><b>Formas de pago:</b> {{ $meta['forma_pago_tipo'] ?? 'Contado' }}</p>
         <p><b>Terminos y condiciones:</b> {{ $meta['terms_conditions'] ?? 'Sin terminos adicionales.' }}</p>
     </div>
 </body>

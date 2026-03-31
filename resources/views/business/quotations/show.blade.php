@@ -40,7 +40,6 @@
                     <li><b>Vigencia:</b> {{ $meta['vigencia_dias'] ?? 15 }} dias</li>
                     <li><b>Tiempo de entrega:</b> {{ $meta['tiempo_entrega'] ?? 'N/A' }}</li>
                     <li><b>Forma de pago:</b> {{ $meta['forma_pago_tipo'] ?? 'N/A' }}</li>
-                    <li><b>Detalle pago:</b> {{ $meta['forma_pago_detalle'] ?? 'N/A' }}</li>
                 </ul>
             </div>
         </div>

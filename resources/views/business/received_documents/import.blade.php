@@ -25,6 +25,7 @@
                     failedDtes: {{ $activeProcess->failed_dtes }},
                     startedAt: '{{ $activeProcess->started_at?->diffForHumans() ?? 'N/A' }}',
                     errorMessage: '{{ $activeProcess->error_message }}',
+                    fetch: @js(data_get($activeProcess->metadata, 'fetch', [])),
                     async updateProgress() {
                         try {
                             const response = await fetch(`/business/received-documents/import/progress/${this.processId}`);
@@ -36,6 +37,7 @@
                                 this.processedDtes = data.process.processed_dtes;
                                 this.failedDtes = data.process.failed_dtes;
                                 this.errorMessage = data.process.error_message;
+                                this.fetch = data.process.fetch || {};
                 
                                 // Si completó o falló, recargar página después de 2 segundos
                                 if (!data.process.is_in_progress) {
@@ -91,6 +93,25 @@
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm" x-show="fetch && fetch.total_units">
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded">
+                            <p class="text-gray-600 dark:text-gray-400">Consultas planificadas</p>
+                            <p class="text-2xl font-bold text-blue-600" x-text="fetch.total_units || 0"></p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded">
+                            <p class="text-gray-600 dark:text-gray-400">Consultas completadas</p>
+                            <p class="text-2xl font-bold text-green-600" x-text="fetch.completed_units || 0"></p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded">
+                            <p class="text-gray-600 dark:text-gray-400">Consultas pendientes</p>
+                            <p class="text-2xl font-bold text-amber-600" x-text="fetch.pending_units || 0"></p>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded">
+                            <p class="text-gray-600 dark:text-gray-400">Consultas a Reintentar</p>
+                            <p class="text-2xl font-bold text-purple-600" x-text="fetch.fallback_to_daily_count || 0"></p>
+                        </div>
+                    </div>
+
                     <div x-show="errorMessage" class="bg-red-100 dark:bg-red-900/20 p-3 rounded">
                         <p class="text-red-800 dark:text-red-200" x-text="errorMessage"></p>
                     </div>
@@ -101,9 +122,17 @@
             <div class="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
                 x-data="{
                     loading: false,
+                    fechaDesde: '',
+                    fechaHasta: '',
+                    tipoDte: '',
                     async startImport() {
                         if (this.loading) return;
                         if (!confirm('¿Está seguro de iniciar la importación de DTEs desde Hacienda?')) return;
+
+                        if ((this.fechaDesde && !this.fechaHasta) || (!this.fechaDesde && this.fechaHasta)) {
+                            alert('Debe indicar ambas fechas (desde y hasta) o dejar ambas vacías.');
+                            return;
+                        }
                 
                         this.loading = true;
                         try {
@@ -111,8 +140,14 @@
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
                                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                }
+                                },
+                                body: JSON.stringify({
+                                    fecha_desde: this.fechaDesde || null,
+                                    fecha_hasta: this.fechaHasta || null,
+                                    tipo_dte: this.tipoDte || null,
+                                }),
                             });
                             const data = await response.json();
                 
@@ -137,6 +172,35 @@
                     <p class="text-gray-600 dark:text-gray-400 mb-6">
                         Inicie un nuevo proceso para descargar y procesar los DTEs recibidos desde el portal de Hacienda.
                     </p>
+
+                    <div class="mx-auto mb-6 max-w-4xl">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                            <div class="text-left">
+                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha desde (opcional)</label>
+                                <input type="date" x-model="fechaDesde"
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div class="text-left">
+                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha hasta (opcional)</label>
+                                <input type="date" x-model="fechaHasta"
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            <div class="text-left">
+                                <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo DTE (opcional)</label>
+                                <select x-model="tipoDte"
+                                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                                    <option value="">Todos</option>
+                                    @foreach ($types as $code => $label)
+                                        <option value="{{ $code }}">{{ $code }} - {{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-left text-xs text-gray-500 dark:text-gray-400">
+                            Si no define fechas, se importará de forma automática desde la última obtención completada (o desde 01/01/2024 si no existe historial).
+                        </p>
+                    </div>
+
                     <button @click="startImport()" :disabled="loading"
                         class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
                         <x-icon icon="play" class="h-5 w-5" x-show="!loading" />

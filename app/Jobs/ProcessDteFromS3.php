@@ -46,16 +46,12 @@ class ProcessDteFromS3 implements ShouldQueue
             if (isset($response['error']) && $response['error']) {
                 // Marcar como fallido pero continuar con los demás
                 $this->importProcess->incrementFailed();
-                
-                // Guardar error en metadata
-                $metadata = $this->importProcess->metadata ?? [];
-                $metadata['errors'] = $metadata['errors'] ?? [];
-                $metadata['errors'][] = [
+
+                $this->importProcess->addProcessingError([
                     'index' => $this->index,
                     'codigo_generacion' => $this->dte['codigoGeneracion'] ?? 'N/A',
                     'error' => $response['message'] ?? 'Error desconocido',
-                ];
-                $this->importProcess->update(['metadata' => $metadata]);
+                ]);
 
             } else {
                 // Incrementar contador de procesados
@@ -66,16 +62,12 @@ class ProcessDteFromS3 implements ShouldQueue
 
             // Marcar como fallido
             $this->importProcess->incrementFailed();
-            
-            // Guardar error en metadata
-            $metadata = $this->importProcess->metadata ?? [];
-            $metadata['errors'] = $metadata['errors'] ?? [];
-            $metadata['errors'][] = [
+
+            $this->importProcess->addProcessingError([
                 'index' => $this->index,
                 'codigo_generacion' => $this->dte['codigoGeneracion'] ?? 'N/A',
                 'error' => $e->getMessage(),
-            ];
-            $this->importProcess->update(['metadata' => $metadata]);
+            ]);
 
             // No re-lanzar la excepción para no detener el proceso completo
         }
@@ -87,15 +79,11 @@ class ProcessDteFromS3 implements ShouldQueue
     public function failed(\Throwable $exception): void
     {
         $this->importProcess->incrementFailed();
-        
-        // Guardar error en metadata
-        $metadata = $this->importProcess->metadata ?? [];
-        $metadata['errors'] = $metadata['errors'] ?? [];
-        $metadata['errors'][] = [
+
+        $this->importProcess->addProcessingError([
             'index' => $this->index,
             'codigo_generacion' => $this->dte['codigoGeneracion'] ?? 'N/A',
             'error' => $exception->getMessage(),
-        ];
-        $this->importProcess->update(['metadata' => $metadata]);
+        ]);
     }
 }

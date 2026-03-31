@@ -3,10 +3,16 @@
 
 @section('content')
     <section class="my-4 px-4 pb-4">
-        <div class="flex w-full items-center justify-between gap-4">
+        <div class="flex w-full flex-wrap items-center justify-between gap-2">
             <h1 class="text-2xl font-bold text-primary-500 dark:text-primary-300 sm:text-3xl">Cotizaciones</h1>
-            <x-button type="a" href="{{ Route('business.quotations.create') }}" typeButton="primary"
-                text="Nueva cotizacion" icon="plus" class="w-full sm:w-auto" />
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <x-button type="a" href="{{ Route('business.quotation-payment-methods.index') }}" typeButton="secondary"
+                    text="Formas de pago" icon="currency-dollar" class="w-full sm:w-auto" />
+                <x-button type="a" href="{{ Route('business.quotation-delivery-times.index') }}" typeButton="secondary"
+                    text="Tiempos de entrega" icon="clock" class="w-full sm:w-auto" />
+                <x-button type="a" href="{{ Route('business.quotations.create') }}" typeButton="primary"
+                    text="Nueva cotizacion" icon="plus" class="w-full sm:w-auto" />
+            </div>
         </div>
 
         <div class="mt-4">

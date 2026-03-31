@@ -20,6 +20,19 @@ use Illuminate\Support\Facades\Storage;
 class DTERecibidoController extends Controller
 {
     private $octopus_service;
+    private const DTE_TYPES = [
+        '01' => 'Factura Consumidor Final',
+        '03' => 'Comprobante de crédito fiscal',
+        '04' => 'Nota de Remisión',
+        '05' => 'Nota de crédito',
+        '06' => 'Nota de débito',
+        '07' => 'Comprobante de retención',
+        '08' => 'Comprobante de Liquidación',
+        '09' => 'Documento Contable de Liquidación',
+        '11' => 'Factura de exportación',
+        '14' => 'Factura de sujeto excluido',
+        '15' => 'Comprobante de Donación',
+    ];
 
     public function __construct()
     {
@@ -132,7 +145,9 @@ class DTERecibidoController extends Controller
             ->limit(10)
             ->get();
 
-        return view("business.received_documents.import", compact('activeProcess', 'processHistory'));
+        $types = self::DTE_TYPES;
+
+        return view("business.received_documents.import", compact('activeProcess', 'processHistory', 'types'));
     }
 
     public function manualUploadIndex()
@@ -241,6 +256,12 @@ class DTERecibidoController extends Controller
 
     public function startImport(Request $request)
     {
+        $validated = $request->validate([
+            'fecha_desde' => 'nullable|date_format:Y-m-d|required_with:fecha_hasta',
+            'fecha_hasta' => 'nullable|date_format:Y-m-d|required_with:fecha_desde|after_or_equal:fecha_desde',
+            'tipo_dte' => 'nullable|in:' . implode(',', array_keys(self::DTE_TYPES)),
+        ]);
+
         $business_id = Session::get('business') ?? null;
         $business = Business::find($business_id);
         
@@ -273,10 +294,23 @@ class DTERecibidoController extends Controller
             'nit' => $nit,
             'dui' => $dui ?? null,
             'status' => 'pending',
+            'metadata' => [
+                'request_filters' => [
+                    'fecha_desde' => $validated['fecha_desde'] ?? null,
+                    'fecha_hasta' => $validated['fecha_hasta'] ?? null,
+                    'tipo_dte' => $validated['tipo_dte'] ?? null,
+                ],
+            ],
         ]);
 
+        $filters = [
+            'fecha_desde' => $validated['fecha_desde'] ?? null,
+            'fecha_hasta' => $validated['fecha_hasta'] ?? null,
+            'tipo_dte' => $validated['tipo_dte'] ?? null,
+        ];
+
         // Despachar Job
-        DownloadDtesFromHacienda::dispatch($importProcess, $nit, $dui ?? null);
+        DownloadDtesFromHacienda::dispatch($importProcess, $nit, $dui ?? null, $filters);
 
         return response()->json([
             'success' => true,
@@ -302,6 +336,7 @@ class DTERecibidoController extends Controller
                 'completed_at' => $process->completed_at?->diffForHumans(),
                 'error_message' => $process->error_message,
                 'is_in_progress' => $process->isInProgress(),
+                'fetch' => data_get($process->metadata, 'fetch', []),
             ]
         ]);
     }

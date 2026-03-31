@@ -137,44 +137,93 @@ class HaciendaService
         }
     }
 
-    public function fetchDtes()
+    public function fetchDtes(?string $fechaDesde = null, ?string $fechaHasta = null, ?string $tipoDte = null)
+    {
+        $result = $this->fetchDtesWithMeta($fechaDesde, $fechaHasta, $tipoDte);
+
+        return $result['dtes'];
+    }
+
+    public function fetchDtesWithMeta(?string $fechaDesde = null, ?string $fechaHasta = null, ?string $tipoDte = null): array
     {
         $token = $this->getAuthToken();
         
         if (!$token) {
             Log::error("fetchDtes() falló: no hay token", ['nit' => $this->nit]);
-            return [];
+            return [
+                'success' => false,
+                'dtes' => [],
+                'error' => 'No se obtuvo token para Hacienda.',
+            ];
         }
 
         try {
-            $response = Http::withToken($token)->timeout(60)->post($this->hacienda_obtencion_url, [
+            $payload = [
                 'nitEmision' => $this->nit,
                 'duiEmision' => $this->dui ?? $this->nit,
                 'tipoRpt' => "R"
-            ]);
+            ];
+
+            if (!empty($fechaDesde)) {
+                $payload['fechaDesde'] = $fechaDesde;
+            }
+
+            if (!empty($fechaHasta)) {
+                $payload['fechaHasta'] = $fechaHasta;
+            }
+
+            if (!empty($tipoDte)) {
+                $payload['tipoDte'] = $tipoDte;
+            }
+
+            $response = Http::withToken($token)->timeout(60)->post($this->hacienda_obtencion_url, $payload);
 
             if (!$response->successful()) {
                 Log::error("Error en petición a Hacienda", [
                     'nit' => $this->nit,
+                    'payload' => $payload,
                     'status' => $response->status(),
                     'body' => $response->body()
                 ]);
-                return [];
+                return [
+                    'success' => false,
+                    'dtes' => [],
+                    'status_code' => $response->status(),
+                    'error' => 'Error HTTP al consultar Hacienda.',
+                ];
             }
 
             $data = $response->json();
             $status = $data['status'] ?? 'UNKNOWN';
             $body = $data['body'] ?? [];
-            
-            return match ($status) {
-                'OK' => $body,
-                default => [],
-            };
+
+            if ($status === 'OK') {
+                return [
+                    'success' => true,
+                    'dtes' => is_array($body) ? $body : [],
+                    'status' => $status,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'dtes' => [],
+                'status' => $status,
+                'error' => 'Respuesta de Hacienda no OK.',
+            ];
         } catch (\Exception $e) {
             Log::error("Error al obtener DTEs desde Hacienda: " . $e->getMessage(), [
                 'nit' => $this->nit,
+                'fecha_desde' => $fechaDesde,
+                'fecha_hasta' => $fechaHasta,
+                'tipo_dte' => $tipoDte,
             ]);
-            return [];
+
+            return [
+                'success' => false,
+                'dtes' => [],
+                'error' => $e->getMessage(),
+            ];
         }
     }
 

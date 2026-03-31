@@ -66,7 +66,7 @@
                 <th>Descripcion</th>
                 <th>Precio venta seleccionado</th>
                 <th>Precio compra seleccionado</th>
-                <th>% ganancia</th>
+                <th>Ganancia</th>
                 <th>Total linea</th>
             </tr>
         </thead>
@@ -83,7 +83,7 @@
                     $reportTotalSalesBeforeDiscounts += $lineGrossTotal;
                     $reportItemDiscounts += $discount;
                     $reportTotalCosts += $lineCostsTotal;
-                    $profitPercent = $supplierCost > 0 ? (($salePrice - $supplierCost) / $supplierCost) * 100 : null;
+                    $lineProfit = $lineSalesTotal - $lineCostsTotal;
                 @endphp
                 <tr>
                     <td class="text-center">{{ $idx + 1 }}</td>
@@ -98,12 +98,8 @@
                             N/A
                         @endif
                     </td>
-                    <td class="text-right">
-                        @if (!is_null($profitPercent))
-                            {{ number_format($profitPercent, 2) }}%
-                        @else
-                            N/A
-                        @endif
+                    <td class="text-right {{ $lineProfit < 0 ? 'text-danger' : 'text-success' }}">
+                        ${{ number_format($lineProfit, 2) }}
                     </td>
                     <td class="text-right">${{ number_format($lineSalesTotal, 2) }}</td>
                 </tr>

@@ -29,6 +29,8 @@ use App\Http\Controllers\Business\PriceVariantController;
 use App\Http\Controllers\Business\RelatedDocumentsController;
 use App\Http\Controllers\Business\ReportingController;
 use App\Http\Controllers\Business\QuotationController;
+use App\Http\Controllers\Business\QuotationDeliveryTimeController;
+use App\Http\Controllers\Business\QuotationPaymentMethodController;
 use App\Http\Controllers\Business\WhatsAppController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,6 +47,17 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     Route::post('/quotations/{id}/convert', [QuotationController::class, 'convert'])->name('quotations.convert');
     Route::get('/quotations/{id}/pdf', [QuotationController::class, 'pdf'])->name('quotations.pdf');
     Route::get('/quotations/{id}/profitability-pdf', [QuotationController::class, 'profitabilityPdf'])->name('quotations.profitability-pdf');
+    Route::get('/quotation-payment-methods', [QuotationPaymentMethodController::class, 'index'])->name('quotation-payment-methods.index');
+    Route::post('/quotation-payment-methods', [QuotationPaymentMethodController::class, 'store'])->name('quotation-payment-methods.store');
+    Route::post('/quotation-payment-methods/quick-store', [QuotationPaymentMethodController::class, 'store'])->name('quotation-payment-methods.quick-store');
+    Route::put('/quotation-payment-methods/{id}', [QuotationPaymentMethodController::class, 'update'])->name('quotation-payment-methods.update');
+    Route::delete('/quotation-payment-methods/{id}', [QuotationPaymentMethodController::class, 'destroy'])->name('quotation-payment-methods.destroy');
+
+    Route::get('/quotation-delivery-times', [QuotationDeliveryTimeController::class, 'index'])->name('quotation-delivery-times.index');
+    Route::post('/quotation-delivery-times', [QuotationDeliveryTimeController::class, 'store'])->name('quotation-delivery-times.store');
+    Route::post('/quotation-delivery-times/quick-store', [QuotationDeliveryTimeController::class, 'store'])->name('quotation-delivery-times.quick-store');
+    Route::put('/quotation-delivery-times/{id}', [QuotationDeliveryTimeController::class, 'update'])->name('quotation-delivery-times.update');
+    Route::delete('/quotation-delivery-times/{id}', [QuotationDeliveryTimeController::class, 'destroy'])->name('quotation-delivery-times.destroy');
     Route::resource("/documents", DocumentController::class);
     Route::get("/documents/{codGeneracion}", [DocumentController::class, "show"])->name('documents.show');
     

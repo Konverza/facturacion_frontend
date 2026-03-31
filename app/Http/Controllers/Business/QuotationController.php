@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Business;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessCustomer;
+use App\Models\BusinessQuotationDeliveryTime;
+use App\Models\BusinessQuotationPaymentMethod;
 use App\Models\Quotation;
 use App\Services\OctopusService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 
 class QuotationController extends Controller
 {
@@ -40,6 +43,12 @@ class QuotationController extends Controller
     {
         $validated = $this->validateQuotation($request);
         $current = session('dte', $this->defaultDteContent($validated['dte_type']));
+        $businessId = (int) session('business');
+
+        $paymentMethod = BusinessQuotationPaymentMethod::where('business_id', $businessId)
+            ->findOrFail((int) $validated['payment_method_id']);
+        $deliveryTime = BusinessQuotationDeliveryTime::where('business_id', $businessId)
+            ->findOrFail((int) $validated['delivery_time_id']);
 
         $customer = $this->buildCustomerData($validated);
         $current['type'] = $validated['dte_type'];
@@ -51,7 +60,7 @@ class QuotationController extends Controller
             'name' => $validated['name'],
             'type' => $validated['dte_type'],
             'content' => $current,
-            'quotation_meta' => $this->buildMeta($validated),
+            'quotation_meta' => $this->buildMeta($validated, $paymentMethod, $deliveryTime),
         ]);
 
         session()->forget('dte');
@@ -93,6 +102,12 @@ class QuotationController extends Controller
     {
         $quotation = $this->findQuotation($id);
         $validated = $this->validateQuotation($request);
+        $businessId = (int) session('business');
+
+        $paymentMethod = BusinessQuotationPaymentMethod::where('business_id', $businessId)
+            ->findOrFail((int) $validated['payment_method_id']);
+        $deliveryTime = BusinessQuotationDeliveryTime::where('business_id', $businessId)
+            ->findOrFail((int) $validated['delivery_time_id']);
 
         $current = session('dte', $this->defaultDteContent($validated['dte_type']));
         $current['type'] = $validated['dte_type'];
@@ -102,7 +117,7 @@ class QuotationController extends Controller
             'name' => $validated['name'],
             'type' => $validated['dte_type'],
             'content' => $current,
-            'quotation_meta' => $this->buildMeta($validated),
+            'quotation_meta' => $this->buildMeta($validated, $paymentMethod, $deliveryTime),
         ]);
 
         session()->forget('dte');
@@ -135,6 +150,7 @@ class QuotationController extends Controller
         $content['type'] = $targetDocumentType;
         $content['quotation_id'] = $quotation->id;
         $content['customer'] = $this->resolveCustomerForDte($content, $targetDocumentType);
+        $content = $this->attachQuotationObservation($content, $quotation);
 
         session([
             'dte' => $content,
@@ -307,6 +323,13 @@ class QuotationController extends Controller
 
         $business = Business::find(session('business'));
         $unidades = $this->octopusService->getCatalog('CAT-014');
+        $paymentMethods = BusinessQuotationPaymentMethod::where('business_id', session('business'))
+            ->orderBy('name')
+            ->get();
+        $deliveryTimes = BusinessQuotationDeliveryTime::where('business_id', session('business'))
+            ->orderBy('name')
+            ->get();
+        $meta = $quotation ? ($quotation->quotation_meta ?? []) : [];
 
         return view($view, [
             'pageTitle' => $title,
@@ -316,12 +339,30 @@ class QuotationController extends Controller
             'business_customers' => $businessCustomers,
             'unidades_medidas' => $unidades,
             'business' => $business,
-            'meta' => $quotation ? ($quotation->quotation_meta ?? []) : [],
+            'meta' => $meta,
+            'paymentMethodOptions' => $paymentMethods->pluck('name', 'id')->toArray(),
+            'deliveryTimeOptions' => $deliveryTimes->pluck('name', 'id')->toArray(),
+            'selectedPaymentMethodId' => $this->resolveSelectedOptionId(
+                $meta,
+                $paymentMethods->pluck('name', 'id')->toArray(),
+                'forma_pago_id',
+                'forma_pago_tipo'
+            ),
+            'selectedDeliveryTimeId' => $this->resolveSelectedOptionId(
+                $meta,
+                $deliveryTimes->pluck('name', 'id')->toArray(),
+                'tiempo_entrega_id',
+                'tiempo_entrega'
+            ),
+            'hasPaymentMethods' => $paymentMethods->isNotEmpty(),
+            'hasDeliveryTimes' => $deliveryTimes->isNotEmpty(),
         ]);
     }
 
     private function validateQuotation(Request $request): array
     {
+        $businessId = (int) session('business');
+
         return $request->validate([
             'name' => 'required|string|max:255',
             'dte_type' => 'required|in:01,03',
@@ -332,9 +373,20 @@ class QuotationController extends Controller
             'correo' => 'nullable|email|max:255',
             'telefono' => 'nullable|string|max:30',
             'vigencia_dias' => 'required|integer|min:1|max:365',
-            'tiempo_entrega' => 'nullable|string|max:255',
-            'forma_pago_tipo' => 'required|string|max:100',
-            'forma_pago_detalle' => 'nullable|string|max:255',
+            'delivery_time_id' => [
+                'required',
+                'integer',
+                Rule::exists('business_quotation_delivery_times', 'id')->where(
+                    fn($query) => $query->where('business_id', $businessId)
+                ),
+            ],
+            'payment_method_id' => [
+                'required',
+                'integer',
+                Rule::exists('business_quotation_payment_methods', 'id')->where(
+                    fn($query) => $query->where('business_id', $businessId)
+                ),
+            ],
             'thank_you_message' => 'nullable|string|max:500',
             'terms_conditions' => 'nullable|string|max:1000',
         ]);
@@ -352,16 +404,46 @@ class QuotationController extends Controller
         ];
     }
 
-    private function buildMeta(array $validated): array
+    private function buildMeta(
+        array $validated,
+        BusinessQuotationPaymentMethod $paymentMethod,
+        BusinessQuotationDeliveryTime $deliveryTime
+    ): array
     {
         return [
             'vigencia_dias' => (int) $validated['vigencia_dias'],
-            'tiempo_entrega' => $validated['tiempo_entrega'] ?? 'Coordinado con el cliente',
-            'forma_pago_tipo' => $validated['forma_pago_tipo'],
-            'forma_pago_detalle' => $validated['forma_pago_detalle'] ?? null,
+            'tiempo_entrega_id' => $deliveryTime->id,
+            'tiempo_entrega' => $deliveryTime->name,
+            'forma_pago_id' => $paymentMethod->id,
+            'forma_pago_tipo' => $paymentMethod->name,
             'thank_you_message' => $validated['thank_you_message'] ?? 'Gracias por su preferencia.',
             'terms_conditions' => $validated['terms_conditions'] ?? null,
         ];
+    }
+
+    private function resolveSelectedOptionId(
+        array $meta,
+        array $availableOptions,
+        string $idKey,
+        string $legacyLabelKey
+    ): ?string {
+        $selectedById = isset($meta[$idKey]) ? (string) $meta[$idKey] : null;
+        if ($selectedById !== null && isset($availableOptions[$selectedById])) {
+            return $selectedById;
+        }
+
+        $legacyLabel = isset($meta[$legacyLabelKey]) ? trim((string) $meta[$legacyLabelKey]) : '';
+        if ($legacyLabel === '') {
+            return null;
+        }
+
+        foreach ($availableOptions as $id => $label) {
+            if (mb_strtolower(trim((string) $label)) === mb_strtolower($legacyLabel)) {
+                return (string) $id;
+            }
+        }
+
+        return null;
     }
 
     private function defaultDteContent(string $type): array
@@ -384,6 +466,25 @@ class QuotationController extends Controller
             'isr' => 0,
             'remove_discounts' => false,
         ];
+    }
+
+    private function attachQuotationObservation(array $content, Quotation $quotation): array
+    {
+        $name = trim((string) ($quotation->name ?? ''));
+        $legend = 'Cotización - ' . ($name !== '' ? $name : ('#' . $quotation->id));
+
+        $currentObservation = trim((string) ($content['extension']['observaciones'] ?? ''));
+        if ($currentObservation === '') {
+            $content['extension']['observaciones'] = $legend;
+            return $content;
+        }
+
+        if (mb_stripos($currentObservation, $legend) !== false) {
+            return $content;
+        }
+
+        $content['extension']['observaciones'] = $legend . "\n" . $currentObservation;
+        return $content;
     }
 
     private function findQuotation(string $id): Quotation

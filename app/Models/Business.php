@@ -55,6 +55,16 @@ class Business extends Model
         return $this->hasMany(BusinessPriceVariant::class);
     }
 
+    public function quotationPaymentMethods()
+    {
+        return $this->hasMany(BusinessQuotationPaymentMethod::class, 'business_id');
+    }
+
+    public function quotationDeliveryTimes()
+    {
+        return $this->hasMany(BusinessQuotationDeliveryTime::class, 'business_id');
+    }
+
     public function plan()
     {
         return $this->belongsTo(Plan::class);

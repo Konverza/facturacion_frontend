@@ -72,27 +72,69 @@
         </div>
     </div>
 
+    @php
+        $missingQuotationConfig = !$hasPaymentMethods || !$hasDeliveryTimes;
+    @endphp
+
     <div class="mt-6 rounded-lg border border-gray-300 p-4 dark:border-gray-800">
         <h2 class="text-lg font-semibold text-primary-500 dark:text-primary-300">Condiciones de cotizacion</h2>
-        <div class="mt-4 grid gap-4 md:grid-cols-2">
+
+        @if ($missingQuotationConfig)
+            <div
+                class="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                Debes crear al menos una forma de pago y un tiempo de entrega antes de guardar la cotizacion.
+            </div>
+        @endif
+
+        <div class="mt-4 grid gap-4 md:grid-cols-1">
             <x-input type="number" name="vigencia_dias" label="Vigencia (dias)" min="1" max="365"
                 value="{{ old('vigencia_dias', $meta['vigencia_dias'] ?? 15) }}" required />
-            <x-input type="text" name="tiempo_entrega" label="Tiempo de entrega"
-                value="{{ old('tiempo_entrega', $meta['tiempo_entrega'] ?? 'Coordinado con el cliente') }}" />
-            <x-select label="Forma de pago" name="forma_pago_tipo" id="quotation_payment_type" :options="[
-                'Contado' => 'Contado',
-                'Credito' => 'Credito a N dias',
-                '50-50' => '50% y 50%',
-                'Otros' => 'Otros',
-            ]" selected="{{ old('forma_pago_tipo', $meta['forma_pago_tipo'] ?? 'Contado') }}"
-                value="{{ old('forma_pago_tipo', $meta['forma_pago_tipo'] ?? 'Contado') }}" :search="false" required />
-            <x-input type="text" name="forma_pago_detalle" label="Detalle forma de pago"
-                value="{{ old('forma_pago_detalle', $meta['forma_pago_detalle'] ?? '') }}" />
+
+            <div class="space-y-2">
+                <x-select label="Tiempo de entrega" name="delivery_time_id" id="quotation_delivery_time_id"
+                    :options="$deliveryTimeOptions"
+                    selected="{{ old('delivery_time_id', $selectedDeliveryTimeId) && isset($deliveryTimeOptions[old('delivery_time_id', $selectedDeliveryTimeId)]) ? $deliveryTimeOptions[old('delivery_time_id', $selectedDeliveryTimeId)] : 'Seleccionar' }}"
+                    value="{{ old('delivery_time_id', $selectedDeliveryTimeId) }}" :search="true"
+                    :required="$hasDeliveryTimes" />
+                <div class="flex flex-col gap-2 sm:flex-row">
+                    <x-input type="text" name="quick_delivery_time_name" id="quick_delivery_time_name"
+                        placeholder="Nuevo tiempo de entrega" class="w-full" />
+                    <x-button type="button" id="btn-quick-delivery-time" text="Agregar rapido" icon="plus"
+                        typeButton="secondary" class="w-full sm:w-auto" />
+                </div>
+                <div class="flex items-center justify-between">
+                    <span id="quick-delivery-time-feedback" class="text-xs text-gray-500 dark:text-gray-400"></span>
+                    <a href="{{ Route('business.quotation-delivery-times.index') }}" target="_blank"
+                        class="text-xs text-primary-500 hover:underline dark:text-primary-300">Administrar tiempos de
+                        entrega</a>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <x-select label="Forma de pago" name="payment_method_id" id="quotation_payment_method_id"
+                    :options="$paymentMethodOptions"
+                    selected="{{ old('payment_method_id', $selectedPaymentMethodId) && isset($paymentMethodOptions[old('payment_method_id', $selectedPaymentMethodId)]) ? $paymentMethodOptions[old('payment_method_id', $selectedPaymentMethodId)] : 'Seleccionar' }}"
+                    value="{{ old('payment_method_id', $selectedPaymentMethodId) }}" :search="true"
+                    :required="$hasPaymentMethods" />
+                <div class="flex flex-col gap-2 sm:flex-row">
+                    <x-input type="text" name="quick_payment_method_name" id="quick_payment_method_name"
+                        placeholder="Nueva forma de pago" class="w-full" />
+                    <x-button type="button" id="btn-quick-payment-method" text="Agregar rapido" icon="plus"
+                        typeButton="secondary" class="w-full sm:w-auto" />
+                </div>
+                <div class="flex items-center justify-between">
+                    <span id="quick-payment-method-feedback" class="text-xs text-gray-500 dark:text-gray-400"></span>
+                    <a href="{{ Route('business.quotation-payment-methods.index') }}" target="_blank"
+                        class="text-xs text-primary-500 hover:underline dark:text-primary-300">Administrar formas de
+                        pago</a>
+                </div>
+            </div>
+
             <x-input type="textarea" name="thank_you_message" label="Mensaje de agradecimiento"
                 value="{{ old('thank_you_message', $meta['thank_you_message'] ?? 'Gracias por su preferencia.') }}"
-                class="md:col-span-2" />
+                class="md:col-span-1" />
             <x-input type="textarea" name="terms_conditions" label="Terminos y condiciones"
-                value="{{ old('terms_conditions', $meta['terms_conditions'] ?? '') }}" class="md:col-span-2" />
+                value="{{ old('terms_conditions', $meta['terms_conditions'] ?? '') }}" class="md:col-span-1" />
         </div>
     </div>
 
