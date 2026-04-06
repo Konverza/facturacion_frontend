@@ -658,7 +658,7 @@ class ProjectController extends Controller
                 : ($lineWithoutIva * 0.13);
 
             $products[] = [
-                'id' => rand(1000, 99999),
+                'id' => $this->nextSequentialId($products, 2000),
                 'product' => null,
                 'product_id' => $item['product_id'] ?? null,
                 'codigo' => $item['codigo'],
@@ -694,7 +694,7 @@ class ProjectController extends Controller
                 : ($priceWithoutIva * 0.13);
 
             $products[] = [
-                'id' => rand(1000, 99999),
+                'id' => $this->nextSequentialId($products, 2000),
                 'product' => null,
                 'product_id' => null,
                 'codigo' => 'MANO-OBRA',
@@ -820,5 +820,23 @@ class ProjectController extends Controller
     private function clamp(float $value, float $min, float $max): float
     {
         return max($min, min($max, $value));
+    }
+
+    private function nextSequentialId(array $items, int $max = 2000): int
+    {
+        $usedIds = collect($items)
+            ->pluck('id')
+            ->filter(fn($id) => is_numeric($id) && (int) $id >= 1 && (int) $id <= $max)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        for ($id = 1; $id <= $max; $id++) {
+            if (!in_array($id, $usedIds, true)) {
+                return $id;
+            }
+        }
+
+        throw new \RuntimeException("Se alcanzó el límite máximo de {$max} productos para el DTE del proyecto.");
     }
 }

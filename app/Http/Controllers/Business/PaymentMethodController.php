@@ -74,7 +74,7 @@ class PaymentMethodController extends Controller
                 }
 
                 $this->dte["metodos_pago"][] = [
-                    "id" => random_int(1000, 999999),
+                    "id" => $this->getNextSequentialId("metodos_pago"),
                     "forma_pago" => $request->forma_pago,
                     "monto" => $monto,
                     "numero_documento" => $request->numero_documento,
@@ -263,5 +263,28 @@ class PaymentMethodController extends Controller
         }
 
         return null;
+    }
+
+    private function getNextSequentialId(string $collectionKey, int $max = 2000): int
+    {
+        $items = $this->dte[$collectionKey] ?? [];
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $usedIds = collect($items)
+            ->pluck("id")
+            ->filter(fn($id) => is_numeric($id) && (int) $id >= 1 && (int) $id <= $max)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        for ($id = 1; $id <= $max; $id++) {
+            if (!in_array($id, $usedIds, true)) {
+                return $id;
+            }
+        }
+
+        throw new \RuntimeException("Se alcanzó el límite máximo de {$max} elementos en {$collectionKey}.");
     }
 }

@@ -75,7 +75,7 @@ class RelatedDocumentsController extends Controller
             }
 
             $this->dte["documentos_relacionados"][] = [
-                "id" => rand(1, 1000),
+                "id" => $this->getNextSequentialId("documentos_relacionados"),
                 "tipo_documento" => $request->tipo_documento,
                 "tipo_generacion" => $request->tipo_generacion,
                 "numero_documento" => $request->numero_documento,
@@ -163,7 +163,7 @@ class RelatedDocumentsController extends Controller
             }
 
             $this->dte["documentos_relacionados"][] = [
-                "id" => rand(1, 1000),
+                "id" => $this->getNextSequentialId("documentos_relacionados"),
                 "tipo_documento" => $document["tipo_dte"],
                 "tipo_generacion" => 2,
                 "numero_documento" => $request->codGeneracion,
@@ -245,5 +245,28 @@ class RelatedDocumentsController extends Controller
                 "message" => "Error al eliminar documento relacionado"
             ]);
         }
+    }
+
+    private function getNextSequentialId(string $collectionKey, int $max = 2000): int
+    {
+        $items = $this->dte[$collectionKey] ?? [];
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $usedIds = collect($items)
+            ->pluck("id")
+            ->filter(fn($id) => is_numeric($id) && (int) $id >= 1 && (int) $id <= $max)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        for ($id = 1; $id <= $max; $id++) {
+            if (!in_array($id, $usedIds, true)) {
+                return $id;
+            }
+        }
+
+        throw new \RuntimeException("Se alcanzó el límite máximo de {$max} elementos en {$collectionKey}.");
     }
 }

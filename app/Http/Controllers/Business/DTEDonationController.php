@@ -36,7 +36,7 @@ class DTEDonationController extends Controller
             }
 
             $this->dte["products"][] = [
-                "id" => rand(1, 1000),
+                "id" => $this->getNextSequentialId("products"),
                 "tipo_donacion" => $request->tipo_donacion,
                 "unidad_medida" => $request->unidad_medida,
                 "cantidad" => $request->cantidad,
@@ -108,6 +108,29 @@ class DTEDonationController extends Controller
         $this->dte["total_pagar"] = $total_pagar;
         $this->dte["monto_pendiente"] = $total_pagar - ($this->dte["monto_abonado"] ?? 0);
         session(["dte" => $this->dte]);
+    }
+
+    private function getNextSequentialId(string $collectionKey, int $max = 2000): int
+    {
+        $items = $this->dte[$collectionKey] ?? [];
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $usedIds = collect($items)
+            ->pluck("id")
+            ->filter(fn($id) => is_numeric($id) && (int) $id >= 1 && (int) $id <= $max)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        for ($id = 1; $id <= $max; $id++) {
+            if (!in_array($id, $usedIds, true)) {
+                return $id;
+            }
+        }
+
+        throw new \RuntimeException("Se alcanzó el límite máximo de {$max} elementos en {$collectionKey}.");
     }
 
 }

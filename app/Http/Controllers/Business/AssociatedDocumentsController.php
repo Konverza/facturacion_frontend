@@ -40,7 +40,7 @@ class AssociatedDocumentsController extends Controller
             }
 
             $this->dte["otros_documentos"][] = [
-                "id" => rand(1, 1000),
+                "id" => $this->getNextSequentialId("otros_documentos"),
                 "documento_asociado" => $request->documento_asociado,
                 "identificacion_documento" => $request->identificacion_documento ?? null,
                 "descripcion_documento" => $request->descripcion_documento ?? null,
@@ -177,5 +177,28 @@ class AssociatedDocumentsController extends Controller
                 "error" => $e->getMessage()
             ]);
         }
+    }
+
+    private function getNextSequentialId(string $collectionKey, int $max = 2000): int
+    {
+        $items = $this->dte[$collectionKey] ?? [];
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $usedIds = collect($items)
+            ->pluck("id")
+            ->filter(fn($id) => is_numeric($id) && (int) $id >= 1 && (int) $id <= $max)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        for ($id = 1; $id <= $max; $id++) {
+            if (!in_array($id, $usedIds, true)) {
+                return $id;
+            }
+        }
+
+        throw new \RuntimeException("Se alcanzó el límite máximo de {$max} elementos en {$collectionKey}.");
     }
 }

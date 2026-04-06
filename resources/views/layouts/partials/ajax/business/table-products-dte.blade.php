@@ -6,10 +6,10 @@
             <x-th>Descripción</x-th>
             <x-th>Cantidad</x-th>
             <x-th>Precio</x-th>
-            <x-th>Descuento por item</x-th>
-            <x-th>Venta gravada</x-th>
-            <x-th>Venta exenta</x-th>
-            <x-th>Venta no sujeta</x-th>
+            <x-th>Descuento</x-th>
+            <x-th>Gravada</x-th>
+            <x-th>Exenta</x-th>
+            <x-th>No sujeta</x-th>
             <x-th :last="true">Acciones</x-th>
         </x-tr>
         <x-slot name="tbody">

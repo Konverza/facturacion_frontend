@@ -2632,8 +2632,12 @@ class DTEController extends Controller
                     $retencionLinea = round($totalBase * 0.10, 8);
                 }
 
+                $nextProductId = isset($groups[$groupKey])
+                    ? $this->nextSequentialId($groups[$groupKey]['products'] ?? [], 2000)
+                    : 1;
+
                 $productArray = [
-                    'id' => rand(1, 100000),
+                    'id' => $nextProductId,
                     'product' => null,
                     'product_id' => null,
                     'codigo' => null,
@@ -2756,7 +2760,7 @@ class DTEController extends Controller
                 // Método de pago por defecto (forma 99) cubre el total
                 $g['metodos_pago'] = [
                     [
-                        'id' => rand(1, 100000),
+                        'id' => $this->nextSequentialId($g['metodos_pago'] ?? [], 2000),
                         'forma_pago' => '99', // Otros
                         'monto' => (string) $g['total_pagar'], // debe reflejar total con IVA si CCF
                         'numero_documento' => '0',
@@ -2921,5 +2925,23 @@ class DTEController extends Controller
         }
 
         return $query;
+    }
+
+    private function nextSequentialId(array $items, int $max = 2000): int
+    {
+        $usedIds = collect($items)
+            ->pluck('id')
+            ->filter(fn($id) => is_numeric($id) && (int) $id >= 1 && (int) $id <= $max)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        for ($id = 1; $id <= $max; $id++) {
+            if (!in_array($id, $usedIds, true)) {
+                return $id;
+            }
+        }
+
+        throw new \RuntimeException("Se alcanzó el límite máximo de {$max} elementos.");
     }
 }

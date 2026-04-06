@@ -35,6 +35,42 @@ class DTEProductController extends Controller
         ])->render();
     }
 
+    private function getNextSequentialProductId(): int
+    {
+        $usedIds = collect($this->dte["products"] ?? [])
+            ->pluck("id")
+            ->filter(fn($id) => is_numeric($id) && (int) $id >= 1 && (int) $id <= 2000)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        for ($id = 1; $id <= 2000; $id++) {
+            if (!in_array($id, $usedIds, true)) {
+                return $id;
+            }
+        }
+
+        throw new \RuntimeException("Se alcanzó el límite máximo de 2000 productos en el DTE.");
+    }
+
+    private function getNextSequentialPaymentMethodId(): int
+    {
+        $usedIds = collect($this->dte["metodos_pago"] ?? [])
+            ->pluck("id")
+            ->filter(fn($id) => is_numeric($id) && (int) $id >= 1 && (int) $id <= 2000)
+            ->map(fn($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        for ($id = 1; $id <= 2000; $id++) {
+            if (!in_array($id, $usedIds, true)) {
+                return $id;
+            }
+        }
+
+        throw new \RuntimeException("Se alcanzó el límite máximo de 2000 métodos de pago en el DTE.");
+    }
+
     public function select(Request $request)
     {
         $product = BusinessProduct::find($request->product_id);
@@ -519,7 +555,7 @@ class DTEProductController extends Controller
                 $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
 
                 $this->dte["products"][] = [
-                    "id" => rand(1, 1000),
+                    "id" => $this->getNextSequentialProductId(),
                     "product" => $business_product->toArray(),
                     "product_id" => $business_product->id,
                     "codigo" => $business_product->codigo,
@@ -603,7 +639,7 @@ class DTEProductController extends Controller
             }
 
             $this->dte["products"][] = [
-                "id" => rand(1, 1000),
+                "id" => $this->getNextSequentialProductId(),
                 "product" => null,
                 "product_id" => null,
                 "codigo" => null,
@@ -718,7 +754,7 @@ class DTEProductController extends Controller
                 $this->dte["remove_discounts"] = in_array("59", $product_tributes) || in_array("71", $product_tributes) || in_array("D1", $product_tributes) || in_array("C8", $product_tributes) || in_array("C5", $product_tributes) || in_array("C6", $product_tributes) || in_array("C7", $product_tributes);
 
                 $this->dte["products"][] = [
-                    "id" => rand(1, 1000),
+                    "id" => $this->getNextSequentialProductId(),
                     "product" => $business_product->toArray(),
                     "product_id" => $business_product->id,
                     "codigo" => $business_product->codigo,
@@ -748,7 +784,7 @@ class DTEProductController extends Controller
             $this->totals();
 
             $this->dte["metodos_pago"][0] = [
-                "id" => rand(1, 1000),
+                "id" => $this->getNextSequentialPaymentMethodId(),
                 "forma_pago" => "01",
                 "monto" => array_sum(array_column($this->dte["products"], "total")),
                 "numero_documento" => null,
@@ -779,7 +815,7 @@ class DTEProductController extends Controller
     {
         try {
             $this->dte["products"][] = [
-                "id" => rand(1, 1000),
+                "id" => $this->getNextSequentialProductId(),
                 "product_id" => null,
                 "codigo" => null,
                 "unidad_medida" => "Otra",
@@ -824,7 +860,7 @@ class DTEProductController extends Controller
     {
         try {
             $this->dte["products"][] = [
-                "id" => rand(1, 1000),
+                "id" => $this->getNextSequentialProductId(),
                 "product_id" => null,
                 "codigo" => null,
                 "unidad_medida" => "Otra",
@@ -913,7 +949,7 @@ class DTEProductController extends Controller
                 if (isset($this->dte["metodos_pago"]) && count($this->dte["metodos_pago"]) > 0) {
                     unset($this->dte["metodos_pago"]);
                     $this->dte["metodos_pago"][] = [
-                        "id" => rand(1, 1000),
+                        "id" => $this->getNextSequentialPaymentMethodId(),
                         "forma_pago" => "01",
                         "monto" => array_sum(array_column($this->dte["products"], "total")),
                         "numero_documento" => null,
