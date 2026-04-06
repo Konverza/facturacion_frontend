@@ -84,6 +84,28 @@ class DTEProductController extends Controller
         return $this->precise_round(($total / 1.13) * 0.13, 8);
     }
 
+    private function resolveExistingItemUnitPrice(array $item, string $tipoVenta): float
+    {
+        $precio = (float) ($item["precio"] ?? 0);
+        $precioSinTributos = (float) ($item["precio_sin_tributos"] ?? $precio);
+        $dteType = $this->dte["type"] ?? null;
+
+        // En DTEs con IVA separado, el cálculo base del total debe usar precio sin tributos.
+        if (in_array($dteType, ["03", "05", "06"], true)) {
+            return $precioSinTributos;
+        }
+
+        if ($dteType === "14") {
+            return $precioSinTributos;
+        }
+
+        if ($tipoVenta !== "Gravada") {
+            return $precioSinTributos;
+        }
+
+        return $precio;
+    }
+
     private function inferManualTributes(array $item): array
     {
         $tributes = [];
@@ -134,6 +156,72 @@ class DTEProductController extends Controller
         }
 
         return null;
+    }
+
+    private function resolveStockContextForProduct(BusinessProduct $businessProduct, Request $request): array
+    {
+        $businessUser = \App\Models\BusinessUser::where('business_id', session('business'))
+            ->where('user_id', auth()->id())
+            ->first();
+
+        $stock = 0;
+        // Normalizar: convertir strings vacíos en null
+        $sucursalId = $request->sucursal_id && $request->sucursal_id !== '' ? $request->sucursal_id : null;
+        $posId = $request->pos_id && $request->pos_id !== '' ? $request->pos_id : null;
+
+        if ($businessProduct->has_stock) {
+            // Caso 1: Usuario con only_default_pos y POS con inventario independiente
+            if ($businessUser && $businessUser->only_default_pos && $businessUser->default_pos_id) {
+                $defaultPos = $businessUser->defaultPos;
+                if ($defaultPos && $defaultPos->has_independent_inventory) {
+                    $posStock = $businessProduct->getStockForPos($defaultPos->id);
+                    $stock = $posStock ? (float) $posStock->stockActual : 0;
+                    $posId = $defaultPos->id;
+                } elseif ($defaultPos && $defaultPos->sucursal_id) {
+                    $branchStock = $businessProduct->getStockForBranch($defaultPos->sucursal_id);
+                    $stock = $branchStock ? (float) $branchStock->stockActual : 0;
+                    $sucursalId = $defaultPos->sucursal_id;
+                }
+            }
+            // Caso 2: Usuario con selección manual
+            elseif ($posId) {
+                $pos = \App\Models\PuntoVenta::find($posId);
+                if ($pos && $pos->has_independent_inventory) {
+                    $posStock = $businessProduct->getStockForPos($posId);
+                    $stock = $posStock ? (float) $posStock->stockActual : 0;
+                } elseif ($pos && $pos->sucursal_id) {
+                    $branchStock = $businessProduct->getStockForBranch($pos->sucursal_id);
+                    $stock = $branchStock ? (float) $branchStock->stockActual : 0;
+                    $sucursalId = $pos->sucursal_id;
+                }
+            } elseif ($sucursalId) {
+                $branchStock = $businessProduct->getStockForBranch($sucursalId);
+                $stock = $branchStock ? (float) $branchStock->stockActual : 0;
+            } elseif ($businessProduct->is_global) {
+                $stock = (float) $businessProduct->stockActual;
+            }
+            // Fallback: Si no hay POS/sucursal proporcionados pero hay default_pos_id, usar su sucursal
+            elseif ($businessUser && $businessUser->default_pos_id) {
+                $defaultPos = $businessUser->defaultPos;
+                if ($defaultPos && $defaultPos->sucursal_id) {
+                    $branchStock = $businessProduct->getStockForBranch($defaultPos->sucursal_id);
+                    $stock = $branchStock ? (float) $branchStock->stockActual : 0;
+                    $sucursalId = $defaultPos->sucursal_id;
+                    $posId = $defaultPos->id;
+                }
+            }
+            // Sin contexto de inventario
+            else {
+                $stock = 0;
+            }
+        }
+
+        return [
+            'stock' => (float) $stock,
+            'sucursal_id' => $sucursalId,
+            'pos_id' => $posId,
+            'business_user' => $businessUser,
+        ];
     }
 
     public function select(Request $request)
@@ -399,63 +487,11 @@ class DTEProductController extends Controller
                 ]);
             }
 
-            // Obtener usuario para determinar origen de stock
-            $business_user = \App\Models\BusinessUser::where('business_id', session('business'))
-                ->where('user_id', auth()->id())
-                ->first();
-
-            // Determinar stock disponible según contexto del usuario
-            $stock = 0;
-            // Normalizar: convertir strings vacíos en null
-            $sucursalId = $request->sucursal_id && $request->sucursal_id !== '' ? $request->sucursal_id : null;
-            $posId = $request->pos_id && $request->pos_id !== '' ? $request->pos_id : null;
-
-            if ($business_product->has_stock) {
-                // Caso 1: Usuario con only_default_pos y POS con inventario independiente
-                if ($business_user && $business_user->only_default_pos && $business_user->default_pos_id) {
-                    $defaultPos = $business_user->defaultPos;
-                    if ($defaultPos && $defaultPos->has_independent_inventory) {
-                        $posStock = $business_product->getStockForPos($defaultPos->id);
-                        $stock = $posStock ? (float) $posStock->stockActual : 0;
-                        $posId = $defaultPos->id;
-                    } else if ($defaultPos && $defaultPos->sucursal_id) {
-                        $branchStock = $business_product->getStockForBranch($defaultPos->sucursal_id);
-                        $stock = $branchStock ? (float) $branchStock->stockActual : 0;
-                        $sucursalId = $defaultPos->sucursal_id;
-                    }
-                }
-                // Caso 2: Usuario con selección manual
-                elseif ($posId) {
-                    $pos = \App\Models\PuntoVenta::find($posId);
-                    if ($pos && $pos->has_independent_inventory) {
-                        $posStock = $business_product->getStockForPos($posId);
-                        $stock = $posStock ? (float) $posStock->stockActual : 0;
-                    } else if ($pos && $pos->sucursal_id) {
-                        $branchStock = $business_product->getStockForBranch($pos->sucursal_id);
-                        $stock = $branchStock ? (float) $branchStock->stockActual : 0;
-                        $sucursalId = $pos->sucursal_id;
-                    }
-                } elseif ($sucursalId) {
-                    $branchStock = $business_product->getStockForBranch($sucursalId);
-                    $stock = $branchStock ? (float) $branchStock->stockActual : 0;
-                } elseif ($business_product->is_global) {
-                    $stock = (float) $business_product->stockActual;
-                }
-                // Fallback: Si no hay POS/sucursal proporcionados pero hay default_pos_id, usar su sucursal
-                elseif ($business_user && $business_user->default_pos_id) {
-                    $defaultPos = $business_user->defaultPos;
-                    if ($defaultPos && $defaultPos->sucursal_id) {
-                        $branchStock = $business_product->getStockForBranch($defaultPos->sucursal_id);
-                        $stock = $branchStock ? (float) $branchStock->stockActual : 0;
-                        $sucursalId = $defaultPos->sucursal_id;
-                        $posId = $defaultPos->id;
-                    }
-                }
-                // Sin contexto de inventario
-                else {
-                    $stock = 0;
-                }
-            }
+            $stockContext = $this->resolveStockContextForProduct($business_product, $request);
+            $stock = (float) ($stockContext['stock'] ?? 0);
+            $sucursalId = $stockContext['sucursal_id'] ?? null;
+            $posId = $stockContext['pos_id'] ?? null;
+            $business_user = $stockContext['business_user'] ?? null;
 
             // Log temporal para debugging
             \Log::info('DTEProductController::store - Stock Debug', [
@@ -1157,11 +1193,39 @@ class DTEProductController extends Controller
                 $cantidad = max(0.00000001, (float) $request->input("cantidad", 0));
                 $tipoVenta = (string) $request->input("tipo", "Gravada");
                 $descuento = max(0, (float) ($item["descuento"] ?? 0));
-                $precio = (float) ($item["precio"] ?? 0);
-                $total = $this->precise_round(max(0, ($precio * $cantidad) - $descuento), 8);
+
+                // No validar stock en facturas de sujeto excluido (tipo 14) ya que son compras.
+                if (($this->dte["type"] ?? null) !== "14") {
+                    $businessProductId = $item["product_id"] ?? null;
+                    if (!empty($businessProductId)) {
+                        $businessProduct = BusinessProduct::find($businessProductId);
+                        if (!$businessProduct) {
+                            return response()->json([
+                                "success" => false,
+                                "message" => "Producto no encontrado para validar stock",
+                            ]);
+                        }
+
+                        if ($businessProduct->has_stock) {
+                            $stockContext = $this->resolveStockContextForProduct($businessProduct, $request);
+                            $stock = (float) ($stockContext['stock'] ?? 0);
+
+                            if ($cantidad > $stock) {
+                                return response()->json([
+                                    "success" => false,
+                                    "message" => "No hay suficiente stock disponible. Stock actual: " . $stock,
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+                $precioBase = $this->resolveExistingItemUnitPrice($item, $tipoVenta);
+                $total = $this->precise_round(max(0, ($precioBase * $cantidad) - $descuento), 8);
 
                 $item["cantidad"] = $cantidad;
                 $item["tipo"] = $tipoVenta;
+                $item["precio"] = $precioBase;
                 $item["total"] = $total;
                 $item["ventas_gravadas"] = $tipoVenta === "Gravada" ? $total : 0;
                 $item["ventas_exentas"] = $tipoVenta === "Exenta" ? $total : 0;
