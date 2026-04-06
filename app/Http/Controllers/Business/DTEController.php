@@ -13,6 +13,7 @@ use App\Models\BusinessUser;
 use App\Models\CuentasCobrar;
 use App\Models\DTE;
 use App\Models\Quotation;
+use App\Models\Project;
 use App\Models\InvoiceBag;
 use App\Models\InvoiceBagInvoice;
 use App\Models\PuntoVenta;
@@ -1139,6 +1140,13 @@ class DTEController extends Controller
                             'linked_dte_code' => $data['codGeneracion'] ?? null,
                             'updated_at' => now(),
                         ]);
+
+                    Project::where('business_id', $business_id)
+                        ->where('quotation_id', $quotationSourceId)
+                        ->update([
+                            'status' => 'facturada',
+                            'updated_at' => now(),
+                        ]);
                 }
 
                 session()->forget('dte');
@@ -1516,7 +1524,22 @@ class DTEController extends Controller
     public function getProductData($product, $type, $documentos_relacionados = null)
     {
         if ($type !== "14") {
-            $tributos = is_array($product["product"]) ? json_decode($product["product"]["tributos"], true) : json_decode($product["tributos"], true);
+            $productData = (isset($product['product']) && is_array($product['product']))
+                ? $product['product']
+                : [];
+
+            $rawTributos = $productData['tributos']
+                ?? ($product['tributos'] ?? '[]');
+
+            if (is_array($rawTributos)) {
+                $tributos = $rawTributos;
+            } elseif (is_string($rawTributos) && trim($rawTributos) !== '') {
+                $decodedTributos = json_decode($rawTributos, true);
+                $tributos = is_array($decodedTributos) ? $decodedTributos : [];
+            } else {
+                $tributos = [];
+            }
+
             $tributos = array_filter($tributos, function ($value) {
                 return $value != "20";
             });

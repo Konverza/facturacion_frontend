@@ -19,9 +19,22 @@
                 </div>
                 <!-- Modal body -->
                 <div class="p-4">
-                    <livewire:business.tables.dte-product :dte="$dte" :number="$number" />                    
+                    @if (isset($productSelectorComponent) && is_string($productSelectorComponent) && $productSelectorComponent !== '')
+                        @livewire($productSelectorComponent, [
+                            'dte' => $dte,
+                            'number' => $number,
+                            'selectRouteName' => $productSelectLookupRouteName ?? 'business.dte.product.select',
+                            'selectRouteParams' => $productSelectLookupRouteParams ?? [],
+                        ])
+                    @else
+                        <livewire:business.tables.dte-product
+                            :dte="$dte"
+                            :number="$number"
+                            :select-route-name="$productSelectLookupRouteName ?? 'business.dte.product.select'"
+                            :select-route-params="$productSelectLookupRouteParams ?? []" />
+                    @endif
                     <div class="mt-4 hidden" id="container-data-product">
-                        <form action="{{ Route('business.dte.product.store') }}" method="POST" id="form-add-product">
+                        <form action="{{ $selectProductAction ?? Route('business.dte.product.store') }}" method="POST" id="form-add-product">
                             @csrf
                             <input type="hidden" name="product_id" id="product_id">
                             <div class="flex flex-col gap-4">

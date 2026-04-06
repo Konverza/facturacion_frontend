@@ -111,7 +111,7 @@
                         @endif
                     </x-td>
                     <x-td :last="true">
-                        <form method="POST" action="{{ Route('business.dte.product.select') }}">
+                        <form method="POST" action="{{ Route($selectRouteName, $selectRouteParams) }}">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
                             <input type="hidden" name="sucursal_id" value="{{ $selectedSucursalId }}">

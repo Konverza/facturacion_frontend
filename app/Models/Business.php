@@ -28,6 +28,8 @@ class Business extends Model
         'has_customer_branches',
         'pos_inventory_enabled',
         'invoice_bag_enabled',
+        'quotation_enabled',
+        'has_projects_enabled',
         'has_api_access',
         'api_key_hash',
         'api_key_last4',
@@ -44,6 +46,8 @@ class Business extends Model
         'has_customer_branches' => 'boolean',
         'pos_inventory_enabled' => 'boolean',
         'invoice_bag_enabled' => 'boolean',
+        'quotation_enabled' => 'boolean',
+        'has_projects_enabled' => 'boolean',
         'has_api_access' => 'boolean',
         'api_key_created_at' => 'datetime',
         'active' => 'boolean',
@@ -88,6 +92,11 @@ class Business extends Model
     public function invoiceBags()
     {
         return $this->hasMany(InvoiceBag::class, 'business_id');
+    }
+
+    public function projects()
+    {
+        return $this->hasMany(Project::class, 'business_id');
     }
 
     public function getFormattedNitAttribute()

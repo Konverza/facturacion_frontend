@@ -331,6 +331,23 @@
                         </div>
                     </li>
                     @endif
+                    @if ($business->quotation_enabled && $business->has_projects_enabled)
+                    <li data-menu-item data-menu-level="sub">
+                        <a href="{{ Route('business.projects.index') }}" data-menu-text="Proyectos"
+                            data-tooltip-target="tooltip-proyectos"
+                            data-menu-keywords="proyectos costeo comparacion"
+                            class="group flex items-center rounded-lg ps-8 pe-2 py-1 text-[13px] text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white">
+                            <x-icon icon="file-report"
+                                class="h-5 w-5 text-gray-400 transition duration-75 group-hover:text-gray-700 dark:text-gray-500 dark:group-hover:text-white" />
+                            <span class="ms-2">Proyectos</span>
+                        </a>
+                        <div id="tooltip-proyectos" role="tooltip"
+                            class="tooltip invisible absolute z-10 hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-medium text-white opacity-0 transition-opacity duration-300 dark:bg-gray-700">
+                            Proyectos
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </li>
+                    @endif
                     @if ($business->invoice_bag_enabled)
                         <li data-menu-item data-menu-level="sub">
                             <a href="{{ Route('business.invoice-bags.index') }}" data-menu-text="Bolsón de Facturas"

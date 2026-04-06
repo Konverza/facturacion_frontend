@@ -14,7 +14,7 @@
         <span class="sr-only">Cerrar</span>
     </button>
     <div>
-        <form action="{{ Route('business.dte.product.store-new') }}" method="POST">
+        <form action="{{ $newProductAction ?? Route('business.dte.product.store-new') }}" method="POST">
             @csrf
             <div class="flex flex-col gap-4 sm:flex-row">
                 <div class="flex-[2]">
@@ -37,6 +37,11 @@
                     <x-input type="text" id="descripcion_product" placeholder="Nombre del producto" label="Producto"
                         name="descripcion" required />
                 </div>
+                @if (!empty($projectMode))
+                    <div class="flex-1">
+                        <x-input type="text" id="codigo_product" placeholder="Código" label="Código" name="codigo" />
+                    </div>
+                @endif
                 @if ($number !== '11' && $number !== '14')
                     <div class="flex-1">
                         <x-select label="Tipo de venta" name="tipo" id="tipo_venta" :options="[

@@ -30,9 +30,14 @@ class DteProduct extends Component
     public $userOnlyDefaultPos = false;
     public $posHasIndependentInventory = false;
     public $priceVariantsEnabled = false;
+    public $selectRouteName = 'business.dte.product.select';
+    public $selectRouteParams = [];
 
-    public function mount()
+    public function mount($selectRouteName = 'business.dte.product.select', $selectRouteParams = [])
     {
+        $this->selectRouteName = $selectRouteName;
+        $this->selectRouteParams = is_array($selectRouteParams) ? $selectRouteParams : [];
+
         $business = \App\Models\Business::find(session('business'));
         $this->priceVariantsEnabled = (bool) ($business?->price_variants_enabled);
 
@@ -57,8 +62,8 @@ class DteProduct extends Component
                     
                     // Si el usuario solo puede usar su POS por defecto
                     if ($this->userOnlyDefaultPos) {
-                        $this->availableSucursales = Sucursal::find($this->defaultSucursalId)
-                            ?->pluck('nombre', 'id')
+                        $this->availableSucursales = Sucursal::where('id', $this->defaultSucursalId)
+                            ->pluck('nombre', 'id')
                             ->toArray();
                     }
                 }

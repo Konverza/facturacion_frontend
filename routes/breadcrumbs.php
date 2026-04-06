@@ -177,6 +177,30 @@ Breadcrumbs::for("business.quotations.edit", function (BreadcrumbTrail $trail, s
     $trail->push($icon . "Editar", route("business.quotations.edit", $id));
 });
 
+Breadcrumbs::for("business.projects.index", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='file-report' class='w-4 h-4'/>");
+    $trail->parent("business.documents.index");
+    $trail->push($icon . "Proyectos", route("business.projects.index"));
+});
+
+Breadcrumbs::for("business.projects.create", function (BreadcrumbTrail $trail) {
+    $icon = Blade::render("<x-icon icon='plus' class='w-4 h-4'/>");
+    $trail->parent("business.projects.index");
+    $trail->push($icon . "Nuevo", route("business.projects.create"));
+});
+
+Breadcrumbs::for("business.projects.show", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='eye' class='w-4 h-4'/>");
+    $trail->parent("business.projects.index");
+    $trail->push($icon . "Detalle", route("business.projects.show", $id));
+});
+
+Breadcrumbs::for("business.projects.edit", function (BreadcrumbTrail $trail, string $id) {
+    $icon = Blade::render("<x-icon icon='pencil' class='w-4 h-4'/>");
+    $trail->parent("business.projects.index");
+    $trail->push($icon . "Editar", route("business.projects.edit", $id));
+});
+
 Breadcrumbs::for("business.quotation-payment-methods.index", function (BreadcrumbTrail $trail) {
     $icon = Blade::render("<x-icon icon='currency-dollar' class='w-4 h-4'/>");
     $trail->parent("business.quotations.index");
