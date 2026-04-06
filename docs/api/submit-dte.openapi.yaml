@@ -1,0 +1,655 @@
+openapi: 3.1.0
+info:
+  title: API Submit DTE
+  version: 1.0.0
+  description: >-
+    Especificación OpenAPI para POST /api/submitDte, basada en el comportamiento
+    actual del backend (submitFromJson + processDTE).
+servers:
+  - url: /
+    description: Servidor actual
+
+tags:
+  - name: DTE
+    description: Envío de documentos tributarios electrónicos
+
+paths:
+  /api/submitDte:
+    post:
+      tags:
+        - DTE
+      summary: Enviar DTE desde JSON
+      description: >-
+        Procesa un payload JSON con estructura dte y lo envía al flujo interno
+        de generación/emisión. Soporta tipos 01,03,04,05,06,07,11,14,15.
+      operationId: submitDte
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitDteRequest'
+            examples:
+              factura01:
+                summary: Ejemplo tipo 01 (Factura)
+                value:
+                  dte:
+                    type: "01"
+                    customer:
+                      tipoDocumento: "13"
+                      numDocumento: "01234567-8"
+                      nrc: null
+                      nombre: "Cliente Demo"
+                      codActividad: "001"
+                      departamento: "06"
+                      municipio: "01"
+                      complemento: "San Salvador"
+                      correo: "cliente@demo.com"
+                    products:
+                      - descripcion: "Producto 1"
+                        cantidad: 1
+                        tipo: "Gravada"
+                        precio: 10.0
+                        precio_sin_tributos: 8.85
+                        total: 10.0
+                        descuento: 0
+                        iva: 1.15
+                        tipo_item: 1
+                    metodos_pago:
+                      - forma_pago: "01"
+                        monto: 10.0
+                        numero_documento: null
+                        plazo: null
+                        periodo: null
+                    monto_abonado: 10.0
+              comprobanteRetencion07:
+                summary: Ejemplo tipo 07 (Retención)
+                value:
+                  dte:
+                    type: "07"
+                    customer:
+                      tipoDocumento: "36"
+                      numDocumento: "06140301100011"
+                      nrc: "12345678"
+                      nombre: "Proveedor Demo"
+                      codActividad: "001"
+                      departamento: "06"
+                      municipio: "01"
+                    documentos_retencion:
+                      - tipo_generacion: "01"
+                        tipo_documento: 1
+                        numero_documento: "A1B2C3D4E5"
+                        codigo_retencion: "01"
+                        descripcion_retencion: "Retención IVA 1%"
+                        fecha_documento: "2026-04-06"
+                        monto_sujeto_retencion: 100.0
+                        iva_retenido: 1.0
+              exportacion11:
+                summary: Ejemplo tipo 11 (Exportación)
+                value:
+                  dte:
+                    type: "11"
+                    customer:
+                      tipoDocumento: "37"
+                      numDocumento: "P1234567"
+                      nombre: "Foreign Customer"
+                      codActividad: "001"
+                      tipoPersona: "02"
+                      pais: "US"
+                      complemento: "New York"
+                      correo: "foreign@demo.com"
+                    emisor:
+                      tipoItemExpor: "1"
+                      regimen: "1"
+                      recintoFiscal: "1"
+                    resumen:
+                      codIncoterms: "EXW"
+                    products:
+                      - descripcion: "Producto Exportación"
+                        cantidad: 2
+                        tipo: "Gravada"
+                        precio: 25.0
+                        precio_sin_tributos: 25.0
+                        total: 50.0
+                        descuento: 0
+                        iva: 0
+                        tipo_item: 1
+                    metodos_pago:
+                      - forma_pago: "01"
+                        monto: 50.0
+                        numero_documento: null
+                        plazo: null
+                        periodo: null
+                    monto_abonado: 50.0
+      responses:
+        '200':
+          description: Respuesta del procesamiento interno/Octopus
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SubmitDteSuccessResponse'
+                  - $ref: '#/components/schemas/SubmitDteBusinessResponse'
+              examples:
+                procesado:
+                  value:
+                    estado: "PROCESADO"
+                    codGeneracion: "A1B2C3"
+                    selloRecibido: "..."
+                    fechaHora: "2026-02-11T12:30:00"
+                rechazadoNegocio:
+                  value:
+                    estado: "RECHAZADO"
+                    observaciones: "Debe agregar al menos un producto"
+        '401':
+          description: API key inválida, ausente o no autorizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                missingHeader:
+                  value:
+                    success: false
+                    message: "Missing Authorization header."
+                unauthorized:
+                  value:
+                    success: false
+                    message: "Unauthorized."
+        '422':
+          description: Error de validación o regla de negocio
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiErrorResponse'
+                  - $ref: '#/components/schemas/SubmitDteBusinessResponse'
+              examples:
+                tipoInvalido:
+                  value:
+                    success: false
+                    message: "Tipo de DTE no soportado o ausente."
+                sinPos:
+                  value:
+                    success: false
+                    message: "No hay Punto de Venta configurado."
+                negocio:
+                  value:
+                    estado: "RECHAZADO"
+                    observaciones: "Stock insuficiente para: Producto X"
+        '500':
+          description: Error interno al procesar el DTE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+              examples:
+                default:
+                  value:
+                    success: false
+                    message: "Error al procesar el DTE desde JSON."
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API_KEY
+      description: Enviar Authorization con formato Bearer {API_KEY}
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Enviar Authorization con formato ApiKey {API_KEY}
+
+  schemas:
+    SubmitDteRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - dte
+      properties:
+        dte:
+          $ref: '#/components/schemas/DtePayload'
+
+    DtePayload:
+      type: object
+      additionalProperties: true
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          enum: ["01", "03", "04", "05", "06", "07", "11", "14", "15"]
+          description: Tipo de DTE soportado por el backend.
+        customer:
+          $ref: '#/components/schemas/DteCustomer'
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/DteProduct'
+          description: >-
+            Requerido para todos los tipos excepto 07. Si type != 07,
+            debe contener al menos un item.
+        metodos_pago:
+          type: array
+          items:
+            $ref: '#/components/schemas/DtePaymentMethod'
+          description: >-
+            Usado para construir resumen.pagos. Para type != 04,
+            monto_abonado debe coincidir con total_pagar.
+        monto_abonado:
+          type: number
+          description: >-
+            Monto total abonado. Se valida contra total_pagar (redondeo a 2
+            decimales) para type distinto de 04.
+        documentos_relacionados:
+          type: array
+          items:
+            $ref: '#/components/schemas/DteDocumentoRelacionado'
+        documentos_retencion:
+          type: array
+          items:
+            $ref: '#/components/schemas/DteDocumentoRetencion'
+          description: Requerido funcionalmente para type 07.
+        otros_documentos:
+          type: array
+          items:
+            $ref: '#/components/schemas/DteOtroDocumento'
+          description: Requerido funcionalmente para type 15.
+        bienTitulo:
+          type: string
+          nullable: true
+          description: Requerido funcionalmente para type 04 (CAT-025).
+        condicion_operacion:
+          type: string
+          nullable: true
+          description: >-
+            Si no viene, backend usa dte.resumen.condicionOperacion o default 1.
+        resumen:
+          type: object
+          nullable: true
+          additionalProperties: true
+          properties:
+            codIncoterms:
+              type: string
+              nullable: true
+        incoterms:
+          type: string
+          nullable: true
+          description: Alternativa de entrada para INCOTERMS.
+        emisor:
+          type: object
+          nullable: true
+          additionalProperties: true
+          properties:
+            regimen:
+              type: string
+              nullable: true
+              description: Régimen exportación (CAT-028), relevante en type 11.
+            recintoFiscal:
+              type: string
+              nullable: true
+              description: Recinto fiscal (CAT-027), relevante en type 11.
+            tipoItemExpor:
+              type: string
+              nullable: true
+              description: Requerido funcionalmente en type 11.
+        flete:
+          type: number
+          nullable: true
+        seguro:
+          type: number
+          nullable: true
+        retener_iva:
+          type: string
+          nullable: true
+          description: "Valor activo esperado: active"
+        retener_renta:
+          type: string
+          nullable: true
+          description: "Valor activo esperado: active"
+        percibir_iva:
+          type: string
+          nullable: true
+          description: "Valor activo esperado: active"
+
+    DteCustomer:
+      type: object
+      additionalProperties: true
+      properties:
+        tipoDocumento:
+          type: string
+          nullable: true
+          description: >-
+            Códigos permitidos: 02,03,13,36,37. También acepta alias de texto
+            que el backend normaliza.
+        numDocumento:
+          type: string
+          nullable: true
+          description: Se normaliza según tipoDocumento y type.
+        nrc:
+          type: [string, integer, 'null']
+          description: NRC, se normaliza a solo dígitos.
+        nombre:
+          type: string
+          nullable: true
+        nombreComercial:
+          type: string
+          nullable: true
+        codActividad:
+          type: string
+          nullable: true
+          description: CAT-019
+        descActividad:
+          type: string
+          nullable: true
+        departamento:
+          type: string
+          nullable: true
+          description: CAT-012. Default backend 06.
+        municipio:
+          type: string
+          nullable: true
+          description: CAT-012 por departamento. Default backend 01.
+        complemento:
+          type: string
+          nullable: true
+        telefono:
+          type: string
+          nullable: true
+        correo:
+          type: string
+          nullable: true
+        tipoPersona:
+          type: string
+          nullable: true
+          description: Natural/Jurídica o código equivalente.
+        pais:
+          type: string
+          nullable: true
+          description: CAT-020. Relevante en type 11.
+
+    DteProduct:
+      type: object
+      additionalProperties: true
+      required:
+        - descripcion
+        - cantidad
+        - tipo
+        - precio
+        - precio_sin_tributos
+        - total
+      properties:
+        id:
+          type: [integer, string, 'null']
+        product:
+          type: [object, 'null']
+          additionalProperties: true
+          description: >-
+            Si incluye product.id de producto existente, puede disparar validación
+            de stock.
+        product_id:
+          type: [integer, string, 'null']
+        codigo:
+          type: string
+          nullable: true
+        unidad_medida:
+          type: string
+          nullable: true
+          description: CAT-014
+        descripcion:
+          type: string
+        cantidad:
+          type: number
+        tipo:
+          type: string
+          enum: ["Gravada", "Exenta", "No sujeta"]
+        precio:
+          type: number
+        precio_sin_tributos:
+          type: number
+        descuento:
+          type: number
+          default: 0
+        ventas_gravadas:
+          type: number
+          default: 0
+        ventas_exentas:
+          type: number
+          default: 0
+        ventas_no_sujetas:
+          type: number
+          default: 0
+        total:
+          type: number
+        iva:
+          type: number
+          default: 0
+        tipo_item:
+          oneOf:
+            - type: integer
+            - type: string
+          description: 1 bien, 2 servicio
+        documento_relacionado:
+          type: string
+          nullable: true
+          description: Requerido funcionalmente en type 05 y 06.
+        tributos:
+          description: Puede llegar como arreglo o JSON string.
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+            - type: 'null'
+        turismo_por_alojamiento:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+        turismo_salida_pais_via_aerea:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+        fovial:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+        contrans:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+        bebidas_alcoholicas:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+        tabaco_cigarillos:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+        tabaco_cigarros:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+
+    DtePaymentMethod:
+      type: object
+      additionalProperties: true
+      required:
+        - forma_pago
+        - monto
+      properties:
+        id:
+          type: [integer, string, 'null']
+        forma_pago:
+          type: string
+          description: Código de forma de pago (CAT-017).
+        monto:
+          type: number
+          minimum: 0
+        numero_documento:
+          type: string
+          nullable: true
+        plazo:
+          type: string
+          nullable: true
+        periodo:
+          oneOf:
+            - type: integer
+            - type: string
+            - type: 'null'
+
+    DteDocumentoRelacionado:
+      type: object
+      additionalProperties: true
+      required:
+        - tipo_documento
+        - tipo_generacion
+        - numero_documento
+        - fecha_documento
+      properties:
+        tipo_documento:
+          type: string
+        tipo_generacion:
+          oneOf:
+            - type: integer
+            - type: string
+        numero_documento:
+          type: string
+        fecha_documento:
+          type: string
+          format: date
+
+    DteDocumentoRetencion:
+      type: object
+      additionalProperties: true
+      required:
+        - tipo_generacion
+        - tipo_documento
+        - numero_documento
+        - codigo_retencion
+        - descripcion_retencion
+        - fecha_documento
+        - monto_sujeto_retencion
+        - iva_retenido
+      properties:
+        tipo_generacion:
+          type: string
+        tipo_documento:
+          oneOf:
+            - type: integer
+            - type: string
+        numero_documento:
+          type: string
+        codigo_retencion:
+          type: string
+        descripcion_retencion:
+          type: string
+        fecha_documento:
+          type: string
+          format: date
+        monto_sujeto_retencion:
+          type: number
+        iva_retenido:
+          type: number
+
+    DteOtroDocumento:
+      type: object
+      additionalProperties: true
+      required:
+        - documento_asociado
+      properties:
+        documento_asociado:
+          oneOf:
+            - type: integer
+            - type: string
+        identificacion_documento:
+          type: string
+          nullable: true
+        descripcion_documento:
+          type: string
+          nullable: true
+        medico:
+          type: object
+          nullable: true
+          additionalProperties: true
+          properties:
+            nombre:
+              type: string
+              nullable: true
+            tipo_servicio:
+              oneOf:
+                - type: integer
+                - type: string
+                - type: 'null'
+            tipo_documento:
+              oneOf:
+                - type: integer
+                - type: string
+                - type: 'null'
+            numero_documento:
+              type: string
+              nullable: true
+        placas:
+          type: string
+          nullable: true
+        modo_transporte:
+          type: string
+          nullable: true
+        numero_identificacion:
+          type: string
+          nullable: true
+        nombre_conductor:
+          type: string
+          nullable: true
+
+    SubmitDteSuccessResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - estado
+      properties:
+        estado:
+          type: string
+          enum: ["PROCESADO", "CONTINGENCIA", "BORRADOR", "PLANTILLA"]
+        codGeneracion:
+          type: string
+        selloRecibido:
+          type: string
+        fechaHora:
+          type: string
+
+    SubmitDteBusinessResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - estado
+      properties:
+        estado:
+          type: string
+          enum: ["RECHAZADO"]
+        observaciones:
+          type: string
+
+    ApiErrorResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        message:
+          type: string

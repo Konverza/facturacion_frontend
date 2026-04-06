@@ -1,0 +1,644 @@
+openapi: 3.1.0
+info:
+  title: API Submit DTE (Strict)
+  version: 1.0.0
+  description: >-
+    Variante estricta del contrato de /api/submitDte con discriminación por
+    dte.type usando oneOf.
+servers:
+  - url: /
+    description: Servidor actual
+
+tags:
+  - name: DTE
+    description: Envío de documentos tributarios electrónicos
+
+paths:
+  /api/submitDte:
+    post:
+      tags:
+        - DTE
+      summary: Enviar DTE desde JSON (strict)
+      operationId: submitDteStrict
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitDteStrictRequest'
+            examples:
+              tipo01:
+                value:
+                  dte:
+                    type: "01"
+                    customer:
+                      tipoDocumento: "13"
+                      numDocumento: "01234567-8"
+                      nombre: "Cliente Demo"
+                      codActividad: "001"
+                      departamento: "06"
+                      municipio: "01"
+                      correo: "cliente@demo.com"
+                    products:
+                      - descripcion: "Producto 1"
+                        cantidad: 1
+                        tipo: "Gravada"
+                        precio: 10
+                        precio_sin_tributos: 8.85
+                        total: 10
+                        descuento: 0
+                        iva: 1.15
+                        tipo_item: 1
+                    metodos_pago:
+                      - forma_pago: "01"
+                        monto: 10
+                    monto_abonado: 10
+              tipo07:
+                value:
+                  dte:
+                    type: "07"
+                    customer:
+                      tipoDocumento: "36"
+                      numDocumento: "06140301100011"
+                      nombre: "Proveedor Demo"
+                    documentos_retencion:
+                      - tipo_generacion: "01"
+                        tipo_documento: 1
+                        numero_documento: "A1B2C3D4E5"
+                        codigo_retencion: "01"
+                        descripcion_retencion: "Retención IVA 1%"
+                        fecha_documento: "2026-04-06"
+                        monto_sujeto_retencion: 100
+                        iva_retenido: 1
+      responses:
+        '200':
+          description: Respuesta del procesamiento interno/Octopus
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/SubmitDteSuccessResponse'
+                  - $ref: '#/components/schemas/SubmitDteBusinessResponse'
+        '401':
+          description: API key inválida, ausente o no autorizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '422':
+          description: Error de validación o regla de negocio
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiErrorResponse'
+                  - $ref: '#/components/schemas/SubmitDteBusinessResponse'
+        '500':
+          description: Error interno al procesar el DTE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API_KEY
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+
+  schemas:
+    SubmitDteStrictRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - dte
+      properties:
+        dte:
+          oneOf:
+            - $ref: '#/components/schemas/Dte01Payload'
+            - $ref: '#/components/schemas/Dte03Payload'
+            - $ref: '#/components/schemas/Dte04Payload'
+            - $ref: '#/components/schemas/Dte05Payload'
+            - $ref: '#/components/schemas/Dte06Payload'
+            - $ref: '#/components/schemas/Dte07Payload'
+            - $ref: '#/components/schemas/Dte11Payload'
+            - $ref: '#/components/schemas/Dte14Payload'
+            - $ref: '#/components/schemas/Dte15Payload'
+          discriminator:
+            propertyName: type
+            mapping:
+              "01": '#/components/schemas/Dte01Payload'
+              "03": '#/components/schemas/Dte03Payload'
+              "04": '#/components/schemas/Dte04Payload'
+              "05": '#/components/schemas/Dte05Payload'
+              "06": '#/components/schemas/Dte06Payload'
+              "07": '#/components/schemas/Dte07Payload'
+              "11": '#/components/schemas/Dte11Payload'
+              "14": '#/components/schemas/Dte14Payload'
+              "15": '#/components/schemas/Dte15Payload'
+
+    DteCommonBase:
+      type: object
+      additionalProperties: true
+      required:
+        - type
+      properties:
+        type:
+          type: string
+        customer:
+          $ref: '#/components/schemas/DteCustomer'
+        productos:
+          description: Alias no usado por backend, mantener products.
+          type: array
+          items:
+            $ref: '#/components/schemas/DteProduct'
+          deprecated: true
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/DteProduct'
+        metodos_pago:
+          type: array
+          items:
+            $ref: '#/components/schemas/DtePaymentMethod'
+        monto_abonado:
+          type: number
+        documentos_relacionados:
+          type: array
+          items:
+            $ref: '#/components/schemas/DteDocumentoRelacionado'
+        otros_documentos:
+          type: array
+          items:
+            $ref: '#/components/schemas/DteOtroDocumento'
+        documentos_retencion:
+          type: array
+          items:
+            $ref: '#/components/schemas/DteDocumentoRetencion'
+        bienTitulo:
+          type: string
+          nullable: true
+        condicion_operacion:
+          type: string
+          nullable: true
+        resumen:
+          type: object
+          nullable: true
+          additionalProperties: true
+          properties:
+            codIncoterms:
+              type: string
+              nullable: true
+        incoterms:
+          type: string
+          nullable: true
+        emisor:
+          type: object
+          nullable: true
+          additionalProperties: true
+          properties:
+            regimen:
+              type: string
+              nullable: true
+            recintoFiscal:
+              type: string
+              nullable: true
+            tipoItemExpor:
+              type: string
+              nullable: true
+
+    Dte01Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "01"
+          required: [type, customer, products, metodos_pago, monto_abonado]
+
+    Dte03Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "03"
+          required: [type, customer, products, metodos_pago, monto_abonado]
+
+    Dte04Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "04"
+          required: [type, customer, products, bienTitulo]
+
+    Dte05Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "05"
+            products:
+              type: array
+              items:
+                $ref: '#/components/schemas/DteProductWithRelatedDoc'
+          required: [type, customer, products, metodos_pago, monto_abonado]
+
+    Dte06Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "06"
+            products:
+              type: array
+              items:
+                $ref: '#/components/schemas/DteProductWithRelatedDoc'
+          required: [type, customer, products, metodos_pago, monto_abonado]
+
+    Dte07Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "07"
+          required: [type, customer, documentos_retencion]
+
+    Dte11Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "11"
+            emisor:
+              type: object
+              additionalProperties: true
+              required: [tipoItemExpor]
+              properties:
+                tipoItemExpor:
+                  type: string
+                regimen:
+                  type: string
+                  nullable: true
+                recintoFiscal:
+                  type: string
+                  nullable: true
+          required: [type, customer, products, metodos_pago, monto_abonado, emisor]
+
+    Dte14Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "14"
+          required: [type, customer, products, metodos_pago, monto_abonado]
+
+    Dte15Payload:
+      allOf:
+        - $ref: '#/components/schemas/DteCommonBase'
+        - type: object
+          properties:
+            type:
+              const: "15"
+            products:
+              type: array
+              items:
+                $ref: '#/components/schemas/DteDonationProduct'
+          required: [type, customer, products, otros_documentos]
+
+    DteCustomer:
+      type: object
+      additionalProperties: true
+      properties:
+        tipoDocumento:
+          type: string
+          nullable: true
+          description: Códigos esperados 02,03,13,36,37 (admite alias por normalización).
+        numDocumento:
+          type: string
+          nullable: true
+        nrc:
+          type: [string, integer, 'null']
+        nombre:
+          type: string
+          nullable: true
+        nombreComercial:
+          type: string
+          nullable: true
+        codActividad:
+          type: string
+          nullable: true
+        descActividad:
+          type: string
+          nullable: true
+        departamento:
+          type: string
+          nullable: true
+        municipio:
+          type: string
+          nullable: true
+        complemento:
+          type: string
+          nullable: true
+        telefono:
+          type: string
+          nullable: true
+        correo:
+          type: string
+          nullable: true
+        tipoPersona:
+          type: string
+          nullable: true
+        pais:
+          type: string
+          nullable: true
+
+    DteProduct:
+      type: object
+      additionalProperties: true
+      required:
+        - descripcion
+        - cantidad
+        - tipo
+        - precio
+        - precio_sin_tributos
+        - total
+      properties:
+        id:
+          type: [integer, string, 'null']
+        product:
+          type: [object, 'null']
+          additionalProperties: true
+        product_id:
+          type: [integer, string, 'null']
+        codigo:
+          type: string
+          nullable: true
+        unidad_medida:
+          type: string
+          nullable: true
+        descripcion:
+          type: string
+        cantidad:
+          type: number
+        tipo:
+          type: string
+          enum: ["Gravada", "Exenta", "No sujeta"]
+        precio:
+          type: number
+        precio_sin_tributos:
+          type: number
+        descuento:
+          type: number
+          default: 0
+        ventas_gravadas:
+          type: number
+          default: 0
+        ventas_exentas:
+          type: number
+          default: 0
+        ventas_no_sujetas:
+          type: number
+          default: 0
+        total:
+          type: number
+        iva:
+          type: number
+          default: 0
+        tipo_item:
+          oneOf:
+            - type: integer
+            - type: string
+        documento_relacionado:
+          type: string
+          nullable: true
+        tributos:
+          oneOf:
+            - type: array
+              items:
+                type: string
+            - type: string
+            - type: 'null'
+
+    DteProductWithRelatedDoc:
+      allOf:
+        - $ref: '#/components/schemas/DteProduct'
+        - type: object
+          required:
+            - documento_relacionado
+
+    DteDonationProduct:
+      type: object
+      additionalProperties: true
+      required:
+        - tipo_donacion
+        - cantidad
+        - unidad_medida
+        - descripcion
+        - depreciacion
+        - valor_unitario
+        - valor_donado
+      properties:
+        tipo_donacion:
+          oneOf:
+            - type: integer
+            - type: string
+        cantidad:
+          type: number
+        unidad_medida:
+          type: string
+        descripcion:
+          type: string
+        depreciacion:
+          type: number
+        valor_unitario:
+          type: number
+        valor_donado:
+          type: number
+
+    DtePaymentMethod:
+      type: object
+      additionalProperties: true
+      required:
+        - forma_pago
+        - monto
+      properties:
+        id:
+          type: [integer, string, 'null']
+        forma_pago:
+          type: string
+          description: Código CAT-017
+        monto:
+          type: number
+          minimum: 0
+        numero_documento:
+          type: string
+          nullable: true
+        plazo:
+          type: string
+          nullable: true
+        periodo:
+          oneOf:
+            - type: integer
+            - type: string
+            - type: 'null'
+
+    DteDocumentoRelacionado:
+      type: object
+      additionalProperties: true
+      required:
+        - tipo_documento
+        - tipo_generacion
+        - numero_documento
+        - fecha_documento
+      properties:
+        tipo_documento:
+          type: string
+        tipo_generacion:
+          oneOf:
+            - type: integer
+            - type: string
+        numero_documento:
+          type: string
+        fecha_documento:
+          type: string
+          format: date
+
+    DteDocumentoRetencion:
+      type: object
+      additionalProperties: true
+      required:
+        - tipo_generacion
+        - tipo_documento
+        - numero_documento
+        - codigo_retencion
+        - descripcion_retencion
+        - fecha_documento
+        - monto_sujeto_retencion
+        - iva_retenido
+      properties:
+        tipo_generacion:
+          type: string
+        tipo_documento:
+          oneOf:
+            - type: integer
+            - type: string
+        numero_documento:
+          type: string
+        codigo_retencion:
+          type: string
+        descripcion_retencion:
+          type: string
+        fecha_documento:
+          type: string
+          format: date
+        monto_sujeto_retencion:
+          type: number
+        iva_retenido:
+          type: number
+
+    DteOtroDocumento:
+      type: object
+      additionalProperties: true
+      required:
+        - documento_asociado
+      properties:
+        documento_asociado:
+          oneOf:
+            - type: integer
+            - type: string
+        identificacion_documento:
+          type: string
+          nullable: true
+        descripcion_documento:
+          type: string
+          nullable: true
+        medico:
+          type: object
+          nullable: true
+          additionalProperties: true
+          properties:
+            nombre:
+              type: string
+              nullable: true
+            tipo_servicio:
+              oneOf:
+                - type: integer
+                - type: string
+                - type: 'null'
+            tipo_documento:
+              oneOf:
+                - type: integer
+                - type: string
+                - type: 'null'
+            numero_documento:
+              type: string
+              nullable: true
+        placas:
+          type: string
+          nullable: true
+        modo_transporte:
+          type: string
+          nullable: true
+        numero_identificacion:
+          type: string
+          nullable: true
+        nombre_conductor:
+          type: string
+          nullable: true
+
+    SubmitDteSuccessResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - estado
+      properties:
+        estado:
+          type: string
+          enum: ["PROCESADO", "CONTINGENCIA", "BORRADOR", "PLANTILLA"]
+        codGeneracion:
+          type: string
+        selloRecibido:
+          type: string
+        fechaHora:
+          type: string
+
+    SubmitDteBusinessResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - estado
+      properties:
+        estado:
+          type: string
+          enum: ["RECHAZADO"]
+        observaciones:
+          type: string
+
+    ApiErrorResponse:
+      type: object
+      additionalProperties: true
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        message:
+          type: string
