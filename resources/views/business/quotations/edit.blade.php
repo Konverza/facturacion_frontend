@@ -19,6 +19,7 @@
 
     @include('layouts.partials.business.dte.modals.modal-select-customer')
     @include('layouts.partials.business.dte.modals.modal-select-product')
+    @include('layouts.partials.business.dte.modals.modal-edit-product')
     @include('layouts.partials.business.dte.drawer-new-product')
     @include('layouts.partials.business.dte.modals.modal-add-discount')
 @endsection

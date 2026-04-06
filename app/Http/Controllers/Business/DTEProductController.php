@@ -71,6 +71,71 @@ class DTEProductController extends Controller
         throw new \RuntimeException("Se alcanzó el límite máximo de 2000 métodos de pago en el DTE.");
     }
 
+    private function calculateItemIva(float $total, string $tipoVenta): float
+    {
+        if ($tipoVenta !== "Gravada") {
+            return 0;
+        }
+
+        if (in_array($this->dte["type"] ?? null, ["03", "05", "06"], true)) {
+            return $this->precise_round($total * 0.13, 8);
+        }
+
+        return $this->precise_round(($total / 1.13) * 0.13, 8);
+    }
+
+    private function inferManualTributes(array $item): array
+    {
+        $tributes = [];
+
+        if (($item["turismo_por_alojamiento"] ?? "inactive") === "active") {
+            $tributes[] = "59";
+        }
+        if (($item["turismo_salida_pais_via_aerea"] ?? "inactive") === "active") {
+            $tributes[] = "71";
+        }
+        if (($item["fovial"] ?? "inactive") === "active") {
+            $tributes[] = "D1";
+        }
+        if (($item["contrans"] ?? "inactive") === "active") {
+            $tributes[] = "C8";
+        }
+        if (($item["bebidas_alcoholicas"] ?? "inactive") === "active") {
+            $tributes[] = "C5";
+        }
+        if (($item["tabaco_cigarillos"] ?? "inactive") === "active") {
+            $tributes[] = "C6";
+        }
+        if (($item["tabaco_cigarros"] ?? "inactive") === "active") {
+            $tributes[] = "C7";
+        }
+
+        if (isset($item["tributos"])) {
+            $jsonTributes = json_decode((string) $item["tributos"], true);
+            if (is_array($jsonTributes)) {
+                $tributes = array_merge($tributes, array_map(fn($tribute) => (string) $tribute, $jsonTributes));
+            }
+        }
+
+        return array_values(array_unique($tributes));
+    }
+
+    private function isManualDteItem(array $item): bool
+    {
+        return empty($item["product_id"]) || empty($item["product"]);
+    }
+
+    private function findDteItemIndexById(string $id): ?int
+    {
+        foreach (($this->dte["products"] ?? []) as $index => $product) {
+            if ((string) ($product["id"] ?? "") === (string) $id) {
+                return $index;
+            }
+        }
+
+        return null;
+    }
+
     public function select(Request $request)
     {
         $product = BusinessProduct::find($request->product_id);
@@ -982,6 +1047,151 @@ class DTEProductController extends Controller
             return response()->json([
                 "success" => false,
                 "message" => "Ha ocurrido un error al eliminar el producto"
+            ]);
+        }
+    }
+
+    public function edit(string $id)
+    {
+        try {
+            $this->dte = session("dte", ["products" => []]);
+            $itemIndex = $this->findDteItemIndexById($id);
+
+            if ($itemIndex === null) {
+                return response()->json([
+                    "success" => false,
+                    "message" => "Producto no encontrado en el DTE",
+                ]);
+            }
+
+            $item = $this->dte["products"][$itemIndex];
+            $isManual = $this->isManualDteItem($item);
+
+            return response()->json([
+                "success" => true,
+                "is_manual" => $isManual,
+                "item" => [
+                    "id" => $item["id"] ?? null,
+                    "product_id" => $item["product_id"] ?? null,
+                    "descripcion" => $item["descripcion"] ?? null,
+                    "unidad_medida" => $item["unidad_medida"] ?? null,
+                    "cantidad" => (float) ($item["cantidad"] ?? 0),
+                    "tipo" => $item["tipo"] ?? "Gravada",
+                    "precio" => (float) ($item["precio"] ?? 0),
+                    "precio_sin_tributos" => (float) ($item["precio_sin_tributos"] ?? 0),
+                    "descuento" => (float) ($item["descuento"] ?? 0),
+                    "total" => (float) ($item["total"] ?? 0),
+                    "tipo_item" => $item["tipo_item"] ?? null,
+                    "documento_relacionado" => $item["documento_relacionado"] ?? null,
+                    "tributos" => $isManual ? $this->inferManualTributes($item) : [],
+                ],
+                "update_url" => route("business.dte.product.update", $id),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                "success" => false,
+                "message" => "No se pudo cargar el item para edición",
+            ]);
+        }
+    }
+
+    public function update(string $id, Request $request)
+    {
+        try {
+            $this->dte = session("dte", ["products" => []]);
+            $itemIndex = $this->findDteItemIndexById($id);
+
+            if ($itemIndex === null) {
+                return response()->json([
+                    "success" => false,
+                    "message" => "Producto no encontrado en el DTE",
+                ]);
+            }
+
+            $item = $this->dte["products"][$itemIndex];
+            $isManual = $this->isManualDteItem($item);
+
+            if (in_array($this->dte["type"] ?? null, ["05", "06"], true)) {
+                if (($request->documento_relacionado ?? "") === "") {
+                    return response()->json([
+                        "success" => false,
+                        "message" => "Debe seleccionar un documento relacionado",
+                    ]);
+                }
+            }
+
+            if ($isManual) {
+                $cantidad = max(0.00000001, (float) $request->input("cantidad", 0));
+                $precioUnitario = max(0, (float) $request->input("precio_unitario", 0));
+                $descuento = max(0, (float) $request->input("descuento", 0));
+                $total = max(0, (float) $request->input("total", 0));
+                $tipoVenta = (string) $request->input("tipo", "Gravada");
+                $tipoItem = (string) $request->input("tipo_item", "1");
+                $tributos = array_map(fn($tribute) => (string) $tribute, $request->input("tributos", []));
+
+                $item["unidad_medida"] = $request->input("unidad_medida");
+                $item["descripcion"] = $request->input("descripcion");
+                $item["cantidad"] = $cantidad;
+                $item["tipo"] = $tipoVenta;
+                $item["precio"] = $precioUnitario;
+                $item["precio_sin_tributos"] = $precioUnitario;
+                $item["descuento"] = $descuento;
+                $item["total"] = $total;
+                $item["tipo_item"] = $tipoItem;
+                $item["documento_relacionado"] = $request->input("documento_relacionado") ?: null;
+                $item["tributos"] = json_encode($tributos);
+
+                $item["ventas_gravadas"] = $tipoVenta === "Gravada" ? $total : 0;
+                $item["ventas_exentas"] = $tipoVenta === "Exenta" ? $total : 0;
+                $item["ventas_no_sujetas"] = $tipoVenta === "No sujeta" ? $total : 0;
+
+                $item["turismo_por_alojamiento"] = in_array("59", $tributos, true) ? "active" : "inactive";
+                $item["turismo_salida_pais_via_aerea"] = in_array("71", $tributos, true) ? "active" : "inactive";
+                $item["fovial"] = in_array("D1", $tributos, true) ? "active" : "inactive";
+                $item["contrans"] = in_array("C8", $tributos, true) ? "active" : "inactive";
+                $item["bebidas_alcoholicas"] = in_array("C5", $tributos, true) ? "active" : "inactive";
+                $item["tabaco_cigarillos"] = in_array("C6", $tributos, true) ? "active" : "inactive";
+                $item["tabaco_cigarros"] = in_array("C7", $tributos, true) ? "active" : "inactive";
+                $item["iva"] = $this->calculateItemIva($total, $tipoVenta);
+            } else {
+                $cantidad = max(0.00000001, (float) $request->input("cantidad", 0));
+                $tipoVenta = (string) $request->input("tipo", "Gravada");
+                $descuento = max(0, (float) ($item["descuento"] ?? 0));
+                $precio = (float) ($item["precio"] ?? 0);
+                $total = $this->precise_round(max(0, ($precio * $cantidad) - $descuento), 8);
+
+                $item["cantidad"] = $cantidad;
+                $item["tipo"] = $tipoVenta;
+                $item["total"] = $total;
+                $item["ventas_gravadas"] = $tipoVenta === "Gravada" ? $total : 0;
+                $item["ventas_exentas"] = $tipoVenta === "Exenta" ? $total : 0;
+                $item["ventas_no_sujetas"] = $tipoVenta === "No sujeta" ? $total : 0;
+                $item["iva"] = $this->calculateItemIva($total, $tipoVenta);
+            }
+
+            $this->dte["products"][$itemIndex] = $item;
+            $this->totals();
+            session(["dte" => $this->dte]);
+
+            return response()->json([
+                "success" => true,
+                "message" => "Item actualizado correctamente",
+                "table_data" => $this->renderProductsTable(),
+                "table" => "products-dte",
+                "modal" => "edit-product-modal",
+                "total_pagar" => $this->dte["total_pagar"],
+                "monto_pendiente" => $this->dte["monto_pendiente"],
+                "table_exportacion" => $this->dte["type"] == "11" ? view("layouts.partials.ajax.business.table-exportacion", [
+                    "dte" => $this->dte
+                ])->render() : null,
+                "table_sujeto_excluido" => $this->dte["type"] == "14" ? view("layouts.partials.ajax.business.table-sujeto-excluido", [
+                    "dte" => $this->dte
+                ])->render() : null,
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                "success" => false,
+                "message" => "No se pudo actualizar el item: " . $e->getMessage(),
             ]);
         }
     }

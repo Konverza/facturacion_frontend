@@ -100,6 +100,32 @@ $(document).ready(function () {
         $("#total_product").val(redondear(total_descuento, 8));
     });
 
+    function calculateEditManualTotal() {
+        const $manualFields = $("#edit-manual-fields");
+        if (!$manualFields.length || $manualFields.hasClass("hidden")) {
+            return;
+        }
+
+        const cantidad = parseFloat($("#edit_cantidad").val()) || 0;
+        const precio = parseFloat($("#edit_precio_unitario").val()) || 0;
+        const descuento = parseFloat($("#edit_descuento").val()) || 0;
+
+        const subtotal = cantidad * precio;
+        const total = subtotal - descuento;
+
+        if (total < 0) {
+            $("#edit_descuento").val(0);
+            $("#edit_total").val(redondear(subtotal, 8));
+            return;
+        }
+
+        $("#edit_total").val(redondear(total, 8));
+    }
+
+    $(document).on("input", "#edit_cantidad, #edit_precio_unitario, #edit_descuento", function () {
+        calculateEditManualTotal();
+    });
+
     $("#tipo_venta").on("Changed", function () {
         const type_sale = $("#tipo_venta").val();
         const url = new URL(window.location.href);
@@ -731,7 +757,9 @@ $(document).ready(function () {
     }
 
     function setCustomSelectValue(selectId, value) {
-        const select = $("#" + selectId);
+        const select = String(selectId || "").startsWith("#")
+            ? $(selectId)
+            : $("#" + selectId);
         if (!select.length) return;
 
         const normalizedValue = value ?? "";
@@ -1066,11 +1094,13 @@ $(document).ready(function () {
                         }
                     }
                 } else {
-                    showAlert("error", "Error", data.message);
+                    showAlert("error", "Error", data.message || "No se pudo completar la operación.");
                 }
             })
             .catch(function (error) {
                 console.log(error);
+                const backendMessage = error?.response?.data?.message;
+                showAlert("error", "Error", backendMessage || "Ha ocurrido un error inesperado.");
             })
             .finally(function () {
                 $("#loader").addClass("hidden");
@@ -1186,6 +1216,157 @@ $(document).ready(function () {
 
         $("#loader").removeClass("hidden");
         $("body").addClass("overflow-hidden");
+    });
+
+    $(document).on("click", ".btn-edit-product", function () {
+        const url = $(this).data("action");
+
+        axios
+            .get(url)
+            .then(function (response) {
+                const data = response.data;
+                if (!data.success) {
+                    showAlert("error", "Error", data.message || "No se pudo cargar el item");
+                    return;
+                }
+
+                const item = data.item || {};
+                const isManual = !!data.is_manual;
+
+                $("#form-edit-product").attr("action", data.update_url || "#");
+                $("#edit_item_id").val(item.id || "");
+                $("#edit_descripcion_preview").val(item.descripcion || "");
+                $("#edit_cantidad").val(item.cantidad ?? "");
+
+                if ($("#edit_tipo").length) {
+                    setCustomSelectValue("#edit_tipo", item.tipo || "Gravada");
+                } else {
+                    $("#edit_tipo_hidden").val(item.tipo || "Gravada");
+                }
+
+                if (isManual) {
+                    $("#edit-manual-fields").removeClass("hidden");
+                    $("#edit-existing-note").addClass("hidden");
+
+                    $("#edit_descripcion").val(item.descripcion || "");
+                    $("#edit_precio_unitario").val(item.precio ?? item.precio_sin_tributos ?? 0);
+                    $("#edit_descuento").val(item.descuento ?? 0);
+                    $("#edit_total").val(item.total ?? 0);
+
+                    setCustomSelectValue("#edit_tipo_item", item.tipo_item || "1");
+                    setCustomSelectValue("#edit_unidad_medida", item.unidad_medida || "");
+                    setCustomSelectValue("#edit_documento_relacionado", item.documento_relacionado || "");
+
+                    $("#form-edit-product input[name='tributos[]']").prop("checked", false);
+
+                    const tributos = Array.isArray(item.tributos) ? item.tributos : [];
+                    tributos.forEach(function (tribute) {
+                        $("#form-edit-product input[name='tributos[]'][value='" + tribute + "']").prop("checked", true);
+                    });
+
+                    calculateEditManualTotal();
+                } else {
+                    $("#edit-manual-fields").addClass("hidden");
+                    $("#edit-existing-note").removeClass("hidden");
+                }
+
+                $("#edit-product-modal").removeClass("hidden").addClass("flex");
+                $("body").addClass("overflow-hidden");
+            })
+            .catch(function (error) {
+                console.log(error);
+                showAlert("error", "Error", "No se pudo cargar el item para edición");
+            });
+    });
+
+    $(document).on("submit", "#form-edit-product", function (event) {
+        event.preventDefault();
+        const form = $(this);
+        if (!form.length) {
+            return;
+        }
+
+        let isValid = true;
+
+        form.find("[required]").each(function () {
+            const input = $(this);
+            if (input.is(":hidden") || input.closest(".hidden").length) {
+                return;
+            }
+
+            const value = (input.val() ?? "").toString().trim();
+            if (!value) {
+                input.addClass("is-invalid");
+                isValid = false;
+            } else {
+                input.removeClass("is-invalid");
+            }
+        });
+
+        if (!isValid) {
+            showAlert("error", "Error", "Rellena los campos requeridos");
+            return;
+        }
+
+        $("#loader").removeClass("hidden");
+        $("body").addClass("overflow-hidden");
+
+        axios({
+            method: form.attr("method") || "POST",
+            url: form.attr("action"),
+            data: form.serialize(),
+        })
+            .then(function (response) {
+                const data = response.data || {};
+
+                if (!data.success) {
+                    showAlert("error", "Error", data.message || "No se pudo actualizar el item.");
+                    return;
+                }
+
+                showAlert("success", "Exito", data.message || "Item actualizado correctamente");
+
+                if (data.table_data && data.table) {
+                    $("#table-" + data.table).html(data.table_data);
+                }
+
+                if (data.modal !== undefined) {
+                    $("#" + data.modal)
+                        .addClass("hidden")
+                        .removeClass("flex");
+                }
+
+                if (data.monto_pendiente !== undefined) {
+                    $("#monto_total").val(redondear(data.monto_pendiente, 2));
+                }
+
+                if (data.table_exportacion !== undefined) {
+                    $("#table-exportacion").html(data.table_exportacion);
+                }
+
+                if (data.table_sujeto_excluido !== undefined) {
+                    $("#table-sujeto-excluido").html(data.table_sujeto_excluido);
+                }
+            })
+            .catch(function (error) {
+                console.log(error);
+                const backendMessage = error?.response?.data?.message;
+                showAlert("error", "Error", backendMessage || "No se pudo actualizar el item.");
+            })
+            .finally(function () {
+                $("#loader").addClass("hidden");
+                $("body").removeClass("overflow-hidden");
+            });
+    });
+
+    $(document).on("click", ".submit-edit-item", function (event) {
+        const form = $("#form-edit-product");
+        if (!form.length) {
+            return;
+        }
+
+        event.preventDefault();
+        form.trigger("submit");
     });
 
     // Omitir Datos Emisor

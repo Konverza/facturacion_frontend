@@ -157,6 +157,8 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
             Route::post("/store", [DTEProductController::class, "store"])->name('store');
             Route::post("/store-new", [DTEProductController::class, "store_new"])->name('store-new');
             Route::post("/store-pos", [DTEProductController::class, "store_from_pos"])->name('store-pos');
+            Route::get("/edit/{id}", [DTEProductController::class, "edit"])->name('edit');
+            Route::post("/update/{id}", [DTEProductController::class, "update"])->name('update');
             Route::post("/unaffected-amounts", [DTEProductController::class, "unaffected_amounts"])->name('unaffected-amounts');
             Route::post("/taxes-iva", [DTEProductController::class, "taxes_iva"])->name('taxes-iva');
             Route::get("/delete/{id}", [DTEProductController::class, "delete"])->name('delete');

@@ -65,9 +65,14 @@
                         <x-td>${{ $formatCompactAmount($product['ventas_exentas'] ?? 0) }}</x-td>
                         <x-td>${{ $formatCompactAmount($product['ventas_no_sujetas'] ?? 0) }}</x-td>
                         <x-td :last="true">
-                            <x-button type="button" icon="trash" size="small"
-                                data-action="{{ Route('business.dte.product.delete', $product['id']) }}"
-                                typeButton="danger" text="Eliminar" class="btn-delete" />
+                            <div class="flex flex-col gap-2 sm:flex-row">
+                                <x-button type="button" icon="pencil" size="small"
+                                    data-action="{{ Route('business.dte.product.edit', $product['id']) }}"
+                                    typeButton="info" text="Editar" class="btn-edit-product" />
+                                <x-button type="button" icon="trash" size="small"
+                                    data-action="{{ Route('business.dte.product.delete', $product['id']) }}"
+                                    typeButton="danger" text="Eliminar" class="btn-delete" />
+                            </div>
                         </x-td>
                     </x-tr>
                 @endforeach

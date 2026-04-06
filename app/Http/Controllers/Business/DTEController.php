@@ -405,7 +405,33 @@ class DTEController extends Controller
         }
 
         $data = $this->processDTE($request, "01", "/factura/");
-        $this->handleResponse($data, $request);
+        $response = $this->handleResponse($data, $request);
+
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
+
+        if ($response === "PROCESADO") {
+            return redirect()->route('business.documents.index')
+                ->with([
+                    'success' => "Exito",
+                    'success_message' => "Documento generado correctamente",
+                ]);
+        } elseif ($response === "BORRADOR") {
+            return redirect()->route('business.documents.drafts')
+                ->with('success', "Exito")
+                ->with(
+                    "success_message",
+                    "Documento guardado como borrador"
+                );
+        }
+
+        return redirect()->route('business.documents.index')
+            ->with('error', "Error")
+            ->with(
+                "error_message",
+                "Ha ocurrido un error al generar el documento."
+            );
     }
 
     public function credito_fiscal(Request $request)
@@ -435,6 +461,9 @@ class DTEController extends Controller
 
         $data = $this->processDTE($request, "03", "/credito_fiscal/");
         $response = $this->handleResponse($data, $request);
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
         if ($response === "PROCESADO") {
             return redirect()->route('business.documents.index')
                 ->with([
@@ -477,6 +506,9 @@ class DTEController extends Controller
 
         $data = $this->processDTE($request, "04", "/nota_remision/");
         $response = $this->handleResponse($data, $request);
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
         if ($response === "PROCESADO") {
             return redirect()->route('business.documents.index')
                 ->with([
@@ -525,6 +557,9 @@ class DTEController extends Controller
 
         $data = $this->processDTE($request, "05", "/nota_credito/");
         $response = $this->handleResponse($data, $request);
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
         if ($response === "PROCESADO") {
             return redirect()->route('business.documents.index')
                 ->with([
@@ -572,7 +607,14 @@ class DTEController extends Controller
         }
 
         $data = $this->processDTE($request, "06", "/nota_debito/");
-        $this->handleResponse($data, $request);
+        $response = $this->handleResponse($data, $request);
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
+
+        return redirect()->route('business.documents.index')
+            ->with('error', "Error")
+            ->with("error_message", "Ha ocurrido un error al generar el documento.");
     }
 
     public function comprobante_retencion(Request $request)
@@ -595,7 +637,14 @@ class DTEController extends Controller
         }
 
         $data = $this->processDTE($request, "07", "/comprobante_retencion/");
-        $this->handleResponse($data, $request);
+        $response = $this->handleResponse($data, $request);
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
+
+        return redirect()->route('business.documents.index')
+            ->with('error', "Error")
+            ->with("error_message", "Ha ocurrido un error al generar el documento.");
     }
 
     public function factura_exportacion(Request $request)
@@ -622,7 +671,14 @@ class DTEController extends Controller
             }
         }
         $data = $this->processDTE($request, "11", "/factura_exportacion/");
-        $this->handleResponse($data, $request);
+        $response = $this->handleResponse($data, $request);
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
+
+        return redirect()->route('business.documents.index')
+            ->with('error', "Error")
+            ->with("error_message", "Ha ocurrido un error al generar el documento.");
     }
 
     public function factura_sujeto_excluido(Request $request)
@@ -641,7 +697,14 @@ class DTEController extends Controller
         }
 
         $data = $this->processDTE($request, "14", "/sujeto_excluido/");
-        $this->handleResponse($data, $request);
+        $response = $this->handleResponse($data, $request);
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
+
+        return redirect()->route('business.documents.index')
+            ->with('error', "Error")
+            ->with("error_message", "Ha ocurrido un error al generar el documento.");
     }
 
     public function comprobante_donacion(Request $request)
@@ -658,7 +721,14 @@ class DTEController extends Controller
         }
 
         $data = $this->processDTE($request, "15", "/comprobante_donacion/");
-        $this->handleResponse($data, $request);
+        $response = $this->handleResponse($data, $request);
+        if ($response instanceof \Illuminate\Http\RedirectResponse) {
+            return $response;
+        }
+
+        return redirect()->route('business.documents.index')
+            ->with('error', "Error")
+            ->with("error_message", "Ha ocurrido un error al generar el documento.");
     }
 
     public function buildDTE(Request $request, $type, $business_id)
@@ -1061,6 +1131,22 @@ class DTEController extends Controller
 
     public function handleResponse($data, $request)
     {
+        if ($data instanceof \Illuminate\Http\RedirectResponse) {
+            return $data;
+        }
+
+        if (!is_array($data)) {
+            session()->forget('quotation_source_id');
+            Log::error('handleResponse recibió una respuesta no válida', [
+                'type' => gettype($data),
+            ]);
+
+            return redirect()->route('business.documents.index')
+                ->with('error', "Error")
+                ->with("error_message", "Ha ocurrido un error al procesar la respuesta del DTE.")
+                ->send();
+        }
+
         $business_id = Session::get('business') ?? null;
         if (isset($data["estado"])) {
             if ($data["estado"] === "PROCESADO" || $data["estado"] === "CONTINGENCIA") {
@@ -1200,7 +1286,7 @@ class DTEController extends Controller
             }
         } else {
             session()->forget('quotation_source_id');
-            Log::error($data);
+            Log::error('Respuesta DTE inválida', ['data' => $data]);
             $this->createDtePending(json_encode($data), "error");
             return redirect()->route('business.documents.index')
                 ->with('error', "Error")
