@@ -20,7 +20,8 @@ class DTEDraftController extends Controller
 
         $draftsQuery = DTE::query()
             ->where('business_id', $businessId)
-            ->where('status', 'pending');
+            ->where('status', 'pending')
+            ->where('is_quotation', false);
 
         if ($authUser->only_fcf) {
             $draftsQuery->where('type', '01');
