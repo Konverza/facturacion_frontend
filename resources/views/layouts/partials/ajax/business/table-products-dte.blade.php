@@ -1,6 +1,7 @@
 <x-table :datatable="false">
     <x-slot name="thead">
         <x-tr>
+            <x-th>#</x-th>
             <x-th>Unidad de medida</x-th>
             <x-th>Descripción</x-th>
             <x-th>Cantidad</x-th>
@@ -12,15 +13,40 @@
             <x-th :last="true">Acciones</x-th>
         </x-tr>
         <x-slot name="tbody">
+            @php
+                $unidadesMedidas = $unidades_medidas ?? [];
+                $formatCompactAmount = function ($value) {
+                    if (!is_numeric($value)) {
+                        return number_format(0, 2);
+                    }
+
+                    $number = (float) $value;
+                    $normalized = number_format($number, 8, '.', '');
+                    $normalized = rtrim(rtrim($normalized, '0'), '.');
+
+                    $decimals = 0;
+                    if (str_contains($normalized, '.')) {
+                        $decimals = strlen(substr(strrchr($normalized, '.'), 1));
+                    }
+
+                    $decimals = max(2, min(8, $decimals));
+                    return number_format($number, $decimals);
+                };
+            @endphp
             @if (isset($dte['products']) && count($dte['products']) > 0)
                 @foreach ($dte['products'] as $product)
+                    @php
+                        $unidadCodigo = $product['unidad_medida'] ?? null;
+                        $unidadDescripcion = $unidadesMedidas[$unidadCodigo] ?? $unidadCodigo ?? 'N/A';
+                    @endphp
                     <x-tr>
-                        <x-td>{{ $product['unidad_medida'] }}</x-td>
+                        <x-td>{{ $loop->iteration }}</x-td>
+                        <x-td>{{ $unidadDescripcion }}</x-td>
                         <x-td>
                             <div class="flex flex-col gap-1">
-                                {{ $product['descripcion'] }}
+                                <span class="text-xs leading-tight">{{ $product['descripcion'] }}</span>
                                 @if (isset($product['documento_relacionado']) && $product['documento_relacionado'] !== null)
-                                    <span class="text-xs text-gray-500">
+                                    <span class="text-[11px] text-gray-500 leading-tight">
                                         ({{ $product['documento_relacionado'] }})
                                     </span>
                                 @endif
@@ -29,15 +55,15 @@
                         <x-td>{{ $product['cantidad'] }}</x-td>
                         <x-td>
                             @if ($dte['type'] !== '01')
-                                ${{ number_format($product['precio_sin_tributos'], 8) }}
+                                ${{ $formatCompactAmount($product['precio_sin_tributos'] ?? 0) }}
                             @else
-                                ${{ number_format($product['precio'], 8) }}
+                                ${{ $formatCompactAmount($product['precio'] ?? 0) }}
                             @endif
                         </x-td>
-                        <x-td>${{ number_format($product['descuento'], 8) }}</x-td>
-                        <x-td>${{ number_format($product['ventas_gravadas'], 8) }}</x-td>
-                        <x-td>${{ number_format($product['ventas_exentas'], 8) }}</x-td>
-                        <x-td>${{ number_format($product['ventas_no_sujetas'], 8) }}</x-td>
+                        <x-td>${{ $formatCompactAmount($product['descuento'] ?? 0) }}</x-td>
+                        <x-td>${{ $formatCompactAmount($product['ventas_gravadas'] ?? 0) }}</x-td>
+                        <x-td>${{ $formatCompactAmount($product['ventas_exentas'] ?? 0) }}</x-td>
+                        <x-td>${{ $formatCompactAmount($product['ventas_no_sujetas'] ?? 0) }}</x-td>
                         <x-td :last="true">
                             <x-button type="button" icon="trash" size="small"
                                 data-action="{{ Route('business.dte.product.delete', $product['id']) }}"
@@ -47,12 +73,12 @@
                 @endforeach
             @else
                 <x-tr>
-                    <x-td :last="true" colspan="9" class="text-center">No hay productos</x-td>
+                    <x-td :last="true" colspan="10" class="text-center">No hay productos</x-td>
                 </x-tr>
             @endif
 
             <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="10" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Subtotal
                         <span>
@@ -65,7 +91,7 @@
 
             @if ($dte['type'] !== '01' && isset($dte['total_ventas_gravadas']) && $dte['total_ventas_gravadas'] > 0)
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto al valor agregado (13%)
                             <span>
@@ -78,7 +104,7 @@
 
             @if (isset($dte['turismo_por_alojamiento']) && $dte['turismo_por_alojamiento'] > 0)
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Turismo por alojamiento
                             <span>
@@ -91,7 +117,7 @@
 
             @if (isset($dte['turismo_salida_pais_via_aerea']) && $dte['turismo_salida_pais_via_aerea'] > 0)
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Turismo salida del país por vía aérea
                             <span>
@@ -104,7 +130,7 @@
 
             @if (isset($dte['fovial']) && $dte['fovial'] > 0)
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             FOVIAL ($0.20 por galón de combustible)
                             <span>
@@ -117,7 +143,7 @@
 
             @if (isset($dte['contrans']) && $dte['contrans'] > 0)
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             COTRANS ($0.10 por galón de combustible)
                             <span>
@@ -130,7 +156,7 @@
 
             @if (isset($dte['bebidas_alcoholicas']) && $dte['bebidas_alcoholicas'] > 0)
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto ad-valorem por diferencial de precio de Bebidas Alcohólicas
                             (8%)
@@ -144,7 +170,7 @@
 
             @if (isset($dte['tabaco_cigarillos']) && $dte['tabaco_cigarillos'] > 0)
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto ad-valorem por diferencial de precio al tabaco cigarrillos
                             (39%)
@@ -158,7 +184,7 @@
 
             @if (isset($dte['tabaco_cigarros']) && $dte['tabaco_cigarros'] > 0)
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto ad-valorem por diferencial de precio al tabaco cigarros
                             (100%)
@@ -171,7 +197,7 @@
             @endif
 
             <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="10" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Monto total de la operación
                         <span>
@@ -183,7 +209,7 @@
 
             @if ($dte['type'] !== '04')
             <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="10" :last="true">
                     <div class="flex items-center justify-end">
                         <div class="me-10">
                             <x-input type="checkbox" label="¿Retener IVA?" name="retener_iva"
@@ -207,7 +233,7 @@
 
             @if ($dte['type'] === '03' || $dte['type'] === '05')
                 <x-tr>
-                    <x-td colspan="9" :last="true">
+                    <x-td colspan="10" :last="true">
                         <div class="flex items-center justify-end">
                             <div class="me-10">
                                 <x-input type="checkbox" label="¿Percibir IVA?" name="percibir_iva"
@@ -231,7 +257,7 @@
 
             @if ($dte['type'] !== '04')
             {{-- <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="10" :last="true">
                     <div class="flex items-center justify-end">
                         <div class="me-10">
                             <x-input type="checkbox" label="¿Retener renta?" name="retener_renta"
@@ -254,7 +280,7 @@
             @endif
 
             <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="10" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Descuento a operación
                         <span class="font-semibold text-red-500">
@@ -269,7 +295,7 @@
             </x-tr>
 
             <x-tr :last="true">
-                <x-td colspan="9" :last="true">
+                <x-td colspan="10" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Total pagar
                         <span>

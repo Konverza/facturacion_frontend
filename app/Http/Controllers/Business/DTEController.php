@@ -95,13 +95,25 @@ class DTEController extends Controller
                         ->with("error_message", "El borrador solicitado no existe o no tiene permisos para accederlo.");
                 }
 
-                $decodedDte = json_decode($dte->content, true);
-                $this->dte = is_array($decodedDte) ? $decodedDte : [];
+                // Si ya estamos editando este mismo borrador en sesión, priorizar sesión
+                // para no perder cambios locales (por ejemplo, tras validaciones fallidas).
+                $sessionDte = session('dte');
+                $editingSameDraftInSession = is_array($sessionDte)
+                    && isset($sessionDte['id'])
+                    && (string) $sessionDte['id'] === (string) $id;
+
+                if ($editingSameDraftInSession) {
+                    $this->dte = $sessionDte;
+                } else {
+                    $decodedDte = json_decode($dte->content, true);
+                    $this->dte = is_array($decodedDte) ? $decodedDte : [];
+                }
+
                 $this->dte["id"] = $id;
                 $this->dte["type"] = $dte->type;
                 if (!$request->input("use_template")) {
-                    $this->dte["status"] = $dte->status;
-                    $this->dte["name"] = $dte->name;
+                    $this->dte["status"] = $this->dte["status"] ?? $dte->status;
+                    $this->dte["name"] = $this->dte["name"] ?? $dte->name;
                 } else {
                     $this->dte["status"] = null;
                     $this->dte["name"] = null;

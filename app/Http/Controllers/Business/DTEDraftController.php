@@ -35,7 +35,7 @@ class DTEDraftController extends Controller
 
         $drafts = $draftsQuery
             ->with('user:id,name')
-            ->orderByDesc('created_at')
+            ->orderByDesc('updated_at')
             ->paginate(15)
             ->withQueryString();
 

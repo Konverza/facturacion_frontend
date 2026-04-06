@@ -730,10 +730,46 @@ $(document).ready(function () {
         }
     }
 
+    function setCustomSelectValue(selectId, value) {
+        const select = $("#" + selectId);
+        if (!select.length) return;
+
+        const normalizedValue = value ?? "";
+        select.val(normalizedValue);
+
+        const selectedLabel = select.next().find(".itemSelected");
+        if (normalizedValue === "") {
+            selectedLabel.text("Selecciona una opción");
+            return;
+        }
+
+        const option = select
+            .next()
+            .find(`.itemOption[data-value="${normalizedValue}"]`)
+            .first();
+        if (option.length) {
+            selectedLabel.html(option.html());
+        }
+    }
+
+    function resetPaymentForm({ keepAmount = true } = {}) {
+        $("#payment_method_id").val("");
+        setCustomSelectValue("forma_pago", "");
+        if (!keepAmount) {
+            $("#monto_total").val(0);
+        }
+        $("#numero_documento").val("0");
+        setCustomSelectValue("plazo", "");
+        $("#periodo").val("");
+        $("#btn-add-forma-pago").find("span").last().text("Agregar forma de pago");
+        $("#btn-cancel-edit-forma-pago").addClass("hidden");
+    }
+
     //Sección forma de pago
     $("#btn-add-forma-pago").on("click", function () {
         const action = $(this).data("action");
         const condicion_operacion = $("#condicion_operacion").val();
+        const payment_method_id = $("#payment_method_id").val();
 
         const forma_pago = $("#forma_pago");
         const monto = $("#monto_total");
@@ -791,16 +827,18 @@ $(document).ready(function () {
                     numero_documento: numero_documento.val(),
                     plazo: plazo.val(),
                     periodo: periodo.val(),
+                    payment_method_id: payment_method_id || null,
                     _token: $("input[name='_token']").val(),
                 })
                 .then(function (response) {
                     if (response.data.success) {
                         $("#table-formas-pago").html(response.data.table_data);
-                        $("#monto_total").val(response.data.monto_pendiente);
+                        $("#monto_total").val(redondear(response.data.monto_pendiente, 2));
+                        resetPaymentForm();
                         showAlert(
                             "success",
                             "Exito",
-                            "Forma de pago agregada correctamente"
+                            response.data.message || "Operación realizada correctamente"
                         );
                     } else {
                         showAlert("error", "Error", response.data.message);
@@ -820,6 +858,50 @@ $(document).ready(function () {
             $("#loader").removeClass("hidden");
             $("body").addClass("overflow-hidden");
         }
+    });
+
+    $(document).on("click", ".btn-edit-forma-pago", function () {
+        const button = $(this);
+        $("#payment_method_id").val(button.data("id"));
+        setCustomSelectValue("forma_pago", String(button.data("forma-pago") ?? ""));
+        $("#monto_total").val(redondear(parseFloat(button.data("monto") || 0), 2));
+        $("#numero_documento").val(button.data("numero-documento") ?? "");
+        setCustomSelectValue("plazo", String(button.data("plazo") ?? ""));
+        $("#periodo").val(button.data("periodo") ?? "");
+        $("#btn-add-forma-pago").find("span").last().text("Actualizar forma de pago");
+        $("#btn-cancel-edit-forma-pago").removeClass("hidden");
+    });
+
+    $(document).on("click", "#btn-cancel-edit-forma-pago", function () {
+        resetPaymentForm();
+    });
+
+    $(document).on("click", "#btn-sync-monto-pendiente", function () {
+        const action = $(this).data("action");
+        axios
+            .post(action, {
+                _token: $("input[name='_token']").val(),
+            })
+            .then(function (response) {
+                if (response.data.success) {
+                    $("#table-formas-pago").html(response.data.table_data);
+                    $("#monto_total").val(redondear(response.data.monto_pendiente, 2));
+                    resetPaymentForm();
+                    showAlert("success", "Exito", response.data.message);
+                } else {
+                    showAlert("error", "Error", response.data.message);
+                }
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
+            .finally(function () {
+                $("#loader").addClass("hidden");
+                $("body").removeClass("overflow-hidden");
+            });
+
+        $("#loader").removeClass("hidden");
+        $("body").addClass("overflow-hidden");
     });
 
     //Documento fisico - Comprobante de retención
@@ -1085,6 +1167,10 @@ $(document).ready(function () {
 
                     if (data.monto_pendiente !== undefined) {
                         $("#monto_total").val(redondear(data.monto_pendiente, 2));
+                    }
+
+                    if (data.table === "formas-pago") {
+                        resetPaymentForm();
                     }
                 } else {
                     showAlert("error", "Error", data.message);

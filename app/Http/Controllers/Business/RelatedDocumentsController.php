@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Business;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Services\OctopusService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,10 +13,24 @@ use Illuminate\Support\Facades\Log;
 class RelatedDocumentsController extends Controller
 {
     public $dte;
+    public $unidades_medidas;
 
     public function __construct()
     {
         $this->dte = session("dte");
+        try {
+            $this->unidades_medidas = (new OctopusService())->getCatalog("CAT-014");
+        } catch (\Throwable $e) {
+            $this->unidades_medidas = [];
+        }
+    }
+
+    private function renderProductsTable(): string
+    {
+        return view("layouts.partials.ajax.business.table-products-dte", [
+            "dte" => $this->dte,
+            "unidades_medidas" => $this->unidades_medidas,
+        ])->render();
     }
 
     public function get()
@@ -220,9 +235,7 @@ class RelatedDocumentsController extends Controller
                     "dte" => $this->dte
                 ])->render(),
                 "select_new" => "select-documento-relacionado-new",
-                "table_data_2" => view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render(),
+                "table_data_2" => $this->renderProductsTable(),
                 "table_2" => "products-dte",
             ]);
         } catch (\Exception $e) {

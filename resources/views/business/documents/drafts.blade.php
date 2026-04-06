@@ -49,8 +49,8 @@
                             @endif
                             <x-td>
                                 <div class="text-xs">
-                                    <div class="font-semibold">{{ $draft->created_at?->format('d/m/Y') }}</div>
-                                    <div class="text-gray-500 dark:text-gray-400">{{ $draft->created_at?->format('h:i A') }}</div>
+                                    <div class="font-semibold">{{ $draft->updated_at?->format('d/m/Y') }}</div>
+                                    <div class="text-gray-500 dark:text-gray-400">{{ $draft->updated_at?->format('h:i A') }}</div>
                                 </div>
                             </x-td>
                             <x-td :last="true">

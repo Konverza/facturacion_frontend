@@ -198,6 +198,7 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
 
         Route::prefix("payment-method")->name("payment-method.")->group(function () {
             Route::post("/store", [PaymentMethodController::class, "store"])->name('store');
+            Route::post("/sync-last", [PaymentMethodController::class, "syncLastPaymentAmount"])->name('sync-last');
             Route::get("/delete/{id}", [PaymentMethodController::class, "delete"])->name('delete');
         });
 

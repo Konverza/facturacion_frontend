@@ -8,16 +8,31 @@ use App\Models\BusinessProduct;
 use App\Models\Business;
 use App\Models\BusinessPriceVariant;
 use App\Models\BusinessProductCostVariant;
+use App\Services\OctopusService;
 use Illuminate\Support\Facades\DB;
 
 
 class DTEProductController extends Controller
 {
     public $dte;
+    public $unidades_medidas;
 
     public function __construct()
     {
         $this->dte = session("dte", ["products" => []]);
+        try {
+            $this->unidades_medidas = (new OctopusService())->getCatalog("CAT-014");
+        } catch (\Throwable $e) {
+            $this->unidades_medidas = [];
+        }
+    }
+
+    private function renderProductsTable(): string
+    {
+        return view("layouts.partials.ajax.business.table-products-dte", [
+            "dte" => $this->dte,
+            "unidades_medidas" => $this->unidades_medidas,
+        ])->render();
     }
 
     public function select(Request $request)
@@ -548,9 +563,7 @@ class DTEProductController extends Controller
                 "success" => true,
                 "product" => $this->dte,
                 // "table_products" => "",
-                "table_products" => $this->dte["type"] != "11" && $this->dte["type"] != "14" ? view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render() : null,
+                "table_products" => $this->dte["type"] != "11" && $this->dte["type"] != "14" ? $this->renderProductsTable() : null,
                 "total_pagar" => $this->dte["total_pagar"],
                 "monto_pendiente" => $this->dte["monto_pendiente"],
                 // "table_exportacion" => "",
@@ -624,9 +637,7 @@ class DTEProductController extends Controller
             return response()->json([
                 "success" => true,
                 "message" => "Producto guardado correctamente",
-                "table_data" => $this->dte["type"] != "11" && $this->dte["type"] != "14" ? view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render() : null,
+                "table_data" => $this->dte["type"] != "11" && $this->dte["type"] != "14" ? $this->renderProductsTable() : null,
                 "table" => "products-dte",
                 "drawer" => "drawer-new-product",
                 "total_pagar" => $this->dte["total_pagar"],
@@ -796,9 +807,7 @@ class DTEProductController extends Controller
             return response()->json([
                 "success" => true,
                 "message" => "Item guardado correctamente",
-                "table_data" => view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render(),
+                "table_data" => $this->renderProductsTable(),
                 "table" => "products-dte",
                 "modal" => "unaffected-amounts",
                 "monto_pendiente" => $this->dte["monto_pendiente"]
@@ -843,9 +852,7 @@ class DTEProductController extends Controller
             return response()->json([
                 "success" => true,
                 "message" => "Item guardado correctamente",
-                "table_data" => view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render(),
+                "table_data" => $this->renderProductsTable(),
                 "table" => "products-dte",
                 "modal" => "taxes-iva",
                 "monto_pendiente" => $this->dte["monto_pendiente"]
@@ -924,9 +931,7 @@ class DTEProductController extends Controller
             return response()->json([
                 "success" => true,
                 "message" => "Producto eliminado correctamente",
-                "table_data" => view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render(),
+                "table_data" => $this->renderProductsTable(),
                 "table" => "products-dte",
                 "total_pagar" => $this->dte["total_pagar"],
                 "monto_pendiente" => $this->dte["monto_pendiente"],
@@ -959,9 +964,7 @@ class DTEProductController extends Controller
             session(["dte" => $this->dte]);
             return response()->json([
                 "success" => true,
-                "table_products" => view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render(),
+                "table_products" => $this->renderProductsTable(),
                 "table_sujeto_excluido" => $this->dte["type"] == "14" ? view("layouts.partials.ajax.business.table-sujeto-excluido", [
                     "dte" => $this->dte
                 ])->render() : null,
@@ -1028,9 +1031,7 @@ class DTEProductController extends Controller
             return response()->json([
                 "success" => true,
                 "message" => "Descuentos aplicados correctamente",
-                "table_data" => view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render(),
+                "table_data" => $this->renderProductsTable(),
                 "table" => "products-dte",
                 "modal" => "add-discount",
                 "total_pagar" => $this->dte["total_pagar"],
@@ -1100,9 +1101,7 @@ class DTEProductController extends Controller
             return response()->json([
                 "success" => true,
                 "message" => "Descuentos eliminados correctamente",
-                "table_data" => view("layouts.partials.ajax.business.table-products-dte", [
-                    "dte" => $this->dte
-                ])->render(),
+                "table_data" => $this->renderProductsTable(),
                 "table" => "products-dte",
                 "total_pagar" => $this->dte["total_pagar"],
                 "total_discounts" => view("layouts.partials.ajax.business.totals-discounts", [
