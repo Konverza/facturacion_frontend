@@ -8,9 +8,11 @@
             <x-input type="time" icon="clock" label="Hora DTE" name="horEmi" id="time-in-real-time" step="1"
                 class="m-0 bg-transparent p-0 text-sm" required />
         </div>
-        <div class="flex items-end gap-1 text-gray-600 dark:text-gray-400">
-            <x-input type="checkbox" label="Emitir DTE con otra fecha" id="dte-otra-fecha" />
-        </div>
+        @if (($business_user?->can_edit_date ?? true))
+            <div class="flex items-end gap-1 text-gray-600 dark:text-gray-400">
+                <x-input type="checkbox" label="Emitir DTE con otra fecha" id="dte-otra-fecha" />
+            </div>
+        @endif
     </div>
     <x-button type="button" typeButton="danger" text="Cancelar documento" icon="cancel"
         class="show-modal w-full sm:w-auto" data-target="#cancel-dte" />

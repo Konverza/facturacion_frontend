@@ -19,12 +19,14 @@ class BusinessUser extends Model
         'only_default_pos',
         'branch_selector', // Indicates if the user can select branches
         'see_others_dtes',
+        'can_edit_date',
     ];
 
     protected $casts = [
         'only_default_pos' => 'boolean',
         'branch_selector' => 'boolean',
         'see_others_dtes' => 'boolean',
+        'can_edit_date' => 'boolean',
     ];
 
     public function business()

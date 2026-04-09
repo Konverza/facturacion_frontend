@@ -160,6 +160,7 @@ class UserController extends Controller
             'only_default_pos' => 'nullable|boolean',
             'branch_selector' => 'nullable|boolean', // Indicates if the user can select branches
             'see_others_dtes' => 'nullable|boolean',
+            'can_edit_date' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
@@ -177,6 +178,7 @@ class UserController extends Controller
                 'only_default_pos' => $request->only_default_pos ?? false,
                 'branch_selector' => $request->branch_selector ?? false,
                 'see_others_dtes' => $request->see_others_dtes ?? false,
+                'can_edit_date' => $request->has('can_edit_date') ? 1 : 0,
             ]);
 
             DB::commit();
@@ -225,6 +227,7 @@ class UserController extends Controller
             'only_default_pos' => $businessUser->only_default_pos,
             'branch_selector' => $businessUser->branch_selector,
             'see_others_dtes' => $businessUser->see_others_dtes,
+            'can_edit_date' => $businessUser->can_edit_date,
         ]);
     }
 
@@ -236,6 +239,7 @@ class UserController extends Controller
             'only_default_pos' => 'nullable',
             'branch_selector' => 'nullable',
             'see_others_dtes' => 'nullable',
+            'can_edit_date' => 'nullable',
         ]);
 
         DB::beginTransaction();
@@ -253,6 +257,7 @@ class UserController extends Controller
             $businessUser->only_default_pos = $request->has('only_default_pos') ? 1 : 0;
             $businessUser->branch_selector = $request->has('branch_selector') ? 1 : 0;
             $businessUser->see_others_dtes = $request->has('see_others_dtes') ? 1 : 0;
+            $businessUser->can_edit_date = $request->has('can_edit_date') ? 1 : 0;
             $businessUser->save();
 
             DB::commit();

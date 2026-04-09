@@ -26,6 +26,7 @@
                         <x-th>¿Solo ver DTEs de ese punto de venta?</x-th>
                         <x-th>¿Seleccionar Sucursal para ver?</x-th>
                         <x-th>¿Ver DTEs de otros usuarios?</x-th>
+                        <x-th>¿Puede editar fecha DTE?</x-th>
                         <x-th>Acciones</x-th>
                     </x-tr>
                 </x-slot>
@@ -57,6 +58,15 @@
                             </x-td>
                             <x-td>
                                 @if ($business->see_others_dtes)
+                                    <span
+                                        class="inline-block px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">Sí</span>
+                                @else
+                                    <span
+                                        class="inline-block px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded">No</span>
+                                @endif
+                            </x-td>
+                            <x-td>
+                                @if ($business->can_edit_date)
                                     <span
                                         class="inline-block px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded">Sí</span>
                                 @else
@@ -102,7 +112,7 @@
                         </x-tr>
                     @empty
                         <x-tr>
-                            <x-td colspan="7" class="text-center">No hay negocios asociados.</x-td>
+                            <x-td colspan="8" class="text-center">No hay negocios asociados.</x-td>
                         </x-tr>
                     @endforelse
                 </x-slot>
@@ -159,6 +169,10 @@
                         <div class="mt-4">
                             <x-input type="toggle" name="see_others_dtes" label="¿Ver DTEs de otros usuarios?"
                                 value="1" id="see_others_dtes" />
+                        </div>
+                        <div class="mt-4">
+                            <x-input type="toggle" name="can_edit_date" label="¿Puede editar fecha del DTE?"
+                                value="1" id="can_edit_date" :checked="true" />
                         </div>
                     </div>
                     <!-- Modal footer -->
@@ -230,6 +244,10 @@
                         <div class="mt-4">
                             <x-input type="toggle" name="see_others_dtes" label="¿Ver DTEs de otros usuarios?"
                                 value="1" id="edit_see_others_dtes" />
+                        </div>
+                        <div class="mt-4">
+                            <x-input type="toggle" name="can_edit_date" label="¿Puede editar fecha del DTE?"
+                                value="1" id="edit_can_edit_date" />
                         </div>
                     </div>
                     <!-- Modal footer -->
@@ -395,6 +413,7 @@
                         $('#edit_only_default_pos').prop('checked', response.only_default_pos == 1);
                         $('#edit_branch_selector').prop('checked', response.branch_selector == 1);
                         $('#edit_see_others_dtes').prop('checked', response.see_others_dtes == 1);
+                        $('#edit_can_edit_date').prop('checked', response.can_edit_date == 1);
                         
                         // Actualizar la acción del formulario
                         $('#form-edit-association').attr('action', action);
