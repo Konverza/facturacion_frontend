@@ -9,12 +9,27 @@
         </div>
 
         <div class="mb-6">
-            <x-button type="a" typeButton="secondary" icon="arrow-left" href="{{ route('business.received-documents.index') }}"
-                text="Volver a DTEs Recibidos" />
+            <x-button type="a" typeButton="secondary" icon="arrow-left"
+                href="{{ route('business.received-documents.index') }}" text="Volver a DTEs Recibidos" />
         </div>
-
+        {{-- Aviso de finalización de Característica --}}
+        <div class="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
+            <div class="flex items-center gap-3">
+                <span class="bg-yellow-100 dark:bg-yellow-900/50 p-2 rounded-full">
+                    <x-icon icon="warning" class="size-7 text-yellow-600 dark:text-yellow-400" />
+                </span>
+                <div class="flex-1">
+                    <p class="mb-4 text-center text-lg font-semibold text-yellow-900 dark:text-yellow-100">
+                        Esta funcionalidad ya no está disponible.
+                    </p>
+                    <p class="text-md text-justify text-yellow-700 dark:text-yellow-300">
+                        Debido a cambios recientes en la integración con Hacienda, la importación directa desde su portal ya no se encuentra disponible. Para asegurar que sus DTEs se mantengan actualizados, le recomendamos cargar los archivos JSON directamente desde la sección de “DTEs Recibidos”.<br>Agradecemos su comprensión y reiteramos nuestro compromiso de seguir mejorando la plataforma con nuevas funcionalidades que faciliten la gestión de sus documentos.
+                    </p>
+                </div>
+            </div>
+        </div>
         <!-- Proceso Activo -->
-        @if ($activeProcess)
+        {{-- @if ($activeProcess)
             <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-6 shadow-sm dark:border-blue-800 dark:bg-blue-900/20"
                 x-data="{
                     processId: {{ $activeProcess->id }},
@@ -215,7 +230,7 @@
                     </button>
                 </div>
             </div>
-        @endif
+        @endif --}}
 
         <!-- Historial de Procesos -->
         @if ($processHistory->count() > 0)
@@ -253,7 +268,8 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="text-2xl font-bold {{ $process->status === 'completed' ? 'text-green-600' : 'text-red-600' }}">
+                                    <span
+                                        class="text-2xl font-bold {{ $process->status === 'completed' ? 'text-green-600' : 'text-red-600' }}">
                                         {{ $process->progress_percentage }}%
                                     </span>
                                 </div>
