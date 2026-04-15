@@ -231,6 +231,7 @@ class DTERecibidoController extends Controller
                 'size' => $file->getSize(),
                 'success' => false,
                 'message' => 'El archivo no contiene un JSON válido.',
+                'error_details' => json_last_error_msg(),
             ];
         }
 
@@ -243,6 +244,7 @@ class DTERecibidoController extends Controller
                 'size' => $file->getSize(),
                 'success' => false,
                 'message' => $response['message'] ?? 'No fue posible guardar el DTE.',
+                'error_details' => $response['error_details'] ?? null,
             ];
         }
 
@@ -251,6 +253,7 @@ class DTERecibidoController extends Controller
             'size' => $file->getSize(),
             'success' => true,
             'message' => $response['message'] ?? 'DTE cargado correctamente.',
+            'error_details' => $response['error_details'] ?? null,
         ];
     }
 
