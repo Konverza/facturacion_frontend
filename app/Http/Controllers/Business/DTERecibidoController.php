@@ -223,7 +223,18 @@ class DTERecibidoController extends Controller
     private function processManualJsonUpload(UploadedFile $file, HaciendaService $haciendaService, string $nit): array
     {
         $jsonContent = file_get_contents($file->getRealPath());
-        $decoded = json_decode($jsonContent, true);
+
+        if ($jsonContent === false) {
+            return [
+                'file_name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'success' => false,
+                'message' => 'No fue posible leer el archivo cargado.',
+                'error_details' => 'Read error',
+            ];
+        }
+
+        $decoded = json_decode($this->normalizeJsonContent($jsonContent), true);
 
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
             return [
@@ -255,6 +266,30 @@ class DTERecibidoController extends Controller
             'message' => $response['message'] ?? 'DTE cargado correctamente.',
             'error_details' => $response['error_details'] ?? null,
         ];
+    }
+
+    private function normalizeJsonContent(string $content): string
+    {
+        $normalized = $content;
+
+        // UTF-8 BOM
+        if (substr($normalized, 0, 3) === "\xEF\xBB\xBF") {
+            $normalized = substr($normalized, 3);
+        }
+
+        // UTF-16/UTF-32 BOMs
+        if (substr($normalized, 0, 2) === "\xFF\xFE") {
+            $normalized = mb_convert_encoding(substr($normalized, 2), 'UTF-8', 'UTF-16LE');
+        } elseif (substr($normalized, 0, 2) === "\xFE\xFF") {
+            $normalized = mb_convert_encoding(substr($normalized, 2), 'UTF-8', 'UTF-16BE');
+        } elseif (substr($normalized, 0, 4) === "\xFF\xFE\x00\x00") {
+            $normalized = mb_convert_encoding(substr($normalized, 4), 'UTF-8', 'UTF-32LE');
+        } elseif (substr($normalized, 0, 4) === "\x00\x00\xFE\xFF") {
+            $normalized = mb_convert_encoding(substr($normalized, 4), 'UTF-8', 'UTF-32BE');
+        }
+
+        // Quita caracteres de control no imprimibles al inicio/fin (incluye SUB 0x1A)
+        return trim($normalized, " \t\n\r\0\x0B\x1A");
     }
 
     public function startImport(Request $request)
