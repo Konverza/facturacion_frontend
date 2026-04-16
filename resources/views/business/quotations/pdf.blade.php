@@ -27,6 +27,12 @@
         $company = $companyData['data'] ?? $companyData;
         $products = $content['products'] ?? [];
         $validityDays = (int) ($meta['vigencia_dias'] ?? 15);
+        $customer = $content['customer'] ?? [];
+        $customerName = $customer['nombre'] ?? ($content['nombre_receptor'] ?? 'Cliente no especificado');
+        $customerDocument = $customer['numDocumento'] ?? ($content['numero_documento'] ?? null);
+        $customerNrc = $customer['nrc'] ?? ($content['nrc_customer'] ?? null);
+        $customerPhone = $customer['telefono'] ?? ($content['telefono'] ?? null);
+        $customerEmail = $customer['correo'] ?? ($content['correo'] ?? null);
     @endphp
 
     <table class="header">
@@ -38,10 +44,10 @@
             </td>
             <td style="width: 48%; text-align: center;">
                 <div class="title">Cotizacion</div>
-                <div>{{ $company['nombre'] ?? $business->name ?? 'N/A' }}</div>
+                {{-- <div>{{ $company['nombre'] ?? $business->name ?? 'N/A' }}</div>
                 <div><b>NIT:</b> {{ $company['nit'] ?? $business->nit ?? 'N/A' }}</div>
                 <div><b>NRC:</b> {{ $company['nrc'] ?? ($business->nrc ?? 'N/A') }}</div>
-                <div><b>Correo:</b> {{ $company['correo'] ?? ($business->email ?? 'N/A') }}</div>
+                <div><b>Correo:</b> {{ $company['correo'] ?? ($business->email ?? 'N/A') }}</div> --}}
             </td>
             <td style="width: 30%; text-align: right;">
                 <div><b>Emitida:</b> {{ $quotation->updated_at?->format('d/m/Y') }}</div>
@@ -50,6 +56,34 @@
             </td>
         </tr>
     </table>
+
+    <table style="margin-top: 10px; border: none;">
+        <tr>
+            <td style="width: 60%; border: none; padding: 0; vertical-align: top;">
+                <div><b>Cliente:</b> {{ $customerName }}</div>
+                @if (!empty($customerDocument))
+                    <div><b>Identificación:</b> {{ $customerDocument }}</div>
+                @endif
+                @if (!empty($customerNrc))
+                    <div><b>NRC:</b> {{ $customerNrc }}</div>
+                @endif
+                @if (!empty($customerPhone))
+                    <div><b>Telefono:</b> {{ $customerPhone }}</div>
+                @endif
+                @if (!empty($customerEmail))
+                    <div><b>Correo:</b> {{ $customerEmail }}</div>
+                @endif
+            </td>
+            <td style="width: 40%; border: none; padding: 0; vertical-align: top; text-align: left;">
+                <div><b>Vendedor:</b> {{ $company['nombre'] ?? $business->name ?? 'N/A' }}</div>
+                <div><b>NIT:</b> {{ $company['nit'] ?? $business->nit ?? 'N/A' }}</div>
+                <div><b>NRC:</b> {{ $company['nrc'] ?? ($business->nrc ?? 'N/A') }}</div>
+                <div><b>Correo:</b> {{ $company['correo'] ?? ($business->email ?? 'N/A') }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <p style="margin-top: 10px;"><b>Presente</b></p>
 
     <table>
         <thead>
@@ -100,6 +134,10 @@
         <tr>
             <td><b>Subtotal:</b></td>
             <td style="text-align:right;">${{ number_format((float) ($content['subtotal'] ?? 0), 2) }}</td>
+        </tr>
+        <tr>
+            <td><b>IVA:</b></td>
+            <td style="text-align:right;">${{ number_format((float) ($content['iva'] ?? 0), 2) }}</td>
         </tr>
         <tr>
             <td><b>Descuento:</b></td>

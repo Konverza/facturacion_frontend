@@ -106,7 +106,7 @@ class QuotationController extends Controller
         $quotation = $this->findQuotation($id);
         $business = Business::findOrFail(session('business'));
         $companyData = $this->octopusService->getDatosEmpresa((string) $business->nit);
-        $logo = $this->resolveLogo((string) $business->nit, is_array($companyData) ? $companyData : []);
+        $logo = $this->resolveLogo((string) $business->nit);
         $canProfitabilityReport = $this->canAccessProfitabilityReport($business);
 
         return view('business.quotations.show', [
@@ -314,7 +314,7 @@ class QuotationController extends Controller
 
         $business = Business::findOrFail(session('business'));
         $companyData = $this->octopusService->getDatosEmpresa((string) $business->nit);
-        $logo = $this->resolveLogo((string) $business->nit, is_array($companyData) ? $companyData : []);
+        $logo = $this->resolveLogo((string) $business->nit);
 
         $pdf = Pdf::loadView('business.quotations.pdf', [
             'quotation' => $quotation,
@@ -340,7 +340,7 @@ class QuotationController extends Controller
         }
 
         $companyData = $this->octopusService->getDatosEmpresa((string) $business->nit);
-        $logo = $this->resolveLogo((string) $business->nit, is_array($companyData) ? $companyData : []);
+        $logo = $this->resolveLogo((string) $business->nit);
 
         $pdf = Pdf::loadView('business.quotations.profitability-pdf', [
             'quotation' => $quotation,
@@ -741,7 +741,7 @@ class QuotationController extends Controller
         return Quotation::where('business_id', session('business'))->findOrFail($id);
     }
 
-    private function resolveLogo(string $nit, array $companyData = []): ?string
+    private function resolveLogo(string $nit): ?string
     {
         $baseUrl = rtrim((string) env('OCTOPUS_API_URL'), '/');
         if ($baseUrl === '') {
@@ -751,94 +751,46 @@ class QuotationController extends Controller
         $response = Http::timeout(20)->get($baseUrl . '/datos_empresa/nit/' . $nit . '/logo');
 
         if (!$response->successful()) {
-            // Try reading logo hints from /datos_empresa payload before using local fallback.
-            $fromCompanyPayload = $this->resolveLogoFromValue($this->extractLogoValueFromPayload($companyData), $baseUrl);
-            return $fromCompanyPayload ?? $this->localLogoFallback();
+            return $this->localLogoFallback();
         }
 
-        $contentType = $response->header('Content-Type');
-        if ($contentType && str_contains($contentType, 'image/')) {
-            return 'data:' . $contentType . ';base64,' . base64_encode($response->body());
+        $payload = $response->json();
+        $logoUrl = is_array($payload) ? ($payload['url'] ?? null) : null;
+
+        if (!is_string($logoUrl) || trim($logoUrl) === '' || !filter_var($logoUrl, FILTER_VALIDATE_URL)) {
+            return $this->localLogoFallback();
         }
 
-        $json = $response->json();
-        $logoValue = $this->extractLogoValueFromPayload(is_array($json) ? $json : ['value' => $json]);
-
-        $resolved = $this->resolveLogoFromValue($logoValue, $baseUrl)
-            ?? $this->resolveLogoFromValue($this->extractLogoValueFromPayload($companyData), $baseUrl)
-            ?? $this->localLogoFallback();
-
-        return $resolved;
-    }
-
-    private function extractLogoValueFromPayload(array $payload): ?string
-    {
-        $candidates = [
-            $payload['url'] ?? null,
-            $payload['logo'] ?? null,
-            $payload['image'] ?? null,
-            $payload['base64'] ?? null,
-            $payload['value'] ?? null,
-            $payload['data']['url'] ?? null,
-            $payload['data']['logo'] ?? null,
-            $payload['data']['image'] ?? null,
-            $payload['data']['base64'] ?? null,
-            $payload['data']['logo_url'] ?? null,
-            $payload['data']['logoUrl'] ?? null,
-            $payload['data']['empresa']['logo'] ?? null,
-            $payload['data']['empresa']['logo_url'] ?? null,
-            $payload['data']['empresa']['logoUrl'] ?? null,
-            $payload['logo_url'] ?? null,
-            $payload['logoUrl'] ?? null,
-        ];
-
-        foreach ($candidates as $candidate) {
-            if (is_string($candidate) && trim($candidate) !== '') {
-                return trim($candidate);
-            }
-        }
-
-        return null;
-    }
-
-    private function resolveLogoFromValue(?string $logoValue, string $baseUrl): ?string
-    {
-        if (!is_string($logoValue) || trim($logoValue) === '') {
-            return null;
-        }
-
-        $logoValue = trim($logoValue);
-
-        if (str_starts_with($logoValue, 'data:image/')) {
-            return $logoValue;
-        }
-
-        if ($this->looksLikeBase64($logoValue)) {
-            return 'data:image/png;base64,' . $logoValue;
-        }
-
-        $logoUrl = $logoValue;
-        if (str_starts_with($logoUrl, '//')) {
-            $logoUrl = 'https:' . $logoUrl;
-        } elseif (str_starts_with($logoUrl, '/')) {
-            $logoUrl = $baseUrl . $logoUrl;
-        }
-
-        if (!filter_var($logoUrl, FILTER_VALIDATE_URL)) {
-            return null;
-        }
-
-        $logoResponse = Http::timeout(20)->get($logoUrl);
+        $logoResponse = Http::timeout(20)->get(trim($logoUrl));
         if (!$logoResponse->successful()) {
-            return null;
+            return $this->localLogoFallback();
         }
 
-        $logoContentType = $logoResponse->header('Content-Type') ?? 'image/png';
-        if (!str_contains($logoContentType, 'image/')) {
-            return null;
+        $logoBytes = $logoResponse->body();
+        if ($logoBytes === '') {
+            return $this->localLogoFallback();
         }
 
-        return 'data:' . $logoContentType . ';base64,' . base64_encode($logoResponse->body());
+        $logoContentType = (string) ($logoResponse->header('Content-Type') ?? '');
+        if ($logoContentType === '' || !str_contains($logoContentType, 'image/')) {
+            $logoContentType = $this->inferImageMimeTypeFromUrl($logoUrl);
+        }
+
+        return 'data:' . $logoContentType . ';base64,' . base64_encode($logoBytes);
+    }
+
+    private function inferImageMimeTypeFromUrl(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+        $extension = is_string($path) ? strtolower(pathinfo($path, PATHINFO_EXTENSION)) : '';
+
+        return match ($extension) {
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+            'gif' => 'image/gif',
+            'svg' => 'image/svg+xml',
+            default => 'image/jpeg',
+        };
     }
 
     private function localLogoFallback(): ?string
@@ -854,19 +806,6 @@ class QuotationController extends Controller
         }
 
         return 'data:image/png;base64,' . base64_encode($bytes);
-    }
-
-    private function looksLikeBase64(string $value): bool
-    {
-        if ($value === '' || preg_match('/\s/', $value)) {
-            return false;
-        }
-
-        if (!preg_match('/^[A-Za-z0-9+\/=]+$/', $value)) {
-            return false;
-        }
-
-        return (bool) base64_decode($value, true);
     }
 
     private function canAccessProfitabilityReport(Business $business): bool

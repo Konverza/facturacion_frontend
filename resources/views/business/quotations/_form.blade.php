@@ -53,8 +53,8 @@
                     <ul class="flex flex-col text-sm">
                         <li>
                             <button type="button"
-                                class="flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900"
-                                data-drawer-target="drawer-new-product" data-drawer-show="drawer-new-product"
+                                class="show-drawer flex w-full items-center gap-1 rounded-lg px-2 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-900"
+                                data-target="#drawer-new-product"
                                 aria-controls="drawer-new-product">
                                 <x-icon icon="pencil" class="h-4 w-4" />
                                 Producto o servicio

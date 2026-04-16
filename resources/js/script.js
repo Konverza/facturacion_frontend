@@ -243,6 +243,25 @@ $(document).ready(function () {
         $("body").removeClass("overflow-hidden");
     });
 
+    $(document).on("click", "#overlay", function () {
+        $(".hide-drawer").each(function () {
+            const target = $(this).data("target");
+            if (target) {
+                $(target).addClass("-translate-x-full");
+            }
+        });
+
+        $(".hide-drawer-left").each(function () {
+            const target = $(this).data("target");
+            if (target) {
+                $(target).addClass("translate-x-full");
+            }
+        });
+
+        $("#overlay").addClass("hidden");
+        $("body").removeClass("overflow-hidden");
+    });
+
     // Botones dinámicos para anular, enviar email y WhatsApp
     $(document).on(
         "click",
