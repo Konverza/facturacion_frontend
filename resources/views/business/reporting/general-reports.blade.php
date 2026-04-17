@@ -93,8 +93,7 @@
                 function toggleFields() {
                     const value = $reportType.val();
                     const isSacReport = value === 'sac_report';
-                    const isKualiReport = value === 'liquidacion_kuali';
-                    const onlyExcel = isSacReport || isKualiReport;
+                    const onlyExcel = isSacReport;
 
                     if (onlyExcel) {
                         $pdfOption.prop('disabled', true).attr('hidden', true);
@@ -118,7 +117,7 @@
                 toggleFields();
 
                 $('form').on('submit', function() {
-                    if (['sac_report', 'liquidacion_kuali'].includes($reportType.val())) {
+                    if ($reportType.val() === 'sac_report') {
                         $format.prop('disabled', false);
                         $format.val('excel');
                     }

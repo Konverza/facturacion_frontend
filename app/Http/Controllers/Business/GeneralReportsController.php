@@ -110,8 +110,8 @@ class GeneralReportsController extends Controller
         }
 
         if ($request->report_type === 'liquidacion_kuali') {
-            if ($request->input('format') !== 'excel') {
-                return back()->withErrors(['format' => 'El Reporte de liquidación diario - Kuali solo puede generarse en formato Excel.']);
+            if (!in_array($request->input('format'), ['excel', 'pdf'], true)) {
+                return back()->withErrors(['format' => 'El Reporte de liquidación diario - Kuali solo puede generarse en formato Excel o PDF.']);
             }
 
             $puntoVenta = PuntoVenta::where('codPuntoVenta', $request->codPuntoVenta)
@@ -120,7 +120,14 @@ class GeneralReportsController extends Controller
                 })
                 ->first();
 
-            return $this->generateLiquidacionKualiReport($parameters, $start, $end, $puntoVenta);
+            return $this->generateLiquidacionKualiReport(
+                $parameters,
+                $start,
+                $end,
+                $puntoVenta,
+                $business,
+                (string) $request->input('format', 'excel')
+            );
         }
 
         $dtes = $this->fetchDtes($parameters);
@@ -172,7 +179,14 @@ class GeneralReportsController extends Controller
         return $pdf->stream('reporte_' . $request->report_type . '_' . now()->format('Ymd_His') . '.pdf');
     }
 
-    private function generateLiquidacionKualiReport(array $parameters, Carbon $start, Carbon $end, ?PuntoVenta $puntoVenta)
+    private function generateLiquidacionKualiReport(
+        array $parameters,
+        Carbon $start,
+        Carbon $end,
+        ?PuntoVenta $puntoVenta,
+        ?Business $business,
+        string $format = 'excel'
+    )
     {
         $templatePath = public_path('reportes/formato_liquidacion_kuali.xlsx');
         if (!file_exists($templatePath)) {
@@ -192,10 +206,85 @@ class GeneralReportsController extends Controller
             return strcmp((string) $leftDate, (string) $rightDate);
         });
 
+        $periodText = $start->isSameDay($end)
+            ? $start->format('d/m/Y')
+            : $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
+
+        $puntoVentaNombre = $puntoVenta?->nombre ?? (string) ($parameters['codPuntoVenta'] ?? '');
+
+        if ($format === 'pdf') {
+            $rows = [];
+
+            $totals = [
+                'qty_garrafa' => 0.0,
+                'qty_garrafa_completa' => 0.0,
+                'qty_pet_kuali' => 0.0,
+                'qty_pet_don_pedro' => 0.0,
+                'qty_caja_pet' => 0.0,
+                'qty_caja_pet_clasica' => 0.0,
+                'sale_garrafa' => 0.0,
+                'sale_garrafa_completa' => 0.0,
+                'sale_pet_kuali' => 0.0,
+                'sale_pet_don_pedro' => 0.0,
+                'sale_caja_pet' => 0.0,
+                'sale_caja_pet_clasica' => 0.0,
+                'pago_credito' => 0.0,
+                'pago_contado' => 0.0,
+                'pago_transferencia' => 0.0,
+                'total_venta' => 0.0,
+            ];
+
+            foreach ($dtes as $dte) {
+                $mapped = $this->buildKualiRowData($dte);
+
+                $row = [
+                    'doc' => (string) ($mapped['A'] ?? ''),
+                    'numero' => (string) ($mapped['B'] ?? ''),
+                    'cliente' => (string) ($mapped['C'] ?? ''),
+                    'qty_garrafa' => (float) ($mapped['D'] ?? 0),
+                    'qty_garrafa_completa' => (float) ($mapped['E'] ?? 0),
+                    'qty_pet_kuali' => (float) ($mapped['F'] ?? 0),
+                    'qty_pet_don_pedro' => (float) ($mapped['G'] ?? 0),
+                    'qty_caja_pet' => (float) ($mapped['H'] ?? 0),
+                    'qty_caja_pet_clasica' => (float) ($mapped['I'] ?? 0),
+                    'sale_garrafa' => (float) ($mapped['J'] ?? 0),
+                    'sale_garrafa_completa' => (float) ($mapped['K'] ?? 0),
+                    'sale_pet_kuali' => (float) ($mapped['L'] ?? 0),
+                    'sale_pet_don_pedro' => (float) ($mapped['M'] ?? 0),
+                    'sale_caja_pet' => (float) ($mapped['N'] ?? 0),
+                    'sale_caja_pet_clasica' => (float) ($mapped['O'] ?? 0),
+                    'pago_credito' => (float) ($mapped['P'] ?? 0),
+                    'pago_contado' => (float) ($mapped['Q'] ?? 0),
+                    'pago_transferencia' => (float) ($mapped['R'] ?? 0),
+                ];
+
+                $row['total_venta'] =
+                    $row['pago_credito'] +
+                    $row['pago_contado'] +
+                    $row['pago_transferencia'];
+
+                foreach ($totals as $key => $value) {
+                    $totals[$key] += (float) ($row[$key] ?? 0);
+                }
+
+                $rows[] = $row;
+            }
+
+            $pdf = Pdf::loadView('business.reporting.pdf.liquidacion-kuali', [
+                'business' => $business,
+                'period_text' => $periodText,
+                'punto_venta_nombre' => $puntoVentaNombre,
+                'rows' => $rows,
+                'totals' => $totals,
+            ])->setPaper('letter', 'landscape');
+
+            return $pdf->stream('reporte_liquidacion_kuali_' . now()->format('Ymd_His') . '.pdf');
+        }
+
         $spreadsheet = IOFactory::load($templatePath);
         $sheet = $spreadsheet->getActiveSheet();
 
-        $rowsPerPage = 29;
+        $rowsPerPage = 20;
         $pageHeight = 47;
         $templateStartColumn = 'A';
         $templateEndColumn = 'R';
@@ -205,12 +294,6 @@ class GeneralReportsController extends Controller
             $targetStartRow = (($page - 1) * $pageHeight) + 1;
             $this->appendKualiTemplatePage($sheet, $templateStartColumn, $templateEndColumn, $pageHeight, $targetStartRow);
         }
-
-        $periodText = $start->isSameDay($end)
-            ? $start->format('d/m/Y')
-            : $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
-
-        $puntoVentaNombre = $puntoVenta?->nombre ?? (string) ($parameters['codPuntoVenta'] ?? '');
 
         for ($pageIndex = 0; $pageIndex < $totalPages; $pageIndex++) {
             $baseRow = $pageIndex * $pageHeight;
