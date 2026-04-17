@@ -225,11 +225,13 @@
         'productSelectorComponent' => 'business.tables.dte-product',
         'productSelectLookupRouteName' => 'business.projects.products.select',
         'productSelectLookupRouteParams' => ['project' => $project->id],
+        'priceInputMode' => 'without_iva',
     ])
 
     @include('layouts.partials.business.dte.drawer-new-product', [
         'newProductAction' => Route('business.projects.items.store-manual', $project->id),
         'projectMode' => true,
+        'priceInputMode' => 'without_iva',
     ])
 @endsection
 

@@ -19,6 +19,10 @@
                 </div>
                 <!-- Modal body -->
                 <div class="p-4">
+                    @php
+                        $priceInputMode = $priceInputMode ?? null;
+                        $forcePriceWithoutIva = $priceInputMode === 'without_iva';
+                    @endphp
                     @if (isset($productSelectorComponent) && is_string($productSelectorComponent) && $productSelectorComponent !== '')
                         @livewire($productSelectorComponent, [
                             'dte' => $dte,
@@ -34,13 +38,18 @@
                             :select-route-params="$productSelectLookupRouteParams ?? []" />
                     @endif
                     <div class="mt-4 hidden" id="container-data-product">
-                        <form action="{{ $selectProductAction ?? Route('business.dte.product.store') }}" method="POST" id="form-add-product">
+                        <form action="{{ $selectProductAction ?? Route('business.dte.product.store') }}" method="POST" id="form-add-product"
+                            data-price-input-mode="{{ $priceInputMode }}">
                             @csrf
+                            @if ($priceInputMode)
+                                <input type="hidden" name="price_input_mode" value="{{ $priceInputMode }}" />
+                            @endif
                             <input type="hidden" name="product_id" id="product_id">
                             <div class="flex flex-col gap-4">
                                 <x-input type="text" label="Producto" name="product" readonly
                                     id="product_description" />
-                                <x-input type="number" name="precio" readonly id="product_price" label="Precio"
+                                <x-input type="number" name="precio" readonly id="product_price"
+                                    label="{{ $forcePriceWithoutIva ? 'Precio (sin IVA)' : 'Precio' }}"
                                     icon="currency-dollar" placeholder="0.00" step="0.01" min="0" />
                             </div>
                             <div class="mt-4 hidden" id="price-variant-container">

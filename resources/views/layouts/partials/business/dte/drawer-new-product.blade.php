@@ -5,17 +5,22 @@
     <h5 id="drawer-label" class="mb-4 inline-flex items-center text-lg font-semibold text-gray-900 dark:text-white">
         Añadir producto o servicio
     </h5>
-    <div class="my-4 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-yellow-500 dark:bg-yellow-950/30">
-        <b>Nota: </b> Se ha actualizado el sistema, ahora estos productos <b>NO</b> serán guardados en la base de datos.
-    </div>
     <button type="button" data-target="#drawer-new-product" aria-controls="drawer-new-product"
         class="hide-drawer absolute end-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-900 dark:hover:text-white">
         <x-icon icon="x" class="h-5 w-5" />
         <span class="sr-only">Cerrar</span>
     </button>
     <div>
-        <form action="{{ $newProductAction ?? Route('business.dte.product.store-new') }}" method="POST">
+        @php
+            $priceInputMode = $priceInputMode ?? null;
+            $forcePriceWithoutIva = $priceInputMode === 'without_iva';
+        @endphp
+        <form action="{{ $newProductAction ?? Route('business.dte.product.store-new') }}" method="POST"
+            data-price-input-mode="{{ $priceInputMode }}">
             @csrf
+            @if ($priceInputMode)
+                <input type="hidden" name="price_input_mode" value="{{ $priceInputMode }}" />
+            @endif
             <div class="flex flex-col gap-4 sm:flex-row">
                 <div class="flex-[2]">
                     <x-select label="Tipo de producto" value="{{ old('tipo_producto') }}" required
@@ -63,7 +68,9 @@
                 </div>
                 <div class="flex-1">
                     @php
-                        if(in_array($number, ["03", "04", "05", "06"])){
+                        if ($forcePriceWithoutIva) {
+                            $label_precio = 'Precio (sin IVA)';
+                        } elseif(in_array($number, ["03", "04", "05", "06"])){
                             $label_precio = "Precio (sin IVA)";
                         } elseif ($number == "14"){
                             $label_precio = "Precio (sin Retención de Renta)";

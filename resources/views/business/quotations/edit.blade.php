@@ -13,14 +13,19 @@
             @include('business.quotations._form', [
                 'formAction' => Route('business.quotations.update', $quotation->id),
                 'method' => 'PUT',
+                'priceInputMode' => 'without_iva',
             ])
         </div>
     </section>
 
     @include('layouts.partials.business.dte.modals.modal-select-customer')
-    @include('layouts.partials.business.dte.modals.modal-select-product')
+    @include('layouts.partials.business.dte.modals.modal-select-product', [
+        'priceInputMode' => 'without_iva',
+    ])
     @include('layouts.partials.business.dte.modals.modal-edit-product')
-    @include('layouts.partials.business.dte.drawer-new-product')
+    @include('layouts.partials.business.dte.drawer-new-product', [
+        'priceInputMode' => 'without_iva',
+    ])
     @include('layouts.partials.business.dte.modals.modal-add-discount')
 @endsection
 

@@ -42,6 +42,11 @@ $(document).ready(function () {
     const count = $("#count_product");
     const price = $("#price");
 
+    function getDrawerPriceInputMode() {
+        const mode = ($("#drawer-new-product form").data("price-input-mode") || "").toString().toLowerCase();
+        return mode === "without_iva" ? "without_iva" : "with_iva";
+    }
+
     $("#count_product, #price").on("input", function () {
         const countValue = parseFloat(count.val());
         const priceValue = parseFloat(price.val());
@@ -73,7 +78,7 @@ $(document).ready(function () {
 
         $("#total_product").val(redondear(total, 8));
         $("#descuento_product").prop("max", redondear(total, 8));
-        updatePrices(priceValue, countValue);
+        updatePrices(priceValue, countValue, getDrawerPriceInputMode());
     });
 
     $("#descuento_product").on("input", function () {
@@ -127,6 +132,10 @@ $(document).ready(function () {
     });
 
     $("#tipo_venta").on("Changed", function () {
+        if (getDrawerPriceInputMode() === "without_iva") {
+            return;
+        }
+
         const type_sale = $("#tipo_venta").val();
         const url = new URL(window.location.href);
         const document_type = url.searchParams.get("document_type");
@@ -187,6 +196,11 @@ $(document).ready(function () {
         return null;
     }
 
+    function getSelectedProductPriceInputMode() {
+        const mode = ($("#form-add-product").data("price-input-mode") || "").toString().toLowerCase();
+        return mode === "without_iva" ? "without_iva" : "with_iva";
+    }
+
     function applySelectedProductPrice() {
         const $form = $("#form-add-product");
         const baseWith = parseFloat($form.data("base-price-with-iva"));
@@ -198,12 +212,15 @@ $(document).ready(function () {
 
         const dteType = $form.data("dte-type");
         const type_sale = $("#type-sale").val();
+        const priceInputMode = getSelectedProductPriceInputMode();
         const costVariantPrices = getSelectedCostVariantPrices();
         const prices = costVariantPrices || getSelectedVariantPrices();
 
-        let productPrice = dteType !== "01" ? prices.without : prices.with;
+        let productPrice = priceInputMode === "without_iva"
+            ? prices.without
+            : (dteType !== "01" ? prices.without : prices.with);
 
-        if (dteType === "01" && type_sale && type_sale !== "Gravada") {
+        if (priceInputMode !== "without_iva" && dteType === "01" && type_sale && type_sale !== "Gravada") {
             productPrice = prices.with / 1.13;
         }
 
@@ -232,12 +249,13 @@ $(document).ready(function () {
         $("#valor_donado").val(redondear(total, 8));
     });
 
-    function updatePrices(price, count) {
-        const iva = count * (price / 1.13) * 0.13;
-        const turismo = count * (price / 1.13) * 0.05;
-        const add_valorem_bebidas_alcoholicas = count * (price / 1.13) * 0.08;
-        const add_valorem_tabaco_cigarrillos = count * (price / 1.13) * 0.39;
-        const add_valorem_tabaco_cigarros = count * (price / 1.13) * 1;
+    function updatePrices(price, count, priceInputMode = "with_iva") {
+        const taxableBase = priceInputMode === "without_iva" ? price : (price / 1.13);
+        const iva = count * taxableBase * 0.13;
+        const turismo = count * taxableBase * 0.05;
+        const add_valorem_bebidas_alcoholicas = count * taxableBase * 0.08;
+        const add_valorem_tabaco_cigarrillos = count * taxableBase * 0.39;
+        const add_valorem_tabaco_cigarros = count * taxableBase * 1;
         $("#iva").text("$" + redondear(iva, 2));
         $("#turismo").text("$" + redondear(turismo, 2));
         $("#add-valorem-bebidas-alcoholicas").text(

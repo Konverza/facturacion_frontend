@@ -68,7 +68,9 @@
         </div>
 
         <div id="table-products-dte" class="mt-4">
-            @include('layouts.partials.ajax.business.table-products-dte')
+            @include('layouts.partials.ajax.business.table-products-dte', [
+                'priceInputMode' => $priceInputMode ?? null,
+            ])
         </div>
     </div>
 

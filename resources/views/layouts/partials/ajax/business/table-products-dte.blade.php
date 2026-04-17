@@ -15,6 +15,8 @@
         <x-slot name="tbody">
             @php
                 $unidadesMedidas = $unidades_medidas ?? [];
+                $tablePriceInputMode = (string) ($priceInputMode ?? ($dte['price_input_mode'] ?? ''));
+                $showPriceWithoutIva = $tablePriceInputMode === 'without_iva';
                 $formatCompactAmount = function ($value) {
                     if (!is_numeric($value)) {
                         return number_format(0, 2);
@@ -54,7 +56,7 @@
                         </x-td>
                         <x-td>{{ $product['cantidad'] }}</x-td>
                         <x-td>
-                            @if ($dte['type'] !== '01')
+                            @if ($showPriceWithoutIva || $dte['type'] !== '01')
                                 ${{ $formatCompactAmount($product['precio_sin_tributos'] ?? 0) }}
                             @else
                                 ${{ $formatCompactAmount($product['precio'] ?? 0) }}
