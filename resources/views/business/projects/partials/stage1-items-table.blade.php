@@ -44,18 +44,24 @@
                 <x-td>{{ $item['best_supplier'] ?? 'Sin proveedor' }}</x-td>
                 <x-td :last="true">
                     <div class="flex flex-col gap-2">
-                        <form method="POST"
-                            action="{{ Route('business.projects.items.add-supplier-cost', ['project' => $project->id, 'itemId' => $item['id']]) }}"
-                            class="grid grid-cols-1 gap-2">
-                            @csrf
-                            <input type="text" name="supplier_name" placeholder="Proveedor"
-                                class="rounded-lg border border-gray-300 p-2 text-xs dark:border-gray-700 dark:bg-gray-900"
-                                required />
-                            <input type="number" name="unit_cost" placeholder="Costo unitario"
-                                class="rounded-lg border border-gray-300 p-2 text-xs dark:border-gray-700 dark:bg-gray-900"
-                                min="0" step="0.0001" required />
-                            <x-button type="submit" text="Agregar costo" icon="plus" typeButton="secondary" size="small" />
-                        </form>
+                        @if (($item['source'] ?? 'manual') !== 'catalog' || !($item['lock_catalog_pair'] ?? false))
+                            <form method="POST"
+                                action="{{ Route('business.projects.items.add-supplier-cost', ['project' => $project->id, 'itemId' => $item['id']]) }}"
+                                class="grid grid-cols-1 gap-2">
+                                @csrf
+                                <input type="text" name="supplier_name" placeholder="Proveedor"
+                                    class="rounded-lg border border-gray-300 p-2 text-xs dark:border-gray-700 dark:bg-gray-900"
+                                    required />
+                                <input type="number" name="unit_cost" placeholder="Costo unitario"
+                                    class="rounded-lg border border-gray-300 p-2 text-xs dark:border-gray-700 dark:bg-gray-900"
+                                    min="0" step="0.0001" required />
+                                <x-button type="submit" text="Agregar costo" icon="plus" typeButton="secondary" size="small" />
+                            </form>
+                        @else
+                            <div class="rounded-lg border border-blue-300 bg-blue-50 px-2 py-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300">
+                                Par costo/precio fijo (no editable)
+                            </div>
+                        @endif
 
                         <form method="POST"
                             action="{{ Route('business.projects.items.delete', ['project' => $project->id, 'itemId' => $item['id']]) }}">

@@ -14,6 +14,7 @@
         @php
             $priceInputMode = $priceInputMode ?? null;
             $forcePriceWithoutIva = $priceInputMode === 'without_iva';
+            $isProjectMode = !empty($projectMode);
         @endphp
         <form action="{{ $newProductAction ?? Route('business.dte.product.store-new') }}" method="POST"
             data-price-input-mode="{{ $priceInputMode }}">
@@ -66,34 +67,38 @@
                     <x-input type="number" label="Cantidad" placeholder="#" min="1" name="cantidad"
                         id="count_product" required />
                 </div>
-                <div class="flex-1">
-                    @php
-                        if ($forcePriceWithoutIva) {
-                            $label_precio = 'Precio (sin IVA)';
-                        } elseif(in_array($number, ["03", "04", "05", "06"])){
-                            $label_precio = "Precio (sin IVA)";
-                        } elseif ($number == "14"){
-                            $label_precio = "Precio (sin Retención de Renta)";
-                        } elseif ($number == "11"){
-                            $label_precio = "Precio";
-                        } else {
-                            $label_precio = "Precio (con IVA)";
-                        }
-                    @endphp
-                    <x-input type="number" icon="currency-dollar" id="price" placeholder="0.00" :label="$label_precio"
-                        name="precio_unitario" step="0.00000001" min="0.00000001" required />
-                </div>
+                @unless ($isProjectMode)
+                    <div class="flex-1">
+                        @php
+                            if ($forcePriceWithoutIva) {
+                                $label_precio = 'Precio (sin IVA)';
+                            } elseif(in_array($number, ["03", "04", "05", "06"])){
+                                $label_precio = "Precio (sin IVA)";
+                            } elseif ($number == "14"){
+                                $label_precio = "Precio (sin Retención de Renta)";
+                            } elseif ($number == "11"){
+                                $label_precio = "Precio";
+                            } else {
+                                $label_precio = "Precio (con IVA)";
+                            }
+                        @endphp
+                        <x-input type="number" icon="currency-dollar" id="price" placeholder="0.00" :label="$label_precio"
+                            name="precio_unitario" step="0.00000001" min="0.00000001" required />
+                    </div>
+                @endunless
             </div>
-            <div class="mt-4 flex gap-4">
-                <div class="flex-1">
-                    <x-input type="number" name="descuento" id="descuento_product" label="Descuento"
-                        icon="currency-dollar" placeholder=0.00 step=0.00000001 min=0.00000001 />
+            @unless ($isProjectMode)
+                <div class="mt-4 flex gap-4">
+                    <div class="flex-1">
+                        <x-input type="number" name="descuento" id="descuento_product" label="Descuento"
+                            icon="currency-dollar" placeholder=0.00 step=0.00000001 min=0.00000001 />
+                    </div>
+                    <div class="flex-1">
+                        <x-input type="number" name="total" id="total_product" placeholder="0.00" label="Total"
+                            icon="currency-dollar" step="0.00000001" min="0.00000001" required />
+                    </div>
                 </div>
-                <div class="flex-1">
-                    <x-input type="number" name="total" id="total_product" placeholder="0.00" label="Total"
-                        icon="currency-dollar" step="0.00000001" min="0.00000001" required />
-                </div>
-            </div>
+            @endunless
             @if ($number !== '11' || $number !== '14')
                 <div class="select-documento-relacionado-new mt-4">
                     <x-select label="Documento relacionado" name="documento_relacionado" id="documento_relacionado_new"

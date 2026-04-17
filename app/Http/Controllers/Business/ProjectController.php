@@ -222,6 +222,8 @@ class ProjectController extends Controller
             ], 422);
         }
 
+        $optimalPair = $this->resolveOptimalCatalogPair($product);
+
         $items = $this->projectItems($project);
 
         $items[] = [
@@ -233,7 +235,14 @@ class ProjectController extends Controller
             'unidad_medida' => (string) ($product->uniMedida ?? ''),
             'cantidad' => (float) $validated['cantidad'],
             'discount_percent' => 0,
-            'suppliers' => $this->supplierListFromProduct($product),
+            'suppliers' => [],
+            'lock_catalog_pair' => true,
+            'apply_margin' => false,
+            'fixed_cost_individual' => $this->round8((float) $optimalPair['cost']),
+            'fixed_price_without_iva' => $this->round8((float) $optimalPair['price_without_iva']),
+            'fixed_price_with_iva' => $this->round8((float) $optimalPair['price_with_iva']),
+            'fixed_pair_label' => (string) ($optimalPair['label'] ?? ''),
+            'fixed_pair_source' => (string) ($optimalPair['source'] ?? 'base_price_only'),
         ];
 
         $this->saveProjectItems($project, $items);
@@ -241,6 +250,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'success' => true,
+            'reload' => true,
             'table_products' => view('business.projects.partials.stage1-items-table', [
                 'project' => $project,
                 'comparison' => $comparison,
@@ -278,6 +288,7 @@ class ProjectController extends Controller
 
         return response()->json([
             'success' => true,
+            'reload' => true,
             'message' => 'Detalle agregado correctamente.',
             'table_data' => view('business.projects.partials.stage1-items-table', [
                 'project' => $project,
@@ -302,6 +313,12 @@ class ProjectController extends Controller
         foreach ($items as &$item) {
             if (($item['id'] ?? null) !== $itemId) {
                 continue;
+            }
+
+            if ((string) ($item['source'] ?? '') === 'catalog' && (bool) ($item['lock_catalog_pair'] ?? false)) {
+                return redirect()->route('business.projects.edit', $project->id)
+                    ->with('error', 'Error')
+                    ->with('error_message', 'El costo/precio de este producto de catálogo es fijo y no es editable.');
             }
 
             $suppliers = isset($item['suppliers']) && is_array($item['suppliers'])
@@ -503,24 +520,36 @@ class ProjectController extends Controller
         $totalBestCost = 0;
 
         foreach ($items as $item) {
-            $suppliers = $this->normalizeSuppliers($item['suppliers'] ?? []);
+            $isCatalogPairLocked = (string) ($item['source'] ?? '') === 'catalog'
+                && (bool) ($item['lock_catalog_pair'] ?? false);
+
+            $suppliers = [];
             $supplierMap = [];
             $bestUnitCost = null;
             $bestSupplier = null;
 
-            foreach ($suppliers as $supplier) {
-                $name = trim((string) ($supplier['name'] ?? ''));
-                if ($name === '') {
-                    continue;
-                }
+            if ($isCatalogPairLocked) {
+                $bestUnitCost = max(0, (float) ($item['fixed_cost_individual'] ?? 0));
+                $bestSupplier = trim((string) ($item['fixed_pair_label'] ?? '')) !== ''
+                    ? trim((string) $item['fixed_pair_label'])
+                    : 'Par fijo';
+            } else {
+                $suppliers = $this->normalizeSuppliers($item['suppliers'] ?? []);
 
-                $unitCost = (float) ($supplier['unit_cost'] ?? 0);
-                $supplierMap[$name] = $unitCost;
-                $providerNames[$name] = $name;
+                foreach ($suppliers as $supplier) {
+                    $name = trim((string) ($supplier['name'] ?? ''));
+                    if ($name === '') {
+                        continue;
+                    }
 
-                if ($bestUnitCost === null || $unitCost < $bestUnitCost) {
-                    $bestUnitCost = $unitCost;
-                    $bestSupplier = $name;
+                    $unitCost = (float) ($supplier['unit_cost'] ?? 0);
+                    $supplierMap[$name] = $unitCost;
+                    $providerNames[$name] = $name;
+
+                    if ($bestUnitCost === null || $unitCost < $bestUnitCost) {
+                        $bestUnitCost = $unitCost;
+                        $bestSupplier = $name;
+                    }
                 }
             }
 
@@ -542,6 +571,12 @@ class ProjectController extends Controller
                 'best_total_cost' => $bestTotalCost,
                 'best_supplier' => $bestSupplier,
                 'discount_percent' => $this->clamp((float) ($item['discount_percent'] ?? 0), 0, 100),
+                'source' => (string) ($item['source'] ?? 'manual'),
+                'lock_catalog_pair' => $isCatalogPairLocked,
+                'apply_margin' => isset($item['apply_margin'])
+                    ? (bool) $item['apply_margin']
+                    : !$isCatalogPairLocked,
+                'fixed_price_without_iva' => $this->round8((float) ($item['fixed_price_without_iva'] ?? 0)),
             ];
         }
 
@@ -593,7 +628,11 @@ class ProjectController extends Controller
             $qty = (float) ($item['cantidad'] ?? 0);
             $costIndividual = (float) ($item['best_unit_cost'] ?? 0);
             $costTotal = $costIndividual * $qty;
-            $priceUnit = $divisor > 0 ? $costIndividual / $divisor : 0;
+            $applyMargin = isset($item['apply_margin']) ? (bool) $item['apply_margin'] : true;
+            $fixedPriceWithoutIva = max(0, (float) ($item['fixed_price_without_iva'] ?? 0));
+            $priceUnit = $applyMargin
+                ? ($divisor > 0 ? $costIndividual / $divisor : 0)
+                : $fixedPriceWithoutIva;
             $discountPercent = $this->clamp((float) ($item['discount_percent'] ?? 0), 0, 100);
             $priceUnitWithDiscount = $priceUnit - ($priceUnit * ($discountPercent / 100));
             $priceTotal = $priceUnitWithDiscount * $qty;
@@ -618,6 +657,8 @@ class ProjectController extends Controller
                 'price_total' => $this->round8($priceTotal),
                 'gain' => $this->round8($gain),
                 'provider' => $item['best_supplier'] ?? null,
+                'apply_margin' => $applyMargin,
+                'fixed_price_without_iva' => $this->round8($fixedPriceWithoutIva),
             ];
         }
 
@@ -779,6 +820,69 @@ class ProjectController extends Controller
         }
 
         return $this->normalizeSuppliers($suppliers);
+    }
+
+    /**
+     * Obtiene el par costo/precio más conveniente para productos de catálogo.
+     * Prioriza el costo más bajo y, en empate, el precio más bajo.
+     */
+    private function resolveOptimalCatalogPair(BusinessProduct $product): array
+    {
+        $basePriceWithoutIva = (float) ($product->precioSinTributos ?? 0);
+        $basePriceWithIva = (float) ($product->precioUni ?? 0);
+
+        $candidates = $product->costVariants()
+            ->with('priceVariant')
+            ->orderBy('costo_final')
+            ->orderBy('nombre_proveedor')
+            ->get()
+            ->map(function (BusinessProductCostVariant $variant) use ($product) {
+                $resolvedPrice = $product->resolvePriceForCostVariant((int) $variant->id);
+
+                return [
+                    'cost' => max(0, (float) ($variant->costo_final ?? 0)),
+                    'price_without_iva' => max(0, (float) ($resolvedPrice['without_iva'] ?? 0)),
+                    'price_with_iva' => max(0, (float) ($resolvedPrice['with_iva'] ?? 0)),
+                    'supplier_name' => trim((string) ($variant->nombre_proveedor ?? '')),
+                    'price_variant_name' => trim((string) ($variant->priceVariant?->name ?? '')),
+                ];
+            })
+            ->values();
+
+        if ($candidates->isEmpty()) {
+            return [
+                'has_pair' => false,
+                'cost' => 0,
+                'price_without_iva' => $basePriceWithoutIva,
+                'price_with_iva' => $basePriceWithIva,
+                'label' => 'Precio base del producto',
+                'source' => 'base_price_only',
+            ];
+        }
+
+        $best = $candidates
+            ->sortBy([
+                ['cost', 'asc'],
+                ['price_without_iva', 'asc'],
+            ])
+            ->first();
+
+        $labelParts = [];
+        if (trim((string) ($best['supplier_name'] ?? '')) !== '') {
+            $labelParts[] = (string) $best['supplier_name'];
+        }
+        if (trim((string) ($best['price_variant_name'] ?? '')) !== '') {
+            $labelParts[] = (string) $best['price_variant_name'];
+        }
+
+        return [
+            'has_pair' => true,
+            'cost' => (float) ($best['cost'] ?? 0),
+            'price_without_iva' => (float) ($best['price_without_iva'] ?? $basePriceWithoutIva),
+            'price_with_iva' => (float) ($best['price_with_iva'] ?? $basePriceWithIva),
+            'label' => !empty($labelParts) ? implode(' - ', $labelParts) : 'Par óptimo',
+            'source' => 'cost_variant_pair',
+        ];
     }
 
     private function normalizeSuppliers(array $suppliers): array

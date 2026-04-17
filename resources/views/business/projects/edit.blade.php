@@ -107,7 +107,9 @@
                     <tbody>
                         @forelse ($costing['items'] ?? [] as $row)
                             <tr class="js-cost-row" data-row-id="{{ $row['id'] }}" data-qty="{{ (float) $row['cantidad'] }}"
-                                data-cost-individual="{{ (float) $row['cost_individual'] }}">
+                                data-cost-individual="{{ (float) $row['cost_individual'] }}"
+                                data-apply-margin="{{ !empty($row['apply_margin']) ? 1 : 0 }}"
+                                data-fixed-price-without-iva="{{ (float) ($row['fixed_price_without_iva'] ?? 0) }}">
                                 <td class="border p-2">{{ $loop->iteration }}</td>
                                 <td class="border p-2">{{ number_format((float) $row['cantidad'], 2) }}</td>
                                 <td class="border p-2">{{ $row['unidad_medida'] ?: '-' }}</td>
@@ -266,6 +268,8 @@
                     const rowId = row.data('rowId');
                     const qty = toNumber(row.data('qty'));
                     const costIndividual = toNumber(row.data('costIndividual'));
+                    const applyMargin = Number(row.data('applyMargin')) === 1;
+                    const fixedPriceWithoutIva = toNumber(row.data('fixedPriceWithoutIva'));
                     const discountInput = $('.js-discount-input[data-row-id="' + rowId + '"]');
 
                     let discountPercent = clamp(toNumber(discountInput.val()), 0, 100);
@@ -274,7 +278,9 @@
                     }
 
                     const costTotal = costIndividual * qty;
-                    const priceUnit = divisor > 0 ? (costIndividual / divisor) : 0;
+                    const priceUnit = applyMargin
+                        ? (divisor > 0 ? (costIndividual / divisor) : 0)
+                        : fixedPriceWithoutIva;
                     const priceUnitWithDiscount = priceUnit - (priceUnit * (discountPercent / 100));
                     const priceTotal = priceUnitWithDiscount * qty;
                     const gain = priceTotal - costTotal;

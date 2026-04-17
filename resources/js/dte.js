@@ -48,6 +48,10 @@ $(document).ready(function () {
     }
 
     $("#count_product, #price").on("input", function () {
+        if (!price.length) {
+            return;
+        }
+
         const countValue = parseFloat(count.val());
         const priceValue = parseFloat(price.val());
         if (count.val() === "" || price.val() === "") {
@@ -627,6 +631,11 @@ $(document).ready(function () {
                 console.log(data);
 
                 if (data.success) {
+                    if (data.reload) {
+                        window.location.reload();
+                        return;
+                    }
+
                     $("#table-products-dte").html(data.table_products);
                     $("#table-exportacion").html(data.table_exportacion);
                     if (data.table_sujeto_excluido !== undefined) {
@@ -1046,6 +1055,11 @@ $(document).ready(function () {
                 const data = response.data;
 
                 if (data.success) {
+                    if (data.reload) {
+                        window.location.reload();
+                        return;
+                    }
+
                     showAlert("success", "Exito", data.message);
                     form.trigger("reset");
                     $("#table-" + data.table).html(data.table_data);
