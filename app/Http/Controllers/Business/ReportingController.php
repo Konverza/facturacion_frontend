@@ -13,6 +13,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Session;
@@ -138,6 +139,82 @@ class ReportingController extends Controller
         }
     }
 
+    public function previewAnexo(Request $request)
+    {
+        $validated = $request->validate([
+            'book_type' => 'required|in:anexos_f07',
+            'tipo_anexo' => 'required|in:contribuyentes,consumidores,compras,compras_se',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'tipo_operacion' => 'nullable|string',
+            'tipo_ingreso' => 'nullable|string',
+            'tipo_operacion_se' => 'nullable|string',
+            'clasificacion' => 'nullable|string',
+            'sector' => 'nullable|string',
+            'tipo_costo' => 'nullable|string',
+        ]);
+
+        $business_id = Session::get('business') ?? null;
+        $business = $business_id ? Business::find($business_id) : null;
+        if (!$business) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró la sesión de negocio.',
+            ], 422);
+        }
+
+        $metadata = $this->getAnexoMetadata($validated['tipo_anexo']);
+        $rows = $this->buildAnexoPreviewRows($validated, $business);
+
+        if (empty($rows)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontraron documentos para el anexo seleccionado.',
+            ], 422);
+        }
+
+        $rows = $this->formatRowsForPreview($rows, $metadata['numeric_columns']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Previsualización generada correctamente.',
+            'tipo_anexo' => $validated['tipo_anexo'],
+            'columns' => $metadata['columns'],
+            'editable_columns' => $metadata['editable_columns'],
+            'rows' => $rows,
+            'file_prefix' => $metadata['file_prefix'],
+        ]);
+    }
+
+    public function downloadAnexo(Request $request)
+    {
+        $validated = $request->validate([
+            'tipo_anexo' => 'required|in:contribuyentes,consumidores,compras,compras_se',
+            'rows' => 'required|array|min:1',
+            'rows.*' => 'required|array',
+        ]);
+
+        $metadata = $this->getAnexoMetadata($validated['tipo_anexo']);
+        $columnKeys = array_map(fn($column) => $column['key'], $metadata['columns']);
+
+        $normalizedRows = [];
+        foreach ($validated['rows'] as $row) {
+            $normalized = [];
+            foreach ($columnKeys as $columnKey) {
+                $value = $row[$columnKey] ?? '';
+                if (in_array($columnKey, $metadata['numeric_columns'], true)) {
+                    $value = number_format((float) $value, 2, '.', '');
+                }
+                $normalized[] = $value;
+            }
+            $normalizedRows[] = $normalized;
+        }
+
+        $file_path = $this->saveRowsAsCsv($normalizedRows, $metadata['file_prefix']);
+
+        return response()->download($file_path)->deleteFileAfterSend(true);
+    }
+
     public function anexos(Request $request): string
     {
         $business_id = Session::get('business') ?? null;
@@ -155,12 +232,513 @@ class ReportingController extends Controller
                 return $this->exportAnexoContribuyentes($dtes, $tipoOperacion, $tipoIngreso);
             case "consumidores":
                 return $this->exportAnexoConsumidores($dtes, $tipoOperacion, $tipoIngreso);
+            case "compras":
+                $dtesRecibidos = $this->fetchReceivedDtes($business->nit, $request->start_date, $request->end_date, [], true);
+                $rowsCompras = $this->buildAnexoComprasRows($dtesRecibidos, [
+                    'tipo_operacion_se' => $tipoOperacionSe,
+                    'clasificacion' => $clasificacion,
+                    'sector' => $sector,
+                    'tipo_costo' => $tipo_costo,
+                ]);
+                $metadataCompras = $this->getAnexoMetadata('compras');
+                $columnKeysCompras = array_map(fn($column) => $column['key'], $metadataCompras['columns']);
+                $normalizedRowsCompras = [];
+                foreach ($rowsCompras as $row) {
+                    $normalized = [];
+                    foreach ($columnKeysCompras as $columnKey) {
+                        $value = $row[$columnKey] ?? '';
+                        if (in_array($columnKey, $metadataCompras['numeric_columns'], true)) {
+                            $value = number_format((float) $value, 2, '.', '');
+                        }
+                        $normalized[] = $value;
+                    }
+                    $normalizedRowsCompras[] = $normalized;
+                }
+                return $this->saveRowsAsCsv($normalizedRowsCompras, $metadataCompras['file_prefix']);
             case "compras_se":
                 // Implementar exportación de anexo de compras SE si es necesario
                 return $this->exportAnexoComprasSE($dtes, $tipoOperacionSe, $clasificacion, $sector, $tipo_costo);
             default:
                 throw new \Exception('Tipo de anexo no válido');
         }
+    }
+
+    private function buildAnexoPreviewRows(array $payload, Business $business): array
+    {
+        $tipoAnexo = $payload['tipo_anexo'];
+
+        if (in_array($tipoAnexo, ['contribuyentes', 'consumidores'], true)) {
+            $dtes = $this->fetchSentDtes($business->nit, $payload['start_date'], $payload['end_date'], true);
+        } else {
+            $dtes = $this->fetchReceivedDtes($business->nit, $payload['start_date'], $payload['end_date'], [], true);
+        }
+
+        return match ($tipoAnexo) {
+            'contribuyentes' => $this->buildAnexoContribuyentesRows($dtes, $payload),
+            'consumidores' => $this->buildAnexoConsumidoresRows($dtes, $payload),
+            'compras' => $this->buildAnexoComprasRows($dtes, $payload),
+            'compras_se' => $this->buildAnexoComprasSeRows($dtes, $payload),
+            default => [],
+        };
+    }
+
+    private function buildAnexoContribuyentesRows(array $dtes, array $payload): array
+    {
+        $filtered = collect($dtes)
+            ->filter(fn($dte) => ($dte['estado'] ?? null) === 'PROCESADO' && in_array((string) ($dte['tipo_dte'] ?? ''), ['03', '05', '06'], true))
+            ->sortBy('fhEmision')
+            ->values();
+
+        $rows = [];
+        foreach ($filtered as $dte) {
+            $doc = $dte['documento'] ?? [];
+            $resumen = $doc['resumen'] ?? [];
+
+            $totalIva = $this->sumTributosByCodes($resumen, ['20']);
+            $totalPagar = (float) ($resumen['totalPagar'] ?? 0);
+
+            $rows[] = [
+                'A' => $this->formatDate($dte['fhEmision'] ?? null),
+                'B' => '4',
+                'C' => (string) ($dte['tipo_dte'] ?? ''),
+                'D' => str_replace('-', '', (string) data_get($doc, 'identificacion.numeroControl', '')),
+                'E' => (string) ($dte['selloRecibido'] ?? ''),
+                'F' => str_replace('-', '', (string) ($dte['codGeneracion'] ?? '')),
+                'G' => '',
+                'H' => (string) data_get($doc, 'receptor.nit', ''),
+                'I' => strtoupper((string) html_entity_decode((string) data_get($doc, 'receptor.nombre', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8')),
+                'J' => (float) ($resumen['totalExenta'] ?? 0),
+                'K' => (float) ($resumen['totalNoSuj'] ?? 0),
+                'L' => (float) ($resumen['totalGravada'] ?? 0),
+                'M' => (float) $totalIva,
+                'N' => 0.00,
+                'O' => 0.00,
+                'P' => $totalPagar,
+                'Q' => '',
+                'R' => (string) ($payload['tipo_operacion'] ?? '1'),
+                'S' => (string) ($payload['tipo_ingreso'] ?? '1'),
+                'T' => '1',
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function buildAnexoConsumidoresRows(array $dtes, array $payload): array
+    {
+        $dteCollection = collect($dtes)
+            ->filter(fn($dte) => ($dte['estado'] ?? null) === 'PROCESADO' && in_array((string) ($dte['tipo_dte'] ?? ''), ['01', '11'], true))
+            ->sortBy('fhEmision')
+            ->values();
+
+        $grouped = $dteCollection
+            ->groupBy(fn($dte) => Carbon::parse($dte['fhEmision'])->toDateString())
+            ->map(fn($items) => $items->groupBy('tipo_dte'));
+
+        $rows = [];
+        $paisesCentroamerica = ['GT', '9483', 'HN', '9501', 'SV', '9300', 'NI', '9615', 'CR', '9411'];
+
+        foreach ($grouped as $fecha => $tipos) {
+            foreach ($tipos as $tipo => $items) {
+                $primerCod = $items->first()['codGeneracion'] ?? '';
+                $ultimoCod = $items->last()['codGeneracion'] ?? '';
+
+                $totalExento = $items->sum(fn($dte) => (float) data_get($dte, 'documento.resumen.totalExenta', 0));
+                $totalNoSuj = $items->sum(fn($dte) => (float) data_get($dte, 'documento.resumen.totalNoSuj', 0));
+                $totalGravado = $tipo === '01'
+                    ? $items->sum(fn($dte) => (float) data_get($dte, 'documento.resumen.totalGravada', 0))
+                    : 0.00;
+
+                $totalExportacionDentro = 0.00;
+                $totalExportacionFuera = 0.00;
+                $totalExportacionServicios = 0.00;
+
+                if ($tipo === '11') {
+                    foreach ($items as $dte) {
+                        $codPais = data_get($dte, 'documento.receptor.codPais');
+                        $tipoItemExpor = data_get($dte, 'documento.emisor.tipoItemExpor');
+                        $totalGravadaDte = (float) data_get($dte, 'documento.resumen.totalGravada', 0);
+
+                        if ((string) $tipoItemExpor === '2') {
+                            $totalExportacionServicios += $totalGravadaDte;
+                            continue;
+                        }
+
+                        if (!empty($codPais)) {
+                            if (in_array((string) $codPais, $paisesCentroamerica, true)) {
+                                $totalExportacionDentro += $totalGravadaDte;
+                            } else {
+                                $totalExportacionFuera += $totalGravadaDte;
+                            }
+                        }
+                    }
+                }
+
+                $totalZonasFrancas = 0.00;
+                $totalCuentaTerceros = 0.00;
+                $totalPagar = $totalExento + $totalNoSuj + $totalGravado + $totalExportacionDentro + $totalExportacionFuera + $totalExportacionServicios + $totalZonasFrancas + $totalCuentaTerceros;
+
+                $rows[] = [
+                    'A' => Carbon::parse($fecha)->format('d/m/Y'),
+                    'B' => '4',
+                    'C' => (string) $tipo,
+                    'D' => 'N/A',
+                    'E' => 'N/A',
+                    'F' => 'N/A',
+                    'G' => 'N/A',
+                    'H' => str_replace('-', '', (string) $primerCod),
+                    'I' => str_replace('-', '', (string) $ultimoCod),
+                    'J' => '',
+                    'K' => $totalExento,
+                    'L' => 0.00,
+                    'M' => $totalNoSuj,
+                    'N' => $totalGravado,
+                    'O' => $totalExportacionDentro,
+                    'P' => $totalExportacionFuera,
+                    'Q' => $totalExportacionServicios,
+                    'R' => $totalZonasFrancas,
+                    'S' => $totalCuentaTerceros,
+                    'T' => $totalPagar,
+                    'U' => (string) ($payload['tipo_operacion'] ?? '1'),
+                    'V' => (string) ($payload['tipo_ingreso'] ?? '1'),
+                    'W' => '2',
+                ];
+            }
+        }
+
+        return $rows;
+    }
+
+    private function buildAnexoComprasSeRows(array $dtes, array $payload): array
+    {
+        $tipoDocumentoMap = [
+            '36' => '1',
+            '13' => '2',
+            '37' => '3',
+            '03' => '3',
+            '02' => '3',
+        ];
+
+        $filtered = collect($dtes)
+            ->filter(fn($dte) => ($dte['estado'] ?? null) === 'PROCESADO' && (string) ($dte['tipo_dte'] ?? '') === '14')
+            ->sortBy('fhEmision')
+            ->values();
+
+        $rows = [];
+        foreach ($filtered as $dte) {
+            $doc = $dte['documento'] ?? [];
+            $sujetoExcluido = $doc['sujetoExcluido'] ?? [];
+
+            $rows[] = [
+                'A' => (string) ($tipoDocumentoMap[(string) data_get($sujetoExcluido, 'tipoDocumento', '')] ?? ''),
+                'B' => str_replace('-', '', (string) data_get($sujetoExcluido, 'numDocumento', '')),
+                'C' => strtoupper((string) html_entity_decode((string) data_get($sujetoExcluido, 'nombre', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8')),
+                'D' => $this->formatDate($dte['fhEmision'] ?? null),
+                'E' => (string) ($dte['selloRecibido'] ?? ''),
+                'F' => str_replace('-', '', (string) ($dte['codGeneracion'] ?? '')),
+                'G' => (float) data_get($doc, 'resumen.totalCompra', 0),
+                'H' => 0.00,
+                'I' => (string) ($payload['tipo_operacion_se'] ?? '2'),
+                'J' => (string) ($payload['clasificacion'] ?? '2'),
+                'K' => (string) ($payload['sector'] ?? '4'),
+                'L' => (string) ($payload['tipo_costo'] ?? '2'),
+                'M' => '5',
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function buildAnexoComprasRows(array $dtes, array $payload): array
+    {
+        // Por defecto se consideran solo DTEs 03, 05 y 06 para el Anexo de Compras.
+        $filtered = collect($dtes)
+            ->filter(fn($dte) => ($dte['estado'] ?? null) !== 'ANULADO' && in_array((string) ($dte['tipo_dte'] ?? ''), ['03', '05', '06'], true))
+            ->sortBy('fhEmision')
+            ->values();
+
+        $rows = [];
+        foreach ($filtered as $dte) {
+            $doc = $dte['documento'] ?? [];
+            $resumen = $doc['resumen'] ?? [];
+            $identificacion = $doc['identificacion'] ?? [];
+            $emisor = $doc['emisor'] ?? [];
+
+            $totalExenta = (float) ($resumen['totalExenta'] ?? 0);
+            $totalNoSuj = (float) ($resumen['totalNoSuj'] ?? 0);
+            $totalGravada = (float) ($resumen['totalGravada'] ?? 0);
+
+            $descuExenta = (float) ($resumen['descuExenta'] ?? 0);
+            $descuNoSuj = (float) ($resumen['descuNoSuj'] ?? 0);
+            $descuGravada = (float) ($resumen['descuGravada'] ?? 0);
+
+            $fovial = $this->sumTributosByCodes($resumen, ['D1']);
+            $contrans = $this->sumTributosByCodes($resumen, ['C8']);
+
+            $colG = max(0, ($totalExenta + $totalNoSuj) - ($descuExenta + $descuNoSuj) + $fovial + $contrans);
+            $colJ = max(0, $totalGravada - $descuGravada);
+            $colN = $this->sumTributosByCodes($resumen, ['20']);
+            $colO = $colG + $colJ;
+
+            $tipoOperacion = $this->resolveTipoOperacionCompras($totalExenta - $descuExenta, $totalNoSuj - $descuNoSuj, $colJ);
+
+            $nitOrNrc = (string) (data_get($emisor, 'nit') ?: data_get($emisor, 'nrc', ''));
+            $dui = empty($nitOrNrc) ? (string) data_get($emisor, 'dui', '') : '';
+
+            $rows[] = [
+                'A' => $this->formatDate(data_get($identificacion, 'fecEmi')),
+                'B' => '4',
+                'C' => (string) data_get($identificacion, 'tipoDte', $dte['tipo_dte'] ?? ''),
+                'D' => str_replace('-', '', (string) data_get($identificacion, 'codigoGeneracion', $dte['codGeneracion'] ?? '')),
+                'E' => $nitOrNrc,
+                'F' => strtoupper((string) html_entity_decode((string) data_get($emisor, 'nombre', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8')),
+                'G' => $colG,
+                'H' => 0.00,
+                'I' => 0.00,
+                'J' => $colJ,
+                'K' => 0.00,
+                'L' => 0.00,
+                'M' => 0.00,
+                'N' => $colN,
+                'O' => $colO,
+                'P' => $dui,
+                'Q' => (string) ($payload['tipo_operacion_se'] ?? $tipoOperacion),
+                'R' => (string) ($payload['clasificacion'] ?? '2'),
+                'S' => (string) ($payload['sector'] ?? '4'),
+                'T' => (string) ($payload['tipo_costo'] ?? '2'),
+                'U' => '3',
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function resolveTipoOperacionCompras(float $netExenta, float $netNoSuj, float $netGravada): string
+    {
+        $hasGravada = $netGravada > 0;
+        $hasExenta = $netExenta > 0;
+        $hasNoSuj = $netNoSuj > 0;
+
+        $count = ($hasGravada ? 1 : 0) + ($hasExenta ? 1 : 0) + ($hasNoSuj ? 1 : 0);
+        if ($count === 0) {
+            return '0';
+        }
+        if ($count > 1) {
+            return '4';
+        }
+        if ($hasGravada) {
+            return '1';
+        }
+        if ($hasExenta) {
+            return '2';
+        }
+
+        return '3';
+    }
+
+    private function getAnexoMetadata(string $tipoAnexo): array
+    {
+        return match ($tipoAnexo) {
+            'contribuyentes' => [
+                'file_prefix' => 'anexo-f07-contribuyentes_',
+                'numeric_columns' => ['J', 'K', 'L', 'M', 'N', 'O', 'P'],
+                'editable_columns' => [
+                    'R' => [
+                        '1' => 'Gravada',
+                        '2' => 'No Gravada o Exento',
+                        '3' => 'Excluido o no Constituye Renta',
+                        '4' => 'Mixta',
+                        '12' => 'Ingresos que ya fueron sujetos de retención informados',
+                        '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
+                    ],
+                    'S' => [
+                        '1' => 'Profesiones, Artes y Oficios',
+                        '2' => 'Actividades de Servicios',
+                        '3' => 'Actividades Comerciales',
+                        '4' => 'Actividades Industriales',
+                        '5' => 'Actividades Agropecuarias',
+                        '6' => 'Utilidades y Dividendos',
+                        '7' => 'Exportaciones de bienes',
+                        '8' => 'Servicios Realizados en el Exterior y Utilizados en El Salvador',
+                        '9' => 'Exportaciones de servicios',
+                        '10' => 'Otras Rentas Gravables',
+                        '12' => 'Ingresos que ya fueron sujetos de retención informados',
+                        '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
+                    ],
+                ],
+                'columns' => $this->buildColumns([
+                    'A' => 'Fecha', 'B' => 'Clase', 'C' => 'Tipo Doc', 'D' => 'No. Documento', 'E' => 'Sello', 'F' => 'Cod. Generación',
+                    'G' => 'Control Interno', 'H' => 'NIT/NRC', 'I' => 'Nombre', 'J' => 'Exentas', 'K' => 'No Sujetas', 'L' => 'Gravadas',
+                    'M' => 'IVA', 'N' => 'Vta. Terceros', 'O' => 'IVA Terceros', 'P' => 'Total', 'Q' => 'DUI',
+                    'R' => 'Tipo Operación', 'S' => 'Tipo Ingreso', 'T' => 'Anexo'
+                ]),
+            ],
+            'consumidores' => [
+                'file_prefix' => 'anexo-f07-consumidor-final_',
+                'numeric_columns' => ['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'],
+                'editable_columns' => [
+                    'U' => [
+                        '1' => 'Gravada',
+                        '2' => 'No Gravada o Exento',
+                        '3' => 'Excluido o no Constituye Renta',
+                        '4' => 'Mixta',
+                        '12' => 'Ingresos que ya fueron sujetos de retención informados',
+                        '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
+                    ],
+                    'V' => [
+                        '1' => 'Profesiones, Artes y Oficios',
+                        '2' => 'Actividades de Servicios',
+                        '3' => 'Actividades Comerciales',
+                        '4' => 'Actividades Industriales',
+                        '5' => 'Actividades Agropecuarias',
+                        '6' => 'Utilidades y Dividendos',
+                        '7' => 'Exportaciones de bienes',
+                        '8' => 'Servicios Realizados en el Exterior y Utilizados en El Salvador',
+                        '9' => 'Exportaciones de servicios',
+                        '10' => 'Otras Rentas Gravables',
+                        '12' => 'Ingresos que ya fueron sujetos de retención informados',
+                        '13' => 'Sujetos pasivos Excluidos (art. 6 LISR)',
+                    ],
+                ],
+                'columns' => $this->buildColumns([
+                    'A' => 'Fecha', 'B' => 'Clase', 'C' => 'Tipo DTE', 'D' => 'Resolución', 'E' => 'Serie', 'F' => 'Ctrl Int Del',
+                    'G' => 'Ctrl Int Al', 'H' => 'Doc Del', 'I' => 'Doc Al', 'J' => 'Máquina', 'K' => 'Exentas', 'L' => 'Exentas Proporc.',
+                    'M' => 'No Sujetas', 'N' => 'Gravadas', 'O' => 'Exp. CA', 'P' => 'Exp. Fuera CA', 'Q' => 'Exp. Servicios',
+                    'R' => 'Zonas Francas', 'S' => 'Terceros No Dom.', 'T' => 'Total', 'U' => 'Tipo Operación', 'V' => 'Tipo Ingreso', 'W' => 'Anexo'
+                ]),
+            ],
+            'compras_se' => [
+                'file_prefix' => 'anexo-f07-compras-se_',
+                'numeric_columns' => ['G', 'H'],
+                'editable_columns' => [
+                    'I' => ['1' => 'Gravada', '2' => 'No Gravada o Exenta', '3' => 'Excluido o no Constituye Renta', '4' => 'Mixta'],
+                    'J' => ['1' => 'Costo', '2' => 'Gasto'],
+                    'K' => ['1' => 'Industrial', '2' => 'Comercial', '3' => 'Agropecuario', '4' => 'Servicios/Otros'],
+                    'L' => [
+                        '1' => 'Gastos de Venta sin Donación',
+                        '2' => 'Gastos de Administración sin Donación',
+                        '3' => 'Gastos Financieros sin Donación',
+                        '4' => 'Costo Artículos Importados/Internaciones',
+                        '5' => 'Costo Artículos Internos',
+                        '6' => 'Costos Indirectos de Fabricación',
+                        '7' => 'Mano de Obra',
+                    ],
+                ],
+                'columns' => $this->buildColumns([
+                    'A' => 'Tipo Doc', 'B' => 'No. Doc', 'C' => 'Nombre', 'D' => 'Fecha', 'E' => 'Sello', 'F' => 'Cod. Generación',
+                    'G' => 'Monto Compra', 'H' => 'Retención IVA', 'I' => 'Tipo Operación', 'J' => 'Clasificación', 'K' => 'Sector', 'L' => 'Tipo Costo/Gasto', 'M' => 'Anexo'
+                ]),
+            ],
+            'compras' => [
+                'file_prefix' => 'anexo-f07-compras_',
+                'numeric_columns' => ['G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'],
+                'editable_columns' => [
+                    'Q' => ['0' => 'Sin datos', '1' => 'Solo gravadas', '2' => 'Solo exentas', '3' => 'Solo no sujetas', '4' => 'Mixta'],
+                    'R' => ['1' => 'Costo', '2' => 'Gasto'],
+                    'S' => ['1' => 'Industrial', '2' => 'Comercial', '3' => 'Agropecuario', '4' => 'Servicios/Otros'],
+                    'T' => [
+                        '1' => 'Gastos de Venta sin Donación',
+                        '2' => 'Gastos de Administración sin Donación',
+                        '3' => 'Gastos Financieros sin Donación',
+                        '4' => 'Costo Artículos Importados/Internaciones',
+                        '5' => 'Costo Artículos Internos',
+                        '6' => 'Costos Indirectos de Fabricación',
+                        '7' => 'Mano de Obra',
+                    ],
+                ],
+                'columns' => $this->buildColumns([
+                    'A' => 'Fecha de Emisión', 'B' => 'Clase Doc', 'C' => 'Tipo Doc', 'D' => 'No. Documento', 'E' => 'NIT/NRC Proveedor',
+                    'F' => 'Nombre Proveedor', 'G' => 'Compras Internas Exentas/No Sujetas', 'H' => 'Internaciones Exentas/No Sujetas',
+                    'I' => 'Importaciones Exentas/No Sujetas', 'J' => 'Compras Internas Gravadas', 'K' => 'Internaciones Gravadas',
+                    'L' => 'Importaciones Gravadas Bienes', 'M' => 'Importaciones Gravadas Servicios', 'N' => 'Crédito Fiscal',
+                    'O' => 'Total Compras', 'P' => 'DUI Proveedor', 'Q' => 'Tipo Operación', 'R' => 'Clasificación',
+                    'S' => 'Sector', 'T' => 'Tipo Costo/Gasto', 'U' => 'No. Anexo'
+                ]),
+            ],
+            default => [
+                'file_prefix' => 'anexo_',
+                'numeric_columns' => [],
+                'editable_columns' => [],
+                'columns' => [],
+            ],
+        };
+    }
+
+    private function buildColumns(array $map): array
+    {
+        $columns = [];
+        foreach ($map as $key => $label) {
+            $columns[] = ['key' => $key, 'label' => $label];
+        }
+        return $columns;
+    }
+
+    private function formatRowsForPreview(array $rows, array $numericColumns): array
+    {
+        return array_map(function ($row) use ($numericColumns) {
+            foreach ($numericColumns as $columnKey) {
+                if (array_key_exists($columnKey, $row)) {
+                    $row[$columnKey] = number_format((float) $row[$columnKey], 2, '.', '');
+                }
+            }
+            return $row;
+        }, $rows);
+    }
+
+    private function sumTributosByCodes(array $resumen, array $codes): float
+    {
+        $tributos = $resumen['tributos'] ?? [];
+        if (!is_array($tributos)) {
+            return 0.0;
+        }
+
+        $sum = 0.0;
+        foreach ($tributos as $tributo) {
+            $codigo = (string) data_get($tributo, 'codigo', '');
+            if (in_array($codigo, $codes, true)) {
+                $sum += (float) data_get($tributo, 'valor', 0);
+            }
+        }
+
+        return round($sum, 2);
+    }
+
+    private function formatDate(?string $date): string
+    {
+        if (empty($date)) {
+            return '';
+        }
+
+        try {
+            return Carbon::parse($date)->format('d/m/Y');
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
+    private function saveRowsAsCsv(array $rows, string $prefix): string
+    {
+        $fileName = $prefix . date('YmdHis') . '_' . Str::lower(Str::random(6)) . '.csv';
+        $directory = 'exports';
+
+        if (!Storage::disk('public')->exists($directory)) {
+            Storage::disk('public')->makeDirectory($directory);
+        }
+
+        $filePath = storage_path("app/public/{$directory}/{$fileName}");
+        $handle = fopen($filePath, 'w');
+
+        if ($handle === false) {
+            throw new \RuntimeException('No fue posible crear el archivo CSV.');
+        }
+
+        foreach ($rows as $row) {
+            fputcsv($handle, $row, ';');
+        }
+
+        fclose($handle);
+
+        return $filePath;
     }
 
     private function exportConsumidores(array $dtes, array $datos_empresa, string $months, string $years, $request): string
@@ -543,6 +1121,29 @@ class ReportingController extends Controller
         }, $data['items'] ?? []);
 
         return $dtes;
+    }
+
+    private function fetchReceivedDtes(string $nit, string $start_date, string $end_date, array $filters = [], bool $associative = true): array
+    {
+        $parameters = [
+            'nit' => $nit,
+            'fechaInicio' => $start_date ? "{$start_date}T00:00:00" : null,
+            'fechaFin' => $end_date ? "{$end_date}T23:59:59" : null,
+            'tipo_dte' => $filters['received_tipo_dte'] ?? null,
+            'documento_emisor' => $filters['received_documento_emisor'] ?? null,
+            'q' => $filters['received_q'] ?? null,
+            'sort' => 'desc',
+            'limit' => 10000,
+            'page' => 1,
+        ];
+
+        $responseDtes = Http::get(env('OCTOPUS_API_URL') . '/dtes_recibidos/', $parameters);
+        $data = $responseDtes->json();
+
+        return array_map(function ($dte) use ($associative) {
+            $dte['documento'] = json_decode($dte['documento'] ?? '{}', $associative);
+            return $dte;
+        }, $data['items'] ?? []);
     }
 
     private function saveSpreadsheet($spreadsheet, string $prefix, $request): string

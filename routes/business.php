@@ -116,6 +116,8 @@ Route::middleware(["auth", "role:business", "web"])->prefix("business")->name("b
     // Reporting
     Route::get("/reporting", [ReportingController::class, "index"])->name('reporting.index');
     Route::post("/reporting", [ReportingController::class, "store"])->name('reporting.store');
+    Route::post("/reporting/preview-anexo", [ReportingController::class, "previewAnexo"])->name('reporting.preview-anexo');
+    Route::post("/reporting/download-anexo", [ReportingController::class, "downloadAnexo"])->name('reporting.download-anexo');
     Route::get("/reporting/general", function () {
         return view('business.reporting.general-dashboard');
     })->name('reporting.general');

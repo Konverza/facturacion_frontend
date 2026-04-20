@@ -17,7 +17,12 @@
                 <p class="text-left text-sm text-blue-700 dark:text-blue-300">
                     Para descargar los Anexos para el F07 en formato CSV, seleccionar en <b>"Tipo de Reporte"</b> la opción
                     <b>"Anexos F07"</b>.<br>
-                    Para los libros en Excel, seleccionar el tipo de libro que se desea generar.
+                    Para los libros en Excel, seleccionar el tipo de libro que se desea generar.<br><br>
+                    <b>Novedad:</b> ahora puedes <b>previsualizar los datos del Anexo</b> antes de descargar el archivo final.<br>
+                    <b>¿Cómo usarlo?</b><br>
+                    1. Completa el formulario y haz clic en <b>"Generar documento"</b>.<br>
+                    2. Revisa la tabla de previsualización y ajusta los campos editables si lo necesitas.<br>
+                    3. Haz clic en <b>"Guardar cambios y descargar CSV"</b> para obtener el archivo final.
                 </p>
             </div>
             <div class="flex flex-col gap-2 overflow-hidden rounded-lg border-2 border-dashed border-yellow-300 bg-yellow-50 p-4 text-center dark:border-yellow-800 dark:bg-yellow-950/40"
@@ -38,7 +43,8 @@
                 </p>
             </div>
             <form action="{{ Route('business.reporting.store') }}" class="mt-3 flex w-full flex-col gap-4"
-                method="POST" id="form-generate-book">
+                method="POST" id="form-generate-book" data-preview-route="{{ Route('business.reporting.preview-anexo') }}"
+                data-download-route="{{ Route('business.reporting.download-anexo') }}">
                 @csrf
                 <div class="flex w-full flex-col gap-4">
                     <x-select :options="[
@@ -56,7 +62,7 @@
                         <x-select :options="[
                             'contribuyentes' => 'Detalle de Ventas al Contribuyente',
                             'consumidores' => 'Detalle de Ventas al Consumidor Final',
-                            // 'compras' => 'Detalle de Compras',
+                            'compras' => 'Detalle de Compras',
                             'compras_se' => 'Detalle de Compras a Sujetos Excluidos (Casilla 66)',
                             // 'venta_tercero' => 'Detalle de Ventas por cuenta de terceros domiciliados (Casilla 108)',
                         ]" name="tipo_anexo" id="anexo-type" label="Tipo de Anexo" />
@@ -127,6 +133,7 @@
                         ]" label="Tipo de Costo / Gasto" name="tipo_costo"
                             required />
                     </div>
+
                     {{-- <x-input type="toggle" name="format_csv" label="Generar en formato .CSV" /> --}}
 
                     <div id="container-ventas-contribuyentes" class="container-books hidden">
@@ -209,6 +216,30 @@
                     </div>
                 </div>
             </form>
+
+            <div id="anexo-preview-container" class="mt-6 hidden">
+                <div class="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/40">
+                    <p class="text-sm text-blue-700 dark:text-blue-300">
+                        Previsualización del anexo generada. Puedes editar los campos configurables por fila y luego guardar para descargar el CSV final.
+                    </p>
+                </div>
+
+                <div id="anexo-preview-top-scroll" class="mb-2 overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                    <div id="anexo-preview-top-scroll-content" class="h-4"></div>
+                </div>
+
+                <div id="anexo-preview-bottom-scroll" class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                    <table class="min-w-full divide-y divide-gray-200 text-xs dark:divide-gray-700" id="anexo-preview-table">
+                        <thead class="bg-gray-100 dark:bg-gray-800" id="anexo-preview-head"></thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900" id="anexo-preview-body"></tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 flex items-center justify-center gap-4">
+                    <x-button type="button" text="Guardar cambios y descargar CSV" typeButton="success" id="btn-download-anexo"
+                        class="w-full sm:w-auto" />
+                </div>
+            </div>
         </div>
     </section>
 @endsection
