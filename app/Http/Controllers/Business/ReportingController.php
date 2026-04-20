@@ -1039,7 +1039,7 @@ class ReportingController extends Controller
                 $colE = (string) data_get($emisor, 'nit', '');
                 $colF = strtoupper((string) html_entity_decode((string) data_get($emisor, 'nombre', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
             } else {
-                $receptor = $doc['receptor'] ?? [];
+                $receptor = $doc['sujetoExcluido'] ?? [];
                 $colI = (float) data_get($resumen, 'totalCompra', 0);
 
                 $colD = '';
