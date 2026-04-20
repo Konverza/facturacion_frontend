@@ -64,6 +64,7 @@
                             'consumidores' => 'Detalle de Ventas al Consumidor Final',
                             'compras' => 'Detalle de Compras',
                             'compras_se' => 'Detalle de Compras a Sujetos Excluidos (Casilla 66)',
+                            'anulados' => 'Detalle de Documentos Anulados',
                             // 'venta_tercero' => 'Detalle de Ventas por cuenta de terceros domiciliados (Casilla 108)',
                         ]" name="tipo_anexo" id="anexo-type" label="Tipo de Anexo" />
                     </div>

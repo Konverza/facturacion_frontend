@@ -142,7 +142,7 @@ class ReportingController extends Controller
     {
         $validated = $request->validate([
             'book_type' => 'required|in:anexos_f07',
-            'tipo_anexo' => 'required|in:contribuyentes,consumidores,compras,compras_se',
+            'tipo_anexo' => 'required|in:contribuyentes,consumidores,compras,compras_se,anulados',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'tipo_operacion' => 'nullable|string',
@@ -188,7 +188,7 @@ class ReportingController extends Controller
     public function downloadAnexo(Request $request)
     {
         $validated = $request->validate([
-            'tipo_anexo' => 'required|in:contribuyentes,consumidores,compras,compras_se',
+            'tipo_anexo' => 'required|in:contribuyentes,consumidores,compras,compras_se,anulados',
             'rows' => 'required|array|min:1',
             'rows.*' => 'required|array',
         ]);
@@ -255,8 +255,10 @@ class ReportingController extends Controller
                 }
                 return $this->saveRowsAsCsv($normalizedRowsCompras, $metadataCompras['file_prefix']);
             case "compras_se":
-                // Implementar exportación de anexo de compras SE si es necesario
                 return $this->exportAnexoComprasSE($dtes, $tipoOperacionSe, $clasificacion, $sector, $tipo_costo);
+            case "anulados":
+                $dtesAnulados = $this->fetchSentDtes($business->nit, $request->start_date, $request->end_date, false, 'ANULADO');
+                return $this->exportAnexoAnulados($dtesAnulados);
             default:
                 throw new \Exception('Tipo de anexo no válido');
         }
@@ -268,6 +270,8 @@ class ReportingController extends Controller
 
         if (in_array($tipoAnexo, ['contribuyentes', 'consumidores'], true)) {
             $dtes = $this->fetchSentDtes($business->nit, $payload['start_date'], $payload['end_date'], true);
+        } elseif ($tipoAnexo === 'anulados') {
+            $dtes = $this->fetchSentDtes($business->nit, $payload['start_date'], $payload['end_date'], true, 'ANULADO');
         } else {
             $dtes = $this->fetchReceivedDtes($business->nit, $payload['start_date'], $payload['end_date'], [], true);
         }
@@ -277,6 +281,7 @@ class ReportingController extends Controller
             'consumidores' => $this->buildAnexoConsumidoresRows($dtes, $payload),
             'compras' => $this->buildAnexoComprasRows($dtes, $payload),
             'compras_se' => $this->buildAnexoComprasSeRows($dtes, $payload),
+            'anulados' => $this->buildAnexoAnuladosRows($dtes),
             default => [],
         };
     }
@@ -512,6 +517,37 @@ class ReportingController extends Controller
         return $rows;
     }
 
+    private function buildAnexoAnuladosRows(array $dtes): array
+    {
+        $filtered = collect($dtes)
+            ->filter(fn($dte) => ($dte['estado'] ?? null) === 'ANULADO')
+            ->sortBy(function ($dte) {
+                return data_get($dte, 'documento.identificacion.fecEmi')
+                    ?? data_get($dte, 'fhEmision')
+                    ?? '';
+            })
+            ->values();
+
+        $rows = [];
+        foreach ($filtered as $dte) {
+            $doc = $dte['documento'] ?? [];
+            $rows[] = [
+                'A' => data_get($doc, 'identificacion.numeroControl', ''),
+                'B' => "4",
+                'C' => "0",
+                'D' => "0",
+                'E' => $dte['tipo_dte'] ?? '',
+                'F' => "D",
+                'G' => $dte['selloRecibido'] ?? '',
+                'H' => "0",
+                "I" => "0",
+                "J" => str_replace('-', '', data_get($doc, 'identificacion.codigoGeneracion', $dte['codGeneracion'] ?? '')),
+            ];
+        }
+
+        return $rows;
+    }
+
     private function resolveTipoOperacionCompras(float $netExenta, float $netNoSuj, float $netGravada): string
     {
         $hasGravada = $netGravada > 0;
@@ -652,6 +688,23 @@ class ReportingController extends Controller
                     'L' => 'Importaciones Gravadas Bienes', 'M' => 'Importaciones Gravadas Servicios', 'N' => 'Crédito Fiscal',
                     'O' => 'Total Compras', 'P' => 'DUI Proveedor', 'Q' => 'Tipo Operación', 'R' => 'Clasificación',
                     'S' => 'Sector', 'T' => 'Tipo Costo/Gasto', 'U' => 'No. Anexo'
+                ]),
+            ],
+            'anulados' => [
+                'file_prefix' => 'anexo-f07-anulados_',
+                'numeric_columns' => [],
+                'editable_columns' => [],
+                'columns' => $this->buildColumns([
+                    'A' => 'Número de Resolución',
+                    'B' => 'Clase de Documento',
+                    'C' => 'Desde (Preimpreso)',
+                    'D' => 'Hasta (Preimpreso)',
+                    'E' => 'Tipo de Documento',
+                    'F' => 'Tipo de Detalle',
+                    'G' => 'Serie',
+                    'H' => 'Desde (Rango Control)',
+                    'I' => 'Hasta (Rango Control)',
+                    'J' => 'Código de Generación',
                 ]),
             ],
             default => [
@@ -1231,6 +1284,11 @@ class ReportingController extends Controller
         return storage_path("app/public/{$filePath}");
     }
 
+    private function exportAnexoAnulados($dtes)
+    {
+        $rows = $this->buildAnexoAnuladosRows($dtes);
+        return $this->saveRowsAsCsv($rows, 'anexo-f07-anulados_');
+    }
 
     private function getMonthsString(Carbon $start, Carbon $end): string
     {
@@ -1266,14 +1324,14 @@ class ReportingController extends Controller
         };
     }
 
-    private function fetchSentDtes(string $nit, string $start_date, string $end_date, bool $associative = true): array
+    private function fetchSentDtes(string $nit, string $start_date, string $end_date, bool $associative = true, $estado = "PROCESADO"): array
     {
         // Parametros
         $parameters = [
             'nit' => $nit,
             'emisionInicio' => $start_date ? "{$start_date}T00:00:00" : null,
             'emisionFin' => $end_date ? "{$end_date}T23:59:59" : null,
-            'estado' => "PROCESADO",
+            'estado' => $estado,
         ];
 
         // Realizar la solicitud a la API de Octopus para obtener los DTEs
@@ -1287,7 +1345,7 @@ class ReportingController extends Controller
         return $dtes;
     }
 
-    private function fetchReceivedDtes(string $nit, string $start_date, string $end_date, array $filters = [], bool $associative = true): array
+    private function fetchReceivedDtes(string $nit, string $start_date, string $end_date, array $filters = [], bool $associative = true, $estado = "PROCESADO"): array
     {
         $parameters = [
             'nit' => $nit,
@@ -1296,6 +1354,7 @@ class ReportingController extends Controller
             'tipo_dte' => $filters['received_tipo_dte'] ?? null,
             'documento_emisor' => $filters['received_documento_emisor'] ?? null,
             'q' => $filters['received_q'] ?? null,
+            'estado' => $estado,
             'sort' => 'desc',
             'limit' => 10000,
             'page' => 1,
