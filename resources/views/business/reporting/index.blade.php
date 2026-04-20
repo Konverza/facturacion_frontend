@@ -51,7 +51,7 @@
                         'anexos_f07' => 'Anexos F07',
                         'contribuyentes' => 'Libro de ventas a contribuyentes',
                         'consumidores' => 'Libro de ventas a consumidores',
-                        // 'compras' => 'Libro de compras',
+                        'compras' => 'Libro de compras',
                         // 'venta_tercero' => 'Libro de Ventas Gravadas por cuenta de terceros domiciliados',
                         // 'compras_se' => 'Libro de Compras a Sujetos Excluidos',
                         // 'retencion_iva' => 'Retención de IVA 1% (emitidos)',

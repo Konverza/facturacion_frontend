@@ -43,14 +43,13 @@ class ReportingController extends Controller
 
             $book = $request->input("book_type");
             $datos_empresa = $octopusService->getDatosEmpresa($business->nit);
+            $date_start = Carbon::parse($request->start_date);
+            $date_end = Carbon::parse($request->end_date);
+            $months_string = $this->getMonthsString($date_start, $date_end);
+            $years_string = $this->getYearsString($date_start, $date_end);
 
             if ($book === "contribuyentes" || $book === "consumidores" || $book === "retencion_iva") {
                 $dtes = $this->fetchSentDtes($business->nit, $request->start_date, $request->end_date);
-
-                $date_start = Carbon::parse($request->start_date);
-                $date_end = Carbon::parse($request->end_date);
-                $months_string = $this->getMonthsString($date_start, $date_end);
-                $years_string = $this->getYearsString($date_start, $date_end);
 
                 $codes = $this->getCodesByBookType($book);
                 if (empty($codes)) {
@@ -112,11 +111,11 @@ class ReportingController extends Controller
                 case 'anexos_f07':
                     $file_path = $this->anexos($request);
                     break;
+                case 'compras':
+                    $file_path = $this->exportCompras($business->nit, $datos_empresa, $months_string, $years_string, $request);
+                    break;
                 // case 'retencion_iva':
                 //     $file_path = $this->exportRetencionIva($dtes_filter, $datos_empresa, $months_string, $request);
-                //     break;
-                // case 'compras':
-                //     $file_path = $this->exportCompras($request);
                 //     break;
                 // case 'percepcion_iva':
                 //     $file_path = $this->exportPercepcionIva($request);
@@ -888,10 +887,16 @@ class ReportingController extends Controller
                 $tipo_documento = "06.NOTA DE DÉBITO";
             }
 
-            $totalDocExentas += $resumen["totalExenta"] ?? 0;
-            $totalDocGravadas += $resumen["totalGravada"] ?? 0;
-            $totalDocNoSujetas += $resumen["totalNoSuj"] ?? 0;
-            $totalIva += $iva;
+            $sign = ($identificacion["tipoDte"] ?? "") === "05" ? -1 : 1;
+            $totalExenta = (float) ($resumen["totalExenta"] ?? 0) * $sign;
+            $totalNoSuj = (float) ($resumen["totalNoSuj"] ?? 0) * $sign;
+            $totalGravada = (float) ($resumen["totalGravada"] ?? 0) * $sign;
+            $ivaFirmado = (float) $iva * $sign;
+
+            $totalDocExentas += $totalExenta;
+            $totalDocGravadas += $totalGravada;
+            $totalDocNoSujetas += $totalNoSuj;
+            $totalIva += $ivaFirmado;
 
             $sheet->setCellValue("A{$row}", $date);
             $sheet->setCellValue("B{$row}", "4.DOCUMENTO TRIBUTARIO ELECTRÓNICO (DTE)");
@@ -901,10 +906,10 @@ class ReportingController extends Controller
             $sheet->setCellValue("F{$row}", $doc["identificacion"]["codigoGeneracion"] ?? "");
             $sheet->setCellValue("G{$row}", $doc["receptor"]["nrc"] ?? "");
             $sheet->setCellValue("H{$row}", html_entity_decode($doc["receptor"]["nombre"] ?? "", ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-            $sheet->setCellValue("I{$row}", $resumen["totalExenta"] ?? 0);
-            $sheet->setCellValue("J{$row}", $resumen["totalNoSuj"] ?? 0);
-            $sheet->setCellValue("K{$row}", $resumen["totalGravada"] ?? 0);
-            $sheet->setCellValue("L{$row}", $iva);
+            $sheet->setCellValue("I{$row}", $totalExenta);
+            $sheet->setCellValue("J{$row}", $totalNoSuj);
+            $sheet->setCellValue("K{$row}", $totalGravada);
+            $sheet->setCellValue("L{$row}", $ivaFirmado);
             $sheet->setCellValue("M{$row}", "=SUM(I$row:L$row)");
             $row++;
         }
@@ -917,6 +922,165 @@ class ReportingController extends Controller
         $sheet->setCellValue("M{$row}", "=SUM(I$row:L$row)");
 
         return $this->saveSpreadsheet($spreadsheet, "libro_contribuyentes_", $request);
+    }
+
+    private function exportCompras(string $nit, array $datos_empresa, string $months, string $years, Request $request): string
+    {
+        $path = public_path("reportes/formato_compras.xlsx");
+        $spreadsheet = IOFactory::load($path);
+        $sheet = $spreadsheet->getActiveSheet();
+        $startRow = 11;
+
+        $dtesEmitidos = collect($this->fetchSentDtes($nit, $request->start_date, $request->end_date, true))
+            ->filter(fn($dte) => ($dte['estado'] ?? null) === 'PROCESADO' && (string) ($dte['tipo_dte'] ?? '') === '14')
+            ->map(function ($dte) {
+                $doc = $dte['documento'] ?? [];
+                $identificacion = $doc['identificacion'] ?? [];
+
+                return [
+                    'source' => 'emitido',
+                    'dte' => $dte,
+                    'emission_date' => (string) ($identificacion['fecEmi'] ?? ''),
+                    'timestamp' => Carbon::parse($identificacion['fecEmi'] ?? now()->toDateString())->timestamp,
+                ];
+            });
+
+        $dtesRecibidos = collect($this->fetchReceivedDtes($nit, $request->start_date, $request->end_date, [], true))
+            ->filter(function ($dte) {
+                $tipo = (string) ($dte['tipo_dte'] ?? '');
+                $estado = $dte['estado'] ?? null;
+
+                return in_array($tipo, ['03', '05', '06'], true)
+                    && ($estado !== 'ANULADO');
+            })
+            ->map(function ($dte) {
+                $doc = $dte['documento'] ?? [];
+                $identificacion = $doc['identificacion'] ?? [];
+                $emissionDate = (string) ($identificacion['fecEmi'] ?? data_get($dte, 'fhEmision', ''));
+
+                return [
+                    'source' => 'recibido',
+                    'dte' => $dte,
+                    'emission_date' => $emissionDate,
+                    'timestamp' => Carbon::parse($emissionDate ?: now()->toDateString())->timestamp,
+                ];
+            });
+
+        $documents = $dtesEmitidos
+            ->concat($dtesRecibidos)
+            ->sortBy('timestamp')
+            ->values();
+
+        $total_dtes = $documents->count();
+        if ($total_dtes > 1) {
+            $sheet->insertNewRowBefore($startRow + 1, $total_dtes - 1);
+        }
+
+        $sheet->setCellValue("A1", $datos_empresa['nombre'] ?? '');
+        $sheet->setCellValue("A2", $datos_empresa['complemento'] ?? '');
+        $sheet->setCellValue("A3", 'Número de Registro de Contribuyente: ' . ($datos_empresa['nrc'] ?? '') . ' NIT: ' . ($datos_empresa['nit'] ?? ''));
+        $sheet->setCellValue("C6", $months);
+        $sheet->setCellValue("C7", $years);
+
+        $row = $startRow;
+
+        $totalComprasExentas = 0.0;
+        $totalComprasGravadas = 0.0;
+        $totalComprasSujetosExcluidos = 0.0;
+        $totalCreditoFiscal = 0.0;
+        $totalFovial = 0.0;
+        $totalCotrans = 0.0;
+
+        foreach ($documents as $index => $item) {
+            $dte = $item['dte'];
+            $source = $item['source'];
+            $doc = $dte['documento'] ?? [];
+            $identificacion = $doc['identificacion'] ?? [];
+            $resumen = $doc['resumen'] ?? [];
+
+            $date = $this->formatDate($item['emission_date']);
+            $codigoGeneracion = (string) data_get($identificacion, 'codigoGeneracion', ($dte['codGeneracion'] ?? ''));
+            $tipoDte = (string) data_get($identificacion, 'tipoDte', ($dte['tipo_dte'] ?? ''));
+            $tipoDocumento = match ($tipoDte) {
+                '14' => '14.FACTURA DE SUJETO EXCLUIDO',
+                '03' => '03.COMPROBANTE DE CREDITO FISCAL',
+                '05' => '05.NOTA DE CREDITO',
+                '06' => '06.NOTA DE DEBITO',
+                default => $tipoDte,
+            };
+            $sign = $source === 'recibido' && $tipoDte === '05' ? -1 : 1;
+
+            $colG = 0.0;
+            $colH = 0.0;
+            $colI = 0.0;
+            $colJ = 0.0;
+            $colK = 0.0;
+            $colL = 0.0;
+            $colD = '';
+            $colE = '';
+            $colF = '';
+
+            if ($source === 'recibido') {
+                $emisor = $doc['emisor'] ?? [];
+                $totalExenta = (float) ($resumen['totalExenta'] ?? 0);
+                $totalNoSuj = (float) ($resumen['totalNoSuj'] ?? 0);
+                $descuExenta = (float) ($resumen['descuExenta'] ?? 0);
+                $descuNoSuj = (float) ($resumen['descuNoSuj'] ?? 0);
+                $totalGravada = (float) ($resumen['totalGravada'] ?? 0);
+                $descuGravada = (float) ($resumen['descuGravada'] ?? 0);
+
+                $colG = (($totalExenta + $totalNoSuj) - ($descuExenta + $descuNoSuj)) * $sign;
+                $colH = ($totalGravada - $descuGravada) * $sign;
+                $colJ = $this->sumTributosByCodes($resumen, ['20']) * $sign;
+                $colK = $this->sumTributosByCodes($resumen, ['D1']) * $sign;
+                $colL = $this->sumTributosByCodes($resumen, ['C8']) * $sign;
+
+                $colD = (string) data_get($emisor, 'nrc', '');
+                $colE = (string) data_get($emisor, 'nit', '');
+                $colF = strtoupper((string) html_entity_decode((string) data_get($emisor, 'nombre', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            } else {
+                $receptor = $doc['receptor'] ?? [];
+                $colI = (float) data_get($resumen, 'totalCompra', 0);
+
+                $colD = '';
+                $colE = (string) data_get($receptor, 'numDocumento', '');
+                $colF = strtoupper((string) html_entity_decode((string) data_get($receptor, 'nombre', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            }
+
+            $totalComprasExentas += $colG;
+            $totalComprasGravadas += $colH;
+            $totalComprasSujetosExcluidos += $colI;
+            $totalCreditoFiscal += $colJ;
+            $totalFovial += $colK;
+            $totalCotrans += $colL;
+
+            $sheet->setCellValue("A{$row}", $index + 1);
+            $sheet->setCellValue("B{$row}", $tipoDocumento);
+            $sheet->setCellValue("C{$row}", $date);
+            $sheet->setCellValue("D{$row}", $codigoGeneracion);
+            $sheet->setCellValue("E{$row}", $colD);
+            $sheet->setCellValue("F{$row}", $colE);
+            $sheet->setCellValue("G{$row}", $colF);
+            $sheet->setCellValue("H{$row}", $colG);
+            $sheet->setCellValue("I{$row}", $colH);
+            $sheet->setCellValue("J{$row}", $colI);
+            $sheet->setCellValue("K{$row}", $colJ);
+            $sheet->setCellValue("L{$row}", $colK);
+            $sheet->setCellValue("M{$row}", $colL);
+            $sheet->setCellValue("N{$row}", "=SUM(H{$row}:M{$row})");
+            $row++;
+        }
+
+        // Set totals
+        $sheet->setCellValue("H{$row}", $totalComprasExentas);
+        $sheet->setCellValue("I{$row}", $totalComprasGravadas);
+        $sheet->setCellValue("J{$row}", $totalComprasSujetosExcluidos);
+        $sheet->setCellValue("K{$row}", $totalCreditoFiscal);
+        $sheet->setCellValue("L{$row}", $totalFovial);
+        $sheet->setCellValue("M{$row}", $totalCotrans);
+        $sheet->setCellValue("N{$row}", "=SUM(H{$row}:M{$row})");
+
+        return $this->saveSpreadsheet($spreadsheet, 'libro_compras_', $request);
     }
 
     private function exportAnexoContribuyentes($dtes, $tipoOperacion, $tipoIngreso)

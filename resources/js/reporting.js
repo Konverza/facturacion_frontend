@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const previewRoute = form.data("preview-route");
 
         if (bookType !== "anexos_f07") {
-            setLoadingText("Generando libro de ventas...");
+            setLoadingText("Generando libro contable...");
             hideLoadingSoon();
             return;
         }
