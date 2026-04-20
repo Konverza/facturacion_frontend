@@ -37,11 +37,10 @@
                     ingreso/gasto, antes de proceder con el envío del anexo.
                 </p>
             </div>
-            <form action="{{ Route('business.reporting.store') }}"
-                class="flex mt-3 items-start gap-4 md:flex-row flex-col-reverse" method="POST" enctype="multipart/form-data"
-                id="form-generate-book">
+            <form action="{{ Route('business.reporting.store') }}" class="mt-3 flex w-full flex-col gap-4"
+                method="POST" id="form-generate-book">
                 @csrf
-                <div class="flex flex-[2] flex-col gap-4">
+                <div class="flex w-full flex-col gap-4">
                     <x-select :options="[
                         'anexos_f07' => 'Anexos F07',
                         'contribuyentes' => 'Libro de ventas a contribuyentes',
@@ -128,20 +127,7 @@
                         ]" label="Tipo de Costo / Gasto" name="tipo_costo"
                             required />
                     </div>
-                    <div class="flex flex-col gap-2">
-                        <div id="selected-documents" class="hidden">
-                            <div class="flex flex-col gap-2">
-                                <x-input type="toggle" name="only_selected"
-                                    info="El libro contable solo se generara con la información de los libros que sean adjuntando en el formulario"
-                                    label="Generar solo con documentos adjuntados" id="only-selected" value="1" />
-                                <x-input type="toggle" name="only_mix" :checked="true"
-                                    info="El libro contable se generara con los documentos adjuntandos más los documentos que estén en el sistema"
-                                    label="Generar con los documentos adjuntados más los documentos ingresados en el sistema"
-                                    id="only-mix" value="1" />
-                            </div>
-                        </div>
-                        {{-- <x-input type="toggle" name="format_csv" label="Generar en formato .CSV" /> --}}
-                    </div>
+                    {{-- <x-input type="toggle" name="format_csv" label="Generar en formato .CSV" /> --}}
 
                     <div id="container-ventas-contribuyentes" class="container-books hidden">
                         <div class="flex flex-col gap-2 overflow-hidden rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-4 text-center dark:border-blue-800 dark:bg-blue-950/40"
@@ -220,48 +206,6 @@
                     <div class="mt-4 flex items-center justify-center gap-4">
                         <x-button type="submit" text="Generar documento" typeButton="primary"
                             class="w-full sm:w-auto" />
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <!-- Zona de arrastrar y soltar archivos -->
-
-                    <p class="mb-4 text-sm font-semibold text-secondary-500 dark:text-secondary-400">
-                        Adjunta los archivos JSON o ZIP que contienen los documentos electrónicos (emitidos o
-                        recibidos). Puedes subir múltiples archivos a la vez.
-                    </p>
-
-                    <div id="drop-zone"
-                        class="group relative cursor-pointer rounded-lg border-2 border-dashed border-secondary-300 p-8 text-center transition-all duration-300 hover:border-secondary-400 hover:bg-secondary-100 dark:border-secondary-700 dark:hover:bg-secondary-950">
-                        <div id="drop-content" class="flex flex-col items-center justify-center space-y-4">
-                            <div
-                                class="rounded-lg bg-secondary-200 p-4 transition-colors group-hover:bg-secondary-300 dark:bg-secondary-800 dark:group-hover:bg-secondary-900">
-                                <x-icon icon="cloud-upload"
-                                    class="size-12 text-secondary-800 transition-colors dark:text-secondary-400" />
-                            </div>
-
-                            <div class="space-y-2">
-                                <h3 id="drop-title" class="text-lg font-semibold text-secondary-900 dark:text-white">
-                                    Arrastra y suelta tus archivos aquí
-                                </h3>
-                                <p class="text-sm text-secondary-600 dark:text-secondary-400">
-                                    o <button type="button" id="browse-files"
-                                        class="font-medium text-blue-500 underline hover:text-blue-600">
-                                        haz clic para seleccionar
-                                    </button>
-                                </p>
-                                <p class="text-xs text-secondary-500 dark:text-secondary-500">
-                                    Formatos soportados: JSON, ZIP
-                                </p>
-                            </div>
-                        </div>
-                        <input type="file" id="file-input" multiple accept=".json,.zip" class="hidden">
-                    </div>
-                    <div id="files-list" class="mt-4 hidden space-y-2">
-                        <h4 class="text-sm font-medium text-secondary-900 dark:text-white">
-                            Archivos seleccionados:
-                        </h4>
-                        <div id="files-container" class="max-h-[500px] space-y-2 overflow-y-auto">
-                        </div>
                     </div>
                 </div>
             </form>

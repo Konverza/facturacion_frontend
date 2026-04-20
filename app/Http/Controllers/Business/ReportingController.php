@@ -29,10 +29,6 @@ class ReportingController extends Controller
     {
         try {
             $octopusService = new OctopusService();
-            $uploadedDtes = [];
-            if ($request->hasFile('uploaded_files')) {
-                $uploadedDtes = $this->processUploadedFiles($request->file('uploaded_files'));
-            }
 
             $business_id = Session::get('business') ?? null;
             if ($business_id) {
@@ -45,19 +41,10 @@ class ReportingController extends Controller
             }
 
             $book = $request->input("book_type");
-            $onlySelected = $request->has('only_selected') && $request->only_selected;
-            $onlyMix = $request->has('only_mix') && $request->only_mix;
             $datos_empresa = $octopusService->getDatosEmpresa($business->nit);
 
             if ($book === "contribuyentes" || $book === "consumidores" || $book === "retencion_iva") {
-                if ($onlySelected) {
-                    $dtes = $uploadedDtes;
-                } else {
-                    $dtes = $this->fetchSentDtes($business->nit, $request->start_date, $request->end_date);
-                    if ($onlyMix && !empty($uploadedDtes)) {
-                        $dtes = array_merge($dtes, $uploadedDtes);
-                    }
-                }
+                $dtes = $this->fetchSentDtes($business->nit, $request->start_date, $request->end_date);
 
                 $date_start = Carbon::parse($request->start_date);
                 $date_end = Carbon::parse($request->end_date);
@@ -72,7 +59,7 @@ class ReportingController extends Controller
                     ]);
                 }
 
-                $dtes_filter = collect($dtes)->filter(function ($dte) use ($date_start, $date_end, $codes, $book, $onlySelected) {
+                $dtes_filter = collect($dtes)->filter(function ($dte) use ($date_start, $date_end, $codes, $book) {
                     $doc = $dte["documento"];
                     if (!$doc)
                         return false;
@@ -92,10 +79,6 @@ class ReportingController extends Controller
                     if ($book == "retencion_iva" && ($tipoDte === "05" || $tipoDte === "06")) {
                         if (($doc["resumen"]["ivaRete1"] ?? 0) <= 0)
                             return false;
-                    }
-
-                    if ($onlySelected) {
-                        return in_array($tipoDte, $codes);
                     }
 
                     $date_emi = Carbon::parse($date);
@@ -132,10 +115,10 @@ class ReportingController extends Controller
                 //     $file_path = $this->exportRetencionIva($dtes_filter, $datos_empresa, $months_string, $request);
                 //     break;
                 // case 'compras':
-                //     $file_path = $this->exportCompras($request, $uploadedDtes, $onlySelected, $onlyMix);
+                //     $file_path = $this->exportCompras($request);
                 //     break;
                 // case 'percepcion_iva':
-                //     $file_path = $this->exportPercepcionIva($request, $uploadedDtes, $onlySelected, $onlyMix);
+                //     $file_path = $this->exportPercepcionIva($request);
                 //     break;
                 default:
                     return redirect()->back()->with([
@@ -507,103 +490,6 @@ class ReportingController extends Controller
     }
 
 
-    private function processUploadedFiles($files)
-    {
-        $allDtes = [];
-
-        foreach ($files as $file) {
-            $extension = $file->getClientOriginalExtension();
-
-            if ($extension === 'json') {
-                $dtes = $this->processJsonFile($file);
-                if (!empty($dtes)) {
-                    $allDtes = array_merge($allDtes, $dtes);
-                }
-            } elseif ($extension === 'zip') {
-                $dtes = $this->processZipFile($file);
-                if (!empty($dtes)) {
-                    $allDtes = array_merge($allDtes, $dtes);
-                }
-            }
-        }
-
-        return $allDtes;
-    }
-
-    private function processJsonFile($file)
-    {
-        try {
-            $content = file_get_contents($file->getRealPath());
-            $jsonData = json_decode($content, true);
-
-            if ($jsonData === null) {
-                return [];
-            }
-
-            $dte = [
-                "documento" => json_encode($jsonData),
-                "estado" => "PROCESADO",
-                "source" => "uploaded_file"
-            ];
-            return [$dte];
-        } catch (\Exception $e) {
-            return [];
-        }
-    }
-
-    private function processZipFile($file)
-    {
-        try {
-            $zip = new \ZipArchive();
-            $result = $zip->open($file->getRealPath());
-            $allDtes = [];
-
-            if ($result === TRUE) {
-                $tempDir = storage_path('app/temp/' . uniqid());
-                mkdir($tempDir, 0755, true);
-
-                $zip->extractTo($tempDir);
-                $zip->close();
-
-                $jsonFiles = glob($tempDir . '/*.json');
-
-                foreach ($jsonFiles as $jsonFile) {
-                    $content = file_get_contents($jsonFile);
-                    $jsonData = json_decode($content, true);
-
-                    if ($jsonData !== null) {
-                        $dte = [
-                            "documento" => json_encode($jsonData),
-                            "estado" => "PROCESADO",
-                            "source" => "uploaded_zip_file"
-                        ];
-
-                        $allDtes[] = $dte;
-                    }
-                }
-
-                $this->deleteDirectory($tempDir);
-            }
-
-            return $allDtes;
-        } catch (\Exception $e) {
-            return [];
-        }
-    }
-
-    private function deleteDirectory($dir)
-    {
-        if (!file_exists($dir))
-            return;
-
-        $files = array_diff(scandir($dir), array('.', '..'));
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            is_dir($path) ? $this->deleteDirectory($path) : unlink($path);
-        }
-        rmdir($dir);
-    }
-
     private function getMonthsString(Carbon $start, Carbon $end): string
     {
         setlocale(LC_TIME, 'es_ES.UTF-8');
@@ -640,10 +526,6 @@ class ReportingController extends Controller
 
     private function fetchSentDtes(string $nit, string $start_date, string $end_date, bool $associative = true): array
     {
-        if (auth()->user()->only_fcf) {
-            $this->tipo_dte = '01'; // Default to Factura Electrónica if the user only wants FCF
-        }
-
         // Parametros
         $parameters = [
             'nit' => $nit,

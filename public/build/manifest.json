@@ -4,7 +4,7 @@
     "name": "alert"
   },
   "resources/css/app.css": {
-    "file": "assets/app-kqeVMPc6.css",
+    "file": "assets/app-D33HGuSj.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -33,7 +33,7 @@
     ]
   },
   "resources/js/reporting.js": {
-    "file": "assets/reporting-DPc-DDJ1.js",
+    "file": "assets/reporting-k8GUZiUj.js",
     "name": "reporting",
     "src": "resources/js/reporting.js",
     "isEntry": true
