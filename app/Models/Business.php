@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use function strlen;
 
 class Business extends Model
@@ -97,6 +98,57 @@ class Business extends Model
     public function projects()
     {
         return $this->hasMany(Project::class, 'business_id');
+    }
+
+    public function getRegistroFeCompletedPayload(): ?array
+    {
+        return match ((string) env('AMBIENTE_HACIENDA')) {
+            '00' => [
+                'estado' => 'Completado',
+                'etapa' => 'Pruebas',
+            ],
+            '01' => [
+                'estado' => 'Completado',
+                'etapa' => 'Producción',
+            ],
+            default => null,
+        };
+    }
+
+    public function getRegistroFeCancelledPayload(): array
+    {
+        return [
+            'estado' => 'Completado',
+            'etapa' => 'Cancelado',
+        ];
+    }
+
+    public function updateRegistroFeStatus(array $payload): bool
+    {
+        if (empty($this->registrofe_id)) {
+            return false;
+        }
+
+        return DB::connection('registro_fe')
+            ->table('empresas')
+            ->where('id', $this->registrofe_id)
+            ->update($payload) > 0;
+    }
+
+    public function syncRegistroFeCompletedStatus(): bool
+    {
+        $payload = $this->getRegistroFeCompletedPayload();
+
+        if ($payload === null) {
+            return false;
+        }
+
+        return $this->updateRegistroFeStatus($payload);
+    }
+
+    public function syncRegistroFeCancelledStatus(): bool
+    {
+        return $this->updateRegistroFeStatus($this->getRegistroFeCancelledPayload());
     }
 
     public function getFormattedNitAttribute()

@@ -234,7 +234,7 @@ class DTERecibidoController extends Controller
             ];
         }
 
-        $decoded = json_decode($this->normalizeJsonContent($jsonContent), true);
+        $decoded = json_decode($this->normalizeJsonContent($jsonContent), true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
 
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
             return [
@@ -286,6 +286,35 @@ class DTERecibidoController extends Controller
             $normalized = mb_convert_encoding(substr($normalized, 4), 'UTF-8', 'UTF-32LE');
         } elseif (substr($normalized, 0, 4) === "\x00\x00\xFE\xFF") {
             $normalized = mb_convert_encoding(substr($normalized, 4), 'UTF-8', 'UTF-32BE');
+        }
+
+        // Algunos DTEs llegan en ANSI/Windows-1252 o ISO-8859-1.
+        // json_decode exige UTF-8 válido, así que convertimos cuando aplique.
+        if (!mb_check_encoding($normalized, 'UTF-8')) {
+            $detected = mb_detect_encoding(
+                $normalized,
+                ['UTF-8', 'Windows-1252', 'ISO-8859-1', 'ISO-8859-15'],
+                true
+            );
+
+            if ($detected && $detected !== 'UTF-8') {
+                $converted = @mb_convert_encoding($normalized, 'UTF-8', $detected);
+                if (is_string($converted) && $converted !== '') {
+                    $normalized = $converted;
+                }
+            } else {
+                // Fallback práctico para archivos exportados por sistemas legacy.
+                $converted = @mb_convert_encoding($normalized, 'UTF-8', 'Windows-1252');
+                if (is_string($converted) && $converted !== '') {
+                    $normalized = $converted;
+                }
+            }
+        }
+
+        // Si aún hubiera secuencias inválidas, las descartamos para permitir parseo JSON.
+        $utf8Safe = @iconv('UTF-8', 'UTF-8//IGNORE', $normalized);
+        if (is_string($utf8Safe) && $utf8Safe !== '') {
+            $normalized = $utf8Safe;
         }
 
         // Quita caracteres de control no imprimibles al inicio/fin (incluye SUB 0x1A)

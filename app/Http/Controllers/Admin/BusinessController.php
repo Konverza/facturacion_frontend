@@ -440,27 +440,7 @@ class BusinessController extends Controller
                             }
                         }
 
-                        // Actualización de información en Registro FE
-                        if ($request->id_registro) {
-                            switch (env("AMBIENTE_HACIENDA")) {
-                                case "00":
-                                    DB::connection("registro_fe")->table("empresas")
-                                        ->where("id", $request->id_registro)
-                                        ->update([
-                                            "estado" => "Completado",
-                                            "etapa" => "Pruebas"
-                                        ]);
-                                    break;
-                                case "01":
-                                    DB::connection("registro_fe")->table("empresas")
-                                        ->where("id", $request->id_registro)
-                                        ->update([
-                                            "estado" => "Completado",
-                                            "etapa" => "Producción"
-                                        ]);
-                                    break;
-                            }
-                        }
+                        $business->syncRegistroFeCompletedStatus();
 
                         Mail::to($request->correo_responsable)
                             ->send(new UsuarioMail(
@@ -589,24 +569,7 @@ class BusinessController extends Controller
             'active' => true,
         ]);
 
-        switch (env("AMBIENTE_HACIENDA")) {
-            case "00":
-                DB::connection("registro_fe")->table("empresas")
-                    ->where("id", $business->registrofe_id)
-                    ->update([
-                        "estado" => "Completado",
-                        "etapa" => "Pruebas"
-                    ]);
-                break;
-            case "01":
-                DB::connection("registro_fe")->table("empresas")
-                    ->where("id", $business->registrofe_id)
-                    ->update([
-                        "estado" => "Completado",
-                        "etapa" => "Producción"
-                    ]);
-                break;
-        }
+        $business->syncRegistroFeCompletedStatus();
 
         return back()->with('success', 'Negocio activado correctamente.');
     }
@@ -617,12 +580,7 @@ class BusinessController extends Controller
             'active' => false,
         ]);
 
-        DB::connection("registro_fe")->table("empresas")
-            ->where("id", $business->registrofe_id)
-            ->update([
-                "estado" => "Completado",
-                "etapa" => "Cancelado"
-            ]);
+        $business->syncRegistroFeCancelledStatus();
 
         return back()->with('success', 'Negocio desactivado correctamente.');
     }
