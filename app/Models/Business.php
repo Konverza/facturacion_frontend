@@ -123,6 +123,48 @@ class Business extends Model
         ];
     }
 
+    public function findRegistroFeId(): ?int
+    {
+        $searchValues = [
+            $this->formatted_nit,
+            $this->nit,
+            $this->formatted_dui,
+            $this->dui,
+        ];
+
+        foreach (array_unique(array_filter($searchValues)) as $searchValue) {
+            $empresa = DB::connection('registro_fe')
+                ->table('empresas')
+                ->where('softDelete', 0)
+                ->whereRaw('JSON_UNQUOTE(JSON_EXTRACT(datos_empresa, "$.dui_nit")) = ?', [$searchValue])
+                ->first();
+
+            if ($empresa) {
+                return (int) $empresa->id;
+            }
+        }
+
+        return null;
+    }
+
+    public function ensureRegistroFeId(): ?int
+    {
+        if (!empty($this->registrofe_id)) {
+            return (int) $this->registrofe_id;
+        }
+
+        $registroFeId = $this->findRegistroFeId();
+
+        if ($registroFeId === null) {
+            return null;
+        }
+
+        $this->registrofe_id = $registroFeId;
+        $this->save();
+
+        return $registroFeId;
+    }
+
     public function updateRegistroFeStatus(array $payload): bool
     {
         if (empty($this->registrofe_id)) {
@@ -140,6 +182,10 @@ class Business extends Model
         $payload = $this->getRegistroFeCompletedPayload();
 
         if ($payload === null) {
+            return false;
+        }
+
+        if ($this->ensureRegistroFeId() === null) {
             return false;
         }
 
