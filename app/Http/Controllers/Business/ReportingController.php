@@ -344,6 +344,7 @@ class ReportingController extends Controller
 
         foreach ($grouped as $fecha => $tipos) {
             foreach ($tipos as $tipo => $items) {
+                $tipo = (string) $tipo;
                 $primerCod = $items->first()['codGeneracion'] ?? '';
                 $ultimoCod = $items->last()['codGeneracion'] ?? '';
 
@@ -359,17 +360,17 @@ class ReportingController extends Controller
 
                 if ($tipo === '11') {
                     foreach ($items as $dte) {
-                        $codPais = data_get($dte, 'documento.receptor.codPais');
-                        $tipoItemExpor = data_get($dte, 'documento.emisor.tipoItemExpor');
+                        $codPais = strtoupper(trim((string) data_get($dte, 'documento.receptor.codPais', '')));
+                        $tipoItemExpor = trim((string) data_get($dte, 'documento.emisor.tipoItemExpor', data_get($dte, 'documento.emisor.tipoItemExpo', '')));
                         $totalGravadaDte = (float) data_get($dte, 'documento.resumen.totalGravada', 0);
 
-                        if ($tipoItemExpor == '2') {
+                        if ($tipoItemExpor === '2') {
                             $totalExportacionServicios += $totalGravadaDte;
                             continue;
                         }
 
-                        if (!empty($codPais)) {
-                            if (in_array((string) $codPais, $paisesCentroamerica, true)) {
+                        if ($codPais !== '') {
+                            if (in_array($codPais, $paisesCentroamerica, true)) {
                                 $totalExportacionDentro += $totalGravadaDte;
                             } else {
                                 $totalExportacionFuera += $totalGravadaDte;
