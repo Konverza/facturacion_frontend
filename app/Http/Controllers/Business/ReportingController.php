@@ -363,7 +363,7 @@ class ReportingController extends Controller
                         $tipoItemExpor = data_get($dte, 'documento.emisor.tipoItemExpor');
                         $totalGravadaDte = (float) data_get($dte, 'documento.resumen.totalGravada', 0);
 
-                        if ((string) $tipoItemExpor === '2') {
+                        if ($tipoItemExpor == '2') {
                             $totalExportacionServicios += $totalGravadaDte;
                             continue;
                         }
