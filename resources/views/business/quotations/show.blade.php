@@ -146,7 +146,7 @@
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
                         <div class="w-full sm:max-w-xs">
                             <x-select label="Documento a emitir" name="document_type" id="quotation_document_type"
-                                :options="['01' => 'Factura', '03' => 'Credito fiscal']" selected="{{ $quotation->type ?? '01' }}"
+                                :options="['01' => 'Factura', '03' => 'Credito fiscal', '11' => 'Factura de exportación']" selected="{{ $quotation->type ?? '01' }}"
                                 value="{{ $quotation->type ?? '01' }}" :search="false" />
                         </div>
                         <x-button type="submit" text="Convertir a DTE" icon="arrow-right" typeButton="success"

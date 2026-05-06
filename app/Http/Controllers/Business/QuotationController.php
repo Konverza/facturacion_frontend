@@ -176,7 +176,7 @@ class QuotationController extends Controller
     public function convert(Request $request, string $id)
     {
         $request->validate([
-            'document_type' => 'required|in:01,03',
+            'document_type' => 'required|in:01,03,11',
         ]);
 
         $targetDocumentType = $request->input('document_type');
@@ -553,15 +553,21 @@ class QuotationController extends Controller
             }
 
             $lineTarget = $baseLine;
-            if ($tipoVenta === 'Gravada' && $targetType === '01') {
+            if ($tipoVenta === 'Gravada' && in_array($targetType, ['01', '11'], true)) {
                 $lineTarget = round($baseLine * 1.13, 8);
             }
 
             $precioTarget = $cantidad > 0
                 ? round($lineTarget / $cantidad, 8)
-                : ($tipoVenta === 'Gravada' && $targetType === '01' ? round($baseUnit * 1.13, 8) : $baseUnit);
+                : ($tipoVenta === 'Gravada' && in_array($targetType, ['01', '11'], true) ? round($baseUnit * 1.13, 8) : $baseUnit);
 
-            $product['precio_sin_tributos'] = $baseUnit;
+            $precioSinTributosTarget = $baseUnit;
+            if ($tipoVenta === 'Gravada' && $targetType === '11') {
+                // Regla de negocio: en exportación convertida desde cotización se muestra precio_sin_tributos con IVA.
+                $precioSinTributosTarget = $precioTarget;
+            }
+
+            $product['precio_sin_tributos'] = $precioSinTributosTarget;
             $product['precio'] = $precioTarget;
             $product['ventas_gravadas'] = $tipoVenta === 'Gravada' ? $lineTarget : 0;
             $product['ventas_exentas'] = $tipoVenta === 'Exenta' ? $baseLine : 0;
@@ -574,7 +580,7 @@ class QuotationController extends Controller
             );
 
             if ($tipoVenta === 'Gravada') {
-                $ivaLine = $targetType === '01'
+                $ivaLine = in_array($targetType, ['01', '11'], true)
                     ? (($lineTarget / 1.13) * 0.13)
                     : ($baseLine * 0.13);
                 $product['iva'] = round((float) $ivaLine, 8);
