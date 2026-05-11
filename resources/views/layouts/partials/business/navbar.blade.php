@@ -1,17 +1,16 @@
 @if ($test_enviroment)
-    <div class="fixed top-0 z-[90] flex h-12 w-full items-center justify-center bg-red-500 px-2 text-white sm:h-8">
-        <span class="flex items-center gap-2 text-xs font-semibold sm:text-sm">
+    <div class="fixed top-0 z-[90] flex min-h-12 w-full items-center justify-center bg-red-500 px-2 py-1 text-white sm:h-8 sm:min-h-8 sm:py-0">
+        <span class="flex w-full items-center justify-center gap-2 text-xs font-semibold sm:text-sm">
             <x-icon icon="info-circle" class="h-4 w-4 min-w-4 max-w-4" />
-            Advertencia: Está en el ambiente de pruebas. Los documentos emitidos no tienen validez legal.
+            <span class="whitespace-normal break-words text-center leading-tight">Advertencia: Está en el ambiente de pruebas. Los documentos emitidos no tienen validez legal.</span>
         </span>
     </div>
 @endif
 @if ($maintenance_notice)
-    <div class="fixed top-0 z-[90] flex h-12 w-full items-center justify-center bg-red-500 px-2 text-white sm:h-8">
-        <span class="flex items-center gap-2 text-xs font-semibold sm:text-sm">
+    <div class="fixed top-0 z-[90] flex min-h-12 w-full items-center justify-center bg-red-500 px-2 py-1 text-white sm:h-8 sm:min-h-8 sm:py-0">
+        <span class="flex w-full items-center justify-center gap-2 text-xs font-semibold sm:text-sm">
             <x-icon icon="info-circle" class="h-4 w-4 min-w-4 max-w-4" />
-            Aviso: Haremos un mantenimiento breve a las 12:00 MD, con una duración aproximada de <b class="uppercase">15
-                minutos.</b> No podrá emitir DTEs durante ese tiempo. Agradecemos su comprensión.
+            <span class="whitespace-normal break-words text-center leading-tight">Aviso: Haremos un mantenimiento breve el día {{ $maintenance_start_date ?? 'por confirmar' }} a las {{ $maintenance_start_time ?? 'hora por confirmar' }}, con una duración aproximada de <b class="uppercase">{{ $maintenance_duration ?? 15 }} minutos.</b> No podrá emitir DTEs durante ese tiempo. Agradecemos su comprensión.</span>
         </span>
     </div>
 @endif
