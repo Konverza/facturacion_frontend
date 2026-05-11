@@ -421,6 +421,7 @@ $(document).ready(function () {
 
                 const $variantContainer = $("#price-variant-container");
                 const $variantSelect = $("#price_variant_id");
+                const $effectiveVariantInput = $("#effective_price_variant_id");
                 const $costContainer = $("#product-cost-variant-container");
                 const $costSelect = $("#product_cost_variant_id");
 
@@ -438,9 +439,11 @@ $(document).ready(function () {
                     if (data.customer_price_variant_id) {
                         $variantSelect.val(String(data.customer_price_variant_id));
                         $variantSelect.prop("disabled", true);
+                        $effectiveVariantInput.val(String(data.customer_price_variant_id));
                         $("#price-variant-help").text("Variante asignada al cliente.");
                     } else {
                         $variantSelect.prop("disabled", false);
+                        $effectiveVariantInput.val($variantSelect.val() || "");
                         $("#price-variant-help").text("Si no se selecciona variante, se utilizará el precio base.");
                     }
 
@@ -448,6 +451,7 @@ $(document).ready(function () {
                 } else {
                     $variantSelect.prop("disabled", false);
                     $variantSelect.empty().append(new Option("Precio base", ""));
+                    $effectiveVariantInput.val("");
                     $variantContainer.addClass("hidden");
                 }
 
@@ -484,6 +488,7 @@ $(document).ready(function () {
     });
 
     $(document).on("change", "#price_variant_id", function () {
+        $("#effective_price_variant_id").val($(this).val() || "");
         applySelectedProductPrice();
     });
 

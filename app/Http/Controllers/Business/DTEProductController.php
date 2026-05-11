@@ -555,7 +555,7 @@ class DTEProductController extends Controller
                 $customerVariantId = $customer
                     ? (is_array($customer) ? ($customer['price_variant_id'] ?? null) : ($customer->price_variant_id ?? null))
                     : null;
-                $requestVariantId = $request->input('price_variant_id');
+                $requestVariantId = $request->input('price_variant_id') ?: $request->input('effective_price_variant_id');
                 $selectedPriceVariantId = $customerVariantId ?: $requestVariantId;
 
                 if ($selectedPriceVariantId && $business) {
