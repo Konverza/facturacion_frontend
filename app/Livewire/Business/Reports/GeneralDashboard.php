@@ -225,7 +225,7 @@ class GeneralDashboard extends Component
             'q' => $this->q,
         ];
 
-        $business_plan = BusinessPlan::where('nit', $business->nit ?? null)->first();
+        $business_plan = BusinessPlan::where('business_id', $business->id ?? null)->first();
         $plan_dtes = json_decode($business_plan?->dtes ?? '[]') ?? [];
         foreach ($this->types as $dte_key => $dte_value) {
             if ($dte_key !== '' && !in_array($dte_key, $plan_dtes)) {

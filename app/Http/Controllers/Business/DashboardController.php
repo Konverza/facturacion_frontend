@@ -49,7 +49,7 @@ class DashboardController extends Controller
                 ->where("user_id", $user->id)
                 ->first();
             $business = Business::find($business_id);
-            $business_plan = BusinessPlan::where("nit", $business->nit)->with('plan')->first();
+            $business_plan = BusinessPlan::where('business_id', $business->id)->with('plan')->first();
             $dtes_pending = DTE::where('business_id', $business->id)->whereNotIn('status', ['template', 'pending']);
             if (!$business_user?->see_others_dtes) {
                 $dtes_pending->where(function ($query) use ($user) {
@@ -79,8 +79,13 @@ class DashboardController extends Controller
                 return back()->with('error', 'No se encontró la empresa asociada.');
             }
 
-            $inicio_mes = date('Y-m-01');
-            $fin_mes = date('Y-m-t');
+            $billing_type = $business_plan->billing_type ?? 'monthly';
+            $is_yearly_plan = $billing_type === 'yearly';
+            $plan_limit_base = (int) ($business_plan->plan->limite ?? 0);
+            $plan_limit_display = $is_yearly_plan ? $plan_limit_base * 12 : $plan_limit_base;
+
+            $inicio_mes = $is_yearly_plan ? date('Y-01-01') : date('Y-m-01');
+            $fin_mes = $is_yearly_plan ? date('Y-12-31') : date('Y-m-t');
             $params = [
                 'nit' => $business->nit,
                 'fechaInicio' => "{$inicio_mes}T00:00:00",
@@ -123,6 +128,7 @@ class DashboardController extends Controller
                 'products',
                 'customers',
                 'business_plan',
+                'plan_limit_display',
                 'types',
                 'dtes_pending',
                 'drafts_count',

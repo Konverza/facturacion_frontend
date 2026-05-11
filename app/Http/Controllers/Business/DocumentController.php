@@ -189,8 +189,8 @@ class DocumentController extends Controller
         if (auth()->user()->only_fcf) {
             $dtes_disponibles = ['01' => 'Factura Consumidor Final'];
         } else {
-            $business_plan = BusinessPlan::where("nit", $business->nit)->first();
-            $plan_dtes = json_decode($business_plan->dtes);
+            $business_plan = BusinessPlan::where('business_id', $business->id)->first();
+            $plan_dtes = json_decode($business_plan?->dtes ?? '[]') ?? [];
             foreach ($plan_dtes as $tipo) {
                 $dtes_disponibles[$tipo] = $tipos_dte[$tipo];
             }

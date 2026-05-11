@@ -23,8 +23,8 @@
                 @include('layouts.partials.business.button-new-dte')
                 <x-button type="a" href="{{ Route('business.customers.create') }}" typeButton="secondary"
                     text="Nuevo cliente" icon="user-plus" class="w-full sm:w-auto" />
-                <x-button type="a" href="{{ Route('business.products.create') }}" typeButton="warning"
-                    text="Nuevo producto" icon="cube-plus" class="w-full sm:w-auto" />
+                <x-button type="a" href="{{ Route('business.products.create') }}" typeButton="warning" text="Nuevo producto"
+                    icon="cube-plus" class="w-full sm:w-auto" />
             </div>
         </div>
         @php
@@ -33,30 +33,48 @@
             $statistics_by_dte['statistics'] = $statistics_by_dte['statistics'] ?? [];
         @endphp
         <div class="flex flex-col flex-wrap gap-4 md:flex-row">
-            <div class="flex flex-1 flex-col">
-                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    <div
-                        class="flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
+            <div class="flex flex-1 flex-col w-full">
+                <!-- Grid de 1 fila: 40 - 20 - 20 - 20 -->
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-9">
+                    <div class="md:col-span-3
+                        flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
                         <span class="rounded-full bg-blue-100 p-4 dark:bg-blue-950/30">
                             <x-icon icon="files" class="size-10 text-blue-500 sm:size-12" />
                         </span>
                         <div class="flex flex-col items-center justify-center gap-1 sm:items-start">
                             <p class="text-2xl font-bold text-blue-500">
-                                {{ $statistics['approved'] }} de {{ $business_plan->plan->limite }}
+                                {{ $statistics['approved'] }} de {{ $plan_limit_display ?? 0 }}
                             </p>
+                            @php
+                                $extraDtes = (int) ($business_plan->extra_dtes ?? 0);
+                                $extraDtesExpiration = $business_plan->extra_dtes_expiration ?? null;
+                                $hasValidExtraDtes =
+                                    $extraDtes > 0 &&
+                                    $extraDtesExpiration &&
+                                    \Carbon\Carbon::parse($extraDtesExpiration)->endOfDay()->gte(\Carbon\Carbon::now());
+                            @endphp
+                            @if ($hasValidExtraDtes)
+                                <span
+                                    class="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:border-green-800 dark:bg-green-950/30 dark:text-green-300">
+                                    +{{ number_format($extraDtes) }} DTE(s) extra
+                                    <span class="font-normal text-green-600 dark:text-green-400">
+                                        hasta {{ \Carbon\Carbon::parse($extraDtesExpiration)->format('d/m/Y') }}
+                                    </span>
+                                </span>
+                            @endif
                             <h1 class="text-sm text-gray-500 dark:text-gray-300">
                                 Documentos emitidos
                             </h1>
                             <h1 class="text-sm text-gray-500 dark:text-gray-300">
-                                ({{ \Carbon\Carbon::parse($inicio_mes)->format('d/m/Y') }} -
-                                {{ \Carbon\Carbon::parse($fin_mes)->format('d/m/Y') }})
+                                {{ \Carbon\Carbon::parse($inicio_mes)->format('d/m/Y') }} al
+                                {{ \Carbon\Carbon::parse($fin_mes)->format('d/m/Y') }}
                             </h1>
                             <x-button type="a" href="{{ Route('business.documents.index') }}" typeButton="info"
                                 text="Ver documentos" size="normal" />
                         </div>
                     </div>
                     <div
-                        class="flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
+                        class="md:col-span-2 flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
                         <!-- TODO: Actualizar estado según API -->
                         <span class="rounded-full bg-green-100 p-4 dark:bg-green-950/30">
                             <x-icon icon="circle-check" class="size-10 text-green-500 sm:size-12" />
@@ -71,15 +89,15 @@
                         </div>
                     </div>
                     <div
-                        class="flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
+                        class="md:col-span-2 flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
                         <span class="rounded-full bg-gray-100 p-4 dark:bg-gray-900">
                             <x-icon icon="users" class="size-10 text-gray-500 sm:size-12" />
                         </span>
-                        <div class="flex flex-col items-center justify-center gap-1 sm:items-start">
-                            <p class="text-4xl font-bold text-gray-500">
+                        <div class="flex flex-col items-center justify-center gap-1 sm:items-center">
+                            <p class="text-4xl text-center font-bold text-gray-500">
                                 {{ $customers }}
                             </p>
-                            <h1 class="text-sm text-gray-500 dark:text-gray-300">
+                            <h1 class="text-sm text-center text-gray-500 dark:text-gray-300">
                                 Clientes registrados
                             </h1>
                             <x-button type="a" href="{{ Route('business.customers.index') }}" typeButton="secondary"
@@ -87,15 +105,15 @@
                         </div>
                     </div>
                     <div
-                        class="flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
+                        class="md:col-span-2 flex w-full flex-1 items-center justify-center gap-4 rounded-lg border border-gray-300 p-4 dark:border-gray-800 dark:bg-gray-950">
                         <span class="rounded-full bg-yellow-100 p-4 dark:bg-yellow-950/30">
                             <x-icon icon="box" class="size-10 text-yellow-500 sm:size-12" />
                         </span>
-                        <div class="flex flex-col items-center justify-center gap-1 sm:items-start">
-                            <p class="text-4xl font-bold text-yellow-500">
+                        <div class="flex flex-col items-center justify-center gap-1 sm:items-center">
+                            <p class="text-4xl text-center font-bold text-yellow-500">
                                 {{ $products }}
                             </p>
-                            <h1 class="text-sm text-gray-500 dark:text-gray-300">
+                            <h1 class="text-sm text-center text-gray-500 dark:text-gray-300">
                                 Productos registrados
                             </h1>
                             <x-button type="a" href="{{ Route('business.products.index') }}" typeButton="warning"
@@ -165,8 +183,7 @@
                                                 }
                                             @endphp
                                             <div class="flex items-center gap-3">
-                                                <div
-                                                    class="flex-1 h-3 w-full rounded-full bg-secondary-200 dark:bg-secondary-900">
+                                                <div class="flex-1 h-3 w-full rounded-full bg-secondary-200 dark:bg-secondary-900">
                                                     <div class="h-full rounded-full {{ $bar_color }}"
                                                         style="width: {{ $progress_percentage }}%;"></div>
                                                 </div>
@@ -195,9 +212,8 @@
                         {{-- Centered button that says "Solicitar Acceso a Producción" --}}
                         <div class="flex mt-4 justify-center">
                             @if ($aprobados_total >= count($dtes_habilitados) && count($dtes_habilitados) > 0)
-                                <x-button type="a" href="{{ Route('business.customers.create') }}"
-                                    typeButton="success" text="Solicitar Acceso a Producción" icon="arrow-up"
-                                    class="w-auto" />
+                                <x-button type="a" href="{{ Route('business.customers.create') }}" typeButton="success"
+                                    text="Solicitar Acceso a Producción" icon="arrow-up" class="w-auto" />
                             @else
                                 <div
                                     class="my-4 rounded-lg border border-dashed border-yellow-500 bg-yellow-100 p-4 text-yellow-500 dark:bg-yellow-950/30">
@@ -374,9 +390,8 @@
                         @csrf
                         @method('DELETE')
                         <input type="hidden" name="status_filter" value="error" />
-                        <x-button type="button" text="Eliminar todos" icon="trash" typeButton="danger"
-                            class="buttonDelete" data-modal-toggle="deleteAllModal" data-modal-target="deleteAllModal"
-                            data-form="form-delete-all" />
+                        <x-button type="button" text="Eliminar todos" icon="trash" typeButton="danger" class="buttonDelete"
+                            data-modal-toggle="deleteAllModal" data-modal-target="deleteAllModal" data-form="form-delete-all" />
                     </form>
                 </div>
                 <div class="mt-4 flex flex-wrap gap-4">
@@ -423,8 +438,7 @@
                                                 Rechazado
                                             </p>
                                         @endif
-                                        <p
-                                            class="flex items-start gap-1 text-sm font-semibold text-gray-500 dark:text-gray-400">
+                                        <p class="flex items-start gap-1 text-sm font-semibold text-gray-500 dark:text-gray-400">
                                             <x-icon icon="info-circle"
                                                 class="text-seFcondary-500 mt-1 size-4 min-w-4 max-w-4 dark:text-secondary-300" />
                                             @if ($dte->error_message)
@@ -455,8 +469,9 @@
                                             data-modal-toggle="deleteModal" data-modal-target="deleteModal"
                                             data-form="form-delete-dte-{{ $dte->id }}" onlyIcon />
                                     </form>
-                                    <x-button type="a" href="{!! Route('business.dte.create', ['document_type' => $dte->type]) . '&id=' . $dte->id !!}" icon="arrow-right"
-                                        typeButton="secondary" onlyIcon />
+                                    <x-button type="a"
+                                        href="{!! Route('business.dte.create', ['document_type' => $dte->type]) . '&id=' . $dte->id !!}"
+                                        icon="arrow-right" typeButton="secondary" onlyIcon />
                                 </div>
                             </div>
                         @endforeach

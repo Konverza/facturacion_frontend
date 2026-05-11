@@ -32,7 +32,9 @@
                 <x-slot name="tbody">
                     @foreach ($business as $busines)
                         @php
-                            $percentage = ($busines->statistics["approved"] / $busines->plan->limite) * 100;
+                            $planLimit = (int) ($busines->plan->limite ?? 0);
+                            $planName = $busines->plan->nombre ?? 'Sin plan';
+                            $percentage = $planLimit > 0 ? ($busines->statistics["approved"] / $planLimit) * 100 : 0;
                             $active = $busines->active;
                             $class = '';
                             $progress_class = 'bg-blue-600';
@@ -66,16 +68,16 @@
                             <x-td>
                                 <span
                                     class="flex w-max items-center gap-1 rounded-full px-2 py-1 text-sm font-bold text-primary-500 dark:text-primary-300">
-                                    {{ $busines->plan->nombre }}
+                                    {{ $planName }}
                                 </span>
                             </x-td>
                             <x-td>
                                 <div class="mb-1 flex justify-between">
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-400">
-                                        {{$busines->statistics["approved"]}} DTE(s) emitidos de {{$busines->plan->limite}}
+                                        {{$busines->statistics["approved"]}} DTE(s) emitidos de {{$planLimit}}
                                     </span>
                                     <span class="text-xs font-medium text-gray-700 dark:text-gray-400">
-                                        {{ number_format(($busines->statistics["approved"] / $busines->plan->limite) * 100, 2) }}% usado
+                                        {{ number_format($percentage, 2) }}% usado
                                     </span>
                                 </div>
                                 <div class="mb-1 flex justify-between">

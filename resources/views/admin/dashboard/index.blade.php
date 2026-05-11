@@ -158,7 +158,7 @@
                                     <span
                                         class="flex w-max items-center gap-1 rounded-full px-2 py-1 text-sm font-bold text-primary-500 dark:text-primary-300">
                                         <x-icon icon="star" class="size-5 text-current" />
-                                        {{ $busines->plan->nombre }}
+                                        {{ $busines->plan->nombre ?? 'Sin plan' }}
                                     </span>
                                 </x-td>
                             </x-tr>

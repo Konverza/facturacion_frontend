@@ -16,7 +16,6 @@ class Business extends Model
     protected $fillable = [
         'nit',
         'nombre',
-        'plan_id',
         'dui',
         'registrofe_id',
         'telefono',
@@ -72,7 +71,19 @@ class Business extends Model
 
     public function plan()
     {
-        return $this->belongsTo(Plan::class);
+        return $this->hasOneThrough(
+            Plan::class,
+            BusinessPlan::class,
+            'business_id',
+            'id',
+            'id',
+            'plan_id'
+        );
+    }
+
+    public function businessPlan()
+    {
+        return $this->hasOne(BusinessPlan::class, 'business_id');
     }
 
     public function users()

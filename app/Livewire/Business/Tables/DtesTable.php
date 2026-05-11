@@ -130,8 +130,8 @@ class DtesTable extends Component
 
 
         // Obtener el plan de negocio y los tipos de DTE disponibles
-        $business_plan = BusinessPlan::where("nit", $business->nit)->first();
-        $plan_dtes = json_decode($business_plan->dtes);
+        $business_plan = BusinessPlan::where('business_id', $business->id)->first();
+        $plan_dtes = json_decode($business_plan?->dtes ?? '[]');
         
         foreach ($this->types as $dte_key => $dte_value) {
             if (!in_array($dte_key, $plan_dtes)) {

@@ -319,7 +319,6 @@ class BusinessController extends Controller
                         $business = new Business();
                         $business->nit = $request->nit;
                         $business->nombre = $request->nombre_comercial;
-                        $business->plan_id = $request->plan_id;
                         $business->dui = $request->dui;
                         $business->registrofe_id = $request->id_registro ?? null;
                         $business->telefono = $request->telefono_responsable;
@@ -328,7 +327,7 @@ class BusinessController extends Controller
                         $business->save();
 
                         $business_plan = new BusinessPlan();
-                        $business_plan->nit = $request->nit;
+                        $business_plan->business_id = $business->id;
                         $business_plan->plan_id = $request->plan_id;
                         $business_plan->dtes = json_encode($request->dtes);
                         $business_plan->save();
@@ -506,7 +505,7 @@ class BusinessController extends Controller
         }
         $empresa_api = Http::get($this->octopus_url . "/datos_empresa/nit/" . $empresa->nit);
         $empresa_api = $empresa_api->json();
-        $business_plan = BusinessPlan::where('nit', $empresa["nit"])->first();
+        $business_plan = BusinessPlan::where('business_id', $empresa->id)->first();
         $tipo_establecimiento = $this->octopus_service->getCatalog("CAT-009");
         $departamentos = $this->octopus_service->getCatalog("CAT-012");
         $municipios = $this->octopus_service->getCatalog("CAT-012", $empresa_api["departamento"]);

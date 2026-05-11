@@ -14,8 +14,8 @@
     ];
     $business_id = Session::get('business') ?? null;
     $business = \App\Models\Business::find($business_id);
-    $business_plan = \App\Models\BusinessPlan::where("nit", $business->nit)->first();
-    $plan_dtes = json_decode($business_plan->dtes);
+    $business_plan = \App\Models\BusinessPlan::where('business_id', $business->id)->first();
+    $plan_dtes = json_decode($business_plan?->dtes ?? '[]');
     $dte_options = [];
     foreach ($plan_dtes as $dte) {
         $dte_options[$dte] = $types[$dte];

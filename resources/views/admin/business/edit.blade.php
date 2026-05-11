@@ -119,14 +119,14 @@
                             </span>
                             <div class="mt-2 flex flex-col gap-4">
                                 <x-select label="Plan contratado" name="plan_id" id="plan" :options="$plans->pluck('nombre', 'id')->toArray()"
-                                    value="{{ old('plan_id') }}" selected="{{ old('plan_id', $business->plan_id) }}" />
+                                    value="{{ old('plan_id') }}" selected="{{ old('plan_id', $business_plan?->plan_id) }}" />
                                 <div>
                                     <span
                                         class="mb-1 block text-sm font-medium text-gray-500 after:ml-0.5 dark:text-gray-300">
                                         DTEs habilitados:
                                     </span>
                                     @php
-                                        $dtes_habilitados = json_decode($business_plan->dtes, true);
+                                        $dtes_habilitados = json_decode($business_plan?->dtes ?? '[]', true);
                                     @endphp
                                     <div class="mt-4 flex flex-col gap-2">
                                         <x-input type="toggle" name="dtes[]" label="Factura Electrónica"
