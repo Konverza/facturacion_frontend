@@ -161,7 +161,7 @@ $(document).ready(function () {
         const baseWith = parseFloat($form.data("base-price-with-iva")) || 0;
 
         const $select = $("#price_variant_id");
-        if ($select.length > 0 && $select.is(":visible")) {
+        if ($select.length > 0) {
             const $opt = $select.find("option:selected");
             const selectedWithout = parseFloat($opt.data("priceWithoutIva"));
             const selectedWith = parseFloat($opt.data("priceWithIva"));
@@ -184,7 +184,7 @@ $(document).ready(function () {
         const baseWith = parseFloat($form.data("base-price-with-iva")) || 0;
 
         const $select = $("#product_cost_variant_id");
-        if ($select.length > 0 && $select.is(":visible")) {
+        if ($select.length > 0) {
             const $opt = $select.find("option:selected");
             const selectedWithout = parseFloat($opt.data("priceWithoutIva"));
             const selectedWith = parseFloat($opt.data("priceWithIva"));
