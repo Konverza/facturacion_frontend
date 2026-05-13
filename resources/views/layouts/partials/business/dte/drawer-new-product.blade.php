@@ -83,10 +83,17 @@
                             }
                         @endphp
                         <x-input type="number" icon="currency-dollar" id="price" placeholder="0.00" :label="$label_precio"
-                            name="precio_unitario" step="0.00000001" min="0.00000001" required />
+                            name="precio_unitario" step="0.00000001" min="0" required />
                     </div>
                 @endunless
             </div>
+            @if (in_array($number, ['01', '03', '11'], true))
+                <div class="mt-4">
+                    <x-input type="number" label="Monto no afecto" name="noGravado" id="no_gravado_product"
+                        icon="currency-dollar" placeholder="0.00000000" step="0.00000001"
+                        value="{{ old('noGravado', 0) }}" />
+                </div>
+            @endif
             @unless ($isProjectMode)
                 <div class="mt-4 flex gap-4">
                     <div class="flex-1">

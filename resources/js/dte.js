@@ -47,13 +47,16 @@ $(document).ready(function () {
         return mode === "without_iva" ? "without_iva" : "with_iva";
     }
 
-    $("#count_product, #price").on("input", function () {
+    $("#count_product, #price, #no_gravado_product").on("input", function () {
         if (!price.length) {
             return;
         }
 
         const countValue = parseFloat(count.val());
-        const priceValue = parseFloat(price.val());
+        const priceValue = parseFloat(price.val()) || 0;
+        const noGravado = parseFloat($("#no_gravado_product").val()) || 0;
+
+        // Precio obligatorio salvo que noGravado sea mayor que cero
         if (count.val() === "" || price.val() === "") {
             $("#iva").text("$0.00");
             $("#turismo").text("$0.00");
@@ -63,15 +66,30 @@ $(document).ready(function () {
             $("#total_product").val(0);
             return;
         }
-        var total = countValue * priceValue;
-        const descuento = parseFloat($("#descuento_product").val()) || 0;
-        total = total - descuento;
+
+        if (priceValue <= 0 && noGravado <= 0) {
+            $("#total_product").val(0);
+            $("#descuento_product").val(0).prop("disabled", true).prop("max", 0);
+            return;
+        }
+
+        // Actualizar min del precio según noGravado
+        $("#price").prop("min", noGravado > 0 ? 0 : 0.00000001);
+
+        // Descuento solo aplica si hay precio mayor a cero
+        const puedeDescontar = priceValue > 0;
+        $("#descuento_product").prop("disabled", !puedeDescontar);
+        if (!puedeDescontar) {
+            $("#descuento_product").val(0);
+        }
+
+        const subtotal = (countValue * priceValue) + noGravado;
+        const descuento = puedeDescontar ? (parseFloat($("#descuento_product").val()) || 0) : 0;
+        var total = subtotal - descuento;
 
         if (total < 0) {
             $("#descuento_product").val(0);
-            $("#total_product").val(
-                redondear(parseFloat(countValue * priceValue), 8)
-            );
+            $("#total_product").val(redondear(subtotal, 8));
             showAlert(
                 "error",
                 "Error",
@@ -81,11 +99,18 @@ $(document).ready(function () {
         }
 
         $("#total_product").val(redondear(total, 8));
-        $("#descuento_product").prop("max", redondear(total, 8));
+        $("#descuento_product").prop("max", redondear(subtotal, 8));
         updatePrices(priceValue, countValue, getDrawerPriceInputMode());
     });
 
     $("#descuento_product").on("input", function () {
+        const priceValue = parseFloat($("#price").val()) || 0;
+        if (priceValue <= 0) {
+            showAlert("error", "Error", "El descuento solo aplica cuando el precio es mayor a cero");
+            $(this).val("");
+            return;
+        }
+
         const descuento = parseFloat($(this).val()) || 0;
         const total = parseFloat($(this).prop("max")) || 0;
 
@@ -117,21 +142,29 @@ $(document).ready(function () {
 
         const cantidad = parseFloat($("#edit_cantidad").val()) || 0;
         const precio = parseFloat($("#edit_precio_unitario").val()) || 0;
-        const descuento = parseFloat($("#edit_descuento").val()) || 0;
+        const noGravado = parseFloat($("#edit_no_gravado").val()) || 0;
+
+        // Descuento solo aplica si precio > 0
+        const puedeDescontar = precio > 0;
+        $("#edit_descuento").prop("disabled", !puedeDescontar);
+        if (!puedeDescontar) {
+            $("#edit_descuento").val(0);
+        }
+        const descuento = puedeDescontar ? (parseFloat($("#edit_descuento").val()) || 0) : 0;
 
         const subtotal = cantidad * precio;
-        const total = subtotal - descuento;
+        const total = subtotal - descuento + noGravado;
 
         if (total < 0) {
             $("#edit_descuento").val(0);
-            $("#edit_total").val(redondear(subtotal, 8));
+            $("#edit_total").val(redondear(subtotal + noGravado, 8));
             return;
         }
 
         $("#edit_total").val(redondear(total, 8));
     }
 
-    $(document).on("input", "#edit_cantidad, #edit_precio_unitario, #edit_descuento", function () {
+    $(document).on("input", "#edit_cantidad, #edit_precio_unitario, #edit_descuento, #edit_no_gravado", function () {
         calculateEditManualTotal();
     });
 
@@ -1021,7 +1054,23 @@ $(document).ready(function () {
     //Submit forms
     $(document).on("click", ".submit-form", function () {
         const form = $(this).closest("form");
-        // console.log(form);
+
+        // Validación especial para el drawer de nuevo producto
+        if (form.is("#drawer-new-product form")) {
+            const priceVal = parseFloat($("#price").val()) || 0;
+            const noGravadoVal = parseFloat($("#no_gravado_product").val()) || 0;
+
+            // Precio debe ser > 0 salvo que haya monto no afecto
+            if (priceVal <= 0 && noGravadoVal <= 0) {
+                showAlert("error", "Error", "El precio debe ser mayor a cero, salvo que se indique un monto no afecto");
+                return;
+            }
+
+            // Descuento solo aplica si precio > 0
+            if (priceVal <= 0) {
+                $("#descuento_product").val(0);
+            }
+        }
 
         let isValid = true;
 
@@ -1288,6 +1337,7 @@ $(document).ready(function () {
                     $("#edit_descripcion").val(item.descripcion || "");
                     $("#edit_precio_unitario").val(item.precio ?? item.precio_sin_tributos ?? 0);
                     $("#edit_descuento").val(item.descuento ?? 0);
+                    $("#edit_no_gravado").val(item.noGravado ?? 0);
                     $("#edit_total").val(item.total ?? 0);
 
                     setCustomSelectValue("#edit_tipo_item", item.tipo_item || "1");

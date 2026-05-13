@@ -1654,7 +1654,7 @@ class DTEController extends Controller
                 "montoDescu" => round($product["descuento"], 8),
                 "ventaGravada" => round($product["ventas_gravadas"], 8),
                 "tributos" => count($tributos) > 0 ? $tributos : null,
-                "noGravado" => 0,
+                "noGravado" => round((float) ($product["noGravado"] ?? 0), 8),
             ];
         } elseif ($type === "14") {
             // Para sujeto excluido no hay IVA; el campo 'compra' debe reflejar el valor de la línea (base) después de descuento.
@@ -1707,7 +1707,7 @@ class DTEController extends Controller
                 "tributos" => $tributos && count($tributos) > 0 ? $tributos : null,
                 "psv" => round((float) $product["precio"], 8),
                 "ivaItem" => round($product["iva"], 8),
-                "noGravado" => 0,
+                "noGravado" => round((float) ($product["noGravado"] ?? 0), 8),
             ];
         }
     }

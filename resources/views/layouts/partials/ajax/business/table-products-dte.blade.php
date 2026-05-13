@@ -7,6 +7,7 @@
             <x-th>Cantidad</x-th>
             <x-th>Precio</x-th>
             <x-th>Descuento</x-th>
+            <x-th>No afecta</x-th>
             <x-th>Gravada</x-th>
             <x-th>Exenta</x-th>
             <x-th>No sujeta</x-th>
@@ -63,6 +64,7 @@
                             @endif
                         </x-td>
                         <x-td>${{ $formatCompactAmount($product['descuento'] ?? 0) }}</x-td>
+                        <x-td>${{ $formatCompactAmount($product['noGravado'] ?? 0) }}</x-td>
                         <x-td>${{ $formatCompactAmount($product['ventas_gravadas'] ?? 0) }}</x-td>
                         <x-td>${{ $formatCompactAmount($product['ventas_exentas'] ?? 0) }}</x-td>
                         <x-td>${{ $formatCompactAmount($product['ventas_no_sujetas'] ?? 0) }}</x-td>
@@ -80,12 +82,12 @@
                 @endforeach
             @else
                 <x-tr>
-                    <x-td :last="true" colspan="10" class="text-center">No hay productos</x-td>
+                    <x-td :last="true" colspan="11" class="text-center">No hay productos</x-td>
                 </x-tr>
             @endif
 
             <x-tr>
-                <x-td colspan="10" :last="true">
+                <x-td colspan="11" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Subtotal
                         <span>
@@ -98,7 +100,7 @@
 
             @if ($dte['type'] !== '01' && isset($dte['total_ventas_gravadas']) && $dte['total_ventas_gravadas'] > 0)
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto al valor agregado (13%)
                             <span>
@@ -111,7 +113,7 @@
 
             @if (isset($dte['turismo_por_alojamiento']) && $dte['turismo_por_alojamiento'] > 0)
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Turismo por alojamiento
                             <span>
@@ -124,7 +126,7 @@
 
             @if (isset($dte['turismo_salida_pais_via_aerea']) && $dte['turismo_salida_pais_via_aerea'] > 0)
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Turismo salida del país por vía aérea
                             <span>
@@ -137,7 +139,7 @@
 
             @if (isset($dte['fovial']) && $dte['fovial'] > 0)
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             FOVIAL ($0.20 por galón de combustible)
                             <span>
@@ -150,7 +152,7 @@
 
             @if (isset($dte['contrans']) && $dte['contrans'] > 0)
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             COTRANS ($0.10 por galón de combustible)
                             <span>
@@ -163,7 +165,7 @@
 
             @if (isset($dte['bebidas_alcoholicas']) && $dte['bebidas_alcoholicas'] > 0)
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto ad-valorem por diferencial de precio de Bebidas Alcohólicas
                             (8%)
@@ -177,7 +179,7 @@
 
             @if (isset($dte['tabaco_cigarillos']) && $dte['tabaco_cigarillos'] > 0)
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto ad-valorem por diferencial de precio al tabaco cigarrillos
                             (39%)
@@ -191,7 +193,7 @@
 
             @if (isset($dte['tabaco_cigarros']) && $dte['tabaco_cigarros'] > 0)
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end gap-4 text-end">
                             Impuesto ad-valorem por diferencial de precio al tabaco cigarros
                             (100%)
@@ -204,7 +206,7 @@
             @endif
 
             <x-tr>
-                <x-td colspan="10" :last="true">
+                <x-td colspan="11" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Monto total de la operación
                         <span>
@@ -216,7 +218,7 @@
 
             @if ($dte['type'] !== '04')
             <x-tr>
-                <x-td colspan="10" :last="true">
+                <x-td colspan="11" :last="true">
                     <div class="flex items-center justify-end">
                         <div class="me-10">
                             <x-input type="checkbox" label="¿Retener IVA?" name="retener_iva"
@@ -240,7 +242,7 @@
 
             @if ($dte['type'] === '03' || $dte['type'] === '05')
                 <x-tr>
-                    <x-td colspan="10" :last="true">
+                    <x-td colspan="11" :last="true">
                         <div class="flex items-center justify-end">
                             <div class="me-10">
                                 <x-input type="checkbox" label="¿Percibir IVA?" name="percibir_iva"
@@ -264,7 +266,7 @@
 
             @if ($dte['type'] !== '04')
             {{-- <x-tr>
-                <x-td colspan="10" :last="true">
+                <x-td colspan="11" :last="true">
                     <div class="flex items-center justify-end">
                         <div class="me-10">
                             <x-input type="checkbox" label="¿Retener renta?" name="retener_renta"
@@ -287,7 +289,7 @@
             @endif
 
             <x-tr>
-                <x-td colspan="10" :last="true">
+                <x-td colspan="11" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Descuento a operación
                         <span class="font-semibold text-red-500">
@@ -302,7 +304,7 @@
             </x-tr>
 
             <x-tr :last="true">
-                <x-td colspan="10" :last="true">
+                <x-td colspan="11" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Total pagar
                         <span>

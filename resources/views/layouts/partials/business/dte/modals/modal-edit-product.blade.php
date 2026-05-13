@@ -59,6 +59,13 @@
                             step="0.00000001" min="0" required />
                     </div>
 
+                    @if (in_array($dte['type'] ?? null, ['01', '03', '11'], true))
+                        <div class="mt-4">
+                            <x-input type="number" label="Monto no afecto" name="noGravado" id="edit_no_gravado"
+                                step="0.00000001" placeholder="0.00000000" />
+                        </div>
+                    @endif
+
                     <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <x-input type="number" label="Descuento" name="descuento" id="edit_descuento"
                             step="0.00000001" min="0" />

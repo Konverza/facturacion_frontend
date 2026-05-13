@@ -518,6 +518,7 @@ class DTEProductController extends Controller
             $priceInputMode = (string) $request->input('price_input_mode', 'with_iva');
             $isPriceWithoutIvaMode = $priceInputMode === 'without_iva';
             $isGravada = $request->tipo === 'Gravada';
+            $noGravado = (float) $request->input('noGravado', 0);
 
             if ($isPriceWithoutIvaMode) {
                 $this->dte['price_input_mode'] = 'without_iva';
@@ -526,6 +527,7 @@ class DTEProductController extends Controller
             $normalizedLineTotal = ($isPriceWithoutIvaMode && ($this->dte['type'] === '01') && $isGravada)
                 ? $this->precise_round($inputLineTotal * 1.13, 8)
                 : $inputLineTotal;
+            $taxableLineTotal = $this->precise_round($normalizedLineTotal - $noGravado, 8);
 
             if ($isPriceWithoutIvaMode) {
                 $this->dte['price_input_mode'] = 'without_iva';
@@ -603,17 +605,19 @@ class DTEProductController extends Controller
                     $product["cantidad"] += $cantidadNueva;
                     $product["descuento"] += (float) ($request->descuento ?? 0);
                     $product["total"] += $normalizedLineTotal;
+                    $product["noGravado"] = $this->precise_round(((float) ($product["noGravado"] ?? 0)) + $noGravado, 8);
                     $product["documento_relacionado"] = $incoming_doc;
-                    $product["ventas_gravadas"] += $request->tipo === "Gravada" ? $normalizedLineTotal : 0;
-                    $product["ventas_exentas"] += $request->tipo === "Exenta" ? $normalizedLineTotal : 0;
-                    $product["ventas_no_sujetas"] += $request->tipo === "No sujeta" ? $normalizedLineTotal : 0;
+                    $product["ventas_gravadas"] += $request->tipo === "Gravada" ? $taxableLineTotal : 0;
+                    $product["ventas_exentas"] += $request->tipo === "Exenta" ? $taxableLineTotal : 0;
+                    $product["ventas_no_sujetas"] += $request->tipo === "No sujeta" ? $taxableLineTotal : 0;
 
                     $iva = 0;
                     if ($request->tipo === "Gravada") {
+                        $baseGravada = (float) ($product["ventas_gravadas"] ?? 0);
                         if (in_array($this->dte["type"], ["03", "05", "06"])) {
-                            $iva = $this->precise_round($product["total"] * 0.13, 8);
+                            $iva = $this->precise_round($baseGravada * 0.13, 8);
                         } else {
-                            $iva = $this->precise_round(($product["total"] / 1.13) * 0.13, 8);
+                            $iva = $this->precise_round(($baseGravada / 1.13) * 0.13, 8);
                         }
                     }
 
@@ -626,11 +630,11 @@ class DTEProductController extends Controller
             $iva = 0;
             if ($request->tipo === "Gravada") {
                 if ($this->dte["type"] === "03" || $this->dte["type"] === "05" || $this->dte["type"] === "06") {
-                    $iva = $this->precise_round($normalizedLineTotal * 0.13, 8);
+                    $iva = $this->precise_round($taxableLineTotal * 0.13, 8);
                 } else {
                     $iva = ($isPriceWithoutIvaMode && ($this->dte['type'] === '01'))
-                        ? $this->precise_round($inputLineTotal * 0.13, 8)
-                        : $this->precise_round(($normalizedLineTotal / 1.13) * 0.13, 8);
+                        ? $this->precise_round(($taxableLineTotal / 1.13) * 0.13, 8)
+                        : $this->precise_round(($taxableLineTotal / 1.13) * 0.13, 8);
                 }
             }
 
@@ -685,9 +689,9 @@ class DTEProductController extends Controller
                     "precio" => ($this->dte["type"] === "14") ? $precio_sin_tributos : ($request->tipo == "Gravada" ? $precio : $precio_sin_tributos),
                     "precio_sin_tributos" => $precio_sin_tributos,
                     "descuento" => $descuento,
-                    "ventas_gravadas" => $request->tipo === "Gravada" ? $total : 0,
-                    "ventas_exentas" => $request->tipo === "Exenta" ? $total : 0,
-                    "ventas_no_sujetas" => $request->tipo === "No sujeta" ? $total : 0,
+                    "ventas_gravadas" => $request->tipo === "Gravada" ? $taxableLineTotal : 0,
+                    "ventas_exentas" => $request->tipo === "Exenta" ? $taxableLineTotal : 0,
+                    "ventas_no_sujetas" => $request->tipo === "No sujeta" ? $taxableLineTotal : 0,
                     "total" => $total,
                     "turismo_por_alojamiento" => in_array("59", $product_tributes) ? "active" : "inactive",
                     "turismo_salida_pais_via_aerea" => in_array("71", $product_tributes) ? "active" : "inactive",
@@ -705,6 +709,7 @@ class DTEProductController extends Controller
                     "supplier_name" => $selectedSupplierName,
                     "supplier_cost" => $selectedSupplierCost,
                     "precio_unitario" => ($this->dte["type"] === "14") ? $precio_sin_tributos : ($request->tipo == "Gravada" ? $precio : $precio_sin_tributos),
+                    "noGravado" => $this->precise_round($noGravado, 8),
                 ];
             }
 
@@ -752,9 +757,11 @@ class DTEProductController extends Controller
             $priceInputMode = (string) $request->input('price_input_mode', 'with_iva');
             $isPriceWithoutIvaMode = $priceInputMode === 'without_iva';
             $isGravada = $request->tipo === 'Gravada';
+            $noGravado = (float) $request->input('noGravado', 0);
 
             $inputUnitPrice = (float) $request->precio_unitario;
             $inputLineTotal = (float) $request->total;
+            $inputLineTaxable = $this->precise_round($inputLineTotal - $noGravado, 8);
 
             // En modo sin IVA (cotizaciones/proyectos), para DTE tipo 01 guardamos valores gravados con IVA.
             $shouldConvertToGross = $isPriceWithoutIvaMode && ($this->dte['type'] === '01') && $isGravada;
@@ -766,14 +773,17 @@ class DTEProductController extends Controller
             $total = $shouldConvertToGross
                 ? $this->precise_round($inputLineTotal * 1.13, 8)
                 : $inputLineTotal;
+            $totalTaxable = $shouldConvertToGross
+                ? $this->precise_round($inputLineTaxable * 1.13, 8)
+                : $inputLineTaxable;
 
             $iva = 0;
             if ($isGravada) {
                 $iva = ($this->dte["type"] === "03")
-                    ? $this->precise_round($total * 0.13, 8)
+                    ? $this->precise_round($totalTaxable * 0.13, 8)
                     : ($shouldConvertToGross
-                        ? $this->precise_round($inputLineTotal * 0.13, 8)
-                        : $this->precise_round(($total / 1.13) * 0.13, 8));
+                        ? $this->precise_round(($totalTaxable / 1.13) * 0.13, 8)
+                        : $this->precise_round(($totalTaxable / 1.13) * 0.13, 8));
             }
 
             $this->dte["products"][] = [
@@ -788,10 +798,11 @@ class DTEProductController extends Controller
                 "precio" => $storedUnitPrice,
                 "precio_sin_tributos" => $inputUnitPrice,
                 "descuento" => floatval($request->descuento ?? 0),
-                "ventas_gravadas" => $request->tipo === "Gravada" ? $total : 0,
-                "ventas_exentas" => $request->tipo === "Exenta" ? $total : 0,
-                "ventas_no_sujetas" => $request->tipo === "No sujeta" ? $total : 0,
+                "ventas_gravadas" => $request->tipo === "Gravada" ? $totalTaxable : 0,
+                "ventas_exentas" => $request->tipo === "Exenta" ? $totalTaxable : 0,
+                "ventas_no_sujetas" => $request->tipo === "No sujeta" ? $totalTaxable : 0,
                 "total" => $total,
+                "noGravado" => $this->precise_round($noGravado, 8),
                 "turismo_por_alojamiento" => in_array("59", $product_tributes) ? "active" : "inactive",
                 "turismo_salida_pais_via_aerea" => in_array("71", $product_tributes) ? "active" : "inactive",
                 "fovial" => in_array("D1", $product_tributes) ? "active" : "inactive",
@@ -915,7 +926,8 @@ class DTEProductController extends Controller
                     "tabaco_cigarillos" => in_array("C6", $product_tributes) ? "active" : "inactive",
                     "tabaco_cigarros" => in_array("C7", $product_tributes) ? "active" : "inactive",
                     "iva" => $iva,
-                    "documento_relacionado" => null
+                    "documento_relacionado" => null,
+                    "noGravado" => 0,
                 ];
             }
 
@@ -974,6 +986,7 @@ class DTEProductController extends Controller
                 "bebidas_alcoholicas" => 0,
                 "tabaco_cigarillos" => 0,
                 "tabaco_cigarros" => 0,
+                "noGravado" => 0,
             ];
 
             $this->totals();
@@ -1019,6 +1032,7 @@ class DTEProductController extends Controller
                 "bebidas_alcoholicas" => 0,
                 "tabaco_cigarillos" => 0,
                 "tabaco_cigarros" => 0,
+                "noGravado" => 0,
             ];
 
             $this->totals();
@@ -1060,6 +1074,7 @@ class DTEProductController extends Controller
                 $this->dte["total_ventas_gravadas"] = 0;
                 $this->dte["total_ventas_exentas"] = 0;
                 $this->dte["total_ventas_no_sujetas"] = 0;
+                $this->dte["total_no_gravado"] = 0;
                 $this->dte["total_taxes"] = 0;
                 $this->dte["total"] = 0;
                 $this->dte["subtotal"] = 0;
@@ -1154,6 +1169,7 @@ class DTEProductController extends Controller
                     "precio_sin_tributos" => (float) ($item["precio_sin_tributos"] ?? 0),
                     "descuento" => (float) ($item["descuento"] ?? 0),
                     "total" => (float) ($item["total"] ?? 0),
+                    "noGravado" => (float) ($item["noGravado"] ?? 0),
                     "tipo_item" => $item["tipo_item"] ?? null,
                     "documento_relacionado" => $item["documento_relacionado"] ?? null,
                     "tributos" => $isManual ? $this->inferManualTributes($item) : [],
@@ -1198,6 +1214,8 @@ class DTEProductController extends Controller
                 $precioUnitario = max(0, (float) $request->input("precio_unitario", 0));
                 $descuento = max(0, (float) $request->input("descuento", 0));
                 $total = max(0, (float) $request->input("total", 0));
+                $noGravado = (float) $request->input("noGravado", $item["noGravado"] ?? 0);
+                $totalAfecto = $this->precise_round(max(0, $total - $noGravado), 8);
                 $tipoVenta = (string) $request->input("tipo", "Gravada");
                 $tipoItem = (string) $request->input("tipo_item", "1");
                 $tributos = array_map(fn($tribute) => (string) $tribute, $request->input("tributos", []));
@@ -1210,13 +1228,14 @@ class DTEProductController extends Controller
                 $item["precio_sin_tributos"] = $precioUnitario;
                 $item["descuento"] = $descuento;
                 $item["total"] = $total;
+                $item["noGravado"] = $this->precise_round($noGravado, 8);
                 $item["tipo_item"] = $tipoItem;
                 $item["documento_relacionado"] = $request->input("documento_relacionado") ?: null;
                 $item["tributos"] = json_encode($tributos);
 
-                $item["ventas_gravadas"] = $tipoVenta === "Gravada" ? $total : 0;
-                $item["ventas_exentas"] = $tipoVenta === "Exenta" ? $total : 0;
-                $item["ventas_no_sujetas"] = $tipoVenta === "No sujeta" ? $total : 0;
+                $item["ventas_gravadas"] = $tipoVenta === "Gravada" ? $totalAfecto : 0;
+                $item["ventas_exentas"] = $tipoVenta === "Exenta" ? $totalAfecto : 0;
+                $item["ventas_no_sujetas"] = $tipoVenta === "No sujeta" ? $totalAfecto : 0;
 
                 $item["turismo_por_alojamiento"] = in_array("59", $tributos, true) ? "active" : "inactive";
                 $item["turismo_salida_pais_via_aerea"] = in_array("71", $tributos, true) ? "active" : "inactive";
@@ -1225,11 +1244,12 @@ class DTEProductController extends Controller
                 $item["bebidas_alcoholicas"] = in_array("C5", $tributos, true) ? "active" : "inactive";
                 $item["tabaco_cigarillos"] = in_array("C6", $tributos, true) ? "active" : "inactive";
                 $item["tabaco_cigarros"] = in_array("C7", $tributos, true) ? "active" : "inactive";
-                $item["iva"] = $this->calculateItemIva($total, $tipoVenta);
+                $item["iva"] = $this->calculateItemIva($totalAfecto, $tipoVenta);
             } else {
                 $cantidad = max(0.00000001, (float) $request->input("cantidad", 0));
                 $tipoVenta = (string) $request->input("tipo", "Gravada");
                 $descuento = max(0, (float) ($item["descuento"] ?? 0));
+                $noGravado = (float) ($item["noGravado"] ?? 0);
 
                 // No validar stock en facturas de sujeto excluido (tipo 14) ya que son compras.
                 if (($this->dte["type"] ?? null) !== "14") {
@@ -1258,16 +1278,17 @@ class DTEProductController extends Controller
                 }
 
                 $precioBase = $this->resolveExistingItemUnitPrice($item, $tipoVenta);
-                $total = $this->precise_round(max(0, ($precioBase * $cantidad) - $descuento), 8);
+                $total = $this->precise_round(max(0, (($precioBase * $cantidad) - $descuento) + $noGravado), 8);
 
                 $item["cantidad"] = $cantidad;
                 $item["tipo"] = $tipoVenta;
                 $item["precio"] = $precioBase;
                 $item["total"] = $total;
-                $item["ventas_gravadas"] = $tipoVenta === "Gravada" ? $total : 0;
-                $item["ventas_exentas"] = $tipoVenta === "Exenta" ? $total : 0;
-                $item["ventas_no_sujetas"] = $tipoVenta === "No sujeta" ? $total : 0;
-                $item["iva"] = $this->calculateItemIva($total, $tipoVenta);
+                $totalAfecto = $this->precise_round(max(0, $total - $noGravado), 8);
+                $item["ventas_gravadas"] = $tipoVenta === "Gravada" ? $totalAfecto : 0;
+                $item["ventas_exentas"] = $tipoVenta === "Exenta" ? $totalAfecto : 0;
+                $item["ventas_no_sujetas"] = $tipoVenta === "No sujeta" ? $totalAfecto : 0;
+                $item["iva"] = $this->calculateItemIva($totalAfecto, $tipoVenta);
             }
 
             $this->dte["products"][$itemIndex] = $item;
@@ -1471,13 +1492,15 @@ class DTEProductController extends Controller
     {
         $this->total_init();
         $this->total_ventas();
+        $this->total_no_gravado();
         $this->total_descuentos();
         $this->total_taxes();
 
         $this->dte["subtotal"] =
             $this->dte["total_ventas_gravadas"]
             + $this->dte["total_ventas_exentas"]
-            + $this->dte["total_ventas_no_sujetas"];
+            + $this->dte["total_ventas_no_sujetas"]
+            + ($this->dte["total_no_gravado"] ?? 0);
 
         if ($this->dte["type"] !== "14" && $this->dte["type"] !== "11" && $this->dte["type"] !== "07" && $this->dte["type"] !== "01") {
             $this->dte["total"] = $this->dte["subtotal"] + $this->dte["total_taxes"];
@@ -1494,7 +1517,7 @@ class DTEProductController extends Controller
         }
 
         if ($this->dte["type"] === "11") {
-            $this->dte["total_pagar"] = $this->precise_round((float) $this->dte["total_ventas_gravadas"] + $this->dte["flete"] + $this->dte["seguro"], 8);
+            $this->dte["total_pagar"] = $this->precise_round((float) $this->dte["total_ventas_gravadas"] + ($this->dte["total_no_gravado"] ?? 0) + $this->dte["flete"] + $this->dte["seguro"], 8);
         }
 
         $this->dte["monto_pendiente"] = $this->dte["total_pagar"] - $this->dte["monto_abonado"] ?? 0;
@@ -1513,6 +1536,10 @@ class DTEProductController extends Controller
 
         if (!isset($this->dte["total_ventas_no_sujetas"])) {
             $this->dte["total_ventas_no_sujetas"] = 0;
+        }
+
+        if (!isset($this->dte["total_no_gravado"])) {
+            $this->dte["total_no_gravado"] = 0;
         }
 
         if (!isset($this->dte["seguro"])) {
@@ -1633,6 +1660,11 @@ class DTEProductController extends Controller
         $this->dte["total_ventas_exentas"] = $this->precise_round((float) array_sum(array_map(fn($product) => $product["ventas_exentas"] ?? 0, $this->dte["products"] ?? [])), 8);
 
         $this->dte["total_ventas_no_sujetas"] = $this->precise_round((float) array_sum(array_map(fn($product) => $product["ventas_no_sujetas"] ?? 0, $this->dte["products"] ?? [])), 8);
+    }
+
+    public function total_no_gravado()
+    {
+        $this->dte["total_no_gravado"] = $this->precise_round((float) array_sum(array_map(fn($product) => $product["noGravado"] ?? 0, $this->dte["products"] ?? [])), 8);
     }
 
     public function total_taxes()

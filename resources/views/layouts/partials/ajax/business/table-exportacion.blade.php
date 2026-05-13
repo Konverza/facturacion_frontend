@@ -6,6 +6,7 @@
             <x-th>Cantidad</x-th>
             <x-th>Precio</x-th>
             <x-th>Descuento por item</x-th>
+            <x-th>No afecta</x-th>
             <x-th>Subtotal</x-th>
             <x-th :last="true">Acciones</x-th>
         </x-tr>
@@ -20,6 +21,7 @@
                             ${{ number_format($product['precio_sin_tributos'], 2) }}
                         </x-td>
                         <x-td>${{ number_format($product['descuento'], 2) }}</x-td>
+                        <x-td>${{ number_format($product['noGravado'] ?? 0, 2) }}</x-td>
                         <x-td>${{ number_format($product['total'], 2) }}</x-td>
                         <x-td :last="true">
                             <x-button type="button" icon="trash" size="small"
@@ -30,12 +32,12 @@
                 @endforeach
             @else
                 <x-tr>
-                    <x-td :last="true" colspan="9" class="text-center">No hay productos</x-td>
+                    <x-td :last="true" colspan="8" class="text-center">No hay productos</x-td>
                 </x-tr>
             @endif
 
             <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="8" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Subtotal
                         <span>
@@ -46,7 +48,7 @@
             </x-tr>
 
             <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="8" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Monto total de la operación
                         <span>
@@ -57,7 +59,7 @@
             </x-tr>
 
             <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="8" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Seguro
                         <x-input type="number" icon="currency-dollar" placeholder="0.00" name="seguro" id="seguro"
@@ -68,7 +70,7 @@
             </x-tr>
 
             <x-tr>
-                <x-td colspan="9" :last="true">
+                <x-td colspan="8" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Flete
                         <x-input type="number" icon="currency-dollar" placeholder="0.00" name="flete" id="flete"
@@ -79,7 +81,7 @@
             </x-tr>
 
             <x-tr :last="true">
-                <x-td colspan="9" :last="true">
+                <x-td colspan="8" :last="true">
                     <div class="flex items-center justify-end gap-4 text-end">
                         Total pagar
                         <span>
