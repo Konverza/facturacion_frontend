@@ -268,7 +268,7 @@ class ReportingController extends Controller
     {
         $tipoAnexo = $payload['tipo_anexo'];
 
-        if (in_array($tipoAnexo, ['contribuyentes', 'consumidores'], true)) {
+        if (in_array($tipoAnexo, ['contribuyentes', 'consumidores', 'compras_se'], true)) {
             $dtes = $this->fetchSentDtes($business->nit, $payload['start_date'], $payload['end_date'], true);
         } elseif ($tipoAnexo === 'anulados') {
             $dtes = $this->fetchSentDtes($business->nit, $payload['start_date'], $payload['end_date'], true, 'ANULADO');
