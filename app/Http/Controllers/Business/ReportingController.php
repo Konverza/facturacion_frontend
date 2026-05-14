@@ -224,7 +224,7 @@ class ReportingController extends Controller
         $clasificacion = $request->clasificacion ?? null;
         $sector = $request->sector ?? null;
         $tipo_costo = $request->tipo_costo ?? null;
-        $dtes = $this->fetchSentDtes($business->nit, $request->start_date, $request->end_date, false);
+        $dtes = $this->fetchSentDtes($business->nit, $request->start_date, $request->end_date, true);
 
         switch ($request->tipo_anexo) {
             case "contribuyentes":
@@ -297,6 +297,7 @@ class ReportingController extends Controller
         foreach ($filtered as $dte) {
             $doc = $dte['documento'] ?? [];
             $resumen = $doc['resumen'] ?? [];
+            $resumenNeto = $this->getResumenNeto($resumen);
 
             $totalIva = $this->sumTributosByCodes($resumen, ['20']);
             $totalPagar = (float) ($resumen['totalPagar'] ?? 0);
@@ -311,9 +312,9 @@ class ReportingController extends Controller
                 'G' => '',
                 'H' => (string) data_get($doc, 'receptor.nit', ''),
                 'I' => strtoupper((string) html_entity_decode((string) data_get($doc, 'receptor.nombre', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8')),
-                'J' => (float) ($resumen['totalExenta'] ?? 0),
-                'K' => (float) ($resumen['totalNoSuj'] ?? 0),
-                'L' => (float) ($resumen['totalGravada'] ?? 0),
+                'J' => $resumenNeto['totalExenta'],
+                'K' => $resumenNeto['totalNoSuj'],
+                'L' => $resumenNeto['totalGravada'],
                 'M' => (float) $totalIva,
                 'N' => 0.00,
                 'O' => 0.00,
@@ -348,10 +349,19 @@ class ReportingController extends Controller
                 $primerCod = $items->first()['codGeneracion'] ?? '';
                 $ultimoCod = $items->last()['codGeneracion'] ?? '';
 
-                $totalExento = $items->sum(fn($dte) => (float) data_get($dte, 'documento.resumen.totalExenta', 0));
-                $totalNoSuj = $items->sum(fn($dte) => (float) data_get($dte, 'documento.resumen.totalNoSuj', 0));
+                $totalExento = $items->sum(function ($dte) {
+                    $resumen = (array) data_get($dte, 'documento.resumen', []);
+                    return $this->getResumenNeto($resumen)['totalExenta'];
+                });
+                $totalNoSuj = $items->sum(function ($dte) {
+                    $resumen = (array) data_get($dte, 'documento.resumen', []);
+                    return $this->getResumenNeto($resumen)['totalNoSuj'];
+                });
                 $totalGravado = $tipo === '01'
-                    ? $items->sum(fn($dte) => (float) data_get($dte, 'documento.resumen.totalGravada', 0))
+                    ? $items->sum(function ($dte) {
+                        $resumen = (array) data_get($dte, 'documento.resumen', []);
+                        return $this->getResumenNeto($resumen)['totalGravada'];
+                    })
                     : 0.00;
 
                 $totalExportacionDentro = 0.00;
@@ -362,7 +372,8 @@ class ReportingController extends Controller
                     foreach ($items as $dte) {
                         $codPais = strtoupper(trim((string) data_get($dte, 'documento.receptor.codPais', '')));
                         $tipoItemExpor = trim((string) data_get($dte, 'documento.emisor.tipoItemExpor', data_get($dte, 'documento.emisor.tipoItemExpo', '')));
-                        $totalGravadaDte = (float) data_get($dte, 'documento.resumen.totalGravada', 0);
+                        $resumenDte = (array) data_get($dte, 'documento.resumen', []);
+                        $totalGravadaDte = $this->getResumenNeto($resumenDte)['totalGravada'];
 
                         if ($tipoItemExpor === '2') {
                             $totalExportacionServicios += $totalGravadaDte;
@@ -433,6 +444,8 @@ class ReportingController extends Controller
         foreach ($filtered as $dte) {
             $doc = $dte['documento'] ?? [];
             $sujetoExcluido = $doc['sujetoExcluido'] ?? [];
+            $resumen = $doc['resumen'] ?? [];
+            $totalCompraNeto = $this->getResumenNeto($resumen)['totalCompra'];
 
             $rows[] = [
                 'A' => (string) ($tipoDocumentoMap[(string) data_get($sujetoExcluido, 'tipoDocumento', '')] ?? ''),
@@ -441,7 +454,7 @@ class ReportingController extends Controller
                 'D' => $this->formatDate($dte['fhEmision'] ?? null),
                 'E' => (string) ($dte['selloRecibido'] ?? ''),
                 'F' => str_replace('-', '', (string) ($dte['codGeneracion'] ?? '')),
-                'G' => (float) data_get($doc, 'resumen.totalCompra', 0),
+                'G' => $totalCompraNeto,
                 'H' => 0.00,
                 'I' => (string) ($payload['tipo_operacion_se'] ?? '2'),
                 'J' => (string) ($payload['clasificacion'] ?? '2'),
@@ -547,6 +560,26 @@ class ReportingController extends Controller
         }
 
         return $rows;
+    }
+
+    private function getResumenNeto(array $resumen): array
+    {
+        $totalExenta = (float) ($resumen['totalExenta'] ?? 0);
+        $totalNoSuj = (float) ($resumen['totalNoSuj'] ?? 0);
+        $totalGravada = (float) ($resumen['totalGravada'] ?? 0);
+        $totalCompra = (float) ($resumen['totalCompra'] ?? 0);
+
+        $descuExenta = (float) ($resumen['descuExenta'] ?? 0);
+        $descuNoSuj = (float) ($resumen['descuNoSuj'] ?? 0);
+        $descuGravada = (float) ($resumen['descuGravada'] ?? 0);
+        $descuTotalCompra = (float) ($resumen['descu'] ?? 0);
+
+        return [
+            'totalExenta' => $totalExenta - $descuExenta,
+            'totalNoSuj' => $totalNoSuj - $descuNoSuj,
+            'totalGravada' => $totalGravada - $descuGravada,
+            'totalCompra' => $totalCompra - $descuTotalCompra,
+        ];
     }
 
     private function resolveTipoOperacionCompras(float $netExenta, float $netNoSuj, float $netGravada): string
@@ -853,17 +886,18 @@ class ReportingController extends Controller
 
             foreach ($dtesGroup as $dte) {
                 $doc = $dte["documento"] ?: [];
+                $resumenNeto = $this->getResumenNeto((array) ($doc['resumen'] ?? []));
                 if ($doc["identificacion"]["tipoDte"] === "11") {
-                    $total_exportaciones += $doc["resumen"]["montoTotalOperacion"] ?? 0;
-                    $totalDocExportacion += $doc["resumen"]["montoTotalOperacion"] ?? 0;
+                    $total_exportaciones += $resumenNeto['totalGravada'];
+                    $totalDocExportacion += $resumenNeto['totalGravada'];
                 } else {
-                    $total_no_sujetas += $doc["resumen"]["totalNoSuj"] ?? 0;
-                    $total_gravadas += $doc["resumen"]["totalGravada"] ?? 0;
-                    $total_exentas += $doc["resumen"]["totalExenta"] ?? 0;
+                    $total_no_sujetas += $resumenNeto['totalNoSuj'];
+                    $total_gravadas += $resumenNeto['totalGravada'];
+                    $total_exentas += $resumenNeto['totalExenta'];
 
-                    $totalDocExentas += $doc["resumen"]["totalExenta"] ?? 0;
-                    $totalDocGravadas += $doc["resumen"]["totalGravada"] ?? 0;
-                    $totalDocNoSujetas += $doc["resumen"]["totalNoSuj"] ?? 0;
+                    $totalDocExentas += $resumenNeto['totalExenta'];
+                    $totalDocGravadas += $resumenNeto['totalGravada'];
+                    $totalDocNoSujetas += $resumenNeto['totalNoSuj'];
                 }
             }
 
@@ -942,9 +976,10 @@ class ReportingController extends Controller
             }
 
             $sign = ($identificacion["tipoDte"] ?? "") === "05" ? -1 : 1;
-            $totalExenta = (float) ($resumen["totalExenta"] ?? 0) * $sign;
-            $totalNoSuj = (float) ($resumen["totalNoSuj"] ?? 0) * $sign;
-            $totalGravada = (float) ($resumen["totalGravada"] ?? 0) * $sign;
+            $resumenNeto = $this->getResumenNeto($resumen);
+            $totalExenta = $resumenNeto['totalExenta'] * $sign;
+            $totalNoSuj = $resumenNeto['totalNoSuj'] * $sign;
+            $totalGravada = $resumenNeto['totalGravada'] * $sign;
             $ivaFirmado = (float) $iva * $sign;
 
             $totalDocExentas += $totalExenta;
@@ -1094,7 +1129,7 @@ class ReportingController extends Controller
                 $colF = strtoupper((string) html_entity_decode((string) data_get($emisor, 'nombre', ''), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
             } else {
                 $receptor = $doc['sujetoExcluido'] ?? [];
-                $colI = (float) data_get($resumen, 'totalCompra', 0);
+                $colI = $this->getResumenNeto($resumen)['totalCompra'];
 
                 $colD = '';
                 $colE = (string) data_get($receptor, 'numDocumento', '');
@@ -1139,19 +1174,16 @@ class ReportingController extends Controller
 
     private function exportAnexoContribuyentes($dtes, $tipoOperacion, $tipoIngreso)
     {
-        $dte_collection = collect();
-        foreach ($dtes as $dte) {
-            if ($dte["estado"] == "PROCESADO" && in_array($dte["tipo_dte"], ["03", "05", "06"])) {
-                $dte_collection->push($dte);
-            }
-        }
-        $fileName = 'anexo-f07-contribuyentes_' . date("YmdHis") . '.csv';
-        $filePath = "exports/{$fileName}";
-        Excel::store(new Contribuyente($dte_collection, $tipoOperacion, $tipoIngreso), $filePath, 'public');
-        if (!Storage::disk('public')->exists($filePath)) {
-            throw new \Exception('Error al generar el archivo de contribuyentes');
-        }
-        return storage_path("app/public/{$filePath}");
+        $rows = $this->buildAnexoContribuyentesRows($dtes, [
+            'tipo_operacion' => $tipoOperacion,
+            'tipo_ingreso' => $tipoIngreso,
+        ]);
+
+        $metadata = $this->getAnexoMetadata('contribuyentes');
+        $columnKeys = array_map(fn($column) => $column['key'], $metadata['columns']);
+        $normalizedRows = $this->normalizeRowsForCsv($rows, $columnKeys, $metadata['numeric_columns']);
+
+        return $this->saveRowsAsCsv($normalizedRows, $metadata['file_prefix']);
     }
 
     private function exportAnexoConsumidores($dtes, $tipoOperacion, $tipoIngreso)
@@ -1181,9 +1213,20 @@ class ReportingController extends Controller
                 $paisesCentroamerica = ['GT', '9483', 'HN', '9501', 'SV', '9300', 'NI', '9615', 'CR', '9411'];
 
                 // Sumar valores de los DTEs
-                $totalExento = $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalExenta ?? 0);
-                $totalNoSuj = $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalNoSuj ?? 0);
-                $totalGravado = $tipo == "01" ? $dtes->sum(fn($dte) => $dte["documento"]->resumen->totalGravada ?? 0) : 0;
+                $totalExento = $dtes->sum(function ($dte) {
+                    $resumen = (array) data_get($dte, 'documento.resumen', []);
+                    return $this->getResumenNeto($resumen)['totalExenta'];
+                });
+                $totalNoSuj = $dtes->sum(function ($dte) {
+                    $resumen = (array) data_get($dte, 'documento.resumen', []);
+                    return $this->getResumenNeto($resumen)['totalNoSuj'];
+                });
+                $totalGravado = $tipo == "01"
+                    ? $dtes->sum(function ($dte) {
+                        $resumen = (array) data_get($dte, 'documento.resumen', []);
+                        return $this->getResumenNeto($resumen)['totalGravada'];
+                    })
+                    : 0;
 
                 // Cálculos de exportación solo para tipo "11"
                 $totalExportacionDentro = 0;
@@ -1194,7 +1237,8 @@ class ReportingController extends Controller
                     foreach ($dtes as $dte) {
                         $codPais = $dte["documento"]->receptor->codPais ?? null;
                         $tipoItemExpor = $dte["documento"]->emisor->tipoItemExpor ?? null;
-                        $totalGravadaDTE = $dte["documento"]->resumen->totalGravada ?? 0;
+                        $resumenDte = (array) data_get($dte, 'documento.resumen', []);
+                        $totalGravadaDTE = $this->getResumenNeto($resumenDte)['totalGravada'];
 
                         // Exportación de servicios (tipoItemExpor = 2)
                         if ($tipoItemExpor == 2) {
@@ -1254,35 +1298,42 @@ class ReportingController extends Controller
         $filePath = "exports/{$fileName}";
 
         // Guardar el archivo temporalmente
-        Excel::store(new ConsumidorFinal($result), $filePath, 'public');
-
-        // Verificar si el archivo se generó
-        if (!Storage::disk('public')->exists($filePath)) {
-            throw new \Exception('Error al generar el archivo de consumidores');
-        }
-
-        return storage_path("app/public/{$filePath}");
+        return $this->saveRowsAsCsv($result, 'anexo-f07-consumidor-final_');
     }
 
 
     private function exportAnexoComprasSE($dtes, $tipoOperacion , $clasificacion, $sector, $tipo_costo)
     {
-        $dte_collection = collect();
-        foreach ($dtes as $dte) {
-            if ($dte["estado"] == "PROCESADO" && in_array($dte["tipo_dte"], ["14"])) {
-                $dte_collection->push($dte);
+        $rows = $this->buildAnexoComprasSeRows($dtes, [
+            'tipo_operacion_se' => $tipoOperacion,
+            'clasificacion' => $clasificacion,
+            'sector' => $sector,
+            'tipo_costo' => $tipo_costo,
+        ]);
+
+        $metadata = $this->getAnexoMetadata('compras_se');
+        $columnKeys = array_map(fn($column) => $column['key'], $metadata['columns']);
+        $normalizedRows = $this->normalizeRowsForCsv($rows, $columnKeys, $metadata['numeric_columns']);
+
+        return $this->saveRowsAsCsv($normalizedRows, $metadata['file_prefix']);
+    }
+
+    private function normalizeRowsForCsv(array $rows, array $columnKeys, array $numericColumns): array
+    {
+        $normalizedRows = [];
+        foreach ($rows as $row) {
+            $normalized = [];
+            foreach ($columnKeys as $columnKey) {
+                $value = $row[$columnKey] ?? '';
+                if (in_array($columnKey, $numericColumns, true)) {
+                    $value = number_format((float) $value, 2, '.', '');
+                }
+                $normalized[] = $value;
             }
+            $normalizedRows[] = $normalized;
         }
 
-        // Sort DTE by emission date and time
-        $dte_collection = $dte_collection->sortBy('fhEmision');
-        $fileName = 'anexo-f07-compras-se_' . date("YmdHis") . '.csv';
-        $filePath = "exports/{$fileName}";
-        Excel::store(new ComprasSe($dte_collection, $tipoOperacion, $clasificacion, $sector, $tipo_costo), $filePath, 'public');
-        if (!Storage::disk('public')->exists($filePath)) {
-            throw new \Exception('Error al generar el archivo de Compras Sujeto Excluido');
-        }
-        return storage_path("app/public/{$filePath}");
+        return $normalizedRows;
     }
 
     private function exportAnexoAnulados($dtes)
