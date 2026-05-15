@@ -306,10 +306,17 @@
                                     @break
 
                                     @case('03')
+                                        @php
+                                            $iva = collect($invoice['documento']->resumen->tributos)->firstWhere('codigo', '20')->valor ?? 0;
+                                        @endphp
                                         <strong>Neto:
                                         </strong>${{ number_format($invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
                                         <strong>IVA:
-                                        </strong>${{ number_format($invoice['documento']->resumen->totalPagar - $invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
+                                        </strong>${{ number_format($iva, 2, '.', ',') }}<br>
+                                        @if($invoice['documento']->resumen->totalNoGravado > 0)
+                                            <strong>No Gravado:
+                                            </strong>${{ number_format($invoice['documento']->resumen->totalNoGravado, 2, '.', ',') }}<br>
+                                        @endif
                                         <strong>Total:
                                         </strong>${{ number_format($invoice['documento']->resumen->totalPagar, 2, '.', ',') }}
                                     @break
@@ -317,8 +324,11 @@
                                     @case('05')
                                         <strong>Neto:
                                         </strong>${{ number_format($invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
+                                        @php
+                                            $iva = collect($invoice['documento']->resumen->tributos)->firstWhere('codigo', '20')->valor ?? 0;
+                                        @endphp
                                         <strong>IVA:
-                                        </strong>${{ number_format($invoice['documento']->resumen->montoTotalOperacion - $invoice['documento']->resumen->subTotalVentas, 2, '.', ',') }}<br>
+                                        </strong>${{ number_format($iva, 2, '.', ',') }}<br>
                                         <strong>Total:
                                         </strong>${{ number_format($invoice['documento']->resumen->montoTotalOperacion, 2, '.', ',') }}
                                     @break
